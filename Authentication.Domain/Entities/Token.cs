@@ -12,6 +12,7 @@ public class Token : IAuthEntity
     
     public string Login { get; set; }
 
+    public Guid RoleId { get; set; }
     public string TokenType { get; set; } = null!;
     
     [ForeignKey(nameof(AppUserId))]

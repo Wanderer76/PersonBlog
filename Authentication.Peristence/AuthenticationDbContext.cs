@@ -16,11 +16,12 @@ public class AuthenticationDbContext : BaseDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("auth");
         base.OnModelCreating(modelBuilder);
         {
             var entity = modelBuilder.Entity<UserRole>();
             entity.HasData(new[]
-            {
+           {
                 new UserRole
                 {
                     Id = Guid.Parse("57a2b99b-b6ee-4c98-a1f0-b18fe96dae60"),
@@ -41,6 +42,12 @@ public class AuthenticationDbContext : BaseDbContext
                     Id = Guid.Parse("c2ff298c-dd14-436c-a28b-e2036866ef41"),
                     Name = "manager"
                 },
+
+                //new UserRole
+                //{
+                //    Id = Guid.Parse("c2ff298c-dd14-436c-a28b-e2036866ef42"),
+                //    Name = "departmentadmin"
+                //},
             });
         }
     }

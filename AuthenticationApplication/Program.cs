@@ -1,5 +1,5 @@
 using Authentication.Peristence;
-using AuthenticationApplication.Service;
+using Authentication.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-builder.Services.AddPersistence();
+builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddService();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -16,6 +17,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    using (var db = app.Services.CreateScope().ServiceProvider.GetRequiredService<AuthenticationDbContext>())
+    {
+        db.Database.EnsureCreated();
+    }
+
 }
 app.UseRouting();
 app.UseHttpsRedirection();
