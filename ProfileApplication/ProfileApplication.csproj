@@ -12,6 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />
       <ProjectReference Include="..\Profile.Service\Profile.Service.csproj" />
     </ItemGroup>
 

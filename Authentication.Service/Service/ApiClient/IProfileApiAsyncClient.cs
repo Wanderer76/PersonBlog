@@ -2,6 +2,8 @@
 using System.Text;
 using System.Text.Json;
 using AuthenticationApplication.Models.Requests;
+using Microsoft.Extensions.Configuration;
+using Shared.Utils;
 
 namespace AuthenticationApplication.Service.ApiClient;
 
@@ -12,17 +14,28 @@ public interface IProfileApiAsyncClient
 
 public class DefaultProfileApiAsyncClient : IProfileApiAsyncClient
 {
-    public Task<HttpResponseMessage> CreateProfileAsync(ProfileCreateRequest createRequest)
+    private readonly IConfiguration configuration;
+
+    public DefaultProfileApiAsyncClient(IConfiguration configuration)
     {
-        var client = new HttpClient();
-        var uri = new Uri("http://localhost:5069/create");
-        var message = new HttpRequestMessage
+        this.configuration = configuration;
+    }
+
+    public async Task<HttpResponseMessage> CreateProfileAsync(ProfileCreateRequest createRequest)
+    {
+        var path = configuration.GetValue<string>("ProfileUrl:Create");
+        path!.AssertFound();
+
+        using var client = new HttpClient();
+        var uri = new Uri(path!);
+        var body = JsonSerializer.Serialize(createRequest,new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
+        using var message = new HttpRequestMessage
         {
             Method = HttpMethod.Post,
             RequestUri = uri,
-            Content = new StringContent(JsonSerializer.Serialize(createRequest), Encoding.UTF8,
-                MediaTypeNames.Application.Json)
+            Content = new StringContent(body, Encoding.UTF8,
+                MediaTypeNames.Application.Json),
         };
-        return client.SendAsync(message);
+        return await client.SendAsync(message);
     }
 }

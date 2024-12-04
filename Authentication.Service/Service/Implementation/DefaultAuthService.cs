@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("Authentication.Test")]
 
 namespace Authentication.Service.Service.Implementation;
 
@@ -15,10 +17,10 @@ internal class DefaultAuthService : IAuthService
 {
     private readonly IReadWriteRepository<IAuthEntity> _context;
     private readonly IProfileApiAsyncClient _profileApiClient;
-    private readonly DefaultTokenService _tokenService;
+    private readonly ITokenService _tokenService;
     public DefaultAuthService(IReadWriteRepository<IAuthEntity> context,
         IProfileApiAsyncClient profileApiClient,
-        DefaultTokenService tokenService)
+        ITokenService tokenService)
     {
         _context = context;
         _profileApiClient = profileApiClient;
@@ -28,9 +30,12 @@ internal class DefaultAuthService : IAuthService
     public async Task<AuthResponse> Authenticate(LoginModel loginModel)
     {
         var user = await _context.Get<AppUser>()
+            .Include(x => x.AppUserRoles)
             .FirstOrDefaultAsync(x => x.Login == loginModel.Login);
 
-        if (PasswordHasher.Validate(user.Password, loginModel.Password))
+        user.AssertFound();
+
+        if (!PasswordHasher.Validate(user.Password, loginModel.Password))
         {
             throw new ArgumentException("Неверный логиг/пароль");
         }
@@ -55,20 +60,6 @@ internal class DefaultAuthService : IAuthService
 
         var userId = Guid.NewGuid();
 
-        var userRoles = (await _context.Get<UserRole>()
-                .Where(x => registerModel.UserRoleIds.Contains(x.Id))
-                .Select(x => x.Id)
-                .ToListAsync())
-            .Select(x => new AppUserRole
-            {
-                AppUserId = userId,
-                UserRoleId = x
-            }).ToList();
-
-        if (!userRoles.Any())
-        {
-            throw new ArgumentException("Роли не найдены");
-        }
 
         var user = new AppUser
         {
@@ -76,7 +67,14 @@ internal class DefaultAuthService : IAuthService
             Login = registerModel.Login,
             Password = PasswordHasher.GetHash(registerModel.Password),
             CreatedAt = DateTimeOffset.UtcNow,
-            AppUserRoles = userRoles
+            AppUserRoles = new List<AppUserRole>
+            {
+                new AppUserRole
+                {
+                    AppUserId = userId,
+                    UserRoleId = Roles.User
+                }
+            }
         };
         _context.Add(user);
 
@@ -86,18 +84,19 @@ internal class DefaultAuthService : IAuthService
             SurName = registerModel.Surname,
             LastName = registerModel.Lastname,
             Birthdate = registerModel.Birthdate,
-            UserId = userId
+            UserId = userId,
+            Email = registerModel.Email
         };
 
         var response = await _profileApiClient.CreateProfileAsync(profileCreateRequest);
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new ArgumentException("Не удалось зарегристрировать пользователя");
+            throw new ArgumentException($"Не удалось зарегристрировать пользователя",new Exception(await response.Content.ReadAsStringAsync()));
         }
 
         await _context.SaveChangesAsync();
-        return await Authenticate(new LoginModel(user.Login, user.Password));
+        return await Authenticate(new LoginModel(user.Login, registerModel.Password));
     }
 
     public ValueTask Logout()
@@ -115,9 +114,10 @@ internal class DefaultAuthService : IAuthService
         }
 
         var userId = tokenModel.UserId;
-        await ClearUserToken(userId);
+        await _tokenService.ClearUserToken(refreshToken);
 
         var user = await _context.Get<AppUser>()
+            .Include(x => x.AppUserRoles)
             .Where(x => x.Id == userId)
             .FirstOrDefaultAsync();
 
@@ -129,27 +129,12 @@ internal class DefaultAuthService : IAuthService
     }
 
 
-    private async Task ClearUserToken(Guid userId)
-    {
-        var userTokens = await _context.Get<Token>()
-            .Where(x => x.AppUserId == userId)
-            .ToListAsync();
-
-        foreach (var token in userTokens)
-        {
-            _context.Remove(token);
-        }
-    }
 
     public async Task<bool> ValidateToken(string token)
     {
-        var tokenModel = _tokenService.GetTokenRepresentaion(token);
-
-        var now = DateTimeOffset.UtcNow;
-
-        if (tokenModel.ExpiredAt > now)
+        if (!_tokenService.Validate(token))
         {
-            await ClearUserToken(tokenModel.UserId);
+            await _tokenService.ClearUserToken(token);
             return false;
         }
 

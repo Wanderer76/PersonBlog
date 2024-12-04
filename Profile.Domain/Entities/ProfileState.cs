@@ -3,8 +3,11 @@
 public enum ProfileState
 {
     Active,
-    NotActive,
-    Working,
-    Holidays,
-    Eat
+    Blocked,
 }
+
+//public enum ProfileType
+//{
+//    Common,
+//    Creator,
+//}

@@ -15,5 +15,7 @@ public class RegisterModel
     [Required] public string Surname { get; set; } = null!;
     public string? Lastname { get; set; }
     public DateTimeOffset Birthdate { get; set; }
-    [Required] public IEnumerable<Guid> UserRoleIds { get; set; } = new List<Guid>();
+    [Required]
+    public string Email { get; set; }
+ //   [Required] public IEnumerable<Guid> UserRoleIds { get; set; } = new List<Guid>();
 }

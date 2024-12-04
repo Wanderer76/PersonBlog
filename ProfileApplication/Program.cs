@@ -1,3 +1,6 @@
+using Profile.Persistence;
+using Profile.Service.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddProfileServices();
+builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddCors(x=>
+x.AddDefaultPolicy(b=>b.AllowAnyMethod().AllowAnyOrigin()));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -16,6 +24,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers(); // подключаем маршрутизацию на контроллеры

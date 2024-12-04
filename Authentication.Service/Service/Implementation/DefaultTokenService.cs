@@ -1,13 +1,19 @@
 ﻿using Authentication.Domain.Entities;
-using Authentication.Peristence;
 using Authentication.Service.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Shared;
 using Shared.Persistence;
-using Shared.Utils;
-using System.Text.Json;
+using Shared.Services;
+using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
+using System.Security.Claims;
+
+[assembly: InternalsVisibleTo("Authentication.Test")]
 
 namespace Authentication.Service.Service.Implementation
 {
-    internal class DefaultTokenService
+    internal class DefaultTokenService : ITokenService
     {
         private readonly IReadWriteRepository<IAuthEntity> _context;
 
@@ -18,35 +24,27 @@ namespace Authentication.Service.Service.Implementation
 
         public bool Validate(string token)
         {
+            var tokenRepresentation = JwtUtils.GetTokenRepresentaion(token);
+            if (tokenRepresentation == null)
+            {
+                return false;
+            }
+            var now = DateTimeOffset.UtcNow;
+            if (tokenRepresentation.ExpiredAt < now)
+            {
+                return false;
+            }
+
             return true;
         }
 
         public AuthResponse GenerateToken(AppUser user)
         {
-            var accessToken = new Token
-            {
-                Id = Guid.NewGuid(),
-                AppUserId = user.Id,
-                TokenType = TokenTypes.Access,
-                Login = user.Login,
-                CreatedAt = DateTimeOffset.UtcNow,
-                ExpiredAt = DateTimeOffset.UtcNow.AddHours(1),
-            };
+            CreateTokenForUser(user, out var accessToken, out var refreshToken);
 
-            var refreshToken = new Token
-            {
-                Id = Guid.NewGuid(),
-                AppUserId = user.Id,
-                TokenType = TokenTypes.Refresh,
-                Login = user.Login,
-                CreatedAt = DateTimeOffset.UtcNow,
-                ExpiredAt = DateTimeOffset.UtcNow.AddHours(1),
-            };
-
-            _context.Add(accessToken);
-            _context.Add(refreshToken);
-
-            var (jwtAccess, jwtRefresh) = JwtService.GetJwtTokens(accessToken, refreshToken);
+            var accessTokenModel = accessToken.ToTokenModel();
+            var refreshTokenModel = accessToken.ToTokenModel();
+            var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessTokenModel, refreshTokenModel);
             return new AuthResponse
             {
                 AccessToken = jwtAccess,
@@ -54,12 +52,53 @@ namespace Authentication.Service.Service.Implementation
             };
         }
 
+        private void CreateTokenForUser(AppUser user, out Token accessToken, out Token refreshToken)
+        {
+            accessToken = new Token
+            {
+                Id = Guid.NewGuid(),
+                AppUserId = user.Id,
+                TokenType = TokenTypes.Access,
+                Login = user.Login,
+                CreatedAt = DateTimeOffset.UtcNow,
+                ExpiredAt = DateTimeOffset.UtcNow.AddHours(1),
+                RoleId = user.AppUserRoles.First().UserRoleId
+            };
+            refreshToken = new Token
+            {
+                Id = Guid.NewGuid(),
+                AppUserId = user.Id,
+                TokenType = TokenTypes.Refresh,
+                Login = user.Login,
+                CreatedAt = DateTimeOffset.UtcNow,
+                ExpiredAt = DateTimeOffset.UtcNow.AddHours(2),
+                RoleId = user.AppUserRoles.First().UserRoleId
+            };
+            _context.Add(accessToken);
+            _context.Add(refreshToken);
+        }
+
+
+
+
+        public async Task ClearUserToken(string token)
+        {
+
+            var userId = GetTokenRepresentaion(token).UserId;
+
+            var userTokens = await _context.Get<Token>()
+                .Where(x => x.AppUserId == userId)
+                .ToListAsync();
+
+            foreach (var i in userTokens)
+            {
+                _context.Remove(i);
+            }
+        }
 
         public TokenModel GetTokenRepresentaion(string token)
         {
-            var tokenModel = JsonSerializer.Deserialize<TokenModel>(token);
-            tokenModel.AssertFound("Не валидный токен");
-            return tokenModel;
+            return JwtUtils.GetTokenRepresentaion(token);
         }
     }
 }

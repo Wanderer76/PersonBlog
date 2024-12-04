@@ -12,7 +12,9 @@ public static class PersistenceExtensions
     {
         var connectionString = configuration["ConnectionStrings:AuthenticationContext"];
         services.AddDbContext<AuthenticationDbContext>(option =>
-            option.UseNpgsql(connectionString));
+        option.UseInMemoryDatabase("Auth")    
+        //option.UseNpgsql(connectionString)
+            );
         services.AddScoped<IReadWriteRepository<IAuthEntity>, DefaultRepository<AuthenticationDbContext, IAuthEntity>>();
 
     }

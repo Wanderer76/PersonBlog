@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
     }
 
 
-    [HttpPost("login")]
+    [HttpPost("refresh")]
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Refresh(string refreshToken)
     {
