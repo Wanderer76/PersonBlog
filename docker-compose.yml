@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    environment:
+      URLS: "[ { url: \"/auth/swagger/v1/swagger.json\", name: \"Authorization\" }, { url: \"/profile/swagger/v1/swagger.json\", name: \"Profile\" }]"
+
+  nginx:
+    image: nginx:alpine
+    ports:
+        - ${NGINX_PORT-7892}:80
+    volumes:
+      - ./nginx/nginx.local-debug.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx-frontend-dev.conf:/etc/nginx/nginx-frontend.conf:ro

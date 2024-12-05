@@ -1,5 +1,6 @@
 using Authentication.Peristence;
 using Authentication.Service;
+using Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 
     using (var db = app.Services.CreateScope().ServiceProvider.GetRequiredService<AuthenticationDbContext>())

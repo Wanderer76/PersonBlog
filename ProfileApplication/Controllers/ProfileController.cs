@@ -8,7 +8,7 @@ namespace ProfileApplication.Controllers;
 
 
 [ApiController]
-[Route("[controller]/")]
+[Route("api/[controller]")]
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _profileService;

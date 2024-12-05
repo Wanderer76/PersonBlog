@@ -16,6 +16,7 @@
       <ProjectReference Include="..\Authentication.Domain\Authentication.Domain.csproj" />
       <ProjectReference Include="..\Authentication.Peristence\Authentication.Peristence.csproj" />
       <ProjectReference Include="..\Authentication.Service\Authentication.Service.csproj" />
+      <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
       <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
