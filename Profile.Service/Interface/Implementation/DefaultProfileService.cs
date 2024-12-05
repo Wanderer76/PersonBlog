@@ -68,7 +68,7 @@ namespace Profile.Service.Interface.Implementation
             throw new NotImplementedException();
         }
 
-        public async Task<ProfileModel> UpdateProfileAsync(ProfileEditModel profileEditModel)
+        public async Task<ProfileModel> UpdateProfileAsync(ProfileUpdateModel profileEditModel)
         {
             var profile = await _profileRepository.Get<AppProfile>()
             .FirstAsync(x => x.Id == profileEditModel.Id);

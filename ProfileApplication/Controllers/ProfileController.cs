@@ -21,16 +21,17 @@ public class ProfileController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateProfile([FromBody] ProfileCreateModel profileCreateModel)
     {
-        _ = await _profileService.CreateProfileAsync(profileCreateModel);
-        return Ok();
+        var result = await _profileService.CreateProfileAsync(profileCreateModel);
+        return Ok(result);
     }
 
     [HttpPost("edit")]
-    public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateModel profileUpdateModel)
+    [Authorize]
+    public async Task<ActionResult<ProfileModel>> UpdateProfile([FromBody] ProfileUpdateModel profileUpdateModel)
     {
-        return Ok("success");
+        var result = await _profileService.UpdateProfileAsync(profileUpdateModel);
+        return Ok(result);
     }
-
 
     [HttpGet("profile")]
     [Authorize]
@@ -42,9 +43,18 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet("profile/{id:guid}")]
-    public async Task<IActionResult> GetProfileById(Guid id) { return Ok("success"); }
+    [Authorize]
+    public async Task<ActionResult<ProfileModel>> GetProfileById(Guid id) {
+
+        var result = await _profileService.GetProfileByUserIdAsync(id);
+        return Ok(result);
+    }
 
 
+    /// <summary>
+    /// Not implemented
+    /// </summary>
+    /// <returns></returns>
     [HttpGet("create")]
     public async Task<IActionResult> GetProfileCreateModel() { return Ok("success"); }
 

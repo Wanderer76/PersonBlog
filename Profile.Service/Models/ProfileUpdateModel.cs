@@ -2,6 +2,6 @@
 {
     public class ProfileUpdateModel : ProfileCreateModel
     {
-        public Guid ProfileId { get; set; }
+        public Guid Id { get; set; }
     }
 }
