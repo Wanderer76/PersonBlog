@@ -45,7 +45,6 @@ namespace Authentication.Test
                 Birthdate = DateTime.Now,
                 Login = "admin",
                 PasswordConfirm = "admin",
-                //UserRoleIds = new[] { Guid.Parse("57a2b99b-b6ee-4c98-a1f0-b18fe96dae60") },
                 Surname = "admin",
             };
 
@@ -91,7 +90,7 @@ namespace Authentication.Test
         }
 
         [Fact, TestPriority(2)]
-        public void AuthenticationTest2()
+        public async Task AuthenticationTest2()
         {
             var loginModel = new LoginModel
             {
@@ -99,7 +98,7 @@ namespace Authentication.Test
                 Password = "admin1"
             };
 
-            var authResult = _authService.Authenticate(loginModel).Result;
+            var authResult = await _authService.Authenticate(loginModel);
 
             Assert.NotNull(authResult);
             Assert.NotNull(authResult.RefreshToken);

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Authentication.Test.Mocks
 {
-    public class AuthDbSeedMock// : IDisposable
+    public class AuthDbSeedMock
     {
         public static AuthenticationDbContext Context { get; private set; }
         private readonly List<UserRole> roles = new List<UserRole>
