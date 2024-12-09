@@ -11,10 +11,14 @@ namespace Profile.Domain.Entities
 
         public Guid BlogId { get; set; }
 
-        public DateTimeOffset SubscriprionStartDate { get; set; }
-        public DateTimeOffset? SubscriprionEndDate { get; set; }
+        public DateTimeOffset SubscriptionStartDate { get; set; }
+        public DateTimeOffset? SubscriptionEndDate { get; set; }
 
         [ForeignKey(nameof(ProfileId))]
-        public AppProfile Profile { get; set; }
+        public required AppProfile Profile { get; set; }
+        
+        [ForeignKey(nameof(BlogId))]
+        public required Blog Blog { get; set; }
+
     }
 }

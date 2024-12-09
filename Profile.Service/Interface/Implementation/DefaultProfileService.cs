@@ -2,6 +2,8 @@
 using Profile.Domain.Entities;
 using Profile.Service.Models;
 using Shared.Persistence;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("Profile.Test")]
 
 namespace Profile.Service.Interface.Implementation
 {
@@ -17,7 +19,7 @@ namespace Profile.Service.Interface.Implementation
         public async Task<ProfileModel> CreateProfileAsync(ProfileCreateModel profileCreateModel)
         {
             var isProfileAlreadyExist = await _profileRepository.Get<AppProfile>()
-                .AnyAsync(x => x.UserId == profileCreateModel.UserId);
+                .AnyAsync(x => x.UserId == profileCreateModel.UserId && x.IsDeleted == true);
             if (isProfileAlreadyExist)
             {
                 throw new ArgumentException("Пользователь уже существует");
@@ -43,7 +45,7 @@ namespace Profile.Service.Interface.Implementation
         public async Task DeleteProfileByUserIdAsync(Guid userId)
         {
             var profile = await _profileRepository.Get<AppProfile>()
-                .FirstAsync(x => x.UserId == userId);
+                .FirstAsync(x => x.UserId == userId && x.IsDeleted == false);
 
             _profileRepository.Attach(profile);
             profile.IsDeleted = true;

@@ -9,5 +9,9 @@ namespace Infrastructure.Models
     {
         private readonly ILogger<BaseController> _logger;
 
+        protected BaseController(ILogger<BaseController> logger)
+        {
+            _logger = logger;
+        }
     }
 }

@@ -50,9 +50,15 @@ public class ProfileController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("delete/{id:guid}")]
+    public async Task<IActionResult> DeleteProfile(Guid id)
+    {
+        await _profileService.DeleteProfileByUserIdAsync(id);
+        return Ok();
+    }
 
     /// <summary>
-    /// Not implemented
+    /// Not implemented возможно и не надо
     /// </summary>
     /// <returns></returns>
     [HttpGet("create")]

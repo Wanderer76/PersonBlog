@@ -92,10 +92,18 @@ internal class DefaultAuthService : IAuthService
 
         if (!response.IsSuccessStatusCode)
         {
-            throw new ArgumentException($"Не удалось зарегристрировать пользователя",new Exception(await response.Content.ReadAsStringAsync()));
+            throw new ArgumentException($"Не удалось зарегистрировать пользователя", new Exception(await response.Content.ReadAsStringAsync()));
+        }
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            await _profileApiClient.RemoveProfileAsync(userId);
+            throw;
         }
 
-        await _context.SaveChangesAsync();
         return await Authenticate(new LoginModel(user.Login, registerModel.Password));
     }
 

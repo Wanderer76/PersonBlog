@@ -19,5 +19,11 @@ namespace Profile.Persistence.Repository
                 .Take(limit)
                 .ToListAsync();
         }
+        public static async Task<AppProfile?> GetProfileByIdAsync(this Context context, Guid id)
+        {
+            return await context.Get<AppProfile>()
+                .Where(x => x.IsDeleted == false)
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
     }
 }
