@@ -59,5 +59,25 @@ namespace Profile.Service.Interface.Implementation
             await _context.SaveChangesAsync();
             return postId;
         }
+
+        public async Task<long> GetVideoStream(Guid postId, long offset, long length, byte[] output)
+        {
+            var post = await _context.Get<Post>()
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Blog.ProfileId,
+                    x.FileId
+                })
+                .FirstAsync(x => x.Id == postId);
+
+            var storage = _fileStorageFactory.CreateFileStorage();
+            return await storage.ReadFileByChunksAsync(post.ProfileId, post.FileId.Value, offset, length, output);
+        }
+
+        public Task GetVideoStream(Guid postId, Stream output)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

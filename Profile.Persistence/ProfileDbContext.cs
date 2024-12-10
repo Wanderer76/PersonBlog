@@ -56,6 +56,29 @@ public class ProfileDbContext : BaseDbContext
                 var entity = modelBuilder.Entity<Subscriptions>();
                 entity.HasIndex(x => new { x.ProfileId, x.BlogId }).IsUnique();
             }
+            {
+                var entity = modelBuilder.Entity<Post>();
+                entity.HasData(new[]
+                {
+                    new Post(Guid.Parse("42c113cc-b4a7-41b5-b0c8-2e059087124f"),Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),PostType.Media,DateTimeOffset.Now,null,Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"),false,"")
+                });
+            }
+            {
+
+                var entity = modelBuilder.Entity<VideoMetadata>();
+                entity.HasData(new[]
+                {
+                    new VideoMetadata
+                    {
+                        Id = Guid.NewGuid(),
+                        FileId = Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"),
+                        ContentType = "video/mp4",
+                        Length=18851336,
+                        Name="asd",                        CreatedAt = DateTimeOffset.UtcNow
+
+                    }
+                });
+            }
         }
     }
 }

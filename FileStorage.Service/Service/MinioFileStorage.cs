@@ -50,5 +50,40 @@ namespace FileStorage.Service.Service
         {
             return $"video-{fileId}";
         }
+
+        public async Task<long> ReadFileByChunksAsync(Guid userId, Guid id, long offset, long length, byte[] buffer)
+        {
+            var size = 0L;
+            var a = await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
+                 .WithBucket(userId.ToString())
+                 .WithObject(GeFileNameFromId(id))
+                   .WithOffsetAndLength(offset, length)
+                 .WithCallbackStream(async stream =>
+                 {
+                     int bytesRead;
+                     while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
+                     {
+                         size += bytesRead;
+                         // Здесь можно обрабатывать прочитанные данные
+                     }
+                     stream.Dispose();
+                 }));
+            return size;
+        }
+
+
+        public async Task<long> ReadFileByChunksAsync(Guid userId, Guid id, long offset, long length, Stream buffer)
+        {
+            var size = 0L;
+            await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
+                 .WithBucket(userId.ToString())
+                 .WithObject(GeFileNameFromId(id))
+                 .WithOffsetAndLength(offset, length)
+                 .WithCallbackStream(stream =>
+                 {
+                     stream.CopyTo(buffer);
+                 }));
+            return buffer.Length;
+        }
     }
 }
