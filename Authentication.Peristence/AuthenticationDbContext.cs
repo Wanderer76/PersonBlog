@@ -59,7 +59,7 @@ public class AuthenticationDbContext : BaseDbContext
                 {
                     Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
                     CreatedAt = DateTimeOffset.UtcNow,
-                    Login=  "admin",
+                    Login = "admin",
                     Password = PasswordHasher.GetHash("admin"),
 
                 }

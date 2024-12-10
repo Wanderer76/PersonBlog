@@ -13,3 +13,15 @@ services:
     volumes:
       - ./nginx/nginx.local-debug.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/nginx-frontend-dev.conf:/etc/nginx/nginx-frontend.conf:ro
+  minio:
+    container_name: fileStorage
+    image: minio/minio
+    command: server /data --console-address :9001
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - D:\minio:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin

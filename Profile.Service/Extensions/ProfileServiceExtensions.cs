@@ -9,6 +9,7 @@ namespace Profile.Service.Extensions
         public static void AddProfileServices(this IServiceCollection services)
         {
             services.AddScoped<IProfileService, DefaultProfileService>();
+            services.AddScoped<IPostService,DefaultPostService>();
             services.AddScoped<IBlogService, DefaultBlogService>();
         }
     }

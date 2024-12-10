@@ -13,6 +13,8 @@ namespace Profile.Domain.Entities
         public PostType Type { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
 
+        public string Title { get; private set; }
+
         public string? Text { get; set; }
         public Guid? FileId { get; private set; }
 
@@ -24,7 +26,7 @@ namespace Profile.Domain.Entities
         [ForeignKey(nameof(FileId))]
         public VideoMetadata? VideoMetadata { get; private set; }
 
-        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? text, Guid? fileId, bool isDeleted)
+        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? text, Guid? fileId, bool isDeleted, string title)
         {
             Id = id;
             BlogId = blogId;
@@ -33,6 +35,7 @@ namespace Profile.Domain.Entities
             Text = text;
             FileId = fileId;
             IsDeleted = isDeleted;
+            Title = title;
         }
     }
 

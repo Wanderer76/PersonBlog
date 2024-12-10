@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Profile.Service.Models.Post;
 
 namespace Profile.Service.Interface
 {
     public interface IPostService
     {
-        Task<Guid> CreatePost();
+        Task<Guid> CreatePost(PostCreateDto postCreateDto);
     }
 }

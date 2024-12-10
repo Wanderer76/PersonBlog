@@ -27,7 +27,7 @@ namespace Profile.Service.Interface.Implementation
             {
                 throw new BlogAlreaddyExistsException("У данного пользователя уже существует блог");
             }
-            var blogId = _context.GetNewGuid();
+            var blogId = GuidService.GetNewGuid();
 
             var blog = new Blog
             {

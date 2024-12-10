@@ -2,9 +2,9 @@
 
 namespace Shared.Persistence;
 
-public interface IReadRepository
+public interface IReadRepository<TDbEntity>
 {
-    IQueryable<TEntity> Get<TEntity>() where TEntity : class;
+    IQueryable<TEntity> Get<TEntity>() where TEntity : class, TDbEntity;
 }
 
 public interface IWriteRepository<TEntity> where TEntity : class
@@ -16,7 +16,7 @@ public interface IWriteRepository<TEntity> where TEntity : class
     Task<int> SaveChangesAsync();
 }
 
-public interface IReadWriteRepository<TEntity> : IReadRepository, IWriteRepository<TEntity>
+public interface IReadWriteRepository<TEntity> : IReadRepository<TEntity>, IWriteRepository<TEntity>
     where TEntity : class
 {
 }
@@ -32,7 +32,7 @@ public class DefaultRepository<TContext, TEntity> : IReadWriteRepository<TEntity
         _context = context;
     }
 
-    public IQueryable<TDbEntity> Get<TDbEntity>() where TDbEntity : class
+    public IQueryable<TDbEntity> Get<TDbEntity>() where TDbEntity : class, TEntity
     {
         return _context.Set<TDbEntity>().AsNoTrackingWithIdentityResolution();
     }
