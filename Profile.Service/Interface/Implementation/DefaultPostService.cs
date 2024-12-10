@@ -3,6 +3,7 @@ using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Profile.Domain.Entities;
+using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
 using Shared.Persistence;
 using Shared.Services;
@@ -41,14 +42,14 @@ namespace Profile.Service.Interface.Implementation
                 fileId = GuidService.GetNewGuid();
                 await storage.PutFileAsync(userProfileId, fileId!.Value, video.OpenReadStream());
 
-                var videoMetadata = new VideoMetadata
+                var videoMetadata = new FileMetadata
                 {
-                    Id = GuidService.GetNewGuid(),
+                    Id = fileId.Value,
                     ContentType = video.ContentType,
                     CreatedAt = now,
                     Length = video.Length,
                     Name = video.Name,
-                    FileId = fileId.Value
+                    //FileId = fileId.Value
                 };
                 _context.Add(videoMetadata);
             }
@@ -60,7 +61,21 @@ namespace Profile.Service.Interface.Implementation
             return postId;
         }
 
-        public async Task<long> GetVideoStream(Guid postId, long offset, long length, byte[] output)
+        public async Task<FileMetadataModel> GetFileMetadataByPostId(Guid postId)
+        {
+            var fileMetadata = await _context.Get<Post>()
+                .Where(x=>x.Id==postId)
+                .Select(x=>x.VideoMetadata)
+                .FirstAsync();
+
+            return new FileMetadataModel(
+                fileMetadata.ContentType,
+                fileMetadata.Length,
+                fileMetadata.Name,
+                fileMetadata.CreatedAt);
+        }
+
+        public async Task<Guid> GetVideoChunkStreamByPostId(Guid postId, long offset, long length, Stream output)
         {
             var post = await _context.Get<Post>()
                 .Select(x => new
@@ -72,12 +87,18 @@ namespace Profile.Service.Interface.Implementation
                 .FirstAsync(x => x.Id == postId);
 
             var storage = _fileStorageFactory.CreateFileStorage();
-            return await storage.ReadFileByChunksAsync(post.ProfileId, post.FileId.Value, offset, length, output);
+            await storage.ReadFileByChunksAsync(post.ProfileId, post.FileId!.Value, offset, length, output);
+            return post.FileId.Value!;
         }
 
         public Task GetVideoStream(Guid postId, Stream output)
         {
             throw new NotImplementedException();
         }
+
+        //Task<Guid> IPostService.GetVideoChunkStreamByPostId(Guid postId, long offset, long length, Stream output)
+        //{
+        //    throw new NotImplementedException();
+        //}
     }
 }

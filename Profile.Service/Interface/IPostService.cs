@@ -1,11 +1,21 @@
-﻿using Profile.Service.Models.Post;
+﻿using Profile.Service.Models.File;
+using Profile.Service.Models.Post;
 
 namespace Profile.Service.Interface
 {
     public interface IPostService
     {
         Task<Guid> CreatePost(PostCreateDto postCreateDto);
-        Task<long> GetVideoStream(Guid postId, long offset, long length, byte[]output);
+        /// <summary>
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <param name="offset"></param>
+        /// <param name="length"></param>
+        /// <param name="output"></param>
+        /// <returns>Возвращает id файла</returns>
+        Task<Guid> GetVideoChunkStreamByPostId(Guid postId, long offset, long length, Stream output);
+        Task<FileMetadataModel> GetFileMetadataByPostId(Guid fileId);
         Task GetVideoStream(Guid postId, Stream output);
     }
+
 }

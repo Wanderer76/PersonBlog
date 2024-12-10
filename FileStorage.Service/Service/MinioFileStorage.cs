@@ -57,16 +57,15 @@ namespace FileStorage.Service.Service
             var a = await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
                  .WithBucket(userId.ToString())
                  .WithObject(GeFileNameFromId(id))
-                   .WithOffsetAndLength(offset, length)
-                 .WithCallbackStream(async stream =>
+                 .WithOffsetAndLength(offset, length)
+                 .WithCallbackStream(stream =>
                  {
                      int bytesRead;
-                     while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
+                     while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
                      {
                          size += bytesRead;
                          // Здесь можно обрабатывать прочитанные данные
                      }
-                     stream.Dispose();
                  }));
             return size;
         }
@@ -74,7 +73,6 @@ namespace FileStorage.Service.Service
 
         public async Task<long> ReadFileByChunksAsync(Guid userId, Guid id, long offset, long length, Stream buffer)
         {
-            var size = 0L;
             await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
                  .WithBucket(userId.ToString())
                  .WithObject(GeFileNameFromId(id))

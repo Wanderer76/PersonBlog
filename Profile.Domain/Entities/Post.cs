@@ -24,7 +24,7 @@ namespace Profile.Domain.Entities
         public Blog Blog { get; set; }
         
         [ForeignKey(nameof(FileId))]
-        public VideoMetadata? VideoMetadata { get; private set; }
+        public FileMetadata? VideoMetadata { get; private set; }
 
         public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? text, Guid? fileId, bool isDeleted, string title)
         {

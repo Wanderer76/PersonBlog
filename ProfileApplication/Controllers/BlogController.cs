@@ -8,6 +8,7 @@ using Profile.Service.Interface;
 using Profile.Service.Models.Post;
 using Shared.Persistence;
 using Shared.Services;
+using Shared.Utils;
 using System;
 using System.Net.Mime;
 
@@ -78,60 +79,23 @@ namespace ProfileApplication.Controllers
 
 
         [HttpGet("video/chunks")]
-        //[Authorize]
         public async Task<IActionResult> GetVideoChunk(Guid postId)
         {
-            const long ChunkSize = 1024 * 1024 * 4;
-            var range = Request.Headers["Range"].ToString();
+            const int ChunkSize = 1024 * 1024 * 4;
 
-            //    var userId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"); // HttpContext.GetUserFromContext();
-            //  var rangeArray = range.Split(new char[] { '=', '-' });
-
-            var dashIndex = range.IndexOf('-');
-            var startPosition = long.Parse(range.Substring(6, dashIndex - 6).ToString());
-            var endPosition = startPosition + ChunkSize;
-            var endRangeString = range.Substring(dashIndex + 1);
-            if (!string.IsNullOrWhiteSpace(endRangeString))
-            {
-                endPosition = long.Parse(endRangeString);
-            }
-
-
-            var originalFileSize = await _context.Get<VideoMetadata>()
-                .Where(x => x.FileId == Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"))
-                .Select(x => x.Length)
-                .FirstAsync();
-
-            var buffer = new byte[ChunkSize];
-
-            using var outputStream = Response.Body;
-            //var chunkSize = (int)await _postService.GetVideoStream(postId, startPosition, buffer.Length, buffer);
-
-            var post = await _context.Get<Post>()
-                        .Select(x => new
-                        {
-                            x.Id,
-                            x.Blog.ProfileId,
-                            x.FileId
-                        })
-                        .FirstAsync(x => x.Id == postId);
-
-            var storage = _fileStorageFactory.CreateFileStorage();
+            var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
+            var fileMetadata = await _postService.GetFileMetadataByPostId(postId);
             using var stream = new MemoryStream();
-            var chunkSize = (int)await storage.ReadFileByChunksAsync(post.ProfileId, post.FileId.Value, startPosition, buffer.Length, stream);
-
-
-
-            var fileSize = endPosition < originalFileSize - 1 ? endPosition : originalFileSize - 1;
-
-            Response.StatusCode = StatusCodes.Status206PartialContent;
-            Response.Headers["Accept-Ranges"] = "bytes";
-            Response.Headers["Content-Range"] = $"bytes {startPosition}-{fileSize}/{originalFileSize}";
-            Response.Headers["Content-Length"] = $"{(startPosition + chunkSize)}";
-            Response.ContentType = "video/mp4";
-            await outputStream.WriteAsync(stream.GetBuffer(), 0, (int)stream.Length);
+            await _postService.GetVideoChunkStreamByPostId(postId, startPosition, endPosition, stream);
+            var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
+            FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream, sendSize, fileMetadata.ContentType);
+            using var outputStream = Response.Body;
+            await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
             return Ok();
         }
+
+
+
         //public async Task<IActionResult> DeleteVideo(Guid id)
         //{
         //    return Ok();
@@ -143,6 +107,14 @@ namespace ProfileApplication.Controllers
         //    return Ok();
         //}
 
+        private void FillHeadersForVideoStreaming(long startPosition, long originalFileSize, Stream stream, long sendSize, string contentType)
+        {
+            Response.StatusCode = StatusCodes.Status206PartialContent;
+            Response.Headers["Accept-Ranges"] = "bytes";
+            Response.Headers["Content-Range"] = $"bytes {startPosition}-{sendSize}/{originalFileSize}";
+            Response.Headers["Content-Length"] = $"{startPosition + stream.Length}";
+            Response.ContentType = contentType;
+        }
     }
 
     public class PostCreateForm
