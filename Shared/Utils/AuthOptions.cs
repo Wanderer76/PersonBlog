@@ -19,4 +19,5 @@ public class AppClaimTypes
     public const string Login = "login";
     public const string UserId = "userId";
     public const string Type = "type";
+    //public const string ProfileId = "profileId";
 }

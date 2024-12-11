@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Service.Models;
+using Profile.Service.Models.Blog;
 using Shared.Persistence;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Profile.Test")]
@@ -9,16 +10,16 @@ namespace Profile.Service.Interface.Implementation
 {
     internal class DefaultProfileService : IProfileService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _profileRepository;
+        private readonly IReadWriteRepository<IProfileEntity> _context;
 
         public DefaultProfileService(IReadWriteRepository<IProfileEntity> profileRepository)
         {
-            _profileRepository = profileRepository;
+            _context = profileRepository;
         }
 
         public async Task<ProfileModel> CreateProfileAsync(ProfileCreateModel profileCreateModel)
         {
-            var isProfileAlreadyExist = await _profileRepository.Get<AppProfile>()
+            var isProfileAlreadyExist = await _context.Get<AppProfile>()
                 .AnyAsync(x => x.UserId == profileCreateModel.UserId && x.IsDeleted == true);
             if (isProfileAlreadyExist)
             {
@@ -37,27 +38,30 @@ namespace Profile.Service.Interface.Implementation
                 UserId = profileCreateModel.UserId,
                 IsDeleted = false
             };
-            _profileRepository.Add(profile);
-            await _profileRepository.SaveChangesAsync();
+            _context.Add(profile);
+            await _context.SaveChangesAsync();
             return profile.ToProfileModel();
         }
 
         public async Task DeleteProfileByUserIdAsync(Guid userId)
         {
-            var profile = await _profileRepository.Get<AppProfile>()
+            var profile = await _context.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == userId && x.IsDeleted == false);
 
-            _profileRepository.Attach(profile);
+            _context.Attach(profile);
             profile.IsDeleted = true;
-            await _profileRepository.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
 
         public async Task<ProfileModel> GetProfileByUserIdAsync(Guid userId)
         {
-            var profile = await _profileRepository.Get<AppProfile>()
+            var profile = await _context.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == userId);
 
-            return profile.ToProfileModel();
+            var blog = await _context.Get<Blog>()
+                .FirstOrDefaultAsync(x => x.ProfileId == profile.Id);
+
+            return profile.ToProfileModel(blog?.ToBlogModel());
         }
 
         public Task SubscribeToBlog(Guid blogId)
@@ -72,10 +76,10 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<ProfileModel> UpdateProfileAsync(ProfileUpdateModel profileEditModel)
         {
-            var profile = await _profileRepository.Get<AppProfile>()
+            var profile = await _context.Get<AppProfile>()
             .FirstAsync(x => x.Id == profileEditModel.Id);
 
-            _profileRepository.Attach(profile);
+            _context.Attach(profile);
             profile.Birthdate = profileEditModel.Birthdate;
             profile.Email = profileEditModel.Email;
             profile.FirstName = profileEditModel.FirstName;
@@ -83,7 +87,7 @@ namespace Profile.Service.Interface.Implementation
             profile.SurName = profileEditModel.SurName;
             profile.PhotoUrl = profileEditModel.PhotoUrl;
 
-            await _profileRepository.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return profile.ToProfileModel();
         }

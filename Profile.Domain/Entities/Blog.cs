@@ -8,7 +8,7 @@ namespace Profile.Domain.Entities
         [Key]
         public Guid Id { get; set; }
         [Required]
-        public required string Name { get; set; }
+        public required string Title { get; set; }
         public string? Description { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public string? PhotoUrl { get; set; }

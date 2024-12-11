@@ -13,9 +13,12 @@ namespace Profile.Service.Interface
         /// <param name="length"></param>
         /// <param name="output"></param>
         /// <returns>Возвращает id файла</returns>
-        Task<Guid> GetVideoChunkStreamByPostId(Guid postId, long offset, long length, Stream output);
-        Task<FileMetadataModel> GetFileMetadataByPostId(Guid fileId);
+        Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, long offset, long length, Stream output);
+        Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId);
         Task GetVideoStream(Guid postId, Stream output);
+        ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
+
+        Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
     }
 
 }

@@ -45,7 +45,7 @@ public class ProfileDbContext : BaseDbContext
                     new Blog
                     {
                         Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                        Name = "Тест",
+                        Title = "Тест",
                         ProfileId =Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
                         CreatedAt = DateTimeOffset.UtcNow
                     }
@@ -58,15 +58,24 @@ public class ProfileDbContext : BaseDbContext
             }
             {
                 var entity = modelBuilder.Entity<Post>();
+                entity.HasMany(x => x.FilesMetadata);
+
                 entity.HasData(new[]
                 {
                     new Post(Guid.Parse("42c113cc-b4a7-41b5-b0c8-2e059087124f"),Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                    PostType.Media,DateTimeOffset.Now,null,Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"),false,"")
+                    PostType.Video,DateTimeOffset.Now,null,Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"),false,"")
                 });
             }
             {
 
                 var entity = modelBuilder.Entity<FileMetadata>();
+
+                entity.HasOne(x=>x.Post)
+                    .WithMany(x=>x.FilesMetadata);
+
+                entity.HasOne<Post>().WithOne(x => x.VideoFile);
+
+
                 entity.HasData(new[]
                 {
                     new FileMetadata

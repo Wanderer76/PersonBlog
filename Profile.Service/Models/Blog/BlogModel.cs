@@ -32,7 +32,7 @@ namespace Profile.Service.Models.Blog
     {
         public static BlogModel ToBlogModel(this Profile.Domain.Entities.Blog blog)
         {
-            return new BlogModel(blog.Id, blog.Name, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId);
+            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId);
         }
     }
 }

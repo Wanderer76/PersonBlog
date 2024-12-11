@@ -27,6 +27,5 @@ public class AppProfile : IProfileEntity
     public string? PhotoUrl { get; set; }
 
     public ProfileState ProfileState { get; set; }
-
     public List<Subscriptions> Subscriptions { get; set; }
 }

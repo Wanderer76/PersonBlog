@@ -19,7 +19,7 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)
         {
-            var profile = await _context.GetProfileByIdAsync(model.ProfileId) ?? throw new ProfileNotFoundException("Профиль не найден");
+            var profile = await _context.GetProfileByUserIdAsync(model.UserId) ?? throw new EntityNotFoundException("Профиль не найден");
 
             var isBlogAlreadyExists = await _context.Get<Blog>().AnyAsync(x => x.ProfileId == profile.Id);
 
@@ -27,13 +27,14 @@ namespace Profile.Service.Interface.Implementation
             {
                 throw new BlogAlreaddyExistsException("У данного пользователя уже существует блог");
             }
+
             var blogId = GuidService.GetNewGuid();
 
             var blog = new Blog
             {
                 Id = blogId,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Name = model.Title,
+                Title = model.Title,
                 Description = model.Description,
                 ProfileId = profile.Id,
                 PhotoUrl = model.PhotoUrl,
@@ -53,6 +54,19 @@ namespace Profile.Service.Interface.Implementation
             var result = await _context.Get<Blog>()
                 .FirstAsync(x => x.Id == id);
             return result.ToBlogModel();
+        }
+
+        public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
+        {
+            var profile = await _context.GetProfileByUserIdAsync(userId);
+            var blog = await _context.Get<Blog>()
+                .Where(x => x.ProfileId == profile.Id)
+                .FirstOrDefaultAsync();
+
+            if (blog == null)
+                throw new EntityNotFoundException("Не удалось найти блог");
+
+            return blog.ToBlogModel();
         }
 
         public Task<BlogModel> UpdateBlogAsync(BlogEditDto model)

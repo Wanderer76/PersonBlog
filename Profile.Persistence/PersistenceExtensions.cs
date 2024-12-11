@@ -11,7 +11,7 @@ namespace Profile.Persistence
         public static void AddPersistence(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration["ConnectionStrings:ProfileContext"];
-            services.AddDbContext<ProfileDbContext>(option =>
+            services.AddDbContextPool<ProfileDbContext>(option =>
             option.UseInMemoryDatabase("Profile")
                 //option.UseNpgsql(connectionString)
                 );

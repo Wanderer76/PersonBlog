@@ -1,4 +1,5 @@
 ﻿using Profile.Domain.Entities;
+using Profile.Service.Models.Blog;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Profile.Service.Models
@@ -14,6 +15,7 @@ namespace Profile.Service.Models
         public Guid UserId { get; set; }
         public string? PhotoUrl { get; set; }
         public ProfileState ProfileState { get; set; }
+        public BlogModel? Blog { get; set; }
     }
 
     internal static class ProfileModelExtensions
@@ -33,5 +35,22 @@ namespace Profile.Service.Models
                 SurName = profile.SurName,
             };
         }
+        public static ProfileModel ToProfileModel(this AppProfile profile, BlogModel? blog)
+        {
+            return new ProfileModel
+            {
+                Id = profile.Id,
+                UserId = profile.UserId,
+                Birthdate = profile.Birthdate,
+                Email = profile.Email,
+                FirstName = profile.FirstName,
+                LastName = profile.LastName,
+                PhotoUrl = profile.PhotoUrl,
+                ProfileState = profile.ProfileState,
+                SurName = profile.SurName,
+                Blog = blog
+            };
+        }
+
     }
 }

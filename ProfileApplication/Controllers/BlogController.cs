@@ -1,16 +1,13 @@
-﻿using FileStorage.Service.Service;
-using Infrastructure.Models;
+﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Service.Interface;
 using Profile.Service.Models.Post;
-using Shared.Persistence;
+using ProfileApplication.Models;
 using Shared.Services;
 using Shared.Utils;
-using System;
-using System.Net.Mime;
+using Profile.Service.Models.Blog;
 
 namespace ProfileApplication.Controllers
 {
@@ -19,31 +16,52 @@ namespace ProfileApplication.Controllers
     public class BlogController : BaseController
     {
         private readonly IPostService _postService;
-        private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly IReadWriteRepository<IProfileEntity> _context;
-        public BlogController(ILogger<BaseController> logger, IPostService postService, IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory) : base(logger)
+        private readonly IBlogService _blogService;
+        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService) : base(logger)
         {
             _postService = postService;
-            _context = context;
-            _fileStorageFactory = fileStorageFactory;
+            _blogService = blogService;
         }
 
-        //public async Task<IActionResult> CreateBlog([FromBody] BlogCreateForm form)
-        //{
-        //    return Ok();
-        //}
+        [Authorize]
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateBlog([FromBody] BlogCreateForm form)
+        {
+            var userId = HttpContext.GetUserFromContext();
+            try
+            {
+                var result = await _blogService.CreateBlogAsync(new BlogCreateDto(userId, form.Title, form.Description, form.PhotoUrl));
+                return Ok(result);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
 
-        //public async Task<IActionResult> DeleteBlog()
-        //{
-        //    return Ok();
-        //}
+        [HttpGet("detail")]
+        [Authorize]
+        public async Task<IActionResult> GetBlogDetail()
+        {
+            var userId = HttpContext.GetUserFromContext();
+            var result = await _blogService.GetBlogByUserIdAsync(userId);
+            return Ok(result);
+        }
 
-        //public async Task<IActionResult> EditBlog([FromBody] BlogCreateForm form)
-        //{
-        //    return Ok();
-        //}
+        [HttpGet("posts/list")]
+        public async Task<IActionResult> GetBlogPostPagedList(Guid blogId, int page, int limit)
+        {
+            var result = await _postService.GetPostsByBlogIdPagedAsync(blogId, page, limit);
+            return Ok(result);
+        }
 
-        //Текстовые посты, можно добавлять картинки
+
+        [HttpPut("edit")]
+        public async Task<IActionResult> EditBlog([FromBody] BlogCreateForm form)
+        {
+            return Ok();
+        }
+
         [HttpPost("post/create")]
         [Authorize]
         public async Task<IActionResult> AddPostToBlog([FromForm] PostCreateForm form)
@@ -53,10 +71,11 @@ namespace ProfileApplication.Controllers
             var result = await _postService.CreatePost(new PostCreateDto
             {
                 UserId = userId,
-                Type = PostType.Media,
+                Type = PostType.Video,
                 Text = form.Text,
                 Title = form.Title,
                 Video = form.Video,
+                Photos = form.Files,
             });
 
             return Ok(result);
@@ -81,12 +100,15 @@ namespace ProfileApplication.Controllers
         [HttpGet("video/chunks")]
         public async Task<IActionResult> GetVideoChunk(Guid postId)
         {
+            if (!await _postService.HasVideoExistByPostIdAsync(postId))
+            {
+                return NotFound();
+            }
             const int ChunkSize = 1024 * 1024 * 4;
-
             var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
-            var fileMetadata = await _postService.GetFileMetadataByPostId(postId);
+            var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
             using var stream = new MemoryStream();
-            await _postService.GetVideoChunkStreamByPostId(postId, startPosition, endPosition, stream);
+            await _postService.GetVideoChunkStreamByPostIdAsync(postId, startPosition, endPosition, stream);
             var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
             FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream, sendSize, fileMetadata.ContentType);
             using var outputStream = Response.Body;
@@ -115,13 +137,5 @@ namespace ProfileApplication.Controllers
             Response.Headers["Content-Length"] = $"{startPosition + stream.Length}";
             Response.ContentType = contentType;
         }
-    }
-
-    public class PostCreateForm
-    {
-        public string Title { get; set; }
-        public string? Text { get; set; }
-        public PostType Type { get; set; }
-        public IFormFile? Video { get; set; }
     }
 }

@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Profile.Service.Models.Blog
+﻿namespace Profile.Service.Models.Blog
 {
     public class BlogCreateDto
     {
-        public Guid ProfileId {  get; set; }
-        public required string Title { get; set; }
-        public string Description { get; set; }
-        public string PhotoUrl { get; set; }
+        public Guid UserId { get; }
+        public string Title { get; }
+        public string? Description { get; }
+        public string? PhotoUrl { get; }
 
-        public BlogCreateDto(Guid profileId, string title, string description, string photoUrl)
+        public BlogCreateDto(Guid userId, string title, string? description, string? photoUrl)
         {
-            ProfileId = profileId;
+            UserId = userId;
             Title = title;
             Description = description;
             PhotoUrl = photoUrl;

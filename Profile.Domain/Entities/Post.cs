@@ -7,33 +7,32 @@ namespace Profile.Domain.Entities
     {
         [Key]
         public Guid Id { get; private set; }
-
         public Guid BlogId { get; private set; }
-
         public PostType Type { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
-
+        [Required]
         public string Title { get; private set; }
-
-        public string? Text { get; set; }
-        public Guid? FileId { get; private set; }
-
+        public string? Description { get; set; }
         public bool IsDeleted { get; set; }
+
+        public Guid? VideoMetadataId { get; set; }
 
         [ForeignKey(nameof(BlogId))]
         public Blog Blog { get; set; }
-        
-        [ForeignKey(nameof(FileId))]
-        public FileMetadata? VideoMetadata { get; private set; }
 
-        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? text, Guid? fileId, bool isDeleted, string title)
+        [ForeignKey(nameof(VideoMetadataId))]
+        public FileMetadata VideoFile { get; set; }
+
+        public List<FileMetadata> FilesMetadata { get; set; }
+
+        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, Guid? videoMetadataId, bool isDeleted, string title)
         {
             Id = id;
             BlogId = blogId;
             Type = type;
             CreatedAt = createdAt;
-            Text = text;
-            FileId = fileId;
+            VideoMetadataId = videoMetadataId;
+            Description = description;
             IsDeleted = isDeleted;
             Title = title;
         }
@@ -42,6 +41,6 @@ namespace Profile.Domain.Entities
     public enum PostType
     {
         Text,
-        Media
+        Video
     }
 }
