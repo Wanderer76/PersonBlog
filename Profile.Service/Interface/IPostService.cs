@@ -3,6 +3,7 @@ using Profile.Service.Models.Post;
 
 namespace Profile.Service.Interface
 {
+    //TODO добавить кеширование
     public interface IPostService
     {
         Task<Guid> CreatePost(PostCreateDto postCreateDto);
@@ -17,8 +18,8 @@ namespace Profile.Service.Interface
         Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId);
         Task GetVideoStream(Guid postId, Stream output);
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
-
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
+        Task RemovePostByIdAsync(Guid id);
     }
 
 }

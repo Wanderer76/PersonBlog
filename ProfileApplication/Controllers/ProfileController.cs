@@ -44,7 +44,8 @@ public class ProfileController : ControllerBase
 
     [HttpGet("profile/{id:guid}")]
     [Authorize]
-    public async Task<ActionResult<ProfileModel>> GetProfileById(Guid id) {
+    public async Task<ActionResult<ProfileModel>> GetProfileById(Guid id)
+    {
 
         var result = await _profileService.GetProfileByUserIdAsync(id);
         return Ok(result);
@@ -55,6 +56,14 @@ public class ProfileController : ControllerBase
     {
         await _profileService.DeleteProfileByUserIdAsync(id);
         return Ok();
+    }
+
+    [HttpGet("profileId/{id:guid}")]
+    [Produces(typeof(Guid?))]
+    public async Task<ActionResult<Guid?>> GetProfileIdById(Guid id)
+    {
+        var result = await _profileService.GetProfileIdByUserIdIfExistsAsync(id);
+        return Ok(result);
     }
 
     /// <summary>

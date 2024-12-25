@@ -64,6 +64,17 @@ namespace Profile.Service.Interface.Implementation
             return profile.ToProfileModel(blog?.ToBlogModel());
         }
 
+        public async Task<Guid?> GetProfileIdByUserIdIfExistsAsync(Guid userId)
+        {
+            var profileId = await _context.Get<AppProfile>()
+                .Where(x => x.UserId == userId)
+                .Select(x => x.Id)
+                .Cast<Guid?>()
+                .FirstOrDefaultAsync();
+
+            return profileId;
+        }
+
         public Task SubscribeToBlog(Guid blogId)
         {
             throw new NotImplementedException();

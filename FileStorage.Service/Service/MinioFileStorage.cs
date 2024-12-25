@@ -5,11 +5,9 @@ namespace FileStorage.Service.Service
     internal class MinioFileStorage : IFileStorage
     {
         private readonly IMinioClient _client;
-        private readonly FileStorageOptions _minioOptions;
 
         public MinioFileStorage(FileStorageOptions options)
         {
-            _minioOptions = options;
             _client = new MinioClient()
                 .WithEndpoint(options.Endpoint)
                 .WithCredentials(options.AccessKey, options.SecretKey)
@@ -51,12 +49,12 @@ namespace FileStorage.Service.Service
             return $"video-{fileId}";
         }
 
-        public async Task<long> ReadFileByChunksAsync(Guid userId, Guid id, long offset, long length, byte[] buffer)
+        public async Task<long> ReadFileByChunksAsync(Guid userId, Guid fileId, long offset, long length, byte[] buffer)
         {
             var size = 0L;
-            var a = await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
+            await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
                  .WithBucket(userId.ToString())
-                 .WithObject(GeFileNameFromId(id))
+                 .WithObject(GeFileNameFromId(fileId))
                  .WithOffsetAndLength(offset, length)
                  .WithCallbackStream(stream =>
                  {
@@ -64,7 +62,6 @@ namespace FileStorage.Service.Service
                      while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
                      {
                          size += bytesRead;
-                         // Здесь можно обрабатывать прочитанные данные
                      }
                  }));
             return size;
@@ -82,6 +79,36 @@ namespace FileStorage.Service.Service
                      stream.CopyTo(buffer);
                  }));
             return buffer.Length;
+        }
+
+        public async Task<long> ReadFileByChunksAsync(Guid userId, Guid id, long offset, long length, string resolution, Stream output)
+        {
+            await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
+                        .WithBucket(GeFileNameFromId(id))
+                        .WithObject(resolution)
+                        .WithOffsetAndLength(offset, length)
+                        .WithCallbackStream(stream =>
+                        {
+                            stream.CopyTo(output);
+                        }));
+
+            return output.Length;
+        }
+
+        public async Task PutFileAsync(Guid userId, Guid fileId, string resolution, Stream input)
+        {
+            if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(GeFileNameFromId(fileId))))
+            {
+                await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs().WithBucket(GeFileNameFromId(fileId)));
+            }
+
+            await _client.PutObjectAsync(
+                       new Minio.DataModel.Args.PutObjectArgs()
+                       .WithBucket(GeFileNameFromId(fileId))
+                       .WithObject(resolution)
+                       .WithObjectSize(input.Length)
+                       .WithStreamData(input)
+                       );
         }
     }
 }

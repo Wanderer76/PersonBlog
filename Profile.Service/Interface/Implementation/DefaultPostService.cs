@@ -1,7 +1,6 @@
-﻿using FileStorage.Service;
+﻿using FFMpegCore;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
 using Profile.Service.Models.File;
@@ -16,7 +15,7 @@ namespace Profile.Service.Interface.Implementation
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
 
-        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IConfiguration configuration, IFileStorageFactory fileStorageFactory)
+        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
@@ -41,8 +40,9 @@ namespace Profile.Service.Interface.Implementation
             {
                 var video = postCreateDto.Video!;
                 videoId = GuidService.GetNewGuid();
+                var a = await FFProbe.AnalyseAsync(video.OpenReadStream());
                 await storage.PutFileAsync(userProfileId, videoId!.Value, video.OpenReadStream());
-
+                
                 var videoMetadata = new FileMetadata
                 {
                     Id = videoId.Value,
@@ -78,6 +78,7 @@ namespace Profile.Service.Interface.Implementation
             var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, videoId, false, postCreateDto.Title);
             _context.Add(post);
             await _context.SaveChangesAsync();
+
             return postId;
         }
 
@@ -150,9 +151,19 @@ namespace Profile.Service.Interface.Implementation
             };
         }
 
-        //Task<Guid> IPostService.GetVideoChunkStreamByPostId(Guid postId, long offset, long length, Stream output)
-        //{
-        //    throw new NotImplementedException();
-        //}
+        public async Task RemovePostByIdAsync(Guid id)
+        {
+            var post = await _context.Get<Post>()
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+            if (post != null)
+            {
+                _context.Attach(post);
+                post.IsDeleted = true;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }

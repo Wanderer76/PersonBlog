@@ -56,11 +56,11 @@ namespace ProfileApplication.Controllers
         }
 
 
-        [HttpPut("edit")]
-        public async Task<IActionResult> EditBlog([FromBody] BlogCreateForm form)
-        {
-            return Ok();
-        }
+        //[HttpPut("edit")]
+        //public async Task<IActionResult> EditBlog([FromBody] BlogCreateForm form)
+        //{
+        //    return Ok();
+        //}
 
         [HttpPost("post/create")]
         [Authorize]
@@ -86,15 +86,17 @@ namespace ProfileApplication.Controllers
         //    return Ok();
         //}
 
-        //public async Task<IActionResult> DeletePost(Guid id)
-        //{
-        //    return Ok();
-        //}
+        public async Task<IActionResult> DeletePost(Guid id)
+        {
+            await _postService.RemovePostByIdAsync(id);
+            return Ok();
+        }
 
-        //public async Task<IActionResult> UploadVideo(IFormFile file)
-        //{
-        //    return Ok();
-        //}
+        [HttpPut("/post/uploadChunk")]
+        public async Task<IActionResult> UploadVideoChunk()
+        {
+            return Ok();
+        }
 
 
         [HttpGet("video/chunks")]
@@ -110,7 +112,7 @@ namespace ProfileApplication.Controllers
             using var stream = new MemoryStream();
             await _postService.GetVideoChunkStreamByPostIdAsync(postId, startPosition, endPosition, stream);
             var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
-            FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream, sendSize, fileMetadata.ContentType);
+            FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
             using var outputStream = Response.Body;
             await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
             return Ok();
@@ -129,12 +131,12 @@ namespace ProfileApplication.Controllers
         //    return Ok();
         //}
 
-        private void FillHeadersForVideoStreaming(long startPosition, long originalFileSize, Stream stream, long sendSize, string contentType)
+        private void FillHeadersForVideoStreaming(long startPosition, long originalFileSize, long streamLength, long sendSize, string contentType)
         {
             Response.StatusCode = StatusCodes.Status206PartialContent;
             Response.Headers["Accept-Ranges"] = "bytes";
             Response.Headers["Content-Range"] = $"bytes {startPosition}-{sendSize}/{originalFileSize}";
-            Response.Headers["Content-Length"] = $"{startPosition + stream.Length}";
+            Response.Headers["Content-Length"] = $"{startPosition + streamLength}";
             Response.ContentType = contentType;
         }
     }

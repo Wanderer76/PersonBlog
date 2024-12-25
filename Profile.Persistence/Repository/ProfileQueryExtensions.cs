@@ -1,27 +1,27 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 
-using Context = Shared.Persistence.IReadWriteRepository<Profile.Domain.Entities.IProfileEntity>;
+using ReadContext = Shared.Persistence.IReadRepository<Profile.Domain.Entities.IProfileEntity>;
 
 namespace Profile.Persistence.Repository
 {
-    public static class ProfileQueryyExtension
+    public static class ProfileQueryExtensions
     {
-        public static async Task<IReadOnlyCollection<AppProfile>> GetAllProfilesPagedAsync(this Context context, int offset, int limit)
+        public static async Task<IReadOnlyCollection<AppProfile>> GetAllProfilesPagedAsync(this ReadContext context, int offset, int limit)
         {
             return await context.Get<AppProfile>()
                 .Skip(offset)
                 .Take(limit)
                 .ToListAsync();
         }
-        public static async Task<AppProfile?> GetProfileByIdAsync(this Context context, Guid id)
+        public static async Task<AppProfile?> GetProfileByIdAsync(this ReadContext context, Guid id)
         {
             return await context.Get<AppProfile>()
                 .Where(x => x.IsDeleted == false)
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public static async Task<AppProfile?> GetProfileByUserIdAsync(this Context context, Guid userId)
+        public static async Task<AppProfile?> GetProfileByUserIdAsync(this ReadContext context, Guid userId)
         {
             return await context.Get<AppProfile>()
                 .Where(x => x.IsDeleted == false)
@@ -29,7 +29,7 @@ namespace Profile.Persistence.Repository
                 .FirstOrDefaultAsync();
         }
 
-        public static async Task<(int TotalPagesCount, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this Context context, Guid blogId, int page, int limit)
+        public static async Task<(int TotalPagesCount, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, int page, int limit)
         {
             var totalPostsCount = await context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
@@ -43,6 +43,7 @@ namespace Profile.Persistence.Repository
                 .Include(x => x.FilesMetadata)
                 .Include(x => x.VideoFile)
                 .ToListAsync();
+
             var pagesCount = totalPostsCount / limit;
             return (pagesCount == 0 ? 1 : pagesCount, posts);
         }

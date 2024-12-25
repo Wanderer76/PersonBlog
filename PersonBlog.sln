@@ -48,7 +48,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{7BA53BDB
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Profile.Test", "Profile.Test\Profile.Test.csproj", "{A650D071-A346-4308-9C7D-D2AF36278CFF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileStorage.Service", "FileStorage.Service\FileStorage.Service.csproj", "{F831B7E5-8E32-4380-A8BC-3D1CEDA928FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage.Service", "FileStorage.Service\FileStorage.Service.csproj", "{F831B7E5-8E32-4380-A8BC-3D1CEDA928FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFmpeg.CLI", "FFmpeg.CLI\FFmpeg.CLI.csproj", "{9CCBE5B2-CF1B-4D7E-854C-EAC55D1F8653}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -128,6 +130,10 @@ Global
 		{F831B7E5-8E32-4380-A8BC-3D1CEDA928FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F831B7E5-8E32-4380-A8BC-3D1CEDA928FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F831B7E5-8E32-4380-A8BC-3D1CEDA928FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9CCBE5B2-CF1B-4D7E-854C-EAC55D1F8653}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9CCBE5B2-CF1B-4D7E-854C-EAC55D1F8653}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9CCBE5B2-CF1B-4D7E-854C-EAC55D1F8653}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9CCBE5B2-CF1B-4D7E-854C-EAC55D1F8653}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
