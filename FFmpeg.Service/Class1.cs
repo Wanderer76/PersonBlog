@@ -8,6 +8,11 @@ namespace FFmpeg.Service
         public void Test()
         {
             var a = new Engine("");
+            var convert = new ConversionOptions
+            {
+
+            };
+
         }
 
     }

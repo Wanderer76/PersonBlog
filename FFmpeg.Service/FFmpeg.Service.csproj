@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="FFmpeg.Net" Version="1.1.0" />
+    <PackageReference Include="xFFmpeg.NET" Version="7.2.0" />
+  </ItemGroup>
+
 </Project>

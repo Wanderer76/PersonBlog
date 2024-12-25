@@ -1,5 +1,4 @@
-﻿using FFMpegCore;
-using FileStorage.Service.Service;
+﻿using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
@@ -40,7 +39,6 @@ namespace Profile.Service.Interface.Implementation
             {
                 var video = postCreateDto.Video!;
                 videoId = GuidService.GetNewGuid();
-                var a = await FFProbe.AnalyseAsync(video.OpenReadStream());
                 await storage.PutFileAsync(userProfileId, videoId!.Value, video.OpenReadStream());
                 
                 var videoMetadata = new FileMetadata
