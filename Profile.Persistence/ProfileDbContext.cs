@@ -11,6 +11,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<Blog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<FileMetadata> VideoMetadata { get; set; }
+    public DbSet<VideoUploadEvent> VideoUploadEvents { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {
@@ -70,8 +71,8 @@ public class ProfileDbContext : BaseDbContext
 
                 var entity = modelBuilder.Entity<FileMetadata>();
 
-                entity.HasOne(x=>x.Post)
-                    .WithMany(x=>x.FilesMetadata);
+                entity.HasOne(x => x.Post)
+                    .WithMany(x => x.FilesMetadata);
 
                 entity.HasOne<Post>().WithOne(x => x.VideoFile);
 
@@ -85,7 +86,25 @@ public class ProfileDbContext : BaseDbContext
                         ContentType = "video/mp4",
                         Length=18851336,
                         Name="asd",
-                        CreatedAt = DateTimeOffset.UtcNow
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        PostId = Guid.Parse("42c113cc-b4a7-41b5-b0c8-2e059087124f"),
+                        ObjectName = "video-4312371c-3a34-460c-8e0c-0c25c1214677-0",
+                        
+                    }
+                });
+            }
+            {
+                var entity = modelBuilder.Entity<VideoUploadEvent>();
+                entity.HasData(new[]
+               {
+                    new VideoUploadEvent
+                    {
+                        Id = Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4427"),
+                        ObjectName="video-fa312c68-5c1d-49cd-a63e-2e8fbdbcdb31-0",
+                        FileUrl = "http://127.0.0.1:9000/09f3c24e-6e70-48ea-a5c5-60727af95d2e/video-fa312c68-5c1d-49cd-a63e-2e8fbdbcdb31-0?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20241227%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20241227T083304Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=60b2b9963717a47fc10ac3bbc3cf5975f929ed9ece4c937515a894ba10752fa9",
+                        IsCompleted=false,
+                        UserProfileId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
+                        FileId = Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"),  
                     }
                 });
             }

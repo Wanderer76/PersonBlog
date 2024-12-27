@@ -107,7 +107,7 @@ namespace ProfileApplication.Controllers
             {
                 return NotFound();
             }
-            const int ChunkSize = 1024 * 1024 * 4;
+            const int ChunkSize = 1024 * 1024 *1;
             var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
             var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
             using var stream = new MemoryStream();

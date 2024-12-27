@@ -10,6 +10,7 @@ namespace Profile.Domain.Entities
         public string ContentType { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public Guid PostId { get; set; }
+        public string ObjectName { get; set; }
 
         [ForeignKey(nameof(PostId))]
         public Post Post { get; set; }

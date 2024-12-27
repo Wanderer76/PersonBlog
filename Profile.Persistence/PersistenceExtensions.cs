@@ -8,13 +8,11 @@ namespace Profile.Persistence
 {
     public static class PersistenceExtensions
     {
-        public static void AddPersistence(this IServiceCollection services, IConfiguration configuration)
+        public static void AddProfilePersistence(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration["ConnectionStrings:ProfileContext"];
             services.AddDbContextPool<ProfileDbContext>(option =>
-            option.UseInMemoryDatabase("Profile")
-                //option.UseNpgsql(connectionString)
-                );
+            option.UseInMemoryDatabase("Profile"));
             services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();
 
         }

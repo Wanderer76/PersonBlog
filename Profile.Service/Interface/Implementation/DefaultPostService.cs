@@ -1,4 +1,5 @@
-﻿using FileStorage.Service.Service;
+﻿using FFmpeg.Service;
+using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
@@ -39,8 +40,9 @@ namespace Profile.Service.Interface.Implementation
             {
                 var video = postCreateDto.Video!;
                 videoId = GuidService.GetNewGuid();
-                await storage.PutFileAsync(userProfileId, videoId!.Value, video.OpenReadStream());
-                
+
+                var objectName = await storage.PutFileWithOriginalResolutionAsync(userProfileId, videoId!.Value, video.OpenReadStream());
+
                 var videoMetadata = new FileMetadata
                 {
                     Id = videoId.Value,
@@ -48,8 +50,20 @@ namespace Profile.Service.Interface.Implementation
                     CreatedAt = now,
                     Length = video.Length,
                     Name = video.Name,
-                    PostId = postId
+                    PostId = postId,
+                    ObjectName = objectName,
                 };
+                var fileUrl = await storage.GetFileUrlAsync(userProfileId, objectName);
+                var videoCreateEvent = new VideoUploadEvent
+                {
+                    Id = GuidService.GetNewGuid(),
+                    FileUrl = fileUrl,
+                    IsCompleted = false,
+                    UserProfileId = userProfileId,
+                    ObjectName = objectName,
+                    FileId = videoMetadata.Id
+                };
+                _context.Add(videoCreateEvent);
                 _context.Add(videoMetadata);
             }
 
@@ -105,8 +119,12 @@ namespace Profile.Service.Interface.Implementation
                 })
                 .FirstAsync(x => x.Id == postId);
 
+            var videoData = await _context.Get<FileMetadata>()
+                .Where(x => x.PostId == postId)
+                .FirstAsync();
             var storage = _fileStorageFactory.CreateFileStorage();
-            await storage.ReadFileByChunksAsync(post.ProfileId, post.VideoMetadataId!.Value, offset, length, output);
+            await storage.ReadFileByChunksAsync(post.ProfileId, videoData.ObjectName, offset, length, output);
+
             return post.VideoMetadataId.Value!;
         }
 
