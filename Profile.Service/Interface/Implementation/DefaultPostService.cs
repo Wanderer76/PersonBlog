@@ -1,5 +1,4 @@
-﻿using FFmpeg.Service;
-using FileStorage.Service.Service;
+﻿using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
@@ -52,6 +51,7 @@ namespace Profile.Service.Interface.Implementation
                     Name = video.Name,
                     PostId = postId,
                     ObjectName = objectName,
+                    FileExtension = Path.GetExtension(video.FileName)
                 };
                 var fileUrl = await storage.GetFileUrlAsync(userProfileId, objectName);
                 var videoCreateEvent = new VideoUploadEvent
@@ -80,6 +80,7 @@ namespace Profile.Service.Interface.Implementation
                         ContentType = i.ContentType,
                         CreatedAt = now,
                         Length = i.Length,
+                        FileExtension = Path.GetExtension(i.FileName),
                         Name = i.Name,
                         PostId = postId
                     };

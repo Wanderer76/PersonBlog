@@ -16,14 +16,14 @@ namespace FFmpeg.Service
 
             var inputMedia = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(input.AbsoluteUri);
             inputMedia.VideoStreams.First().SetSize(VideoSize.Hd720);
-            //inputMedia.VideoStreams.First().SetCodec(VideoCodec.h264);
+            inputMedia.VideoStreams.First().SetCodec(VideoCodec.mpeg4);
             inputMedia.AudioStreams.First().SetCodec(AudioCodec.aac);
 
 
             var result = await Xabe.FFmpeg.FFmpeg.Conversions.New()
             .AddStream((IStream)inputMedia.VideoStreams.First(), (IStream)inputMedia.AudioStreams.First())
             .SetOutput(filePath)
-            .SetOutputFormat(Format.mp4)
+            .SetOutputFormat(Path.GetExtension(filePath))
             .SetOverwriteOutput(true)
             .Start();
 
