@@ -20,10 +20,11 @@ namespace FFmpeg.Service
             inputMedia.AudioStreams.First().SetCodec(AudioCodec.aac);
 
 
+            var format = Path.GetExtension(filePath).Replace(".", "");
             var result = await Xabe.FFmpeg.FFmpeg.Conversions.New()
             .AddStream((IStream)inputMedia.VideoStreams.First(), (IStream)inputMedia.AudioStreams.First())
             .SetOutput(filePath)
-            .SetOutputFormat(Path.GetExtension(filePath))
+            .SetOutputFormat(format)
             .SetOverwriteOutput(true)
             .Start();
 

@@ -107,9 +107,9 @@ namespace ProfileApplication.Controllers
             {
                 return NotFound();
             }
-            const int ChunkSize = 1024 * 1024 *1;
-            var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
+            const int ChunkSize = 1024 * 1024 * 1;
             var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
+            var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
             using var stream = new MemoryStream();
             await _postService.GetVideoChunkStreamByPostIdAsync(postId, startPosition, endPosition, stream);
             var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
@@ -137,7 +137,7 @@ namespace ProfileApplication.Controllers
             Response.StatusCode = StatusCodes.Status206PartialContent;
             Response.Headers["Accept-Ranges"] = "bytes";
             Response.Headers["Content-Range"] = $"bytes {startPosition}-{sendSize}/{originalFileSize}";
-            Response.Headers["Content-Length"] = $"{startPosition + streamLength}";
+            Response.Headers["Content-Length"] = $"{streamLength}";
             Response.ContentType = contentType;
         }
     }

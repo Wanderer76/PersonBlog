@@ -125,7 +125,6 @@ namespace Profile.Service.Interface.Implementation
                 .FirstAsync();
             var storage = _fileStorageFactory.CreateFileStorage();
             await storage.ReadFileByChunksAsync(post.ProfileId, videoData.ObjectName, offset, length, output);
-
             return post.VideoMetadataId.Value!;
         }
 
