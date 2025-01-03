@@ -62,3 +62,55 @@ public class DefaultRepository<TContext, TEntity> : IReadWriteRepository<TEntity
         _context.Remove(entity);
     }
 }
+
+public class DefaultReadRepository<TContext, TDbEntity> : IReadRepository<TDbEntity>
+    where TContext : BaseDbContext
+{
+    private readonly TContext _context;
+    public DefaultReadRepository(TContext context)
+    {
+        _context = context;
+    }
+
+    public IQueryable<TEntity> Get<TEntity>() where TEntity : class, TDbEntity
+    {
+        return _context.Set<TEntity>().AsNoTrackingWithIdentityResolution();
+    }
+}
+
+public class DefaultWriteRepository<TContext, TEntity> : IWriteRepository<TEntity>
+    where TEntity : class
+    where TContext : BaseDbContext
+{
+    private readonly TContext _context;
+
+    public DefaultWriteRepository(TContext context)
+    {
+        _context = context;
+    }
+
+    public void Attach(TEntity entity)
+    {
+        _context.Attach(entity);
+    }
+
+    public void Add(TEntity entity)
+    {
+        _context.Add(entity);
+    }
+
+    public int SaveChanges()
+    {
+        return _context.SaveChanges();
+    }
+
+    public Task<int> SaveChangesAsync()
+    {
+        return _context.SaveChangesAsync();
+    }
+
+    public void Remove(TEntity entity)
+    {
+        _context.Remove(entity);
+    }
+}

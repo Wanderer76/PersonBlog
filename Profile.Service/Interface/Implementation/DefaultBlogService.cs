@@ -21,7 +21,8 @@ namespace Profile.Service.Interface.Implementation
         {
             var profile = await _context.GetProfileByUserIdAsync(model.UserId) ?? throw new EntityNotFoundException("Профиль не найден");
 
-            var isBlogAlreadyExists = await _context.Get<Blog>().AnyAsync(x => x.ProfileId == profile.Id);
+            var isBlogAlreadyExists = await _context.Get<Blog>()
+                .AnyAsync(x => x.ProfileId == profile.Id);
 
             if (isBlogAlreadyExists)
             {
@@ -44,9 +45,12 @@ namespace Profile.Service.Interface.Implementation
             return blog.ToBlogModel();
         }
 
-        public Task DeleteBlogAsync(Guid id)
+        public async Task DeleteBlogAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var blog = await _context.Get<Blog>()
+                .FirstAsync(x => x.Id == id);
+            _context.Remove(blog);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<BlogModel> GetBlogAsync(Guid id)
@@ -58,13 +62,10 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
         {
-            var profile = await _context.GetProfileByUserIdAsync(userId);
+            var profile = await _context.GetProfileByUserIdAsync(userId) ?? throw new EntityNotFoundException("Профиль не найден");
             var blog = await _context.Get<Blog>()
                 .Where(x => x.ProfileId == profile.Id)
-                .FirstOrDefaultAsync();
-
-            if (blog == null)
-                throw new EntityNotFoundException("Не удалось найти блог");
+                .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
 
             return blog.ToBlogModel();
         }

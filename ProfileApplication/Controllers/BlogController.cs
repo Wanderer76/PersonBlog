@@ -99,7 +99,7 @@ namespace ProfileApplication.Controllers
             return Ok();
         }
 
-
+        //TODO добавить кэш
         [HttpGet("video/chunks")]
         public async Task<IActionResult> GetVideoChunk(Guid postId)
         {

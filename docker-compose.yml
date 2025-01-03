@@ -12,14 +12,14 @@ services:
     volumes:
       - ./nginx/nginx.local-debug.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/nginx-frontend-dev.conf:/etc/nginx/nginx-frontend.conf:ro
-  profile-app:
-    build:
-        context: ./
-        dockerfile: ProfileApplication/Dockerfile
-    ports:
-      - "5069:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+  # profile-app:
+  #   build:
+  #       context: ./
+  #       dockerfile: ProfileApplication/Dockerfile
+  #   ports:
+  #     - "5069:8080" 
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
   minio:
     container_name: fileStorage
     image: minio/minio

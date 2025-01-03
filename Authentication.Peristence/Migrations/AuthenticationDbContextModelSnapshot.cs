@@ -17,8 +17,8 @@ namespace Authentication.Peristence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("auth")
-                .HasAnnotation("ProductVersion", "8.0.7")
+                .HasDefaultSchema("Authentication")
+                .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -45,7 +45,17 @@ namespace Authentication.Peristence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppUsers", "auth");
+                    b.ToTable("AppUsers", "Authentication");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 3, 11, 45, 58, 704, DateTimeKind.Unspecified).AddTicks(6585), new TimeSpan(0, 0, 0, 0, 0)),
+                            LastAuthenticate = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Login = "admin",
+                            Password = "bk/QhiCzne0=;zyfj5njzkC02n26/1GjRdDR/3j2IoEofTbE5qONczTI="
+                        });
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.AppUserRole", b =>
@@ -60,7 +70,14 @@ namespace Authentication.Peristence.Migrations
 
                     b.HasIndex("UserRoleId");
 
-                    b.ToTable("AppUserRoles", "auth");
+                    b.ToTable("AppUserRoles", "Authentication");
+
+                    b.HasData(
+                        new
+                        {
+                            AppUserId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+                            UserRoleId = new Guid("accbc12f-6ff1-4343-a26f-13b99e64abb6")
+                        });
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.Token", b =>
@@ -93,7 +110,7 @@ namespace Authentication.Peristence.Migrations
 
                     b.HasIndex("AppUserId");
 
-                    b.ToTable("Tokens", "auth");
+                    b.ToTable("Tokens", "Authentication");
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.UserRole", b =>
@@ -109,7 +126,29 @@ namespace Authentication.Peristence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserRoles", "auth");
+                    b.ToTable("UserRoles", "Authentication");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("57a2b99b-b6ee-4c98-a1f0-b18fe96dae60"),
+                            Name = "admin"
+                        },
+                        new
+                        {
+                            Id = new Guid("accbc12f-6ff1-4343-a26f-13b99e64abb6"),
+                            Name = "superadmin"
+                        },
+                        new
+                        {
+                            Id = new Guid("d95ca3d6-0f63-4b48-a54f-1202f3d6bf2c"),
+                            Name = "user"
+                        },
+                        new
+                        {
+                            Id = new Guid("c2ff298c-dd14-436c-a28b-e2036866ef41"),
+                            Name = "bloger"
+                        });
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.AppUserRole", b =>

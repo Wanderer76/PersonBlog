@@ -35,7 +35,7 @@ namespace Profile.Service.Interface.Implementation
             var now = DateTimeOffset.UtcNow;
             var storage = _fileStorageFactory.CreateFileStorage();
 
-            if (postCreateDto.Type == PostType.Video)
+            if (postCreateDto.Video != null)
             {
                 var video = postCreateDto.Video!;
                 videoId = GuidService.GetNewGuid();

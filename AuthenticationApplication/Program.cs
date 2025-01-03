@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddService();
 var app = builder.Build();
 
