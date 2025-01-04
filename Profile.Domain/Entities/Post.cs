@@ -21,8 +21,9 @@ namespace Profile.Domain.Entities
         public Blog Blog { get; set; }
 
         [ForeignKey(nameof(VideoMetadataId))]
-        public FileMetadata VideoFile { get; set; }
+        public VideoMetadata? VideoFile { get; set; }
 
+        [NotMapped]
         public List<FileMetadata> FilesMetadata { get; set; }
 
         public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, Guid? videoMetadataId, bool isDeleted, string title)

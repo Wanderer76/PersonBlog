@@ -71,7 +71,7 @@ namespace FFMpeg.Cli
             using var parallelScope = _serviceScope.CreateScope();
             var context = parallelScope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
-            var fileMetadata = await context.Get<FileMetadata>()
+            var fileMetadata = await context.Get<VideoMetadata>()
                 .FirstAsync(x => x.ObjectName == @event.ObjectName);
 
             var url = await storage.GetFileUrlAsync(@event.UserProfileId, @event.ObjectName);
@@ -85,7 +85,7 @@ namespace FFMpeg.Cli
                 await fileStream.CopyToAsync(copyStream);
                 copyStream.Position = 0;
                 var objectName = await storage.PutFileWithOriginalResolutionAsync(@event.UserProfileId, fileId, copyStream, FileStorage.Service.Models.VideoResolution.Hd);
-                var newVideoMetadata = new FileMetadata
+                var newVideoMetadata = new VideoMetadata
                 {
                     Id = fileId,
                     ContentType = fileMetadata.ContentType,

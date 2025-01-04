@@ -42,7 +42,7 @@ namespace Profile.Service.Interface.Implementation
 
                 var objectName = await storage.PutFileWithOriginalResolutionAsync(userProfileId, videoId!.Value, video.OpenReadStream());
 
-                var videoMetadata = new FileMetadata
+                var videoMetadata = new VideoMetadata
                 {
                     Id = videoId.Value,
                     ContentType = video.ContentType,
@@ -67,26 +67,26 @@ namespace Profile.Service.Interface.Implementation
                 _context.Add(videoMetadata);
             }
 
-            if (postCreateDto.Photos != null && postCreateDto.Photos.Any())
-            {
-                foreach (var i in postCreateDto.Photos)
-                {
-                    var photoId = GuidService.GetNewGuid();
-                    await storage.PutFileAsync(userProfileId, videoId!.Value, i.OpenReadStream());
+            //if (postCreateDto.Photos != null && postCreateDto.Photos.Any())
+            //{
+            //    foreach (var i in postCreateDto.Photos)
+            //    {
+            //        var photoId = GuidService.GetNewGuid();
+            //        await storage.PutFileAsync(userProfileId, videoId!.Value, i.OpenReadStream());
 
-                    var photoMetadata = new FileMetadata
-                    {
-                        Id = photoId,
-                        ContentType = i.ContentType,
-                        CreatedAt = now,
-                        Length = i.Length,
-                        FileExtension = Path.GetExtension(i.FileName),
-                        Name = i.Name,
-                        PostId = postId
-                    };
-                    _context.Add(photoMetadata);
-                }
-            }
+            //        var photoMetadata = new FileMetadata
+            //        {
+            //            Id = photoId,
+            //            ContentType = i.ContentType,
+            //            CreatedAt = now,
+            //            Length = i.Length,
+            //            FileExtension = Path.GetExtension(i.FileName),
+            //            Name = i.Name,
+            //            PostId = postId
+            //        };
+            //        _context.Add(photoMetadata);
+            //    }
+            //}
 
             var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, videoId, false, postCreateDto.Title);
             _context.Add(post);
@@ -120,7 +120,7 @@ namespace Profile.Service.Interface.Implementation
                 })
                 .FirstAsync(x => x.Id == postId);
 
-            var videoData = await _context.Get<FileMetadata>()
+            var videoData = await _context.Get<VideoMetadata>()
                 .Where(x => x.PostId == postId)
                 .FirstAsync();
             var storage = _fileStorageFactory.CreateFileStorage();

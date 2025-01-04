@@ -12,7 +12,7 @@ using Profile.Persistence;
 namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
-    [Migration("20250103114930_Init")]
+    [Migration("20250104103156_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -115,48 +115,10 @@ namespace Profile.Persistence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 3, 11, 49, 30, 16, DateTimeKind.Unspecified).AddTicks(3931), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 4, 10, 31, 55, 898, DateTimeKind.Unspecified).AddTicks(9877), new TimeSpan(0, 0, 0, 0, 0)),
                             ProfileId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
                             Title = "Тест"
                         });
-                });
-
-            modelBuilder.Entity("Profile.Domain.Entities.FileMetadata", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("FileExtension")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long>("Length")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ObjectName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PostId");
-
-                    b.ToTable("VideoMetadata", "Profile");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Post", b =>
@@ -191,9 +153,6 @@ namespace Profile.Persistence.Migrations
 
                     b.HasIndex("BlogId");
 
-                    b.HasIndex("VideoMetadataId")
-                        .IsUnique();
-
                     b.ToTable("Posts", "Profile");
                 });
 
@@ -223,6 +182,45 @@ namespace Profile.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Subscriptions", "Profile");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.VideoMetadata", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Length")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ObjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId")
+                        .IsUnique();
+
+                    b.ToTable("VideoMetadata", "Profile");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.VideoUploadEvent", b =>
@@ -264,17 +262,6 @@ namespace Profile.Persistence.Migrations
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("Profile.Domain.Entities.FileMetadata", b =>
-                {
-                    b.HasOne("Profile.Domain.Entities.Post", "Post")
-                        .WithMany("FilesMetadata")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
-                });
-
             modelBuilder.Entity("Profile.Domain.Entities.Post", b =>
                 {
                     b.HasOne("Profile.Domain.Entities.Blog", "Blog")
@@ -283,13 +270,7 @@ namespace Profile.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Profile.Domain.Entities.FileMetadata", "VideoFile")
-                        .WithOne()
-                        .HasForeignKey("Profile.Domain.Entities.Post", "VideoMetadataId");
-
                     b.Navigation("Blog");
-
-                    b.Navigation("VideoFile");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Subscriptions", b =>
@@ -311,6 +292,17 @@ namespace Profile.Persistence.Migrations
                     b.Navigation("Profile");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.VideoMetadata", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.Post", "Post")
+                        .WithOne("VideoFile")
+                        .HasForeignKey("Profile.Domain.Entities.VideoMetadata", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.AppProfile", b =>
                 {
                     b.Navigation("Subscriptions");
@@ -323,7 +315,7 @@ namespace Profile.Persistence.Migrations
 
             modelBuilder.Entity("Profile.Domain.Entities.Post", b =>
                 {
-                    b.Navigation("FilesMetadata");
+                    b.Navigation("VideoFile");
                 });
 #pragma warning restore 612, 618
         }
