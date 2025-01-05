@@ -27,7 +27,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseRouting();
 app.UseHttpsRedirection();
-
+app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers(); // подключаем маршрутизацию на контроллеры

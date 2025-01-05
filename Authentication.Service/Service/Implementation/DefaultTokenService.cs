@@ -43,7 +43,7 @@ namespace Authentication.Service.Service.Implementation
             CreateTokenForUser(user, out var accessToken, out var refreshToken);
 
             var accessTokenModel = accessToken.ToTokenModel();
-            var refreshTokenModel = accessToken.ToTokenModel();
+            var refreshTokenModel = refreshToken.ToTokenModel();
             var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessTokenModel, refreshTokenModel);
             return new AuthResponse
             {
