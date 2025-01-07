@@ -1,13 +1,21 @@
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css';
 import AuthPage from './pages/auth/AuthPage';
+import { MainPage } from './pages/main/MainPage';
+
+
+
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        {/* <VideoComponent sourceUrl="http://localhost:7892/profile/Blog/video/chunks?postId=42c113cc-b4a7-41b5-b0c8-2e059087124f" /> */}
-        <AuthPage></AuthPage>
-      </header>
+
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<AuthPage />} />
+          <Route path="/main" element={<MainPage/>} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
