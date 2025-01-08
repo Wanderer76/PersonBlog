@@ -6,7 +6,7 @@ export class MainPage extends React.Component {
         return (
             <>
                 <h1>
-                    Main Page
+                    Главная
                 </h1>
             </>)
     }

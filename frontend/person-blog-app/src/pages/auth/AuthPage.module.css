@@ -9,11 +9,11 @@
 }
 
 .modalBody {
-    margin-left: auto;
-    margin-right: auto;
-    width: 25%;
-    padding: 20px;
-    margin-top: 50vh;
+    z-index: 1;
+    margin: auto;
+    margin-top: 45%;
+    width: 50%;
+    padding: 30px;
     background-color: crimson;
 }
 
@@ -24,6 +24,6 @@
     margin-top: 10px;
     margin-left: auto;
     margin-right: auto;
-    padding: 5px;
+    padding: 10px;
     width: 90%;
 }

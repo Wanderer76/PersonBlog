@@ -11,21 +11,30 @@ const AuthPageForm = function () {
     const navigate = useNavigate()
 
     async function sendAuthRequest(url, body) {
-        const resonse = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body)
-        });
-        if (resonse.status === 200) {
-            const data = await resonse.json();
-            saveAccessToken(data.accessToken);
-            saveRefreshToken(data.refreshToken);
-            navigate("/main");
+
+        if (body.login === "" && body.password === "") {
+            return
         }
-        else {
-            console.log("error")
+        try {
+            const resonse = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (resonse.status === 200) {
+                const data = await resonse.json();
+                saveAccessToken(data.accessToken);
+                saveRefreshToken(data.refreshToken);
+                navigate("/main");
+            }
+            else {
+                console.log("error")
+            }
+        } catch (e) {
+            console.log(e)
         }
     }
 
