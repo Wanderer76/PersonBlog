@@ -66,7 +66,6 @@ namespace ProfileApplication.Controllers
         [Authorize]
         public async Task<IActionResult> AddPostToBlog([FromForm] PostCreateForm form)
         {
-
             var userId = HttpContext.GetUserFromContext();
             var result = await _postService.CreatePost(new PostCreateDto
             {
@@ -101,14 +100,14 @@ namespace ProfileApplication.Controllers
 
         //TODO добавить кэш
         [HttpGet("video/chunks")]
-        public async Task<IActionResult> GetVideoChunk(Guid postId)
+        public async Task<IActionResult> GetVideoChunk(Guid postId, int resolution)
         {
             if (!await _postService.HasVideoExistByPostIdAsync(postId))
             {
                 return NotFound();
             }
             const int ChunkSize = 1024 * 1024 * 1;
-            var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
+            var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId, resolution);
             var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
             using var stream = new MemoryStream();
             await _postService.GetVideoChunkStreamByPostIdAsync(postId, startPosition, endPosition, stream);

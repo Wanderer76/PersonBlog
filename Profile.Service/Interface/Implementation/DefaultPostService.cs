@@ -1,4 +1,5 @@
-﻿using FileStorage.Service.Service;
+﻿using FileStorage.Service.Models;
+using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
@@ -95,11 +96,12 @@ namespace Profile.Service.Interface.Implementation
             return postId;
         }
 
-        public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId)
+        public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId, int resolution = 0)
         {
             var fileMetadata = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
                 .Select(x => x.VideoFile)
+                .Where(x => x.Resolution == (VideoResolution)resolution)
                 .FirstAsync();
 
             return new FileMetadataModel(

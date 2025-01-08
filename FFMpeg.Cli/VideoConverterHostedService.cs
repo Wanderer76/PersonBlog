@@ -94,10 +94,13 @@ namespace FFMpeg.Cli
                     Length = copyStream.Length,
                     Name = @event.ObjectName,
                     FileExtension = Path.GetExtension(fileName),
-                    PostId = fileMetadata.PostId
+                    PostId = fileMetadata.PostId,
+                    Resolution = FileStorage.Service.Models.VideoResolution.Hd,
                 };
 
                 context.Add(newVideoMetadata);
+                context.Attach(@event);
+                @event.IsCompleted = true;
                 await context.SaveChangesAsync();
             }
             finally
