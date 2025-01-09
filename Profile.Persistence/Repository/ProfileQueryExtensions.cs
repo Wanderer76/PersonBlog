@@ -41,7 +41,7 @@ namespace Profile.Persistence.Repository
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .Include(x => x.FilesMetadata)
-                .Include(x => x.VideoFile)
+                .Include(x => x.VideoFiles)
                 .ToListAsync();
 
             var pagesCount = totalPostsCount / limit;

@@ -1,6 +1,7 @@
 using Authentication.Peristence;
 using Authentication.Service;
 using Infrastructure.Extensions;
+using Infrastructure.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,12 +20,16 @@ if (app.Environment.IsDevelopment())
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 
-    using (var db = app.Services.CreateScope().ServiceProvider.GetRequiredService<AuthenticationDbContext>())
+    using (var scope = app.Services.CreateScope())
     {
-        db.Database.EnsureCreated();
+        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+        foreach (var initializer in initializers)
+        {
+            initializer.Initialize();
+        }
     }
-
 }
+
 app.UseRouting();
 app.UseHttpsRedirection();
 app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());

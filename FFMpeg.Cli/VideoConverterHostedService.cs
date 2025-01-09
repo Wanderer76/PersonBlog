@@ -1,10 +1,10 @@
 ﻿using FFmpeg.Service;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Profile.Domain.Entities;
 using Shared.Persistence;
 using Shared.Services;
+using Xabe.FFmpeg;
 
 namespace FFMpeg.Cli
 {
@@ -24,7 +24,8 @@ namespace FFMpeg.Cli
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new Timer(StartTask, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            //_timer = new Timer(StartTask, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            StartTask(null);
         }
 
         private void StartTask(object? state)
@@ -34,35 +35,37 @@ namespace FFMpeg.Cli
 
         private async Task ProcessUploadVideoEvents()
         {
-            using var scope = _serviceScope.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
-
-            var events = await context.Get<VideoUploadEvent>()
-                .Where(x => x.IsCompleted == false)
-                .Take(10)
-                .ToListAsync();
-
-            if (events.Any())
+            while (true)
             {
-                var storage = _fileStorageFactory.CreateFileStorage();
-
-                //events.AsParallel().ForAll(@event =>
-                //{
-                //    using var parallelScope = _serviceScope.CreateScope();
-                //    var dbContext = parallelScope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
-                //    await ProcessFile(dbContext, storage, @event);
-                //})
-
-
-                foreach (var @event in events.AsParallel())
+                try
                 {
-                    await ProcessFile(storage, @event);
-                }
+                    using var scope = _serviceScope.CreateScope();
+                    var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
-            }
-            else
-            {
-                await Task.Delay(1000);
+                    var events = await context.Get<VideoUploadEvent>()
+                        .Where(x => x.IsCompleted == false)
+                        .Take(10)
+                        .ToListAsync();
+
+                    if (events.Count != 0)
+                    {
+                        var storage = _fileStorageFactory.CreateFileStorage();
+
+                        foreach (var @event in events)
+                        {
+                            await ProcessFile(storage, @event);
+                        }
+
+                    }
+                    else
+                    {
+                        await Task.Delay(1000);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
 
@@ -75,41 +78,52 @@ namespace FFMpeg.Cli
                 .FirstAsync(x => x.ObjectName == @event.ObjectName);
 
             var url = await storage.GetFileUrlAsync(@event.UserProfileId, @event.ObjectName);
-            var fileId = GuidService.GetNewGuid();
-            var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
-            try
-            {
-                await FFMpegService.ConvertToHlsAsync(new Uri(url), fileName);
-                using var fileStream = new FileStream(fileName, FileMode.Open);
-                using var copyStream = new MemoryStream();
-                await fileStream.CopyToAsync(copyStream);
-                copyStream.Position = 0;
-                var objectName = await storage.PutFileWithOriginalResolutionAsync(@event.UserProfileId, fileId, copyStream, FileStorage.Service.Models.VideoResolution.Hd);
-                var newVideoMetadata = new VideoMetadata
-                {
-                    Id = fileId,
-                    ContentType = fileMetadata.ContentType,
-                    ObjectName = objectName,
-                    CreatedAt = DateTime.UtcNow,
-                    Length = copyStream.Length,
-                    Name = @event.ObjectName,
-                    FileExtension = Path.GetExtension(fileName),
-                    PostId = fileMetadata.PostId,
-                    Resolution = FileStorage.Service.Models.VideoResolution.Hd,
-                };
 
-                context.Add(newVideoMetadata);
-                context.Attach(@event);
-                @event.IsCompleted = true;
-                await context.SaveChangesAsync();
-            }
-            finally
+            var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
+
+            foreach (var videoSize in videoSizes)
             {
-                if (File.Exists(fileName))
+                var fileId = GuidService.GetNewGuid();
+                var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
+                try
                 {
-                    File.Delete(fileName);
+                    await FFMpegService.ConvertToHlsAsync(new Uri(url), fileName, videoSize);
+                    using var fileStream = new FileStream(fileName, FileMode.Open);
+                    using var copyStream = new MemoryStream();
+                    await fileStream.CopyToAsync(copyStream);
+                    copyStream.Position = 0;
+                    var objectName = await storage.PutFileWithOriginalResolutionAsync(@event.UserProfileId, fileId, copyStream, videoSize.Convert());
+                    var newVideoMetadata = new VideoMetadata
+                    {
+                        Id = fileId,
+                        ContentType = fileMetadata.ContentType,
+                        ObjectName = objectName,
+                        CreatedAt = DateTime.UtcNow,
+                        Length = copyStream.Length,
+                        Name = @event.ObjectName,
+                        FileExtension = Path.GetExtension(fileName),
+                        PostId = fileMetadata.PostId,
+                        Resolution = videoSize.Convert(),
+                    };
+
+                    context.Add(newVideoMetadata);
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                finally
+                {
+                    if (File.Exists(fileName))
+                    {
+                        File.Delete(fileName);
+                    }
                 }
             }
+
+            context.Attach(@event);
+            @event.IsCompleted = true;
+            await context.SaveChangesAsync();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

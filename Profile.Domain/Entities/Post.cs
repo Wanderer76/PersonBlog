@@ -15,24 +15,20 @@ namespace Profile.Domain.Entities
         public string? Description { get; set; }
         public bool IsDeleted { get; set; }
 
-        public Guid? VideoMetadataId { get; set; }
-
         [ForeignKey(nameof(BlogId))]
         public Blog Blog { get; set; }
 
-        [ForeignKey(nameof(VideoMetadataId))]
-        public VideoMetadata? VideoFile { get; set; }
+        public List<VideoMetadata> VideoFiles { get; set; }
 
         [NotMapped]
         public List<FileMetadata> FilesMetadata { get; set; }
 
-        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, Guid? videoMetadataId, bool isDeleted, string title)
+        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title)
         {
             Id = id;
             BlogId = blogId;
             Type = type;
             CreatedAt = createdAt;
-            VideoMetadataId = videoMetadataId;
             Description = description;
             IsDeleted = isDeleted;
             Title = title;

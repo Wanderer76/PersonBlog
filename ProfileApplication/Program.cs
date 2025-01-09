@@ -1,5 +1,6 @@
 using FileStorage.Service;
 using Infrastructure.Extensions;
+using Infrastructure.Interface;
 using Profile.Persistence;
 using Profile.Service.Extensions;
 
@@ -25,9 +26,13 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    using (var db = app.Services.CreateScope().ServiceProvider.GetRequiredService<ProfileDbContext>())
+    using (var scope = app.Services.CreateScope())
     {
-        db.Database.EnsureCreated();
+        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+        foreach (var initializer in initializers)
+        {
+            initializer.Initialize();
+        }
     }
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();

@@ -1,6 +1,4 @@
-﻿
-
-
+﻿using FileStorage.Service.Models;
 using Xabe.FFmpeg;
 
 namespace FFmpeg.Service
@@ -10,44 +8,39 @@ namespace FFmpeg.Service
     /// </summary>
     public static class FFMpegService
     {
-        public static async Task ConvertToHlsAsync(Uri input, string filePath)
+        public static async Task ConvertToHlsAsync(Uri input, string filePath, VideoSize size)
         {
             Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
 
             var inputMedia = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(input.AbsoluteUri);
-            inputMedia.VideoStreams.First().SetSize(VideoSize.Hd720);
-            inputMedia.VideoStreams.First().SetCodec(VideoCodec.mpeg4);
-            inputMedia.AudioStreams.First().SetCodec(AudioCodec.aac);
-
+            var inputVideo = inputMedia.VideoStreams.First().SetSize(size).SetCodec(VideoCodec.h264);
+            var inputAudio = inputMedia.AudioStreams.First().SetCodec(AudioCodec.aac);
 
             var format = Path.GetExtension(filePath).Replace(".", "");
             var result = await Xabe.FFmpeg.FFmpeg.Conversions.New()
-            .AddStream((IStream)inputMedia.VideoStreams.First(), (IStream)inputMedia.AudioStreams.First())
-            .SetOutput(filePath)
-            .SetOutputFormat(format)
-            .SetOverwriteOutput(true)
-            .Start();
+                .AddStream<IVideoStream>(inputVideo)
+                .AddStream(inputAudio)
+                .SetOutput(filePath)
+                .SetOutputFormat(format)
+                .Start();
+        }
 
 
-            // .FromUrlInput(input,options=>
-            //options.WithVideoCodec("mpeg4"))
-            //    .OutputToUrl((output), options => options
-            //    .WithVideoFilters(f => f.Scale(VideoSize.Hd))
-            //     // .WithConstantRateFactor(21)
-            //      // .WithAudioCodec(AudioCodec.Aac)
-            //      //.WithVideoCodec("mpeg4")
-            //    .ForceFormat("mp4")
-            //    )
-            //    .ProcessSynchronously();            // .FromUrlInput(input,options=>
-            //options.WithVideoCodec("mpeg4"))
-            //    .OutputToUrl((output), options => options
-            //    .WithVideoFilters(f => f.Scale(VideoSize.Hd))
-            //     // .WithConstantRateFactor(21)
-            //      // .WithAudioCodec(AudioCodec.Aac)
-            //      //.WithVideoCodec("mpeg4")
-            //    .ForceFormat("mp4")
-            //    )
-            //    .ProcessSynchronously();
+        public static VideoResolution Convert(this VideoSize size)
+        {
+            switch (size)
+            {
+                case VideoSize.Hd1080:
+                    return VideoResolution.FullHd;
+                case VideoSize.Hd720:
+                    return VideoResolution.Hd;
+                case VideoSize.Vga:
+                    return VideoResolution.Middle;
+                case VideoSize.Nhd:
+                    return VideoResolution.Low;
+                default:
+                    return VideoResolution.Original;
+            }
         }
     }
 }

@@ -52,7 +52,8 @@ namespace Profile.Service.Interface.Implementation
                     Name = video.Name,
                     PostId = postId,
                     ObjectName = objectName,
-                    FileExtension = Path.GetExtension(video.FileName)
+                    FileExtension = Path.GetExtension(video.FileName),
+                    Resolution = VideoResolution.Original
                 };
                 var fileUrl = await storage.GetFileUrlAsync(userProfileId, objectName);
                 var videoCreateEvent = new VideoUploadEvent
@@ -89,7 +90,7 @@ namespace Profile.Service.Interface.Implementation
             //    }
             //}
 
-            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, videoId, false, postCreateDto.Title);
+            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title);
             _context.Add(post);
             await _context.SaveChangesAsync();
 
@@ -100,7 +101,7 @@ namespace Profile.Service.Interface.Implementation
         {
             var fileMetadata = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
-                .Select(x => x.VideoFile)
+                .SelectMany(x => x.VideoFiles)
                 .Where(x => x.Resolution == (VideoResolution)resolution)
                 .FirstAsync();
 
@@ -108,26 +109,23 @@ namespace Profile.Service.Interface.Implementation
                 fileMetadata.ContentType,
                 fileMetadata.Length,
                 fileMetadata.Name,
-                fileMetadata.CreatedAt);
+                fileMetadata.CreatedAt,
+                fileMetadata.Id);
         }
 
-        public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, long offset, long length, Stream output)
+        public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
         {
-            var post = await _context.Get<Post>()
-                .Select(x => new
-                {
-                    x.Id,
-                    x.Blog.ProfileId,
-                    x.VideoMetadataId
-                })
-                .FirstAsync(x => x.Id == postId);
+            var profileId = await _context.Get<Post>()
+                .Where(x => x.Id == postId)
+                .Select(x => x.Blog.ProfileId)
+                .FirstAsync();
 
             var videoData = await _context.Get<VideoMetadata>()
-                .Where(x => x.PostId == postId)
+                .Where(x => x.Id == fileMetadataId)
                 .FirstAsync();
             var storage = _fileStorageFactory.CreateFileStorage();
-            await storage.ReadFileByChunksAsync(post.ProfileId, videoData.ObjectName, offset, length, output);
-            return post.VideoMetadataId.Value!;
+            await storage.ReadFileByChunksAsync(profileId, videoData.ObjectName, offset, length, output);
+            return fileMetadataId;
         }
 
         public Task GetVideoStream(Guid postId, Stream output)
@@ -137,11 +135,10 @@ namespace Profile.Service.Interface.Implementation
 
         public async ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId)
         {
-            var videoId = await _context.Get<Post>()
-                .Where(x => x.Id == postId)
-                .Select(x => x.VideoMetadataId)
-                .FirstOrDefaultAsync();
-            return videoId.HasValue;
+            var hasVideo = await _context.Get<VideoMetadata>()
+                .Where(x => x.PostId == postId)
+                .AnyAsync();
+            return hasVideo;
         }
 
         public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
@@ -155,9 +152,9 @@ namespace Profile.Service.Interface.Implementation
                 x.Description,
                 x.CreatedAt,
                 new VideoMetadataModel(
-                    x.VideoFile.Id,
-                    x.VideoFile.Length,
-                    x.VideoFile.ContentType
+                    x.VideoFiles.FirstOrDefault().Id,
+                    x.VideoFiles.FirstOrDefault().Length,
+                    x.VideoFiles.FirstOrDefault().ContentType
                 )
             ))
                 .ToList();

@@ -10,11 +10,12 @@ namespace Profile.Service.Interface
         /// <summary>
         /// </summary>
         /// <param name="postId"></param>
+        /// <param name="fileMetadataId"></param>
         /// <param name="offset"></param>
         /// <param name="length"></param>
-        /// <param name="output"></param>
         /// <returns>Возвращает id файла</returns>
-        Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, long offset, long length, Stream output);
+        /// <param name="output"></param>
+        Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
         Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId, int resolution = 0);
         Task GetVideoStream(Guid postId, Stream output);
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);

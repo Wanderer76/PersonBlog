@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Profile.Persistence;
@@ -11,9 +12,11 @@ using Profile.Persistence;
 namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
-    partial class ProfileDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250109082616_AddResolution")]
+    partial class AddResolution
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,7 +115,7 @@ namespace Profile.Persistence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 9, 8, 50, 5, 770, DateTimeKind.Unspecified).AddTicks(9426), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 9, 8, 26, 14, 612, DateTimeKind.Unspecified).AddTicks(3426), new TimeSpan(0, 0, 0, 0, 0)),
                             ProfileId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
                             Title = "Тест"
                         });
@@ -142,6 +145,9 @@ namespace Profile.Persistence.Migrations
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
+
+                    b.Property<Guid?>("VideoMetadataId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -214,7 +220,8 @@ namespace Profile.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PostId");
+                    b.HasIndex("PostId")
+                        .IsUnique();
 
                     b.ToTable("VideoMetadata", "Profile");
                 });
@@ -291,8 +298,8 @@ namespace Profile.Persistence.Migrations
             modelBuilder.Entity("Profile.Domain.Entities.VideoMetadata", b =>
                 {
                     b.HasOne("Profile.Domain.Entities.Post", "Post")
-                        .WithMany("VideoFiles")
-                        .HasForeignKey("PostId")
+                        .WithOne("VideoFile")
+                        .HasForeignKey("Profile.Domain.Entities.VideoMetadata", "PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -311,7 +318,7 @@ namespace Profile.Persistence.Migrations
 
             modelBuilder.Entity("Profile.Domain.Entities.Post", b =>
                 {
-                    b.Navigation("VideoFiles");
+                    b.Navigation("VideoFile");
                 });
 #pragma warning restore 612, 618
         }

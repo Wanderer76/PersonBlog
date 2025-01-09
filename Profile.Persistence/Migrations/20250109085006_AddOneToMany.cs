@@ -1,0 +1,70 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Profile.Persistence.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddOneToMany : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropIndex(
+                name: "IX_VideoMetadata_PostId",
+                schema: "Profile",
+                table: "VideoMetadata");
+
+            migrationBuilder.DropColumn(
+                name: "VideoMetadataId",
+                schema: "Profile",
+                table: "Posts");
+
+            migrationBuilder.UpdateData(
+                schema: "Profile",
+                table: "Blogs",
+                keyColumn: "Id",
+                keyValue: new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
+                column: "CreatedAt",
+                value: new DateTimeOffset(new DateTime(2025, 1, 9, 8, 50, 5, 770, DateTimeKind.Unspecified).AddTicks(9426), new TimeSpan(0, 0, 0, 0, 0)));
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VideoMetadata_PostId",
+                schema: "Profile",
+                table: "VideoMetadata",
+                column: "PostId");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropIndex(
+                name: "IX_VideoMetadata_PostId",
+                schema: "Profile",
+                table: "VideoMetadata");
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "VideoMetadataId",
+                schema: "Profile",
+                table: "Posts",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.UpdateData(
+                schema: "Profile",
+                table: "Blogs",
+                keyColumn: "Id",
+                keyValue: new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
+                column: "CreatedAt",
+                value: new DateTimeOffset(new DateTime(2025, 1, 9, 8, 26, 14, 612, DateTimeKind.Unspecified).AddTicks(3426), new TimeSpan(0, 0, 0, 0, 0)));
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VideoMetadata_PostId",
+                schema: "Profile",
+                table: "VideoMetadata",
+                column: "PostId",
+                unique: true);
+        }
+    }
+}

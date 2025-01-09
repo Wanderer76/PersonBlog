@@ -100,7 +100,7 @@ namespace ProfileApplication.Controllers
 
         //TODO добавить кэш
         [HttpGet("video/chunks")]
-        public async Task<IActionResult> GetVideoChunk(Guid postId, int resolution)
+        public async Task<IActionResult> GetVideoChunk(Guid postId, int resolution = 480)
         {
             if (!await _postService.HasVideoExistByPostIdAsync(postId))
             {
@@ -110,14 +110,13 @@ namespace ProfileApplication.Controllers
             var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId, resolution);
             var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
             using var stream = new MemoryStream();
-            await _postService.GetVideoChunkStreamByPostIdAsync(postId, startPosition, endPosition, stream);
+            await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
             var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
             FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
             using var outputStream = Response.Body;
             await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
             return Ok();
         }
-
 
 
         //public async Task<IActionResult> DeleteVideo(Guid id)
