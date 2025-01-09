@@ -40,7 +40,6 @@ namespace Profile.Persistence.Repository
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((page - 1) * limit)
                 .Take(limit)
-                .Include(x => x.FilesMetadata)
                 .Include(x => x.VideoFiles)
                 .ToListAsync();
 

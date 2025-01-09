@@ -38,4 +38,8 @@ export class JwtTokenService {
             saveRefreshToken(data.refreshToken);
         }
     }
+
+    static isAuth() {
+        return getAccessToken() !== null;
+    }
 }

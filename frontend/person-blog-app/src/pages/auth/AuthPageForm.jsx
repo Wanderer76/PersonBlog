@@ -28,7 +28,8 @@ const AuthPageForm = function () {
                 const data = await resonse.json();
                 saveAccessToken(data.accessToken);
                 saveRefreshToken(data.refreshToken);
-                navigate("/main");
+                navigate("/");
+                window.location.reload();
             }
             else {
                 console.log("error")

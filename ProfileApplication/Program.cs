@@ -15,7 +15,6 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
 
-builder.Services.AddCors(x => x.AddDefaultPolicy(b => b.AllowAnyMethod().AllowAnyOrigin()));
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -40,9 +39,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseCors(x => x.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.MapControllers();
 
 

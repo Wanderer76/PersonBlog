@@ -3,6 +3,7 @@ import './App.css';
 import AuthPage from './pages/auth/AuthPage';
 import { MainPage } from './pages/main/MainPage';
 import { Header } from './components/header/Header';
+import { ProfilePage } from './pages/profile/ProfilePage';
 
 
 
@@ -11,12 +12,13 @@ function App() {
   return (
     <div className="App">
       <Header/>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/" element={<MainPage/>} />
-        </Routes>
-      </BrowserRouter>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/profile" element={<ProfilePage/>} />
+          </Routes>
+        </BrowserRouter>
     </div>
   );
 }

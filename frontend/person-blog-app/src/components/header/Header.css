@@ -24,7 +24,6 @@
     background-color: rgba(0,0,0, 0);
     width: 100%;
     display: flex;
-
     justify-content: center;
 }
 
@@ -35,6 +34,10 @@
     text-align: center;
 }
 
+/* Right-aligned link */
+.navbar .left {
+    margin-right: auto;
+}
 
 /* Right-aligned link */
 .navbar .right {
