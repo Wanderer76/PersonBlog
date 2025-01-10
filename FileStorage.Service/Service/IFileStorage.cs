@@ -4,7 +4,7 @@ namespace FileStorage.Service.Service
 {
     public interface IFileStorage
     {
-        Task PutFileAsync(Guid userId, Guid id, Stream input);
+        Task<string> PutFileAsync(Guid userId, Guid id, Stream input);
         //Task PutFileAsync(Guid userId, Guid id, string resolution, Stream input);
         Task<string> PutFileWithOriginalResolutionAsync(Guid userId, Guid id, Stream input, VideoResolution resolution = VideoResolution.Original);
         Task<string> GetFileUrlAsync(Guid userId, string objectName);

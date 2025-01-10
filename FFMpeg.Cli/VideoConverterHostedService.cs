@@ -87,7 +87,7 @@ namespace FFMpeg.Cli
                 var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
                 try
                 {
-                    await FFMpegService.ConvertToHlsAsync(new Uri(url), fileName, videoSize);
+                    await FFMpegService.ConvertToH264Async(new Uri(url).AbsoluteUri, fileName, videoSize);
                     using var fileStream = new FileStream(fileName, FileMode.Open);
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
@@ -108,7 +108,7 @@ namespace FFMpeg.Cli
 
                     context.Add(newVideoMetadata);
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                 }
@@ -117,6 +117,35 @@ namespace FFMpeg.Cli
                     if (File.Exists(fileName))
                     {
                         File.Delete(fileName);
+                    }
+                }
+            }
+
+            var post = await context.Get<Post>()
+                   .FirstAsync(x => x.Id == fileMetadata.PostId);
+
+            if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
+            {
+                var snapshotFileId = GuidService.GetNewGuid();
+                var snapshotFileName = Path.Combine(path, snapshotFileId.ToString() + ".png");
+
+                try
+                {
+                    await FFMpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
+                    using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
+                    using var copyStream = new MemoryStream();
+                    await fileStream.CopyToAsync(copyStream);
+                    copyStream.Position = 0;
+                    var objectName = await storage.PutFileAsync(@event.UserProfileId, snapshotFileId, copyStream);
+
+                    context.Attach(post);
+                    post.PreviewId = objectName;
+                }
+                finally
+                {
+                    if (File.Exists(snapshotFileName))
+                    {
+                        File.Delete(snapshotFileName);
                     }
                 }
             }

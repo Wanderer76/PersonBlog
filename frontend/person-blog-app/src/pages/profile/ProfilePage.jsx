@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { JwtTokenService } from "../../scripts/TokenStrorage";
-
+import './ProfilePage.css'
 
 export class ProfilePage extends React.Component {
 
@@ -88,6 +88,19 @@ const CommonProfileData = function (props) {
 const BlogPosts = function (props) {
 
     const hasMounted = useRef(false);
+    const [posts, setPosts] = useState([{
+        id: "7a1c3e30-eccb-4fc4-823d-62af6b1ff9df",
+        type: 1,
+        title: "Тестовое видео",
+        description: "Тестовое видео",
+        createdAt: "2025-01-09T08:31:44.652343+00:00",
+        previewId: null,
+        videoData: {
+            id: "5bf456a0-4636-4934-af21-1675aa0505f0",
+            length: 18851336,
+            contentType: "video/mp4"
+        }
+    }])
 
     useEffect(() => {
         const url = `http://localhost:7892/profile/Blog/posts/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
@@ -111,7 +124,8 @@ const BlogPosts = function (props) {
                 }
             })
                 .then(result => {
-                   console.log(result);
+                    setPosts(result.posts);
+                    console.log(result);
                 }, [])
         }
         sendRequest();
@@ -120,9 +134,42 @@ const BlogPosts = function (props) {
 
     return (
         <div>
-            <h2>
-                {props.blogId}
-            </h2>
+            <h4>
+                Посты
+                <br />
+                <button>Создать</button>
+            </h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Название</th>
+                        <th scope="col">Описание</th>
+                        <th scope="col">Дата создания</th>
+                        <th scope="col">Тип</th>
+                        <th scope="col">Видео</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {posts.map(x => {
+                        const date = new Date(x.createdAt);
+                        return <tr key={x.id}>
+                            <td>{x.title}</td>
+                            <td>{x.description}</td>
+                            <td>{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
+                            <td>{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
+                            <td>{x.previewId === null ? <></> : getVideo(x)} </td>
+                        </tr>
+                    })}
+                </tbody>
+            </table>
         </div>
     );
+}
+
+function getVideo(props) {
+    const url = `http://localhost:7892/profile/Blog/video/chunks?postId=${props.id}&resolution=1080`;
+    return <>
+        <video controls poster={props.previewId} width={500}>
+            <source src={url}></source></video>
+    </>
 }

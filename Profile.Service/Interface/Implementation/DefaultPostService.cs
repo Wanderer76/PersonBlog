@@ -144,20 +144,29 @@ namespace Profile.Service.Interface.Implementation
         public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
         {
             var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, page, limit);
-
-            var posts = pagedPosts.Posts.Select(x => new PostModel(
-                x.Id,
-                x.Type,
-                x.Title,
-                x.Description,
-                x.CreatedAt,
-                new VideoMetadataModel(
-                    x.VideoFiles.FirstOrDefault().Id,
-                    x.VideoFiles.FirstOrDefault().Length,
-                    x.VideoFiles.FirstOrDefault().ContentType
-                )
-            ))
-                .ToList();
+            var profileId = await _context.Get<Blog>()
+                .Where(x => x.Id == blogId)
+                .Select(x => x.ProfileId)
+                .FirstAsync();
+            var fileStorage = _fileStorageFactory.CreateFileStorage();
+            var posts = new List<PostModel>(pagedPosts.Posts.Count());
+            foreach (var x in pagedPosts.Posts)
+            {
+                var previewUrl = string.IsNullOrWhiteSpace(x.PreviewId) ? null : await fileStorage.GetFileUrlAsync(profileId, x.PreviewId);
+                posts.Add(new PostModel(
+                                x.Id,
+                                x.Type,
+                                x.Title,
+                                x.Description,
+                                x.CreatedAt,
+                                previewUrl,
+                                new VideoMetadataModel(
+                                    x.VideoFiles.FirstOrDefault().Id,
+                                    x.VideoFiles.FirstOrDefault().Length,
+                                    x.VideoFiles.FirstOrDefault().ContentType
+                                )
+                            ));
+            }
 
             return new PostPagedListViewModel
             {

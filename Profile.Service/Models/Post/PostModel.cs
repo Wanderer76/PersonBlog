@@ -9,15 +9,17 @@ namespace Profile.Service.Models.Post
         public string Title { get; }
         public string? Description { get; }
         public DateTimeOffset CreatedAt { get; }
+        public string? PreviewId { get; }
         public VideoMetadataModel VideoData { get; }
 
-        public PostModel(Guid id, PostType type, string title, string? description, DateTimeOffset createdAt, VideoMetadataModel videoData)
+        public PostModel(Guid id, PostType type, string title, string? description, DateTimeOffset createdAt, string? previewId, VideoMetadataModel videoData)
         {
             Id = id;
             Type = type;
             Title = title;
             Description = description;
             CreatedAt = createdAt;
+            PreviewId = previewId;
             VideoData = videoData;
         }
 

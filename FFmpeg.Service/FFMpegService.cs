@@ -8,13 +8,13 @@ namespace FFmpeg.Service
     /// </summary>
     public static class FFMpegService
     {
-        public static async Task ConvertToHlsAsync(Uri input, string filePath, VideoSize size)
+        public static async Task ConvertToH264Async(string input, string filePath, VideoSize size)
         {
             Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
 
-            var inputMedia = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(input.AbsoluteUri);
+            var inputMedia = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(input);
             var inputVideo = inputMedia.VideoStreams.First().SetSize(size).SetCodec(VideoCodec.h264);
-            var inputAudio = inputMedia.AudioStreams.First().SetCodec(AudioCodec.aac);
+            var inputAudio = inputMedia.AudioStreams.FirstOrDefault()?.SetCodec(AudioCodec.aac);
 
             var format = Path.GetExtension(filePath).Replace(".", "");
             var result = await Xabe.FFmpeg.FFmpeg.Conversions.New()
@@ -25,6 +25,11 @@ namespace FFmpeg.Service
                 .Start();
         }
 
+        public static async Task GeneratePreview(string input, string filePath)
+        {
+            var result = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Snapshot(input, filePath, TimeSpan.FromSeconds(1));
+            await result.Start();
+        }
 
         public static VideoResolution Convert(this VideoSize size)
         {

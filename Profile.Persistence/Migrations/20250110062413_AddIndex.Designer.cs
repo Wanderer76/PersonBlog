@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Profile.Persistence;
@@ -11,9 +12,11 @@ using Profile.Persistence;
 namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
-    partial class ProfileDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250110062413_AddIndex")]
+    partial class AddIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,7 +115,7 @@ namespace Profile.Persistence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 10, 6, 26, 31, 350, DateTimeKind.Unspecified).AddTicks(1537), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 10, 6, 24, 13, 505, DateTimeKind.Unspecified).AddTicks(8038), new TimeSpan(0, 0, 0, 0, 0)),
                             ProfileId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
                             Title = "Тест"
                         });
@@ -137,6 +140,7 @@ namespace Profile.Persistence.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("PreviewId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Title")

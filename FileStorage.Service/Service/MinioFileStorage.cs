@@ -118,9 +118,22 @@ namespace FileStorage.Service.Service
             return result.ObjectName;
         }
 
-        public Task PutFileAsync(Guid userId, Guid id, Stream input)
+        public async Task<string> PutFileAsync(Guid userId, Guid id, Stream input)
         {
-            throw new NotImplementedException();
+            if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(userId.ToString())))
+            {
+                await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs().WithBucket(userId.ToString()));
+            }
+
+            var result = await _client.PutObjectAsync(
+                                    new Minio.DataModel.Args.PutObjectArgs()
+                                    .WithBucket(userId.ToString())
+                                    .WithObject(GeFileNameFromId(id))
+                                    .WithObjectSize(input.Length)
+                                    .WithStreamData(input)
+                                    );
+
+            return result.ObjectName;
         }
 
         public async Task<string> GetFileUrlAsync(Guid userId, string objectName)

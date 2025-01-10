@@ -18,6 +18,8 @@ namespace Profile.Domain.Entities
         [ForeignKey(nameof(BlogId))]
         public Blog Blog { get; set; }
 
+        public string? PreviewId { get; set; }
+
         public List<VideoMetadata> VideoFiles { get; set; }
 
         [NotMapped]
