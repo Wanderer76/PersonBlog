@@ -6,9 +6,27 @@ import { useNavigate } from "react-router-dom"
 
 const AuthPageForm = function () {
     const url = 'http://localhost:7892/auth/api/Auth/login';
-    const [login, setLogin] = useState("");
-    const [password, setPassword] = useState("");
+
+    const [authForm, setAuthForm] = useState({
+        login: "",
+        password: ""
+    });
+
     const navigate = useNavigate()
+
+    function updateAuthForm(event) {
+        const key = event.target.name;
+        const value = event.target.value;
+
+        setAuthForm((prev) => ({
+
+            ...prev,
+            [key]: value
+
+        }))
+    }
+    console.log(authForm);
+
 
     async function sendAuthRequest(url, body) {
 
@@ -45,14 +63,14 @@ const AuthPageForm = function () {
                 <label>Войти</label>
                 <br />
 
-                <input className={styles.modalContent} placeholder="login" value={login}
-                    onChange={(e) => setLogin(e.target.value)} />
+                <input className={styles.modalContent} placeholder="login" value={authForm.login} name='login'
+                    onChange={updateAuthForm} />
 
-                <input className={styles.modalContent} placeholder="password" type="password" autoSave='false' value={password}
-                    onChange={(e) => setPassword(e.target.value)} />
+                <input className={styles.modalContent} placeholder="password" name='password' type="password" autoSave='false' value={authForm.password}
+                    onChange={updateAuthForm} />
 
                 <button className={styles.modalContent} onClick={() => {
-                    sendAuthRequest(url, { login, password })
+                    sendAuthRequest(url, authForm)
                 }
                 }>
                     Войти
