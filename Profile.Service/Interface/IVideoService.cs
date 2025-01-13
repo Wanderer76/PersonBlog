@@ -17,11 +17,11 @@ namespace Profile.Service.Interface
 
     }
 
-    internal class VideoService : IVideoService
+    internal class DefaultVideoService : IVideoService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
 
-        public VideoService(IReadWriteRepository<IProfileEntity> context)
+        public DefaultVideoService(IReadWriteRepository<IProfileEntity> context)
         {
             _context = context;
         }

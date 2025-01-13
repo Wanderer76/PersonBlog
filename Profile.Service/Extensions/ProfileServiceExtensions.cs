@@ -1,6 +1,4 @@
-﻿using FFmpeg.Service;
-using FFMpegCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Profile.Service.Interface;
 using Profile.Service.Interface.Implementation;
 
@@ -13,6 +11,7 @@ namespace Profile.Service.Extensions
             services.AddScoped<IProfileService, DefaultProfileService>();
             services.AddScoped<IPostService,DefaultPostService>();
             services.AddScoped<IBlogService, DefaultBlogService>();
+            services.AddScoped<IVideoService, DefaultVideoService>();
             //services.AddFFMpeg(new FFOptions
             //{
             //    BinaryFolder = "../ffmpeg",

@@ -52,6 +52,7 @@ export function CreatePostForm(props) {
             await uploadFile(postId);
         }
         props.onHandleClose();
+        window.location.reload()
     }
 
     async function uploadFile(postId) {

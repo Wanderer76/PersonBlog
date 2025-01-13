@@ -47,14 +47,14 @@ const CommonProfileData = function (props) {
         const url = "/profile/Blog/detail";
         if (hasMounted.current) return;
 
-        function sendRequest() {
-            API.get(url, {
+        async function sendRequest() {
+            await API.get(url, {
                 headers: {
                     'Authorization': JwtTokenService.getFormatedTokenForHeader(),
                     'Content-Type': 'appplication/json'
                 },
             }).then(response => {
-                if (response.status===200) {
+                if (response.status === 200) {
                     hasMounted.current = true;
                     return response.data
                 }
