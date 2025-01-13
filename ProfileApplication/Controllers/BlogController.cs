@@ -9,8 +9,6 @@ using Shared.Services;
 using Shared.Utils;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
-using Shared.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace ProfileApplication.Controllers
 {
@@ -20,14 +18,13 @@ namespace ProfileApplication.Controllers
     {
         private readonly IPostService _postService;
         private readonly IBlogService _blogService;
-        private readonly IReadWriteRepository<IProfileEntity> _context;
-        private static Dictionary<Guid, PostModel> _postsCache = new();
+        private readonly IVideoService _videoService;
 
-        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IReadWriteRepository<IProfileEntity> context) : base(logger)
+        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IVideoService videoService) : base(logger)
         {
             _postService = postService;
             _blogService = blogService;
-            _context = context;
+            _videoService = videoService;
         }
 
         [Authorize]
@@ -104,34 +101,10 @@ namespace ProfileApplication.Controllers
         public async Task<IActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
         {
             var userId = HttpContext.GetUserFromContext();
-
-            var metadata = await _context.Get<VideoMetadata>().FirstOrDefaultAsync(x => x.PostId == uploadVideoChunk.PostId);
-            if (metadata == null)
-            {
-                metadata = new VideoMetadata
-                {
-                    Id = GuidService.GetNewGuid(),
-                    FileExtension = uploadVideoChunk.FileExtension,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    ContentType = uploadVideoChunk.ChunkData.ContentType,
-                    PostId = uploadVideoChunk.PostId,
-                    IsProcessed = true,
-                    Name = uploadVideoChunk.FileName,
-                    Resolution = FileStorage.Service.Models.VideoResolution.Original,
-                    ObjectName = string.Empty
-                };
-                _context.Add(metadata);
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-            }
             try
             {
+                var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
+
                 using var data = uploadVideoChunk.ChunkData.OpenReadStream();
                 await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
                 {
@@ -141,18 +114,6 @@ namespace ProfileApplication.Controllers
                     ChunkData = data,
                     PostId = uploadVideoChunk.PostId
                 });
-
-                if (uploadVideoChunk.TotalChunkCount == uploadVideoChunk.ChunkNumber)
-                {
-                    _context.Add(new CombineFileChunksEvent
-                    {
-                        Id = GuidService.GetNewGuid(),
-                        VideoMetadataId = metadata.Id,
-                        IsCompleted = false,
-                        CreatedAt = DateTimeOffset.UtcNow
-                    });
-                    await _context.SaveChangesAsync();
-                }
             }
             catch (Exception ex)
             {

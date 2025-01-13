@@ -197,6 +197,18 @@ namespace Profile.Service.Interface.Implementation
                 FileId = metadata.Id,
                 ChunkNumber = uploadVideoChunkDto.ChunkNumber,
             });
+
+            if (uploadVideoChunkDto.TotalChunkCount == uploadVideoChunkDto.ChunkNumber)
+            {
+                _context.Add(new CombineFileChunksEvent
+                {
+                    Id = GuidService.GetNewGuid(),
+                    VideoMetadataId = metadata.Id,
+                    IsCompleted = false,
+                    CreatedAt = DateTimeOffset.UtcNow
+                });
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

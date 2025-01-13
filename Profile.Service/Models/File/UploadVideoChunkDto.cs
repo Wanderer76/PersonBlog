@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Profile.Service.Models.File
+﻿namespace Profile.Service.Models.File
 {
     public class UploadVideoChunkDto
     {

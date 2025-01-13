@@ -1,7 +1,6 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Profile.Domain.Entities;
 using Shared.Persistence;
 using Shared.Services;

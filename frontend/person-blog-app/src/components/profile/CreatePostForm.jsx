@@ -10,7 +10,7 @@ export function CreatePostForm(props) {
     const [maxProgress, setMaxProgress] = useState(0);
     const [showProgress, setShowProgress] = useState(false);
 
-    const CHUNK_SIZE = 35 * 1024 * 1024; // 5MB. You may want to lower this if you anticipate poor connections
+    const CHUNK_SIZE = 10 * 1024 * 1024; // 5MB. You may want to lower this if you anticipate poor connections
 
     function updateForm(event) {
         const key = event.target.name;
@@ -60,7 +60,6 @@ export function CreatePostForm(props) {
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
         let currentChunk = 0;
 
-        // const uploadProgress = document.getElementById('uploadProgress');
         setUploadProgress(0);
         setMaxProgress(totalChunks);
 
@@ -72,7 +71,6 @@ export function CreatePostForm(props) {
             await uploadChunk(chunk, currentChunk + 1, totalChunks, file.name, postId, '.mp4', file.size);
             currentChunk++;
             setUploadProgress(currentChunk);
-            //uploadProgress.value = currentChunk;
         }
         alert('Загрузка завершена');
     }
