@@ -11,5 +11,6 @@ namespace Profile.Service.Models.Post
         public PostType Type { get; set; }
         public IFormFile? Video { get; set; }
         public IFormFileCollection Photos { get; set; }
+        public bool IsPartial { get; set; }
     }
 }

@@ -17,6 +17,8 @@ namespace ProfileApplication.Controllers
     {
         private readonly IPostService _postService;
         private readonly IBlogService _blogService;
+        private static Dictionary<Guid, PostModel> _postsCache = new();
+
         public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService) : base(logger)
         {
             _postService = postService;
@@ -55,7 +57,6 @@ namespace ProfileApplication.Controllers
             return Ok(result);
         }
 
-
         //[HttpPut("edit")]
         //public async Task<IActionResult> EditBlog([FromBody] BlogCreateForm form)
         //{
@@ -75,6 +76,7 @@ namespace ProfileApplication.Controllers
                 Title = form.Title,
                 Video = form.Video,
                 Photos = form.Files,
+                IsPartial = form.IsPartial,
             });
 
             return Ok(result);
@@ -93,7 +95,7 @@ namespace ProfileApplication.Controllers
         }
 
         [HttpPut("/post/uploadChunk")]
-        public async Task<IActionResult> UploadVideoChunk()
+        public async Task<IActionResult> UploadVideoChunk([FromBody] UploadVideoChunkForm uploadVideoChunk)
         {
             return Ok();
         }

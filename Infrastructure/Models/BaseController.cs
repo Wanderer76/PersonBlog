@@ -7,7 +7,7 @@ namespace Infrastructure.Models
     [Route("api/[controller]")]
     public abstract class BaseController : ControllerBase
     {
-        private readonly ILogger<BaseController> _logger;
+        protected readonly ILogger<BaseController> _logger;
 
         protected BaseController(ILogger<BaseController> logger)
         {

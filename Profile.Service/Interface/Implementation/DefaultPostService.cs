@@ -41,7 +41,7 @@ namespace Profile.Service.Interface.Implementation
                 var video = postCreateDto.Video!;
                 videoId = GuidService.GetNewGuid();
 
-                var objectName = await storage.PutFileWithOriginalResolutionAsync(userProfileId, videoId!.Value, video.OpenReadStream());
+                var objectName = await storage.PutFileWithResolutionAsync(userProfileId, videoId!.Value, video.OpenReadStream());
 
                 var videoMetadata = new VideoMetadata
                 {

@@ -92,7 +92,7 @@ namespace FFMpeg.Cli
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
                     copyStream.Position = 0;
-                    var objectName = await storage.PutFileWithOriginalResolutionAsync(@event.UserProfileId, fileId, copyStream, videoSize.Convert());
+                    var objectName = await storage.PutFileWithResolutionAsync(@event.UserProfileId, fileId, copyStream, videoSize.Convert());
                     var newVideoMetadata = new VideoMetadata
                     {
                         Id = fileId,
