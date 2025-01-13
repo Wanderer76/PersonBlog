@@ -6,7 +6,7 @@ namespace Profile.Service.Interface
     //TODO добавить кеширование
     public interface IPostService
     {
-        Task<Guid> CreatePost(PostCreateDto postCreateDto);
+        Task<Guid> CreatePostAsync(PostCreateDto postCreateDto);
         /// <summary>
         /// </summary>
         /// <param name="postId"></param>
@@ -21,6 +21,7 @@ namespace Profile.Service.Interface
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);
+        Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
     }
 
 }

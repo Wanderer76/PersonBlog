@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Profile.Persistence;
@@ -11,9 +12,11 @@ using Profile.Persistence;
 namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
-    partial class ProfileDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250113100214_AddProcessed")]
+    partial class AddProcessed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,30 +115,10 @@ namespace Profile.Persistence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 13, 11, 20, 59, 774, DateTimeKind.Unspecified).AddTicks(7224), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 1, 13, 10, 2, 13, 68, DateTimeKind.Unspecified).AddTicks(8646), new TimeSpan(0, 0, 0, 0, 0)),
                             ProfileId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
                             Title = "Тест"
                         });
-                });
-
-            modelBuilder.Entity("Profile.Domain.Entities.CombineFileChunksEvent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid>("VideoMetadataId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("CombineFileChunksEvents", "Profile");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Post", b =>

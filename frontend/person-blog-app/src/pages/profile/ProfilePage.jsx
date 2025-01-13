@@ -15,7 +15,6 @@ export class ProfilePage extends React.Component {
 
     updateId(id) {
         this.setState({ blogId: id })
-        console.log("update " + this.state.blogId)
     }
 
     render() {

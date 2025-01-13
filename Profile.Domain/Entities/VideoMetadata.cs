@@ -4,6 +4,7 @@ namespace Profile.Domain.Entities
 {
     public class VideoMetadata : FileMetadata, IProfileEntity
     {
+        public bool IsProcessed { get; set; }
         public VideoResolution Resolution { get; set; }
     }
 }

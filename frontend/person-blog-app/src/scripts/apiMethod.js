@@ -16,12 +16,13 @@ API.interceptors.response.use(
             var status = await JwtTokenService.refreshToken()
             if (status === 200)
                 window.location.reload();
-
-            JwtTokenService.cleanAuth();
-            //const navigate = useNavigate();
-            // Проверяем, чтобы не было бесконечной петли редиректов
-            if (window.location.pathname !== '/auth') {
-                window.location.href = '/auth'
+            else {
+                JwtTokenService.cleanAuth();
+                //const navigate = useNavigate();
+                // Проверяем, чтобы не было бесконечной петли редиректов
+                if (window.location.pathname !== '/auth') {
+                    window.location.href = '/auth'
+                }
             }
             return Promise.reject(error); // Передать ошибку дальше
         } else if (error.response && error.response.status === 400) { // Пример обработки другой ошибки

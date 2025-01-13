@@ -21,7 +21,7 @@ namespace Profile.Service.Interface.Implementation
             _fileStorageFactory = fileStorageFactory;
         }
 
-        public async Task<Guid> CreatePost(PostCreateDto postCreateDto)
+        public async Task<Guid> CreatePostAsync(PostCreateDto postCreateDto)
         {
             var userProfileId = await _context.Get<AppProfile>()
                 .Where(x => x.UserId == postCreateDto.UserId)
@@ -41,7 +41,7 @@ namespace Profile.Service.Interface.Implementation
                 var video = postCreateDto.Video!;
                 videoId = GuidService.GetNewGuid();
 
-                var objectName = await storage.PutFileWithResolutionAsync(userProfileId, videoId!.Value, video.OpenReadStream());
+                var objectName = await storage.PutFileWithResolutionAsync(postId, videoId!.Value, video.OpenReadStream());
 
                 var videoMetadata = new VideoMetadata
                 {
@@ -55,7 +55,7 @@ namespace Profile.Service.Interface.Implementation
                     FileExtension = Path.GetExtension(video.FileName),
                     Resolution = VideoResolution.Original
                 };
-                var fileUrl = await storage.GetFileUrlAsync(userProfileId, objectName);
+                var fileUrl = await storage.GetFileUrlAsync(postId, objectName);
                 var videoCreateEvent = new VideoUploadEvent
                 {
                     Id = GuidService.GetNewGuid(),
@@ -115,16 +115,11 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
         {
-            var profileId = await _context.Get<Post>()
-                .Where(x => x.Id == postId)
-                .Select(x => x.Blog.ProfileId)
-                .FirstAsync();
-
             var videoData = await _context.Get<VideoMetadata>()
                 .Where(x => x.Id == fileMetadataId)
                 .FirstAsync();
             var storage = _fileStorageFactory.CreateFileStorage();
-            await storage.ReadFileByChunksAsync(profileId, videoData.ObjectName, offset, length, output);
+            await storage.ReadFileByChunksAsync(postId, videoData.ObjectName, offset, length, output);
             return fileMetadataId;
         }
 
@@ -160,11 +155,12 @@ namespace Profile.Service.Interface.Implementation
                                 x.Description,
                                 x.CreatedAt,
                                 previewUrl,
+                                x.VideoFiles.Any() ?
                                 new VideoMetadataModel(
                                     x.VideoFiles.FirstOrDefault().Id,
                                     x.VideoFiles.FirstOrDefault().Length,
                                     x.VideoFiles.FirstOrDefault().ContentType
-                                )
+                                ) : null
                             ));
             }
 
@@ -189,5 +185,18 @@ namespace Profile.Service.Interface.Implementation
             await _context.SaveChangesAsync();
         }
 
+        public async Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
+        {
+            var fileStorage = _fileStorageFactory.CreateFileStorage();
+            var metadata = await _context.Get<VideoMetadata>()
+                .Where(x => x.IsProcessed == true)
+                .FirstAsync(x => x.PostId == uploadVideoChunkDto.PostId);
+
+            await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId, GuidService.GetNewGuid(), uploadVideoChunkDto.ChunkData, new VideoChunkUploadingInfo
+            {
+                FileId = metadata.Id,
+                ChunkNumber = uploadVideoChunkDto.ChunkNumber,
+            });
+        }
     }
 }

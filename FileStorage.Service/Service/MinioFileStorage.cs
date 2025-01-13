@@ -1,5 +1,7 @@
 ﻿using FileStorage.Service.Models;
 using Minio;
+using Minio.ApiEndpoints;
+using Minio.DataModel;
 
 namespace FileStorage.Service.Service
 {
@@ -21,12 +23,14 @@ namespace FileStorage.Service.Service
             await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
                 .WithBucket(bucketId.ToString())
                 .WithObject(objectName)
-                .WithCallbackStream(async stream => await stream.CopyToAsync(output)));
+                .WithCallbackStream(stream => stream.CopyTo(output)));
         }
 
-        public Task RemoveFileAsync(Guid userId, Guid id)
+        public async Task RemoveFileAsync(Guid bucketId, string objectName)
         {
-            throw new NotImplementedException();
+            await _client.RemoveObjectAsync(new Minio.DataModel.Args.RemoveObjectArgs()
+                .WithBucket(bucketId.ToString())
+                .WithObject(objectName));
         }
 
         private string GeFileNameFromId(Guid fileId)
@@ -51,42 +55,9 @@ namespace FileStorage.Service.Service
             return buffer.Length;
         }
 
-        //public async Task<long> ReadFileByChunksAsync(Guid userId, Guid id, long offset, long length, string resolution, Stream output)
-        //{
-        //    await _client.GetObjectAsync(new Minio.DataModel.Args.GetObjectArgs()
-        //                .WithBucket(GeFileNameFromId(id))
-        //                .WithObject(resolution)
-        //                .WithOffsetAndLength(offset, length)
-        //                .WithCallbackStream(stream =>
-        //                {
-        //                    stream.CopyTo(output);
-        //                }));
-
-        //    return output.Length;
-        //}
-
-        //public async Task PutFileAsync(Guid userId, Guid fileId, string resolution, Stream input)
-        //{
-        //    if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(GeFileNameFromId(fileId))))
-        //    {
-        //        await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs().WithBucket(GeFileNameFromId(fileId)));
-        //    }
-
-        //    await _client.PutObjectAsync(
-        //               new Minio.DataModel.Args.PutObjectArgs()
-        //               .WithBucket(GeFileNameFromId(fileId))
-        //               .WithObject(resolution)
-        //               .WithObjectSize(input.Length)
-        //               .WithStreamData(input)
-        //               );
-        //}
-
         public async Task<string> PutFileWithResolutionAsync(Guid bucketId, Guid fileId, Stream input, VideoResolution resolution = VideoResolution.Original)
         {
-            if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(bucketId.ToString())))
-            {
-                await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs().WithBucket(bucketId.ToString()));
-            }
+            await CreateBucketIfNotExistAsync(bucketId);
 
             var result = await _client.PutObjectAsync(
                           new Minio.DataModel.Args.PutObjectArgs()
@@ -101,10 +72,7 @@ namespace FileStorage.Service.Service
 
         public async Task<string> PutFileAsync(Guid bucketId, Guid id, Stream input)
         {
-            if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(bucketId.ToString())))
-            {
-                await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs().WithBucket(bucketId.ToString()));
-            }
+            await CreateBucketIfNotExistAsync(bucketId);
 
             var result = await _client.PutObjectAsync(
                                     new Minio.DataModel.Args.PutObjectArgs()
@@ -134,6 +102,50 @@ namespace FileStorage.Service.Service
                                     .WithObject(GeFileNameFromId(fileId, resolution))
                                     .WithExpiry(604800));
             return result;
+        }
+
+        public async Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options, VideoResolution resolution = VideoResolution.Original)
+        {
+            await CreateBucketIfNotExistAsync(bucketId);
+
+            var result = await _client.PutObjectAsync(
+                          new Minio.DataModel.Args.PutObjectArgs()
+                          .WithBucket(bucketId.ToString())
+                          .WithObject(GeFileNameFromId(id, resolution))
+                          .WithObjectSize(input.Length)
+                          .WithHeaders(new Dictionary<string, string>
+                          {
+                              { "FileId", options.FileId.ToString() },
+                              { "ChunkNumber", options.ChunkNumber.ToString() },
+                              { "ChunkSize", input.Length.ToString() }
+                          })
+                          .WithStreamData(input));
+
+            return result.ObjectName;
+        }
+
+        private async Task CreateBucketIfNotExistAsync(Guid bucketId)
+        {
+            if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(bucketId.ToString())))
+            {
+                await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs()
+                    .WithBucket(bucketId.ToString()));
+            }
+        }
+
+        public async IAsyncEnumerable<(string Objectname, IDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, VideoChunkUploadingInfo options)
+        {
+            var a = _client.ListObjectsEnumAsync(new Minio.DataModel.Args.ListObjectsArgs()
+                .WithBucket(bucketId.ToString())
+                .WithIncludeUserMetadata(true)
+                .WithHeaders(new Dictionary<string, string>
+                          {
+                              { "FileId", options.FileId.ToString() },
+                          }));
+            await foreach (var item in a)
+            {
+                yield return (item.Key, item.UserMetadata);
+            }
         }
     }
 }

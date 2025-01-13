@@ -77,7 +77,7 @@ namespace FFMpeg.Cli
             var fileMetadata = await context.Get<VideoMetadata>()
                 .FirstAsync(x => x.ObjectName == @event.ObjectName);
 
-            var url = await storage.GetFileUrlAsync(@event.UserProfileId, @event.ObjectName);
+            var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
 
             var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
 
@@ -92,7 +92,7 @@ namespace FFMpeg.Cli
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
                     copyStream.Position = 0;
-                    var objectName = await storage.PutFileWithResolutionAsync(@event.UserProfileId, fileId, copyStream, videoSize.Convert());
+                    var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, fileId, copyStream, videoSize.Convert());
                     var newVideoMetadata = new VideoMetadata
                     {
                         Id = fileId,
