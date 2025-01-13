@@ -1,3 +1,4 @@
+import API from '../../scripts/apiMethod';
 import { saveAccessToken, saveRefreshToken } from '../../scripts/TokenStrorage';
 import styles from './AuthPage.module.css';
 import React, { useState } from "react";

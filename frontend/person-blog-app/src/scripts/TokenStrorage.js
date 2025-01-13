@@ -26,17 +26,30 @@ export class JwtTokenService {
     static async refreshToken() {
         const url = 'http://localhost:7892/auth/api/Auth/refresh?refreshToken=' + getRefreshToken();
         console.log(url)
-        var response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
+
+        if (this.isAuth()) {
+            var response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            if (response.status === 200) {
+                const data = await response.json();
+                saveAccessToken(data.accessToken);
+                saveRefreshToken(data.refreshToken);
             }
-        })
-        if (response.status === 200) {
-            const data = await response.json();
-            saveAccessToken(data.accessToken);
-            saveRefreshToken(data.refreshToken);
+            if (response.status === 401) {
+                this.cleanAuth();
+            }
+            return response.status;
         }
+        return 401;
+    }
+
+    static cleanAuth() {
+        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+        sessionStorage.removeItem(REFRESH_TOKEN_KEY);
     }
 
     static isAuth() {

@@ -19,7 +19,7 @@ namespace Infrastructure.Extensions
                     {
                         //ValidateIssuer = true,
                         //ValidateAudience = true,
-                        //ValidateLifetime = true,
+                        ValidateLifetime = true,
                         //ValidateIssuerSigningKey = true,
                         ValidIssuer = AuthOptions.ISSUER,
                         ValidAudience = AuthOptions.AUDIENCE,

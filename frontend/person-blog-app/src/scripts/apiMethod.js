@@ -1,0 +1,37 @@
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // React Router v6
+import { JwtTokenService } from './TokenStrorage';
+
+const API = axios.create({
+    baseURL: 'http://localhost:7892', // Ваш базовый URL
+
+});
+
+API.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response && error.response.status === 401) {
+            // Обработка ошибки 401
+            console.error('Ошибка авторизации (401):', error);
+            var status = await JwtTokenService.refreshToken()
+            if (status === 200)
+                window.location.reload();
+
+            JwtTokenService.cleanAuth();
+            //const navigate = useNavigate();
+            // Проверяем, чтобы не было бесконечной петли редиректов
+            if (window.location.pathname !== '/auth') {
+                window.location.href = '/auth'
+            }
+            return Promise.reject(error); // Передать ошибку дальше
+        } else if (error.response && error.response.status === 400) { // Пример обработки другой ошибки
+            // Обработка ошибки 400
+            console.error('Ошибка 400:', error);
+            // Обработка ошибки, например, показать модальное окно пользователю
+            return Promise.reject(error);
+        }
+        return Promise.reject(error); // Передать остальные ошибки дальше
+    }
+);
+
+export default API;

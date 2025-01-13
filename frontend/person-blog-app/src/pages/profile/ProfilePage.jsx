@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import './ProfilePage.css'
+import { CreatePostForm } from "../../components/profile/CreatePostForm";
+import API from "../../scripts/apiMethod";
 
 export class ProfilePage extends React.Component {
 
@@ -43,20 +45,19 @@ const CommonProfileData = function (props) {
     })
 
     useEffect(() => {
-        const url = "http://localhost:7892/profile/Blog/detail";
+        const url = "/profile/Blog/detail";
         if (hasMounted.current) return;
 
         function sendRequest() {
-            fetch(url, {
+            API.get(url, {
                 headers: {
                     'Authorization': JwtTokenService.getFormatedTokenForHeader(),
                     'Content-Type': 'appplication/json'
                 },
-                method: 'GET'
             }).then(response => {
-                if (response.ok) {
+                if (response.status===200) {
                     hasMounted.current = true;
-                    return response.json()
+                    return response.data
                 }
                 if (response.status === 401) {
                     JwtTokenService.refreshToken();
@@ -88,47 +89,42 @@ const CommonProfileData = function (props) {
 const BlogPosts = function (props) {
 
     const hasMounted = useRef(false);
+    const [showCreateForm, setShowCreateForm] = useState(false);
     const [posts, setPosts] = useState([{
-        id: "7a1c3e30-eccb-4fc4-823d-62af6b1ff9df",
+        id: null,
         type: 1,
-        title: "Тестовое видео",
-        description: "Тестовое видео",
+        title: "",
+        description: "",
         createdAt: "2025-01-09T08:31:44.652343+00:00",
         previewId: null,
         videoData: {
-            id: "5bf456a0-4636-4934-af21-1675aa0505f0",
+            id: null,
             length: 18851336,
             contentType: "video/mp4"
         }
     }])
 
     useEffect(() => {
-        const url = `http://localhost:7892/profile/Blog/posts/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
+        const url = `/profile/Blog/posts/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
         if (hasMounted.current) return;
 
-        function sendRequest() {
-            fetch(url, {
-                headers: {
-                    'Authorization': JwtTokenService.getFormatedTokenForHeader(),
-                    'Content-Type': 'appplication/json'
-                },
-                method: 'GET'
-            }).then(response => {
-                if (response.ok) {
-                    hasMounted.current = true;
-                    return response.json()
-                }
-                if (response.status === 401) {
-                    JwtTokenService.refreshToken();
-                    window.location.reload();
-                }
-            })
-                .then(result => {
-                    setPosts(result.posts);
-                    console.log(result);
-                }, [])
-        }
-        sendRequest();
+        API.get(url, {
+            headers: {
+                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null,
+                'Content-Type': 'appplication/json'
+            },
+        }).then(response => {
+            if (response.status === 200) {
+                hasMounted.current = true;
+                var result = response.data;
+                setPosts(result.posts);
+            }
+            if (response.status === 401) {
+                JwtTokenService.refreshToken();
+                window.location.reload();
+            }
+        }, [])
+
     })
 
 
@@ -137,8 +133,9 @@ const BlogPosts = function (props) {
             <h4>
                 Посты
                 <br />
-                <button>Создать</button>
+                <button onClick={() => setShowCreateForm(true)}>Создать</button>
             </h4>
+            {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)}></CreatePostForm>}
             <table>
                 <thead>
                     <tr>
