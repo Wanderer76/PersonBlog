@@ -10,9 +10,10 @@ namespace Profile.Service.Models.Post
         public string? Description { get; }
         public DateTimeOffset CreatedAt { get; }
         public string? PreviewId { get; }
-        public VideoMetadataModel VideoData { get; }
+        public bool IsProcessed { get; }
+        public VideoMetadataModel? VideoData { get; }
 
-        public PostModel(Guid id, PostType type, string title, string? description, DateTimeOffset createdAt, string? previewId, VideoMetadataModel videoData)
+        public PostModel(Guid id, PostType type, string title, string? description, DateTimeOffset createdAt, string? previewId, VideoMetadataModel? videoData, bool isProcessed)
         {
             Id = id;
             Type = type;
@@ -21,6 +22,7 @@ namespace Profile.Service.Models.Post
             CreatedAt = createdAt;
             PreviewId = previewId;
             VideoData = videoData;
+            IsProcessed = isProcessed;
         }
 
         public override bool Equals(object? obj)

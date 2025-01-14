@@ -6,11 +6,14 @@
         public long Length { get; }
         public string ContentType { get; }
 
-        public VideoMetadataModel(Guid id, long length, string contentType)
+        public IEnumerable<int> Resolutions { get; set; }
+
+        public VideoMetadataModel(Guid id, long length, string contentType, IEnumerable<int> resolutions)
         {
             Id = id;
             Length = length;
             ContentType = contentType;
+            Resolutions = resolutions;
         }
 
         public override bool Equals(object? obj)

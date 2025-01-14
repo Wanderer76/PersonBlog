@@ -3,6 +3,7 @@ import { JwtTokenService } from "../../scripts/TokenStrorage";
 import './ProfilePage.css'
 import { CreatePostForm } from "../../components/profile/CreatePostForm";
 import API from "../../scripts/apiMethod";
+import VideoPlayer from '../../components/VideoPlayer/VideoPlayer'
 
 export class ProfilePage extends React.Component {
 
@@ -94,13 +95,15 @@ const BlogPosts = function (props) {
         type: 1,
         title: "",
         description: "",
-        createdAt: "2025-01-09T08:31:44.652343+00:00",
+        createdAt: null,
         previewId: null,
         videoData: {
             id: null,
-            length: 18851336,
-            contentType: "video/mp4"
-        }
+            length: 0,
+            contentType: null,
+            resolutions: [] | Array
+        } | null,
+        isProcessed: true
     }])
 
     useEffect(() => {
@@ -126,6 +129,18 @@ const BlogPosts = function (props) {
 
     })
 
+    async function handleRemove(id) {
+        const url = `profile/post/delete/${id}`;
+        const response = await API.delete(url, {
+            headers: {
+                Authorization: JwtTokenService.getFormatedTokenForHeader()
+            }
+        });
+        if (response.status === 200) {
+            setPosts(posts.filter(x => x.id !== id))
+        }
+    }
+
 
     return (
         <div>
@@ -143,6 +158,7 @@ const BlogPosts = function (props) {
                         <th scope="col">Дата создания</th>
                         <th scope="col">Тип</th>
                         <th scope="col">Видео</th>
+                        <th scope="col"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -153,7 +169,8 @@ const BlogPosts = function (props) {
                             <td>{x.description}</td>
                             <td>{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
                             <td>{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
-                            <td>{x.previewId === null ? <></> : getVideo(x)} </td>
+                            <td>{x.type === 1 && x.isProcessed ? <p>В обработке</p> : getVideo(x)} </td>
+                            <td><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
                         </tr>
                     })}
                 </tbody>
@@ -163,9 +180,15 @@ const BlogPosts = function (props) {
 }
 
 function getVideo(props) {
-    const url = `http://localhost:7892/profile/Blog/video/chunks?postId=${props.id}&resolution=1080`;
+    const url = `http://localhost:7892/profile/Blog/video/chunks?postId=${props.id}&resolution=`;
     return <>
-        <video controls poster={props.previewId} width={500}>
-            <source src={url}></source></video>
+
+        {/* <video controls poster={props.previewId} width={500}>
+            <source src={url}></source></video> */}
+        <VideoPlayer thumbnail={props.previewId} videoUrl={url} qualities={props.videoData.resolutions.map(x => {
+            return { path: url + x, label: x }
+        })}>
+            
+        </VideoPlayer >
     </>
 }

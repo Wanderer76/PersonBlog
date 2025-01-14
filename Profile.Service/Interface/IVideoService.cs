@@ -1,20 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FileStorage.Service.Models;
+using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Service.Models.File;
 using Shared.Persistence;
 using Shared.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Profile.Service.Interface
 {
     public interface IVideoService
     {
-        public Task<VideoMetadata> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk);
-
+        Task<VideoMetadata> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk);
     }
 
     internal class DefaultVideoService : IVideoService
@@ -30,6 +25,7 @@ namespace Profile.Service.Interface
         {
             var metadata = await _context.Get<VideoMetadata>()
                 .FirstOrDefaultAsync(x => x.PostId == uploadVideoChunk.PostId);
+
             if (metadata == null)
             {
                 metadata = new VideoMetadata
@@ -41,7 +37,7 @@ namespace Profile.Service.Interface
                     PostId = uploadVideoChunk.PostId,
                     IsProcessed = true,
                     Name = uploadVideoChunk.FileName,
-                    Resolution = FileStorage.Service.Models.VideoResolution.Original,
+                    Resolution = VideoResolution.Original,
                     ObjectName = string.Empty
                 };
                 _context.Add(metadata);
@@ -51,6 +47,4 @@ namespace Profile.Service.Interface
             return metadata;
         }
     }
-
-
 }

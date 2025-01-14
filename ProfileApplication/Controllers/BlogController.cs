@@ -90,6 +90,7 @@ namespace ProfileApplication.Controllers
         //}
 
         [HttpDelete("/post/delete/{id:guid}")]
+        [Authorize]
         public async Task<IActionResult> DeletePost(Guid id)
         {
             await _postService.RemovePostByIdAsync(id);

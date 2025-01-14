@@ -148,6 +148,7 @@ namespace Profile.Service.Interface.Implementation
             foreach (var x in pagedPosts.Posts)
             {
                 var previewUrl = string.IsNullOrWhiteSpace(x.PreviewId) ? null : await fileStorage.GetFileUrlAsync(profileId, x.PreviewId);
+                var isProcessed = x.VideoFiles.Count != 0 ? x.VideoFiles.Any(a => a.IsProcessed) : false;
                 posts.Add(new PostModel(
                                 x.Id,
                                 x.Type,
@@ -155,12 +156,17 @@ namespace Profile.Service.Interface.Implementation
                                 x.Description,
                                 x.CreatedAt,
                                 previewUrl,
-                                x.VideoFiles.Any() ?
+                                x.VideoFiles.Count != 0 && !isProcessed ?
                                 new VideoMetadataModel(
                                     x.VideoFiles.FirstOrDefault().Id,
                                     x.VideoFiles.FirstOrDefault().Length,
-                                    x.VideoFiles.FirstOrDefault().ContentType
-                                ) : null
+                                    x.VideoFiles.FirstOrDefault().ContentType,
+                                    x.VideoFiles
+                                    .Select(x => (int)x.Resolution)
+                                    .Where(x => x != 0)
+                                    .OrderBy(x => x)
+                                ) : null,
+                                isProcessed
                             ));
             }
 

@@ -96,13 +96,14 @@ namespace FFMpeg.Cli
                     var newVideoMetadata = new VideoMetadata
                     {
                         Id = fileId,
-                        ContentType = fileMetadata.ContentType,
+                        ContentType = fileMetadata.ContentType,//"application/x-mpegURL",//
                         ObjectName = objectName,
                         CreatedAt = DateTime.UtcNow,
                         Length = copyStream.Length,
                         Name = @event.ObjectName,
-                        FileExtension = Path.GetExtension(fileName),
+                        FileExtension = fileMetadata.FileExtension,
                         PostId = fileMetadata.PostId,
+                        IsProcessed = false,
                         Resolution = videoSize.Convert(),
                     };
 
@@ -152,6 +153,10 @@ namespace FFMpeg.Cli
 
             context.Attach(@event);
             @event.IsCompleted = true;
+
+            context.Attach(fileMetadata);
+            fileMetadata.IsProcessed = false;
+
             await context.SaveChangesAsync();
         }
 

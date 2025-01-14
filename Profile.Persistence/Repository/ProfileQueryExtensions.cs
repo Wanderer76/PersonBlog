@@ -33,10 +33,11 @@ namespace Profile.Persistence.Repository
         {
             var totalPostsCount = await context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
+                .Where(x=>x.IsDeleted == false)
                 .CountAsync();
 
             var posts = await context.Get<Post>()
-                .Include(x => x.VideoFiles.Where(x => x.IsProcessed == true))
+                .Include(x => x.VideoFiles)
                 .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((page - 1) * limit)
