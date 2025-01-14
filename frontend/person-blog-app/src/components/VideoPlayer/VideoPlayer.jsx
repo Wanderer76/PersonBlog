@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import videojs from 'video.js';
-import "videojs-contrib-quality-levels";
-import hlsQualitySelector from "videojs-hls-quality-selector";
 import 'video.js/dist/video-js.css';
+import 'videojs-resolution-switcher-v8';
 
 // FOR MORE VIDEO PLAYER OPTIONS, VISIT: https://videojs.com/guides/options/
 
@@ -10,17 +9,24 @@ import 'video.js/dist/video-js.css';
 // const videoUrl = 'http://localhost:8000/videos/587a4d55-661f-4a2c-b3d1-b3c4dfbfbfde/playlist.m3u8';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, videoUrl, qualities }) => {
+export const VideoPlayer = ({ thumbnail, qualities }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
-
   const options = {
     autoplay: false,
     controls: true,
     playbackRates: [0.5, 1, 1.5, 2],
-    height: 400,
+    width: 500,
+    height: 500,
     responsive: true,
     poster: thumbnail,
+    plugins: {
+      videoJsResolutionSwitcher: {
+        default: 480,
+        dynamicLabel: true,
+        ui:true
+      }
+    },
     controlBar: {
       playToggle: true,
       volumePanel: {
@@ -30,47 +36,44 @@ export const VideoPlayer = ({ thumbnail, videoUrl, qualities }) => {
         forward: 10,
         backward: 10
       },
-      html5: {
-        nativeAudioTracks: true,
-        nativeVideoTracks: true,
-        nativeTextTracks: true
-      },
+
       fullscreenToggle: true
-    },
-    sources: qualities.map(x => {
-      return {
-        src: x.path,
-        label: `${x.label}p`,
-        type: 'video/mp4'//'application/x-mpegURL'
-      }
-    }),
+    }
   };
 
-  console.log(options.sources)
-
   useEffect(() => {
-
     // Make sure Video.js player is only initialized once
     if (!playerRef.current) {
       // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode. 
       const videoElement = document.createElement("video-js");
 
       videoElement.classList.add('vjs-big-play-centered');
+      videoElement.classList.add('vjs-default-skin');
       videoRef.current.appendChild(videoElement);
-      const player = playerRef.current = videojs(videoElement, options, () => {
-        videojs.log('player is ready');
-
-        ///  onReady && onReady(player);
+      playerRef.current = videojs(videoElement, options, function () {
+        var player = this;
+        player.on('resolutionchange', function () {
+          console.log(player);
+          console.log(player.currentResolution());
+          player.play();
+        });
+        player.updateSrc(qualities.map(x => {
+          return {
+            src: x.path,
+            label: `${x.label}p`,
+            type: 'video/mp4'/*'application/x-mpegURL'*/,
+            res: x.label
+          }
+        }).reverse())
       });
-      player.hlsQualitySelector = hlsQualitySelector;
-      player.hlsQualitySelector();
+
     } else {
       const player = playerRef.current;
 
       player.autoplay(options.autoplay);
       player.src(options.sources);
     }
-  }, [options, videoRef]);
+  }, [options, videoRef, qualities]);
 
   React.useEffect(() => {
     const player = playerRef.current;
@@ -82,29 +85,76 @@ export const VideoPlayer = ({ thumbnail, videoUrl, qualities }) => {
     };
   }, [playerRef]);
 
-
-  function handleQualitySwitch(event) {
-    const player = playerRef.current;
-    const quality = event.target.name;
-    if (player !== null)
-      player.src(options.sources.filter(x => x.label === quality)[0]);
-  }
-
   return (
     <div data-vjs-player>
       <div
         ref={videoRef}
-        className=''
       >
-        <div id="quality-selector">
-          <button onClick={handleQualitySwitch} name="1080p">1080p</button>
-          <button onClick={handleQualitySwitch} name="720p">720p</button>
-          <button onClick={handleQualitySwitch} name="480p">480p</button>
-        </div>
+
       </div>
 
     </div>
   );
 }
 
+
 export default VideoPlayer;
+
+// export class VideoPlayer extends React.Component {
+
+//   constructor(props) {
+//     super(this.props);
+//     // ({ thumbnail, videoUrl, qualities }) =>
+//     this.videoRef = React.createRef();
+//     this.player = null;
+//     this.state = {
+//       thumbnail: props.thumbnail,
+//       videoUrl: props.videoUrl,
+//       qualities: props.qualities,
+//       options :{
+//         autoplay: false,
+//         controls: true,
+//         playbackRates: [0.5, 1, 1.5, 2],
+//         height: 400,
+//         responsive: true,
+//         poster: props.thumbnail,
+//         controlBar: {
+//           playToggle: true,
+//           volumePanel: {
+//             inline: false
+//           },
+//           skipButtons: {
+//             forward: 10,
+//             backward: 10
+//           },
+//           html5: {
+//             nativeAudioTracks: true,
+//             nativeVideoTracks: true,
+//             nativeTextTracks: true
+//           },
+//           fullscreenToggle: true
+//         },
+//         sources: props.qualities.map(x => {
+//           return {
+//             src: x.path,
+//             label: `${x.label}p`,
+//             type: 'video/mp4'//'application/x-mpegURL'
+//           }
+//         }),
+//       }
+//     }
+//   }
+
+//   componentDidMount() {
+//     this.player = videojs(this.videoRef.current, this.state.options);
+//     this.player.qualitySelector();
+//   }
+
+//   render() {
+//     return (
+//         <div data-vjs-player>
+//             <video ref={this.videoRef} className="video-js vjs-default-skin"/>
+//         </div>
+//     );
+// }
+// }

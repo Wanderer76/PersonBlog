@@ -4,6 +4,8 @@ import './ProfilePage.css'
 import { CreatePostForm } from "../../components/profile/CreatePostForm";
 import API from "../../scripts/apiMethod";
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer'
+import 'video.js';
+import 'video.js/dist/video-js.css';
 
 export class ProfilePage extends React.Component {
 
@@ -185,10 +187,13 @@ function getVideo(props) {
 
         {/* <video controls poster={props.previewId} width={500}>
             <source src={url}></source></video> */}
-        <VideoPlayer thumbnail={props.previewId} videoUrl={url} qualities={props.videoData.resolutions.map(x => {
+       
+        <VideoPlayer thumbnail={props.previewId} qualities={props.videoData.resolutions.map(x => {
             return { path: url + x, label: x }
         })}>
-            
+
         </VideoPlayer >
+
+       
     </>
 }
