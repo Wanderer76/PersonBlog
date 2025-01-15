@@ -10,7 +10,7 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "^7.1.1",
     "react-scripts": "5.0.1",
-    "video.js": "^8.21.0",
+    "video.js": "^8.17.3",
     "videojs-resolution-switcher-v8": "^1.0.12"
   },
   "scripts": {

@@ -5,7 +5,6 @@ import { CreatePostForm } from "../../components/profile/CreatePostForm";
 import API from "../../scripts/apiMethod";
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer'
 import 'video.js';
-import 'video.js/dist/video-js.css';
 
 export class ProfilePage extends React.Component {
 
