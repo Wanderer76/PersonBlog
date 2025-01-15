@@ -87,6 +87,8 @@ namespace FFMpeg.Cli
                 var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
                 try
                 {
+                    var dir = Path.Combine(path, fileId.ToString());
+                    await FFMpegService.CreateHls(new Uri(url).AbsoluteUri, dir);
                     await FFMpegService.ConvertToH264Async(new Uri(url).AbsoluteUri, fileName, videoSize);
                     using var fileStream = new FileStream(fileName, FileMode.Open);
                     using var copyStream = new MemoryStream();
