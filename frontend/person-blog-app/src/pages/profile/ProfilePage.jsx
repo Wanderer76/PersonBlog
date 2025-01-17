@@ -181,18 +181,18 @@ const BlogPosts = function (props) {
 }
 
 function getVideo(props) {
-    const url = `http://localhost:7892/profile/Blog/video/chunks?postId=${props.id}&resolution=`;
+    const url = `http://localhost:7892/profile/Blog/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
     return <>
 
         {/* <video controls poster={props.previewId} width={500}>
             <source src={url}></source></video> */}
-       
-        <VideoPlayer thumbnail={props.previewId} qualities={props.videoData.resolutions.map(x => {
-            return { path: url + x, label: x }
-        })}>
+
+        <VideoPlayer thumbnail={props.previewId} qualities={[
+            { path: url, label: 'd' }]
+        }>
 
         </VideoPlayer >
 
-       
+
     </>
 }

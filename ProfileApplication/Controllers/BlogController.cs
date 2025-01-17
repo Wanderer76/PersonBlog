@@ -9,6 +9,9 @@ using Shared.Services;
 using Shared.Utils;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
+using Shared.Persistence;
+using Microsoft.EntityFrameworkCore;
+using FileStorage.Service.Service;
 
 namespace ProfileApplication.Controllers
 {
@@ -19,12 +22,16 @@ namespace ProfileApplication.Controllers
         private readonly IPostService _postService;
         private readonly IBlogService _blogService;
         private readonly IVideoService _videoService;
+        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IFileStorageFactory fileStorageFactory;
 
-        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IVideoService videoService) : base(logger)
+        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IVideoService videoService, IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory) : base(logger)
         {
             _postService = postService;
             _blogService = blogService;
             _videoService = videoService;
+            _context = context;
+            this.fileStorageFactory = fileStorageFactory;
         }
 
         [Authorize]
@@ -134,13 +141,70 @@ namespace ProfileApplication.Controllers
             }
             const int ChunkSize = 1024 * 1024 * 1;
             var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId, resolution);
-            var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
-            using var stream = new MemoryStream();
-            await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
-            var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
-            FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
+
+            var fileMetadata1 = await _context.Get<Post>()
+    .Where(x => x.Id == postId)
+    .SelectMany(x => x.VideoFiles)
+    // .Where(x => x.Resolution == (VideoResolution)resolution)
+    .FirstAsync();
+
+            using var re = new MemoryStream();
+            await fileStorageFactory.CreateFileStorage()
+                              .ReadFileAsync(postId, fileMetadata1.ObjectName, re);
+
+
+
+            // var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
+            Response.Headers["Content-Length"] = $"application/x-mpegURL";
             using var outputStream = Response.Body;
-            await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
+            await outputStream.WriteAsync(re.GetBuffer().AsMemory(0, (int)re.Length));
+
+
+            //    using var stream = new MemoryStream();
+            //    await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
+            //    var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
+            //    FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
+            //    using var outputStream = Response.Body;
+            //    await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
+            return Ok();
+        }
+
+        [HttpGet("video/v2/{postId}/chunks/{file}")]
+        public async Task<IActionResult> GetVideoChunk2(Guid postId, string? file)
+        {
+            //if (!await _postService.HasVideoExistByPostIdAsync(postId))
+            //{
+            //    return NotFound();
+            //}
+            const int ChunkSize = 1024 * 1024 * 1;
+            // var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
+
+
+
+            var fileMetadata1 = await _context.Get<Post>()
+    .Where(x => x.Id == postId)
+    .SelectMany(x => x.VideoFiles)
+    // .Where(x => x.Resolution == (VideoResolution)resolution)
+    .FirstAsync();
+
+            var fileName = file ?? fileMetadata1.ObjectName;
+
+            var re = new MemoryStream();
+            await fileStorageFactory.CreateFileStorage()
+                              .ReadFileAsync(postId, fileName.Contains(".ts") ? $"{fileMetadata1.Id}_0/{fileName}" : fileName, re);
+
+            re.Position = 0;
+
+            // var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
+            return File(re, "application/x-mpegURL");
+
+
+            //    using var stream = new MemoryStream();
+            //    await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
+            //    var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
+            //    FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
+            //    using var outputStream = Response.Body;
+            //    await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
             return Ok();
         }
 

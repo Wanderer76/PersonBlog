@@ -20,13 +20,13 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
     height: 500,
     responsive: true,
     poster: thumbnail,
-    plugins: {
-      videoJsResolutionSwitcher: {
-        default: 480,
-        dynamicLabel: true,
-        ui:true
-      }
-    },
+    // plugins: {
+    //   videoJsResolutionSwitcher: {
+    //     default: 480,
+    //     dynamicLabel: true,
+    //     ui:true
+    //   }
+    // },
     controlBar: {
       playToggle: true,
       volumePanel: {
@@ -38,7 +38,15 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
       },
 
       fullscreenToggle: true
-    }
+    },
+    sources:qualities.map(x => {
+      return {
+        src: x.path,
+        label: `${x.label}p`,
+        type: 'application/x-mpegURL',
+        res: x.label
+      }
+    }).reverse()
   };
 
   useEffect(() => {
@@ -52,19 +60,20 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
       videoRef.current.appendChild(videoElement);
       playerRef.current = videojs(videoElement, options, function () {
         var player = this;
+        console.log(options.sources)
         player.on('resolutionchange', function () {
           console.log(player);
           console.log(player.currentResolution());
-          player.play();
+   
         });
-        player.updateSrc(qualities.map(x => {
-          return {
-            src: x.path,
-            label: `${x.label}p`,
-            type: 'video/mp4'/*'application/x-mpegURL'*/,
-            res: x.label
-          }
-        }).reverse())
+        // player.updateSrc(qualities.map(x => {
+        //   return {
+        //     src: x.path,
+        //     label: `${x.label}p`,
+        //     type: 'application/x-mpegURL',
+        //     res: x.label
+        //   }
+        // }).reverse())
       });
 
     } else {

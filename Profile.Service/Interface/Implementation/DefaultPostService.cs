@@ -102,7 +102,7 @@ namespace Profile.Service.Interface.Implementation
             var fileMetadata = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
                 .SelectMany(x => x.VideoFiles)
-                .Where(x => x.Resolution == (VideoResolution)resolution)
+               // .Where(x => x.Resolution == (VideoResolution)resolution)
                 .FirstAsync();
 
             return new FileMetadataModel(
@@ -163,8 +163,9 @@ namespace Profile.Service.Interface.Implementation
                                     x.VideoFiles.FirstOrDefault().ContentType,
                                     x.VideoFiles
                                     .Select(x => (int)x.Resolution)
-                                    .Where(x => x != 0)
-                                    .OrderBy(x => x)
+                                   // .Where(x => x != 0)
+                                    .OrderBy(x => x),
+                                    x.VideoFiles.FirstOrDefault().ObjectName
                                 ) : null,
                                 isProcessed
                             ));
