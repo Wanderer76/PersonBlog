@@ -39,19 +39,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseWhen(context => context.Request.Path.StartsWithSegments("/video"), appBuilder =>
-{
-    var provider = new FileExtensionContentTypeProvider();
-    // Add new mappings
-    provider.Mappings[".m3u8"] = "application/x-mpegURL";
-    provider.Mappings[".ts"] = "video/MP2T";
+//app.UseWhen(context => context.Request.Path.StartsWithSegments("/video"), appBuilder =>
+//{
+//    var provider = new FileExtensionContentTypeProvider();
+//    // Add new mappings
+//    provider.Mappings[".m3u8"] = "application/x-mpegURL";
+//    provider.Mappings[".ts"] = "video/MP2T";
 
-    appBuilder.UseStaticFiles(new StaticFileOptions
-    {
-        ContentTypeProvider = provider,
-        RequestPath = "/uploads"
-    });
-});
+//    appBuilder.UseStaticFiles(new StaticFileOptions
+//    {
+//        ContentTypeProvider = provider,
+//        RequestPath = "/uploads"
+//    });
+//});
 
 app.UseHttpsRedirection();
 app.UseRouting();

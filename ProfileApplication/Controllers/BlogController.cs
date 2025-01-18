@@ -12,6 +12,7 @@ using Profile.Service.Models.File;
 using Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using FileStorage.Service.Service;
+using System.IO;
 
 namespace ProfileApplication.Controllers
 {
@@ -24,14 +25,14 @@ namespace ProfileApplication.Controllers
         private readonly IVideoService _videoService;
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFileStorageFactory fileStorageFactory;
-
+        private static IFileStorage storage;
         public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IVideoService videoService, IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory) : base(logger)
         {
             _postService = postService;
             _blogService = blogService;
             _videoService = videoService;
             _context = context;
-            this.fileStorageFactory = fileStorageFactory;
+            storage = fileStorageFactory.CreateFileStorage();
         }
 
         [Authorize]
@@ -169,8 +170,8 @@ namespace ProfileApplication.Controllers
             return Ok();
         }
 
-        [HttpGet("video/v2/{postId}/chunks/{file}")]
-        public async Task<IActionResult> GetVideoChunk2(Guid postId, string? file)
+        [HttpGet("video/v2/{postId}/{resolution}/chunks/{file}")]
+        public async Task<IActionResult> GetVideoChunk2(Guid postId, string? file, int resolution)
         {
             //if (!await _postService.HasVideoExistByPostIdAsync(postId))
             //{
@@ -189,14 +190,20 @@ namespace ProfileApplication.Controllers
 
             var fileName = file ?? fileMetadata1.ObjectName;
 
+            if (fileName.Contains(".m3u8"))
+            {
+                Console.WriteLine();
+            }
             var re = new MemoryStream();
-            await fileStorageFactory.CreateFileStorage()
-                              .ReadFileAsync(postId, fileName.Contains(".ts") ? $"{fileMetadata1.Id}_0/{fileName}" : fileName, re);
+            await storage.ReadFileAsync(postId,
+                              fileName.Contains(".ts") ? $"{fileMetadata1.Id}_{resolution}/{fileName}" : fileName,
+                              re);
 
             re.Position = 0;
-
+            using var reader = new StreamReader(re);
+            string content = await reader.ReadToEndAsync();
+            return Content(content, "application/x-mpegURL");
             // var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
-            return File(re, "application/x-mpegURL");
 
 
             //    using var stream = new MemoryStream();
@@ -205,7 +212,36 @@ namespace ProfileApplication.Controllers
             //    FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
             //    using var outputStream = Response.Body;
             //    await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
-            return Ok();
+        }
+
+
+
+        [HttpGet("video/v2/{postId}/{resolution}/chunks/{file}/{playlist}")]
+        public async Task<IActionResult> GetVideoChunk3(Guid postId, string? file, int resolution, string playlist)
+        {
+            //if (!await _postService.HasVideoExistByPostIdAsync(postId))
+            //{
+            //    return NotFound();
+            //}
+            const int ChunkSize = 1024 * 1024 * 1;
+            // var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
+
+
+
+            var fileMetadata1 = await _context.Get<Post>()
+    .Where(x => x.Id == postId)
+    .SelectMany(x => x.VideoFiles)
+    // .Where(x => x.Resolution == (VideoResolution)resolution)
+    .FirstAsync();
+
+            var fileName = file ?? fileMetadata1.ObjectName;
+            var re = new MemoryStream();
+            await storage.ReadFileAsync(postId,
+                              $"{fileName}/{playlist}",
+                              re);
+
+            re.Position = 0;
+            return File(re, "application/x-mpegURL");
         }
 
 

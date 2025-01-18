@@ -12,7 +12,7 @@ namespace FFmpeg.Service
     /// </summary>
     public static class FFMpegService
     {
-        
+
         static FFMpegService()
         {
             Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
@@ -57,13 +57,13 @@ namespace FFmpeg.Service
             }
         }
 
-        public static async Task CreateHls(string input, string output,string fileName = "stream")
+        public static async Task CreateHls(string input, string output, 
+            string[] resolutions, 
+            string[] bitrates, 
+            string[] audioBitrates, 
+            string fileName, string masterName = "master")
         {
             string inputUrl = input;
-            string[] resolutions = { "1920x1080", "1280x720", "854x480", "640x360", "256x144" };
-            string[] bitrates = { "5M", "3M", "1500k", "1000k", "500k" };
-            string[] audioBitrates = { "96k", "96k", "64k", "48k", "48k" };
-
             StringBuilder filterComplexBuilder = new StringBuilder();
             filterComplexBuilder.Append("[0:v]split=").Append(resolutions.Length);
             for (int i = 1; i <= resolutions.Length; i++)
@@ -102,7 +102,7 @@ namespace FFmpeg.Service
             var mapVariants = mapVariantsBuilder.ToString().Trim();
 
 
-            var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{fileName}_%v/data%05d.ts -master_pl_name {fileName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{fileName}_%v.m3u8";
+            var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{fileName}_%v/data%05d.ts -master_pl_name {masterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{fileName}_%v/playlist.m3u8";
 
             Console.WriteLine($"ffmpeg {ffmpegCommand}");
 
@@ -121,7 +121,7 @@ namespace FFmpeg.Service
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                
+
             };
 
             Process process = new Process { StartInfo = processStartInfo };

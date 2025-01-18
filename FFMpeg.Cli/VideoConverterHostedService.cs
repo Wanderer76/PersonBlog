@@ -83,12 +83,16 @@ namespace FFMpeg.Cli
 
             // foreach (var videoSize in videoSizes)
             {
-                var fileId = Guid.Parse("1fe110cb-de27-440b-933a-8499a9d36986"); //GuidService.GetNewGuid();
-                var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
-                var dir = Path.Combine(path, fileId.ToString());
+                //var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
+                var dir = Path.Combine(path, fileMetadata.Id.ToString());
+                string[] resolutions = { "1920x1080", "1280x720", "854x480", "640x360", "256x144" };
+                string[] bitrates = { "5M", "3M", "1500k", "1000k", "500k" };
+                string[] audioBitrates = { "96k", "96k", "64k", "48k", "48k" };
+                var fileId = GuidService.GetNewGuid();
                 try
                 {
-                    await FFMpegService.CreateHls(new Uri(url).AbsoluteUri, dir, fileMetadata.Id.ToString());
+                    Directory.CreateDirectory(dir);
+                    await FFMpegService.CreateHls(new Uri(url).AbsoluteUri, dir, resolutions, bitrates, audioBitrates, fileId.ToString(), fileMetadata.Id.ToString());
                     foreach (var file in Directory.GetFiles(dir))
                     {
                         using var fileStream = new FileStream(file, FileMode.Open);

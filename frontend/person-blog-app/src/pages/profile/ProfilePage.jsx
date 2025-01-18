@@ -180,16 +180,21 @@ const BlogPosts = function (props) {
     );
 }
 
+function updateRes( postId, res, objectName ) {
+    return `http://localhost:7892/profile/Blog/video/v2/${postId}/${res}/chunks/${objectName}`;
+}
+
 function getVideo(props) {
-    const url = `http://localhost:7892/profile/Blog/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
+    const url = `http://localhost:7892/profile/Blog/video/v2/${props.id}/${1}/chunks/${props.videoData.objectName}`;
     return <>
 
         {/* <video controls poster={props.previewId} width={500}>
             <source src={url}></source></video> */}
 
-        <VideoPlayer thumbnail={props.previewId} qualities={[
-            { path: url, label: 'd' }]
-        }>
+        <VideoPlayer thumbnail={props.previewId} path={
+            { url: url, label: 'd', postId: props.id, res: 0, objectName: props.videoData.objectName }}
+            onSrc={updateRes}
+        >
 
         </VideoPlayer >
 

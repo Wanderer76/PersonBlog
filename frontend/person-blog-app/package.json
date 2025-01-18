@@ -13,6 +13,7 @@
     "react-router-dom": "^7.1.1",
     "react-scripts": "5.0.1",
     "video.js": "^8.17.3",
+    "videojs-quality-selector-hls": "^1.1.1",
     "videojs-resolution-switcher-v8": "^1.0.12"
   },
   "scripts": {
