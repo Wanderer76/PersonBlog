@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import './ProfilePage.css'
 import { CreatePostForm } from "../../components/profile/CreatePostForm";
-import API from "../../scripts/apiMethod";
+import API, { BaseApUrl } from "../../scripts/apiMethod";
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer'
 import 'video.js';
 
@@ -180,12 +180,12 @@ const BlogPosts = function (props) {
     );
 }
 
-function updateRes( postId, res, objectName ) {
-    return `http://localhost:7892/profile/Blog/video/v2/${postId}/${res}/chunks/${objectName}`;
+function updateRes(postId, res, objectName) {
+    return `${BaseApUrl}/profile/Video/video/v2/${postId}/${res}/chunks/${objectName}`;
 }
 
 function getVideo(props) {
-    const url = `http://localhost:7892/profile/Blog/video/v2/${props.id}/${1}/chunks/${props.videoData.objectName}`;
+    const url = `${BaseApUrl}/profile/Video/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
     return <>
 
         {/* <video controls poster={props.previewId} width={500}>

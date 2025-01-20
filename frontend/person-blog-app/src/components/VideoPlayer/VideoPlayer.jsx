@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import 'videojs-quality-selector-hls';
+import './qualitySelector/plugin.js';
 import 'hls.js';
 
 // FOR MORE VIDEO PLAYER OPTIONS, VISIT: https://videojs.com/guides/options/
@@ -21,13 +21,6 @@ export const VideoPlayer = ({ thumbnail, path, onSrc }) => {
     height: 500,
     responsive: true,
     poster: thumbnail,
-    // plugins: {
-    //   videoJsResolutionSwitcher: {
-    //     default: 480,
-    //     dynamicLabel: true,
-    //     ui:true
-    //   }
-    // },
     plugins: {
       qualitySelectorHls: {
         displayCurrentQuality: true,
@@ -80,8 +73,8 @@ export const VideoPlayer = ({ thumbnail, path, onSrc }) => {
         qualities.on('change', (a) => {
           // console.log(`asdsadsa^ ${onSrc(path.postId,2,path.objectName)}`);
 
-          options.sources = []
-          console.log(`asdsadsa^ ${player.currentSrc()}`);
+          // options.sources = []
+          // console.log(`asdsadsa^ ${player.currentSrc()}`);
           // player.src([
           //   {
           //     src: `${path.url}`,

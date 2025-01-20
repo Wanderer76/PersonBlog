@@ -92,7 +92,11 @@ namespace FFMpeg.Cli
                 try
                 {
                     Directory.CreateDirectory(dir);
-                    await FFMpegService.CreateHls(new Uri(url).AbsoluteUri, dir, resolutions, bitrates, audioBitrates, fileId.ToString(), fileMetadata.Id.ToString());
+                    await FFMpegService.CreateHls(new Uri(url).AbsoluteUri, dir,
+                        resolutions,
+                        bitrates, 
+                        audioBitrates, 
+                        fileId.ToString(), fileMetadata.Id.ToString());
                     foreach (var file in Directory.GetFiles(dir))
                     {
                         using var fileStream = new FileStream(file, FileMode.Open);
