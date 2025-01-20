@@ -143,105 +143,49 @@ namespace ProfileApplication.Controllers
             const int ChunkSize = 1024 * 1024 * 1;
             var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId, resolution);
 
-            var fileMetadata1 = await _context.Get<Post>()
-    .Where(x => x.Id == postId)
-    .SelectMany(x => x.VideoFiles)
-    // .Where(x => x.Resolution == (VideoResolution)resolution)
-    .FirstAsync();
-
-            using var re = new MemoryStream();
-            await fileStorageFactory.CreateFileStorage()
-                              .ReadFileAsync(postId, fileMetadata1.ObjectName, re);
-
-
-
-            // var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
-            Response.Headers["Content-Length"] = $"application/x-mpegURL";
+            var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
+            using var stream = new MemoryStream();
+            await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
+            var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
+            FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
             using var outputStream = Response.Body;
-            await outputStream.WriteAsync(re.GetBuffer().AsMemory(0, (int)re.Length));
-
-
-            //    using var stream = new MemoryStream();
-            //    await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
-            //    var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
-            //    FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
-            //    using var outputStream = Response.Body;
-            //    await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
+            await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
             return Ok();
         }
 
         [HttpGet("video/v2/{postId}/{resolution}/chunks/{file}")]
         public async Task<IActionResult> GetVideoChunk2(Guid postId, string? file, int resolution)
         {
-            //if (!await _postService.HasVideoExistByPostIdAsync(postId))
-            //{
-            //    return NotFound();
-            //}
-            const int ChunkSize = 1024 * 1024 * 1;
-            // var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
-
-
-
-            var fileMetadata1 = await _context.Get<Post>()
-    .Where(x => x.Id == postId)
-    .SelectMany(x => x.VideoFiles)
-    // .Where(x => x.Resolution == (VideoResolution)resolution)
-    .FirstAsync();
-
-            var fileName = file ?? fileMetadata1.ObjectName;
-
-            if (fileName.Contains(".m3u8"))
+            if (!await _postService.HasVideoExistByPostIdAsync(postId))
             {
-                Console.WriteLine();
+                return NotFound();
             }
-            var re = new MemoryStream();
+            const int ChunkSize = 1024 * 1024 * 1;
+            var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
+
+            var fileName = file ?? fileMetadata.ObjectName;
+
+            var result = new MemoryStream();
             await storage.ReadFileAsync(postId,
-                              fileName.Contains(".ts") ? $"{fileMetadata1.Id}_{resolution}/{fileName}" : fileName,
-                              re);
+                              fileName.Contains(".ts") ? $"{fileMetadata.Id}_{resolution}/{fileName}" : fileName,
+                              result);
 
-            re.Position = 0;
-            using var reader = new StreamReader(re);
-            string content = await reader.ReadToEndAsync();
-            return Content(content, "application/x-mpegURL");
-            // var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
-
-
-            //    using var stream = new MemoryStream();
-            //    await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
-            //    var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
-            //    FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
-            //    using var outputStream = Response.Body;
-            //    await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
+            result.Position = 0;
+            return File(result, "application/x-mpegURL");
         }
-
-
 
         [HttpGet("video/v2/{postId}/{resolution}/chunks/{file}/{playlist}")]
         public async Task<IActionResult> GetVideoChunk3(Guid postId, string? file, int resolution, string playlist)
         {
-            //if (!await _postService.HasVideoExistByPostIdAsync(postId))
-            //{
-            //    return NotFound();
-            //}
             const int ChunkSize = 1024 * 1024 * 1;
-            // var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
 
-
-
-            var fileMetadata1 = await _context.Get<Post>()
-    .Where(x => x.Id == postId)
-    .SelectMany(x => x.VideoFiles)
-    // .Where(x => x.Resolution == (VideoResolution)resolution)
-    .FirstAsync();
-
-            var fileName = file ?? fileMetadata1.ObjectName;
-            var re = new MemoryStream();
+            var result = new MemoryStream();
             await storage.ReadFileAsync(postId,
-                              $"{fileName}/{playlist}",
-                              re);
+                              $"{file}/{playlist}",
+                              result);
 
-            re.Position = 0;
-            return File(re, "application/x-mpegURL");
+            result.Position = 0;
+            return File(result, "application/x-mpegURL");
         }
 
 

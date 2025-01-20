@@ -102,7 +102,7 @@ namespace Profile.Service.Interface.Implementation
             var fileMetadata = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
                 .SelectMany(x => x.VideoFiles)
-               // .Where(x => x.Resolution == (VideoResolution)resolution)
+                .Where(x => x.Resolution == (VideoResolution)resolution)
                 .FirstAsync();
 
             return new FileMetadataModel(
@@ -110,7 +110,8 @@ namespace Profile.Service.Interface.Implementation
                 fileMetadata.Length,
                 fileMetadata.Name,
                 fileMetadata.CreatedAt,
-                fileMetadata.Id);
+                fileMetadata.Id,
+                fileMetadata.ObjectName);
         }
 
         public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
@@ -147,7 +148,7 @@ namespace Profile.Service.Interface.Implementation
             var posts = new List<PostModel>(pagedPosts.Posts.Count());
             foreach (var x in pagedPosts.Posts)
             {
-                var previewUrl = string.IsNullOrWhiteSpace(x.PreviewId) ? null : await fileStorage.GetFileUrlAsync(profileId, x.PreviewId);
+                var previewUrl = string.IsNullOrWhiteSpace(x.PreviewId) ? null : await fileStorage.GetFileUrlAsync(x.Id, x.PreviewId);
                 var isProcessed = x.VideoFiles.Count != 0 ? x.VideoFiles.Any(a => a.IsProcessed) : false;
                 posts.Add(new PostModel(
                                 x.Id,
@@ -163,7 +164,7 @@ namespace Profile.Service.Interface.Implementation
                                     x.VideoFiles.FirstOrDefault().ContentType,
                                     x.VideoFiles
                                     .Select(x => (int)x.Resolution)
-                                   // .Where(x => x != 0)
+                                    // .Where(x => x != 0)
                                     .OrderBy(x => x),
                                     x.VideoFiles.FirstOrDefault().ObjectName
                                 ) : null,
