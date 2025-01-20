@@ -181,11 +181,11 @@ const BlogPosts = function (props) {
 }
 
 function updateRes(postId, res, objectName) {
-    return `${BaseApUrl}/profile/Video/video/v2/${postId}/${res}/chunks/${objectName}`;
+    return `${BaseApUrl}/video/Video/video/v2/${postId}/${res}/chunks/${objectName}`;
 }
 
 function getVideo(props) {
-    const url = `${BaseApUrl}/profile/Video/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
+    const url = `${BaseApUrl}/video/Video/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
     return <>
 
         {/* <video controls poster={props.previewId} width={500}>

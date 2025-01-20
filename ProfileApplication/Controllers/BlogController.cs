@@ -6,7 +6,6 @@ using Profile.Service.Interface;
 using Profile.Service.Models.Post;
 using ProfileApplication.Models;
 using Shared.Services;
-using Shared.Utils;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
 using Shared.Persistence;
