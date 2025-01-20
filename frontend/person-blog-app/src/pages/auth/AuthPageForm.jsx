@@ -1,4 +1,4 @@
-import API from '../../scripts/apiMethod';
+import API, { BaseApUrl } from '../../scripts/apiMethod';
 import { saveAccessToken, saveRefreshToken } from '../../scripts/TokenStrorage';
 import styles from './AuthPage.module.css';
 import React, { useState } from "react";
@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom"
 
 
 const AuthPageForm = function () {
-    const url = 'http://localhost:7892/auth/api/Auth/login';
+    const url = BaseApUrl + '/auth/api/Auth/login';
 
     const [authForm, setAuthForm] = useState({
         login: "",

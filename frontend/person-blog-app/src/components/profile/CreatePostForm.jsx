@@ -28,9 +28,9 @@ export function CreatePostForm(props) {
         Object.keys(postForm).forEach((key) => {
 
             if (key === "video") {
-                if (postForm.video !== null && postForm.video.size < CHUNK_SIZE) {
-                    formData.append(key, postForm[key])
-                }
+                // if (postForm.video !== null && postForm.video.size < CHUNK_SIZE) {
+                //     formData.append(key, postForm[key])
+                // }
             }
             else
                 formData.append(key, postForm[key])
@@ -47,7 +47,7 @@ export function CreatePostForm(props) {
             }
         })
 
-        if (postForm.video !== null && postForm.video.size > CHUNK_SIZE) {
+        if (postForm.video !== null) {
             setShowProgress(true);
             await uploadFile(postId);
         }

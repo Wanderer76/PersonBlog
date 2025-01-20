@@ -77,51 +77,59 @@ namespace FFmpeg.Service
 
             var inputMedia = await GetStreams(input);
             var inputAudio = inputMedia.FirstOrDefault(x => x.codec_type == "audio");
-
-            for (int i = 0; i < resolutions.Length; i++)
+            try
             {
-                string resolution = resolutions[i];
-                string[] parts = resolution.Split('x');
-                int width = int.Parse(parts[0]);
-                int height = int.Parse(parts[1]);
-                string rate = bitrates[i];
-                string ab = audioBitrates[i];
-
-                filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
-
-                string bufsize = rate.Replace("M", "0M").Replace("k", "k");
-                mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} libx264 -x264-params ""nal - hrd = cbr:force - cfr = 1"" -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 ");
-                if (inputAudio != null)
+                for (int i = 0; i < resolutions.Length; i++)
                 {
-                    mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
-                    mapVariantsBuilder.Append($"v:{i},a:{i} ");
+                    string resolution = resolutions[i];
+                    string[] parts = resolution.Split('x');
+                    int width = int.Parse(parts[0]);
+                    int height = int.Parse(parts[1]);
+                    string rate = bitrates[i];
+                    string ab = audioBitrates[i];
+
+                    filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
+
+                    string bufsize = rate.Replace("M", "0M").Replace("k", "k");
+                    mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} libx264 -x264-params ""nal - hrd = cbr:force - cfr = 1"" -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 ");
+                    if (inputAudio != null)
+                    {
+                        mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
+                        mapVariantsBuilder.Append($"v:{i},a:{i} ");
+                    }
+                    else
+                    {
+                        mapVariantsBuilder.Append($"v:{i} ");
+                    }
                 }
-                else
-                {
-                    mapVariantsBuilder.Append($"v:{i} ");
-                }
+
+                var filterComplex = filterComplexBuilder.ToString();
+                var mapVideoParams = mapVideoParamsBuilder.ToString();
+                var mapAudioParams = mapAudioParamsBuilder.ToString();
+                var mapVariants = mapVariantsBuilder.ToString().Trim();
+
+
+                var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{fileName}_%v/data%05d.ts -master_pl_name {masterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{fileName}_%v/playlist.m3u8";
+
+                Console.WriteLine($"ffmpeg {ffmpegCommand}");
+
+                await ExecuteCommand(FFMpegPath, ffmpegCommand);
             }
-
-            var filterComplex = filterComplexBuilder.ToString();
-            var mapVideoParams = mapVideoParamsBuilder.ToString();
-            var mapAudioParams = mapAudioParamsBuilder.ToString();
-            var mapVariants = mapVariantsBuilder.ToString().Trim();
-
-
-            var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{fileName}_%v/data%05d.ts -master_pl_name {masterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{fileName}_%v/playlist.m3u8";
-
-            Console.WriteLine($"ffmpeg {ffmpegCommand}");
-
-            await ExecuteCommand(FFMpegPath, ffmpegCommand);
-
+            catch (Exception e)
+            {
+                Console.WriteLine();
+            }
         }
 
         private static async Task<IEnumerable<FFProbeObject.FFProbeStream>> GetStreams(string inputFile)
         {
             var value = await ExecuteCommand(FFProbePath, @$"-v panic -print_format json=c=1 -show_streams ""{inputFile}""");
-
+            if (string.IsNullOrEmpty(value))
+            {
+                return [];
+            }
             var desirialized = JsonConvert.DeserializeObject<FFProbeObject>(value).streams;
-            return desirialized;
+            return desirialized ?? [];
         }
 
 

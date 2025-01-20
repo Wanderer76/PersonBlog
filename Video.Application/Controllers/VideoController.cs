@@ -21,6 +21,12 @@ namespace Video.Application.Controllers
             _postService = postService;
         }
 
+        /// <summary>
+        /// Пригодится разве что для .mp4
+        /// </summary>
+        /// <param name="postId"></param>
+        /// <param name="resolution"></param>
+        /// <returns></returns>
         //TODO добавить кэш
         [HttpGet("video/chunks")]
         public async Task<IActionResult> GetVideoChunk(Guid postId, int resolution = 480)
@@ -43,22 +49,20 @@ namespace Video.Application.Controllers
         }
 
         [HttpGet("video/v2/{postId}/chunks/{file}")]
-        public async Task<IActionResult> GetVideoSegmensOrManifest(Guid postId, string? file)
+        public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string? file)
         {
-            const int ChunkSize = 1024 * 1024 * 1;
-            var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
-            var fileName = file ?? fileMetadata.ObjectName;
+            var fileName = file ?? (await _postService.GetVideoFileMetadataByPostIdAsync(postId)).ObjectName;
             var result = new MemoryStream();
             await storage.ReadFileAsync(postId, fileName, result);
             result.Position = 0;
             return File(result, HLSType);
         }
 
-        [HttpGet("video/v2/{postId}/chunks/{file}/{playlist}")]
-        public async Task<IActionResult> GetVideoSegment(Guid postId, string? file, string playlist)
+        [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]
+        public async Task<IActionResult> GetVideoSegment(Guid postId, string file, string segment)
         {
             var result = new MemoryStream();
-            await storage.ReadFileAsync(postId, $"{file}/{playlist}", result);
+            await storage.ReadFileAsync(postId, $"{file}/{segment}", result);
             result.Position = 0;
             return File(result, HLSType);
         }
