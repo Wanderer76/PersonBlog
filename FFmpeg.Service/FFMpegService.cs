@@ -1,9 +1,6 @@
-﻿using FileStorage.Service.Models;
-using System.Diagnostics.Tracing;
+﻿using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Text;
-using Xabe.FFmpeg;
-using System.Runtime.ConstrainedExecution;
 
 namespace FFmpeg.Service
 {
@@ -12,27 +9,28 @@ namespace FFmpeg.Service
     /// </summary>
     public static class FFMpegService
     {
-
+        const string FFMpegPath = "../ffmpeg/ffmpeg.exe";
+        const string FFProbePath = "../ffmpeg/ffprobe.exe";
         static FFMpegService()
         {
-            Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
+            //    Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
         }
 
 
-        public static async Task ConvertToH264Async(string input, string filePath, VideoSize size)
-        {
-            var inputMedia = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(input);
-            var inputVideo = inputMedia.VideoStreams.First().SetSize(size).SetCodec(VideoCodec.h264);
-            var inputAudio = inputMedia.AudioStreams.FirstOrDefault()?.SetCodec(AudioCodec.aac);
-            var format = Path.GetExtension(filePath).Replace(".", "");
+        //public static async Task ConvertToH264Async(string input, string filePath, VideoSize size)
+        //{
+        //    var inputMedia = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(input);
+        //    var inputVideo = inputMedia.VideoStreams.First().SetSize(size).SetCodec(VideoCodec.h264);
+        //    var inputAudio = inputMedia.AudioStreams.FirstOrDefault()?.SetCodec(AudioCodec.aac);
+        //    var format = Path.GetExtension(filePath).Replace(".", "");
 
-            var result = await Xabe.FFmpeg.FFmpeg.Conversions.New()
-                .AddStream<IVideoStream>(inputVideo)
-                .AddStream(inputAudio)
-                .SetOutput(filePath)
-                .SetOutputFormat(format)
-                .Start();
-        }
+        //    var result = await Xabe.FFmpeg.FFmpeg.Conversions.New()
+        //        .AddStream<IVideoStream>(inputVideo)
+        //        .AddStream(inputAudio)
+        //        .SetOutput(filePath)
+        //        .SetOutputFormat(format)
+        //        .Start();
+        //}
 
         public static async Task GeneratePreview(string input, string filePath)
         {
@@ -40,27 +38,28 @@ namespace FFmpeg.Service
             await result.Start();
         }
 
-        public static VideoResolution Convert(this VideoSize size)
-        {
-            switch (size)
-            {
-                case VideoSize.Hd1080:
-                    return VideoResolution.FullHd;
-                case VideoSize.Hd720:
-                    return VideoResolution.Hd;
-                case VideoSize.Vga:
-                    return VideoResolution.Middle;
-                case VideoSize.Nhd:
-                    return VideoResolution.Low;
-                default:
-                    return VideoResolution.Original;
-            }
-        }
+        //public static VideoResolution Convert(this VideoSize size)
+        //{
+        //    switch (size)
+        //    {
+        //        case VideoSize.Hd1080:
+        //            return VideoResolution.FullHd;
+        //        case VideoSize.Hd720:
+        //            return VideoResolution.Hd;
+        //        case VideoSize.Vga:
+        //            return VideoResolution.Middle;
+        //        case VideoSize.Nhd:
+        //            return VideoResolution.Low;
+        //        default:
+        //            return VideoResolution.Original;
+        //    }
+        //}
 
-        public static async Task CreateHls(string input, string output, 
-            string[] resolutions, 
-            string[] bitrates, 
-            string[] audioBitrates, 
+
+        public static async Task CreateHls(string input, string output,
+            string[] resolutions,
+            string[] bitrates,
+            string[] audioBitrates,
             string fileName, string masterName = "master")
         {
             string inputUrl = input;
@@ -76,6 +75,8 @@ namespace FFmpeg.Service
             var mapAudioParamsBuilder = new StringBuilder();
             var mapVariantsBuilder = new StringBuilder();
 
+            var inputMedia = await GetStreams(input);
+            var inputAudio = inputMedia.FirstOrDefault(x => x.codec_type == "audio");
 
             for (int i = 0; i < resolutions.Length; i++)
             {
@@ -90,10 +91,15 @@ namespace FFmpeg.Service
 
                 string bufsize = rate.Replace("M", "0M").Replace("k", "k");
                 mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} libx264 -x264-params ""nal - hrd = cbr:force - cfr = 1"" -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 ");
-
-                mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
-
-                mapVariantsBuilder.Append($"v:{i},a:{i} ");
+                if (inputAudio != null)
+                {
+                    mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
+                    mapVariantsBuilder.Append($"v:{i},a:{i} ");
+                }
+                else
+                {
+                    mapVariantsBuilder.Append($"v:{i} ");
+                }
             }
 
             var filterComplex = filterComplexBuilder.ToString();
@@ -106,16 +112,24 @@ namespace FFmpeg.Service
 
             Console.WriteLine($"ffmpeg {ffmpegCommand}");
 
-            await ExecuteCommand(ffmpegCommand);
+            await ExecuteCommand(FFMpegPath, ffmpegCommand);
 
         }
 
+        private static async Task<IEnumerable<FFProbeObject.FFProbeStream>> GetStreams(string inputFile)
+        {
+            var value = await ExecuteCommand(FFProbePath, @$"-v panic -print_format json=c=1 -show_streams ""{inputFile}""");
 
-        private static async Task ExecuteCommand(string command)
+            var desirialized = JsonConvert.DeserializeObject<FFProbeObject>(value).streams;
+            return desirialized;
+        }
+
+
+        private static async Task<string> ExecuteCommand(string utilPath, string command)
         {
             ProcessStartInfo processStartInfo = new ProcessStartInfo
             {
-                FileName = "../ffmpeg/ffmpeg.exe",
+                FileName = utilPath,
                 Arguments = command,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -125,13 +139,13 @@ namespace FFmpeg.Service
             };
 
             Process process = new Process { StartInfo = processStartInfo };
-            process.OutputDataReceived += (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    Console.WriteLine($"Output: {e.Data}");
-                }
-            };
+            //process.OutputDataReceived += (sender, e) =>
+            //{
+            //    if (!string.IsNullOrEmpty(e.Data))
+            //    {
+            //        Console.WriteLine($"Output: {e.Data}");
+            //    }
+            //};
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
@@ -141,11 +155,11 @@ namespace FFmpeg.Service
             };
 
             process.Start();
-            process.BeginOutputReadLine();
+            //    process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             await process.WaitForExitAsync();
 
-            Console.WriteLine($"FFmpeg finished with exit code: {process.ExitCode}");
+            return await process.StandardOutput.ReadToEndAsync();
         }
     }
 }
