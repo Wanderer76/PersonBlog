@@ -6,9 +6,10 @@ using Profile.Service.Interface;
 using Profile.Service.Models.Post;
 using ProfileApplication.Models;
 using Shared.Services;
-using Shared.Utils;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
+using Shared.Persistence;
+using FileStorage.Service.Service;
 
 namespace ProfileApplication.Controllers
 {
@@ -19,8 +20,7 @@ namespace ProfileApplication.Controllers
         private readonly IPostService _postService;
         private readonly IBlogService _blogService;
         private readonly IVideoService _videoService;
-
-        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IVideoService videoService) : base(logger)
+        public BlogController(ILogger<BaseController> logger, IPostService postService, IBlogService blogService, IVideoService videoService, IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory) : base(logger)
         {
             _postService = postService;
             _blogService = blogService;
@@ -123,28 +123,7 @@ namespace ProfileApplication.Controllers
             return Ok();
 
         }
-
-        //TODO добавить кэш
-        [HttpGet("video/chunks")]
-        public async Task<IActionResult> GetVideoChunk(Guid postId, int resolution = 480)
-        {
-            if (!await _postService.HasVideoExistByPostIdAsync(postId))
-            {
-                return NotFound();
-            }
-            const int ChunkSize = 1024 * 1024 * 1;
-            var fileMetadata = await _postService.GetVideoFileMetadataByPostIdAsync(postId, resolution);
-            var (startPosition, endPosition) = Request.GetHeaderRangeParsedValues(ChunkSize);
-            using var stream = new MemoryStream();
-            await _postService.GetVideoChunkStreamByPostIdAsync(postId, fileMetadata.Id, startPosition, endPosition, stream);
-            var sendSize = endPosition < fileMetadata.Length - 1 ? endPosition : fileMetadata.Length - 1;
-            FillHeadersForVideoStreaming(startPosition, fileMetadata.Length, stream.Length, sendSize, fileMetadata.ContentType);
-            using var outputStream = Response.Body;
-            await outputStream.WriteAsync(stream.GetBuffer().AsMemory(0, (int)stream.Length));
-            return Ok();
-        }
-
-
+      
         //public async Task<IActionResult> DeleteVideo(Guid id)
         //{
         //    return Ok();
@@ -156,13 +135,6 @@ namespace ProfileApplication.Controllers
         //    return Ok();
         //}
 
-        private void FillHeadersForVideoStreaming(long startPosition, long originalFileSize, long streamLength, long sendSize, string contentType)
-        {
-            Response.StatusCode = StatusCodes.Status206PartialContent;
-            Response.Headers["Accept-Ranges"] = "bytes";
-            Response.Headers["Content-Range"] = $"bytes {startPosition}-{sendSize}/{originalFileSize}";
-            Response.Headers["Content-Length"] = $"{streamLength}";
-            Response.ContentType = contentType;
-        }
+       
     }
 }

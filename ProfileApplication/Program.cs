@@ -1,6 +1,8 @@
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.FileProviders;
 using Profile.Persistence;
 using Profile.Service.Extensions;
 
@@ -36,6 +38,20 @@ if (app.Environment.IsDevelopment())
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 }
+
+//app.UseWhen(context => context.Request.Path.StartsWithSegments("/video"), appBuilder =>
+//{
+//    var provider = new FileExtensionContentTypeProvider();
+//    // Add new mappings
+//    provider.Mappings[".m3u8"] = "application/x-mpegURL";
+//    provider.Mappings[".ts"] = "video/MP2T";
+
+//    appBuilder.UseStaticFiles(new StaticFileOptions
+//    {
+//        ContentTypeProvider = provider,
+//        RequestPath = "/uploads"
+//    });
+//});
 
 app.UseHttpsRedirection();
 app.UseRouting();

@@ -147,5 +147,20 @@ namespace FileStorage.Service.Service
                 yield return (item.Key, item.UserMetadata);
             }
         }
+
+        public async Task<string> PutFileWithResolutionAsync(Guid bucketId, string objectName, Stream input)
+        {
+            await CreateBucketIfNotExistAsync(bucketId);
+
+            var result = await _client.PutObjectAsync(
+                          new Minio.DataModel.Args.PutObjectArgs()
+                          .WithBucket(bucketId.ToString())
+                          .WithObject(objectName)
+                          .WithObjectSize(input.Length)
+                          .WithStreamData(input)
+                          );
+
+            return result.ObjectName;
+        }
     }
 }

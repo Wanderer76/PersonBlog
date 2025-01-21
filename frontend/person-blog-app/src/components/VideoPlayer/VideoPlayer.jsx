@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
-import 'videojs-resolution-switcher-v8';
+import './qualitySelector/plugin.js';
+import 'hls.js';
 
 // FOR MORE VIDEO PLAYER OPTIONS, VISIT: https://videojs.com/guides/options/
 
@@ -9,7 +10,7 @@ import 'videojs-resolution-switcher-v8';
 // const videoUrl = 'http://localhost:8000/videos/587a4d55-661f-4a2c-b3d1-b3c4dfbfbfde/playlist.m3u8';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, qualities }) => {
+export const VideoPlayer = ({ thumbnail, path, onSrc }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   const options = {
@@ -21,10 +22,9 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
     responsive: true,
     poster: thumbnail,
     plugins: {
-      videoJsResolutionSwitcher: {
-        default: 480,
-        dynamicLabel: true,
-        ui:true
+      qualitySelectorHls: {
+        displayCurrentQuality: true,
+        vjsIconClass: 'vjs-icon-hd'
       }
     },
     controlBar: {
@@ -38,6 +38,10 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
       },
 
       fullscreenToggle: true
+    },
+    sources: {
+      src: path.url,
+      type: 'application/x-mpegURL',
     }
   };
 
@@ -46,25 +50,52 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
     if (!playerRef.current) {
       // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode. 
       const videoElement = document.createElement("video-js");
-
       videoElement.classList.add('vjs-big-play-centered');
       videoElement.classList.add('vjs-default-skin');
       videoRef.current.appendChild(videoElement);
+
       playerRef.current = videojs(videoElement, options, function () {
         var player = this;
-        player.on('resolutionchange', function () {
-          console.log(player);
-          console.log(player.currentResolution());
-          player.play();
+        // player.on('resolutionchange', function () {
+        //   console.log(player.currentResolution());
+        // });
+        // player.qualitySelectorHls({
+        //   displayCurrentQuality: true,
+        //   vjsIconClass: 'vjs-icon-hd'
+        // });
+
+        console.log(player.src())
+        var qualities = player.qualityLevels();
+
+        qualities.on('addqualitylevel', () => {
+
         });
-        player.updateSrc(qualities.map(x => {
-          return {
-            src: x.path,
-            label: `${x.label}p`,
-            type: 'video/mp4'/*'application/x-mpegURL'*/,
-            res: x.label
-          }
-        }).reverse())
+        qualities.on('change', (a) => {
+          // console.log(`asdsadsa^ ${onSrc(path.postId,2,path.objectName)}`);
+
+          // options.sources = []
+          // console.log(`asdsadsa^ ${player.currentSrc()}`);
+          // player.src([
+          //   {
+          //     src: `${path.url}`,
+          //     type: 'application/x-mpegURL',
+          //   }
+          // ]);
+
+        });
+
+        // console.log(player.qualityLevels());
+
+        // player.addqualitylevel([...player.qualityLevels()].reverse());
+
+        // player.updateSrc(qualities.map(x => {
+        //   return {
+        //     src: x.path,
+        //     label: `${x.label}p`,
+        //     type: 'application/x-mpegURL',
+        //     res: x.label
+        //   }
+        // }).reverse())
       });
 
     } else {
@@ -73,7 +104,7 @@ export const VideoPlayer = ({ thumbnail, qualities }) => {
       player.autoplay(options.autoplay);
       player.src(options.sources);
     }
-  }, [options, videoRef, qualities]);
+  }, [options, videoRef, path]);
 
   React.useEffect(() => {
     const player = playerRef.current;

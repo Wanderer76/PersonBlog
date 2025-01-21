@@ -1,4 +1,5 @@
 import React from "react";
+import DemoPage from "../../components/VideoPlayer/Demo";
 
 
 export class MainPage extends React.Component {
@@ -23,7 +24,6 @@ export class MainPage extends React.Component {
                 <h1>
                     Главная
                 </h1>
-
                 <table>
 
                 </table>

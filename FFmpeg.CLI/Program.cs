@@ -17,9 +17,9 @@ builder.Services.AddHostedService<VideoConverterHostedService>();
 builder.Services.AddHostedService<FileChunksCombinerHostedService>();
 
 var app = builder.Build();
-using (var db = app.Services.CreateScope().ServiceProvider.GetRequiredService<ProfileDbContext>())
-{
-    db.Database.EnsureCreated();
-}
+//using (var db = app.Services.CreateScope().ServiceProvider.GetRequiredService<ProfileDbContext>())
+//{
+//    db.Database.EnsureCreated();
+//}
 
 app.Run();
