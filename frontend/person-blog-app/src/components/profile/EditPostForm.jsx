@@ -1,39 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import './CreatePostForm.css';
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import API from "../../scripts/apiMethod";
 
-export function CreatePostForm(props) {
+export function EditPostForm(props) {
 
-    const [postForm, setPostForm] = useState({ type: 1, title: "", description: "", video: null });
+    const [postForm, setPostForm] = useState({...props.post,video:null});
     const [uploadProgress, setUploadProgress] = useState(0);
     const [maxProgress, setMaxProgress] = useState(0);
     const [showProgress, setShowProgress] = useState(false);
+    const [preview, setPreview] = useState(props.post.previewId);
 
     const CHUNK_SIZE = 10 * 1024 * 1024;
-
     function updateForm(event) {
         const key = event.target.name;
-        const value = key === 'video' ? event.target.files[0] : event.target.value;
+        const value = (key === 'video' || key === 'previewId') ? event.target.files[0] : event.target.value;
         setPostForm((prev) => ({
             ...prev,
             [key]: value
         }))
+        console.log(postForm);
     }
 
     async function sendForm() {
-        const url = "/profile/Blog/post/create";
+        const url = "/profile/Blog/post/edit";
         let formData = new FormData();
-        var postId = null;
+        var postId = postForm.id;
         Object.keys(postForm).forEach((key) => {
-
-            if (key === "video") {
+            if (key !== "video") {
                 // if (postForm.video !== null && postForm.video.size < CHUNK_SIZE) {
                 //     formData.append(key, postForm[key])
                 // }
-            }
-            else
                 formData.append(key, postForm[key])
+
+            }
         });
 
         await API.post(url, formData, {
@@ -47,6 +47,7 @@ export function CreatePostForm(props) {
             }
         })
 
+        console.log(postForm);
         if (postForm.video !== null) {
             setShowProgress(true);
             await uploadFile(postId);
@@ -103,18 +104,27 @@ export function CreatePostForm(props) {
         <>
             <div className="modal">
                 <div className="createPostForm">
-                    <p>Создать пост</p>
+                    <p>Редактировать пост</p>
                     <p>Название</p>
-                    <input className="modalContent" placeholder="Название" name="title" onChange={updateForm} />
+                    <input className="modalContent" placeholder="Название" name="title" value={postForm.title} onChange={updateForm} />
                     <p>Описание</p>
-                    <input className="modalContent" placeholder="Название" name="description" onChange={updateForm} />
+                    <input className="modalContent" placeholder="Описание" name="description" value={postForm.description} onChange={updateForm} />
+                    <p>Превью</p>
+                    <img className="modalContent" src={preview} />
+                    <input className="modalContent" placeholder="Загрузите новое превью видео" type="file" accept=".jpg,.png,.jpeg" name="previewId" onChange={(e) => {
+                        updateForm(e);
+                        if (e.target.files && e.target.files[0]) {
+                            setPreview(URL.createObjectURL(e.target.files[0]));
+                        }
+                    }
+                    } />
                     <p>Видео</p>
                     <input className="modalContent" type="file" accept=".mp4,.mkv" name="video" onChange={updateForm} />
                     <br />
                     {showProgress && <progress value={uploadProgress} max={maxProgress}></progress>}
                     {showProgress && <br />}
                     <button onClick={props.onHandleClose}>Закрыть</button>
-                    <button onClick={sendForm}>Создать</button>
+                    <button onClick={sendForm}>Сохранить</button>
                 </div>
             </div>
         </>

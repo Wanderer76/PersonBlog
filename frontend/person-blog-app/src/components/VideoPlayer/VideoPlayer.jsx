@@ -6,7 +6,7 @@ import 'hls.js';
 
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onSrc }) => {
+export const VideoPlayer = ({ thumbnail, path }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   const options = {

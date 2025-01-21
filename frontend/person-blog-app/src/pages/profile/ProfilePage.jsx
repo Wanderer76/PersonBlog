@@ -5,6 +5,7 @@ import { CreatePostForm } from "../../components/profile/CreatePostForm";
 import API, { BaseApUrl } from "../../scripts/apiMethod";
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer'
 import 'video.js';
+import { EditPostForm } from "../../components/profile/EditPostForm";
 
 export class ProfilePage extends React.Component {
 
@@ -91,6 +92,7 @@ const BlogPosts = function (props) {
 
     const hasMounted = useRef(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [editForm, setEditForm] = useState(null);
     const [posts, setPosts] = useState([{
         id: null,
         type: 1,
@@ -142,6 +144,9 @@ const BlogPosts = function (props) {
         }
     }
 
+    async function handleEdit(params) {
+    }
+
 
     return (
         <div>
@@ -151,6 +156,7 @@ const BlogPosts = function (props) {
                 <button onClick={() => setShowCreateForm(true)}>Создать</button>
             </h4>
             {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)}></CreatePostForm>}
+            {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
             <table>
                 <thead>
                     <tr>
@@ -159,6 +165,7 @@ const BlogPosts = function (props) {
                         <th scope="col">Дата создания</th>
                         <th scope="col">Тип</th>
                         <th scope="col">Видео</th>
+                        <th scope="col"></th>
                         <th scope="col"></th>
                     </tr>
                 </thead>
@@ -172,6 +179,7 @@ const BlogPosts = function (props) {
                             <td>{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
                             <td>{x.type === 1 && x.isProcessed ? <p>В обработке</p> : getVideo(x)} </td>
                             <td><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
+                            <td><button onClick={() => setEditForm({...x})}>Редактировать</button> </td>
                         </tr>
                     })}
                 </tbody>
@@ -180,16 +188,11 @@ const BlogPosts = function (props) {
     );
 }
 
-function updateRes(postId, res, objectName) {
-    return `${BaseApUrl}/video/Video/video/v2/${postId}/${res}/chunks/${objectName}`;
-}
-
 function getVideo(props) {
     const url = `${BaseApUrl}/video/Video/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
     return <>
         <VideoPlayer thumbnail={props.previewId} path={
-            { url: url, label: 'd', postId: props.id, res: 0, objectName: props.videoData.objectName }}
-            onSrc={updateRes}>
+            { url: url, label: 'd', postId: props.id, res: 0, objectName: props.videoData.objectName }}>
         </VideoPlayer >
     </>
 }

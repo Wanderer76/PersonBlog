@@ -1,6 +1,7 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
 using Profile.Service.Models.File;
@@ -217,6 +218,61 @@ namespace Profile.Service.Interface.Implementation
                 });
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<PostModel> UpdatePostAsync(PostEditDto postEditDto)
+        {
+            var post = await _context.Get<Post>()
+                .Include(x => x.VideoFiles)
+                .FirstOrDefaultAsync(x => x.Id == postEditDto.Id) ?? throw new ArgumentException("Пост не найден");
+
+            var blogUserId = await _context.Get<Blog>()
+                .Where(x => x.Id == post.BlogId)
+                .Select(x => x.Profile.UserId)
+                .FirstAsync();
+
+            if (blogUserId != postEditDto.UserId)
+            {
+                throw new ArgumentException("Пост вам не принадлежит");
+            }
+            var storage = _fileStorageFactory.CreateFileStorage();
+
+            _context.Attach(post);
+            if (postEditDto.PreviewId != null)
+            {
+                var snapshotFileId = GuidService.GetNewGuid();
+                using var copyStream = postEditDto.PreviewId.OpenReadStream();
+                copyStream.Position = 0;
+                var objectName = await storage.PutFileAsync(post.Id, snapshotFileId, copyStream);
+                post.PreviewId = objectName;
+            }
+            _context.Attach(post);
+            post.Title = postEditDto.Title;
+            post.Description = postEditDto.Description;
+            await _context.SaveChangesAsync();
+
+            var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await storage.GetFileUrlAsync(post.Id, post.PreviewId);
+            var isProcessed = post.VideoFiles.Count != 0 ? post.VideoFiles.Any(a => a.IsProcessed) : false;
+            var videoMetadata = post.VideoFiles.FirstOrDefault();
+            return new PostModel(
+                            post.Id,
+                            post.Type,
+                            post.Title,
+                            post.Description,
+                            post.CreatedAt,
+                            previewUrl,
+                            post.VideoFiles.Count != 0 && !isProcessed ?
+                            new VideoMetadataModel(
+                                videoMetadata.Id,
+                                videoMetadata.Length,
+                                videoMetadata.ContentType,
+                                post.VideoFiles
+                                .Select(x => (int)x.Resolution)
+                                .OrderBy(x => x),
+                                videoMetadata.ObjectName
+                            ) : null,
+                            isProcessed
+                        );
         }
     }
 }

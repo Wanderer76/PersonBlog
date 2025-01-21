@@ -22,6 +22,7 @@ namespace Profile.Service.Interface
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);
         Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
+        Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
     }
 
 }

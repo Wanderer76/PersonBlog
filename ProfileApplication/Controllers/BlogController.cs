@@ -74,7 +74,7 @@ namespace ProfileApplication.Controllers
             {
                 UserId = userId,
                 Type = PostType.Video,
-                Text = form.Text,
+                Text = form.Description,
                 Title = form.Title,
                 Video = form.Video,
                 Photos = form.Files,
@@ -84,10 +84,22 @@ namespace ProfileApplication.Controllers
             return Ok(result);
         }
 
-        //public async Task<IActionResult> EditPost([FromBody] PostCreateForm form)
-        //{
-        //    return Ok();
-        //}
+        [HttpPost("post/edit")]
+        [Authorize]
+        public async Task<IActionResult> EditPost([FromForm] PostEditForm form)
+        {
+            var userId = HttpContext.GetUserFromContext();
+
+            var result = await _postService.UpdatePostAsync(new PostEditDto
+            (
+                form.Id,
+                userId,
+                form.Description,
+                form.Title,
+                form.PreviewId
+            ));
+            return Ok(result);
+        }
 
         [HttpDelete("/post/delete/{id:guid}")]
         [Authorize]

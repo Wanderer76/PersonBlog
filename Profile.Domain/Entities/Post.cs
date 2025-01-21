@@ -8,10 +8,10 @@ namespace Profile.Domain.Entities
         [Key]
         public Guid Id { get; private set; }
         public Guid BlogId { get; private set; }
-        public PostType Type { get; private set; }
+        public PostType Type { get; set; }
         public DateTimeOffset CreatedAt { get; private set; }
         [Required]
-        public string Title { get; private set; }
+        public string Title { get; set; }
         public string? Description { get; set; }
         public bool IsDeleted { get; set; }
 
