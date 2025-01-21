@@ -187,17 +187,9 @@ function updateRes(postId, res, objectName) {
 function getVideo(props) {
     const url = `${BaseApUrl}/video/Video/video/v2/${props.id}/chunks/${props.videoData.objectName}`;
     return <>
-
-        {/* <video controls poster={props.previewId} width={500}>
-            <source src={url}></source></video> */}
-
         <VideoPlayer thumbnail={props.previewId} path={
             { url: url, label: 'd', postId: props.id, res: 0, objectName: props.videoData.objectName }}
-            onSrc={updateRes}
-        >
-
+            onSrc={updateRes}>
         </VideoPlayer >
-
-
     </>
 }

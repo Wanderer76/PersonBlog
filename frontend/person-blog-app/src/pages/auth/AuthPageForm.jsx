@@ -20,14 +20,11 @@ const AuthPageForm = function () {
         const value = event.target.value;
 
         setAuthForm((prev) => ({
-
             ...prev,
             [key]: value
 
         }))
     }
-    console.log(authForm);
-
 
     async function sendAuthRequest(url, body) {
 

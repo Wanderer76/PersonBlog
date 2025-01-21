@@ -1,3 +1,4 @@
+import { BaseApUrl } from "./apiMethod";
 
 
 export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
@@ -24,7 +25,7 @@ export class JwtTokenService {
     }
 
     static async refreshToken() {
-        const url = 'http://localhost:7892/auth/api/Auth/refresh?refreshToken=' + getRefreshToken();
+        const url = `${BaseApUrl}/auth/api/Auth/refresh?refreshToken=` + getRefreshToken();
         console.log(url)
 
         if (this.isAuth()) {
