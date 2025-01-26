@@ -48,6 +48,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFMpeg.Cli", "FFMpeg.Cli\FF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Application", "Video.Application\Video.Application.csproj", "{9A96ABF8-0C6A-4A14-91AD-8105C4B67762}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Domain", "Video.Domain\Video.Domain.csproj", "{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -122,6 +124,10 @@ Global
 		{9A96ABF8-0C6A-4A14-91AD-8105C4B67762}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A96ABF8-0C6A-4A14-91AD-8105C4B67762}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A96ABF8-0C6A-4A14-91AD-8105C4B67762}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

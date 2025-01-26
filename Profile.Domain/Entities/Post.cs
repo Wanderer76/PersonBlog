@@ -10,6 +10,7 @@ namespace Profile.Domain.Entities
         public Guid BlogId { get; private set; }
         public PostType Type { get; set; }
         public DateTimeOffset CreatedAt { get; private set; }
+
         [Required]
         public string Title { get; set; }
         public string? Description { get; set; }
@@ -21,9 +22,9 @@ namespace Profile.Domain.Entities
         public string? PreviewId { get; set; }
 
         public List<VideoMetadata> VideoFiles { get; set; }
-
-        [NotMapped]
-        public List<FileMetadata> FilesMetadata { get; set; }
+        public int ViewCount { get; set; }
+        public int LikeCount { get; set; }
+        public int DislikeCount { get; set; }
 
         public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title)
         {

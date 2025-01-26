@@ -26,6 +26,12 @@ namespace Profile.Service.Interface
             var metadata = await _context.Get<VideoMetadata>()
                 .FirstOrDefaultAsync(x => x.PostId == uploadVideoChunk.PostId);
 
+            var post = await _context.Get<Post>()
+                .FirstAsync(x => x.Id == uploadVideoChunk.PostId);
+
+            _context.Attach(post);
+            post.Type = PostType.Video;
+
             if (metadata == null)
             {
                 metadata = new VideoMetadata

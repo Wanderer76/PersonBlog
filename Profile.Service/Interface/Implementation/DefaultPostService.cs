@@ -1,9 +1,9 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
+using Profile.Service.Models;
 using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
 using Shared.Persistence;
@@ -141,33 +141,33 @@ namespace Profile.Service.Interface.Implementation
         public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
         {
             var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, page, limit);
+
             var profileId = await _context.Get<Blog>()
                 .Where(x => x.Id == blogId)
                 .Select(x => x.ProfileId)
                 .FirstAsync();
+
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var posts = new List<PostModel>(pagedPosts.Posts.Count());
-            foreach (var x in pagedPosts.Posts)
+
+            foreach (var post in pagedPosts.Posts)
             {
-                var previewUrl = string.IsNullOrWhiteSpace(x.PreviewId) ? null : await fileStorage.GetFileUrlAsync(x.Id, x.PreviewId);
-                var isProcessed = x.VideoFiles.Count != 0 ? x.VideoFiles.Any(a => a.IsProcessed) : false;
+                var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+                var isProcessed = post.VideoFiles.Count != 0 ? post.VideoFiles.Any(a => a.IsProcessed) : false;
+                var videoFile = post.VideoFiles.FirstOrDefault();
                 posts.Add(new PostModel(
-                                x.Id,
-                                x.Type,
-                                x.Title,
-                                x.Description,
-                                x.CreatedAt,
+                                post.Id,
+                                post.Type,
+                                post.Title,
+                                post.Description,
+                                post.CreatedAt,
                                 previewUrl,
-                                x.VideoFiles.Count != 0 && !isProcessed ?
+                                post.VideoFiles.Count != 0 && !isProcessed ?
                                 new VideoMetadataModel(
-                                    x.VideoFiles.FirstOrDefault().Id,
-                                    x.VideoFiles.FirstOrDefault().Length,
-                                    x.VideoFiles.FirstOrDefault().ContentType,
-                                    x.VideoFiles
-                                    .Select(x => (int)x.Resolution)
-                                    // .Where(x => x != 0)
-                                    .OrderBy(x => x),
-                                    x.VideoFiles.FirstOrDefault().ObjectName
+                                    videoFile.Id,
+                                    videoFile.Length,
+                                    videoFile.ContentType,
+                                    videoFile.ObjectName
                                 ) : null,
                                 isProcessed
                             ));
@@ -266,13 +266,41 @@ namespace Profile.Service.Interface.Implementation
                                 videoMetadata.Id,
                                 videoMetadata.Length,
                                 videoMetadata.ContentType,
-                                post.VideoFiles
-                                .Select(x => (int)x.Resolution)
-                                .OrderBy(x => x),
                                 videoMetadata.ObjectName
                             ) : null,
                             isProcessed
                         );
+        }
+
+        public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
+        {
+            var post = await _context.Get<Post>()
+                .FirstAsync(x => x.Id == postId);
+            var fileStorage = _fileStorageFactory.CreateFileStorage();
+            var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
+                ? null
+                : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+
+            var videoMetadata = post.VideoFiles.FirstOrDefault();
+            var isProcessed = post.VideoFiles.Count != 0 ? post.VideoFiles.Any(a => a.IsProcessed) : false;
+
+            return new PostDetailViewModel(
+                post.Id,
+                previewUrl,
+                post.CreatedAt,
+                post.ViewCount,
+                post.Description,
+                post.Title,
+                post.Type,
+                post.VideoFiles.Count != 0 && !isProcessed ?
+                            new VideoMetadataModel(
+                                videoMetadata.Id,
+                                videoMetadata.Length,
+                                videoMetadata.ContentType,
+                                videoMetadata.ObjectName
+                            ) : null,
+                isProcessed
+            );
         }
     }
 }

@@ -7,14 +7,11 @@
         public string ContentType { get; }
         public string ObjectName { get; }
 
-        public IEnumerable<int> Resolutions { get; set; }
-
-        public VideoMetadataModel(Guid id, long length, string contentType, IEnumerable<int> resolutions, string objectName)
+        public VideoMetadataModel(Guid id, long length, string contentType,string objectName)
         {
             Id = id;
             Length = length;
             ContentType = contentType;
-            Resolutions = resolutions;
             ObjectName = objectName;
         }
 

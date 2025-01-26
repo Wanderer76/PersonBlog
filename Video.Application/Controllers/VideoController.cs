@@ -66,5 +66,17 @@ namespace Video.Application.Controllers
             result.Position = 0;
             return File(result, HLSType);
         }
+
+        [HttpGet("video/{postId:guid}")]
+        public async Task<IActionResult> GetVideoData(Guid postId)
+        {
+            var post = await _postService.GetDetailPostByIdAsync(postId);
+
+            return Ok(new
+            {
+                Post = post,
+                Comment = new List<string>()
+            });
+        }
     }
 }

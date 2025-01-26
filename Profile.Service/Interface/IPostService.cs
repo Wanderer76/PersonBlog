@@ -1,4 +1,5 @@
-﻿using Profile.Service.Models.File;
+﻿using Profile.Service.Models;
+using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
 
 namespace Profile.Service.Interface
@@ -17,12 +18,12 @@ namespace Profile.Service.Interface
         /// <param name="output"></param>
         Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
         Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId, int resolution = 0);
-        Task GetVideoStream(Guid postId, Stream output);
+        //Task GetVideoStream(Guid postId, Stream output);
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);
         Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
         Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
+        Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
     }
-
 }
