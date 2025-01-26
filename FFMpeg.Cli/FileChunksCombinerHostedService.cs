@@ -19,7 +19,6 @@ namespace FFMpeg.Cli
         }
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            //_timer = new Timer(StartTask, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
             StartTask(null);
         }
         private void StartTask(object? state)

@@ -1,4 +1,5 @@
 ﻿using FFmpeg.Service;
+using FFMpeg.Cli.Models;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
@@ -12,19 +13,20 @@ namespace FFMpeg.Cli
     {
         private readonly IServiceScopeFactory _serviceScope;
         private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly string path;
-        private Timer _timer;
+        private readonly IEnumerable<VideoPreset> _videoPresets;
+        private readonly string _tempPath;
 
-        public VideoConverterHostedService(IServiceScopeFactory serviceScope, IFileStorageFactory fileStorageFactory, IConfiguration configuration)
+        public VideoConverterHostedService(IServiceScopeFactory serviceScope,
+            IFileStorageFactory fileStorageFactory, IConfiguration configuration)
         {
             _serviceScope = serviceScope;
             _fileStorageFactory = fileStorageFactory;
-            path = Path.GetFullPath(configuration["TempDir"]!);
+            _tempPath = Path.GetFullPath(configuration["TempDir"]!);
+            _videoPresets = configuration.GetSection("VideoPresets").Get<List<VideoPreset>>()!;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            //_timer = new Timer(StartTask, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
             StartTask(null);
         }
 
@@ -80,70 +82,58 @@ namespace FFMpeg.Cli
             var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
 
             var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
-
-            // foreach (var videoSize in videoSizes)
+            var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
+            var fileId = GuidService.GetNewGuid();
+            try
             {
-                //var fileName = Path.Combine(path, fileId.ToString() + fileMetadata.FileExtension);
-                var dir = Path.Combine(path, fileMetadata.Id.ToString());
-                string[] resolutions = { "1920x1080", "1280x720", "854x480", "640x360", "256x144" };
-                string[] bitrates = { "5M", "3M", "1500k", "1000k", "500k" };
-                string[] audioBitrates = { "96k", "96k", "64k", "48k", "48k" };
-                var fileId = GuidService.GetNewGuid();
-                try
+                Directory.CreateDirectory(dir);
+                var inputUrl = new Uri(url).AbsoluteUri;
+                var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl);
+
+                var presets = (videoStream == null
+                    ? _videoPresets
+                    : _videoPresets.Where(x => x.Width <= videoStream.Width))
+                    .ToList();
+
+                await FFMpegService.CreateHls(
+                    inputUrl,
+                    dir,
+                    presets.Select(x => x.GetResolution()).ToArray(),
+                    presets.Select(x => x.VideoBitrate).ToArray(),
+                    presets.Select(x => x.AudioBitrate).ToArray(),
+                    fileId.ToString(), fileMetadata.Id.ToString());
+
+                foreach (var file in Directory.GetFiles(dir))
                 {
-                    Directory.CreateDirectory(dir);
-                    await FFMpegService.CreateHls(new Uri(url).AbsoluteUri, dir,
-                        resolutions,
-                        bitrates, 
-                        audioBitrates, 
-                        fileId.ToString(), fileMetadata.Id.ToString());
-                    foreach (var file in Directory.GetFiles(dir))
+                    using var fileStream = new FileStream(file, FileMode.Open);
+                    using var copyStream = new MemoryStream();
+                    await fileStream.CopyToAsync(copyStream);
+                    copyStream.Position = 0;
+                    var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
+                }
+        
+                foreach (string folder in Directory.EnumerateDirectories(dir))
+                {
+                    foreach (var file in Directory.EnumerateFiles(folder))
                     {
                         using var fileStream = new FileStream(file, FileMode.Open);
                         using var copyStream = new MemoryStream();
                         await fileStream.CopyToAsync(copyStream);
                         copyStream.Position = 0;
-                        var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
+                        var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
                     }
-                    foreach (string folder in Directory.EnumerateDirectories(dir))
-                    {
-                        foreach (var file in Directory.EnumerateFiles(folder))
-                        {
-                            using var fileStream = new FileStream(file, FileMode.Open);
-                            using var copyStream = new MemoryStream();
-                            await fileStream.CopyToAsync(copyStream);
-                            copyStream.Position = 0;
-                            var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
-                        }
-                    }
-
-
-                    //var newVideoMetadata = new VideoMetadata
-                    //{
-                    //    Id = fileId,
-                    //    ContentType = fileMetadata.ContentType,//"application/x-mpegURL",//
-                    //    ObjectName = "master.m3u8",
-                    //    CreatedAt = DateTime.UtcNow,
-                    //    //Length = copyStream.Length,
-                    //    Name = @event.ObjectName,
-                    //    FileExtension = fileMetadata.FileExtension,
-                    //    PostId = fileMetadata.PostId,
-                    //    IsProcessed = false,
-                    //  //  Resolution = videoSize.Convert(),
-                    //};
-
-                    //context.Add(newVideoMetadata);
                 }
-                catch (Exception e)
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                if (Directory.Exists(dir))
                 {
-                    Console.WriteLine(e.Message);
-                }
-                finally
-                {
-                    if (Directory.Exists(dir))
-                    {
-                        Directory.Delete(dir, true);
-                    }
+                    Directory.Delete(dir, true);
                 }
             }
 
@@ -153,7 +143,7 @@ namespace FFMpeg.Cli
             if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
             {
                 var snapshotFileId = GuidService.GetNewGuid();
-                var snapshotFileName = Path.Combine(path, snapshotFileId.ToString() + ".png");
+                var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
 
                 try
                 {

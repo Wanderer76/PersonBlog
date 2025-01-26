@@ -2,56 +2,75 @@
 
 namespace FFmpeg.Service
 {
-    internal class FFProbeObject
+    public class FFProbeObject
     {
+        [JsonProperty("streams")]
+        public IEnumerable<FFProbeStream> Streams { get; set; }
+    }
 
-        public class FFProbeStream
-        {
-            public string codec_name { get; set; }
+    public class FFProbeStream
+    {
+        [JsonProperty("codec_name")]
+        public string CodecName { get; set; }
 
-            public int height { get; set; }
+        [JsonProperty("height")]
+        public int Height { get; set; }
 
-            public int width { get; set; }
+        [JsonProperty("width")]
+        public int Width { get; set; }
 
-            public string codec_type { get; set; }
+        [JsonProperty("codec_type")]
+        public string CodecType { get; set; }
 
-            public string r_frame_rate { get; set; }
+        [JsonProperty("r_frame_rate")]
+        public string RFrameRate { get; set; }
 
-            public double duration { get; set; }
+        [JsonProperty("duration")]
+        public double Duration { get; set; }
 
-            public long bit_rate { get; set; }
+        [JsonProperty("bit_rate")]
+        public long BitRate { get; set; }
 
-            public int index { get; set; }
+        [JsonProperty("index")]
+        public int Index { get; set; }
 
-            public int channels { get; set; }
+        [JsonProperty("channels")]
+        public int Channels { get; set; }
 
-            public int sample_rate { get; set; }
+        [JsonProperty("sample_rate")]
+        public int SampleRate { get; set; }
 
-            public string pix_fmt { get; set; }
+        [JsonProperty("pix_fmt")]
+        public string PixFmt { get; set; }
 
-            public Tags tags { get; set; }
+        [JsonProperty("tags")]
+        public Tags Tags { get; set; }
 
-            public string nb_frames { get; set; }
+        [JsonProperty("nb_frames")]
+        public string NbFrames { get; set; }
 
-            public Disposition disposition { get; set; }
-        }
+        [JsonProperty("disposition")]
+        public Disposition Disposition { get; set; }
+    }
 
-        internal class Tags
-        {
-            public string language { get; set; }
+    public class Tags
+    {
+        [JsonProperty("language")]
+        public string Language { get; set; }
 
-            public string title { get; set; }
+        [JsonProperty("title")]
+        public string Title { get; set; }
 
-            public int? rotate { get; set; }
-        }
+        [JsonProperty("rotate")]
+        public int? Rotate { get; set; }
+    }
 
-        internal class Disposition
-        {
-            [JsonProperty("default")]
-            public int @default { get; set; }
+    public class Disposition
+    {
+        [JsonProperty("default")]
+        public int Default { get; set; }
 
-            public int forced { get; set; }
-        }
-        public FFProbeStream[] streams { get; set; }
+        [JsonProperty("forced")]
+        public int Forced { get; set; }
     }
 }

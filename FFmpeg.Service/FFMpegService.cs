@@ -56,6 +56,13 @@ namespace FFmpeg.Service
         //}
 
 
+        public async static Task<FFProbeStream?> GetVideoMediaInfo(string input)
+        {
+            var inputMedia = await GetStreams(input);
+            var inputVideo = inputMedia.FirstOrDefault(x => x.CodecType == "video");
+            return inputVideo;
+        }
+
         public static async Task CreateHls(string input, string output,
             string[] resolutions,
             string[] bitrates,
@@ -76,7 +83,7 @@ namespace FFmpeg.Service
             var mapVariantsBuilder = new StringBuilder();
 
             var inputMedia = await GetStreams(input);
-            var inputAudio = inputMedia.FirstOrDefault(x => x.codec_type == "audio");
+            var inputAudio = inputMedia.FirstOrDefault(x => x.CodecType == "audio");
             try
             {
                 for (int i = 0; i < resolutions.Length; i++)
@@ -121,17 +128,16 @@ namespace FFmpeg.Service
             }
         }
 
-        private static async Task<IEnumerable<FFProbeObject.FFProbeStream>> GetStreams(string inputFile)
+        private static async Task<IEnumerable<FFProbeStream>> GetStreams(string inputFile)
         {
             var value = await ExecuteCommand(FFProbePath, @$"-v panic -print_format json=c=1 -show_streams ""{inputFile}""");
             if (string.IsNullOrEmpty(value))
             {
                 return [];
             }
-            var desirialized = JsonConvert.DeserializeObject<FFProbeObject>(value).streams;
+            var desirialized = JsonConvert.DeserializeObject<FFProbeObject>(value).Streams;
             return desirialized ?? [];
         }
-
 
         private static async Task<string> ExecuteCommand(string utilPath, string command)
         {
