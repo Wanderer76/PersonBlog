@@ -2,7 +2,9 @@ using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Service.Interface;
+using Shared.Services;
 using Shared.Utils;
+using Video.Service.Interface;
 
 namespace Video.Application.Controllers
 {
@@ -13,12 +15,14 @@ namespace Video.Application.Controllers
         private const string HLSType = "application/x-mpegURL";
         private readonly IFileStorage storage;
         private readonly IPostService _postService;
+        private readonly IReactionService _videoService;
 
-        public VideoController(ILogger<BaseController> logger, IFileStorageFactory factory, IPostService postService)
+        public VideoController(ILogger<BaseController> logger, IFileStorageFactory factory, IPostService postService, IReactionService videoService)
             : base(logger)
         {
             storage = factory.CreateFileStorage();
             _postService = postService;
+            _videoService = videoService;
         }
 
         /// <summary>
@@ -61,11 +65,14 @@ namespace Video.Application.Controllers
         [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]
         public async Task<IActionResult> GetVideoSegment(Guid postId, string file, string segment)
         {
+            var userId = HttpContext.GetOptionalUserFromContext();
             var result = new MemoryStream();
+            await _videoService.SetViewToPost(postId, userId, segment);
             await storage.ReadFileAsync(postId, $"{file}/{segment}", result);
             result.Position = 0;
             return File(result, HLSType);
         }
+
 
         [HttpGet("video/{postId:guid}")]
         public async Task<IActionResult> GetVideoData(Guid postId)

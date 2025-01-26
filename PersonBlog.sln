@@ -50,6 +50,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Application", "Video.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Domain", "Video.Domain\Video.Domain.csproj", "{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Service", "Video.Service\Video.Service.csproj", "{137E92AE-B1AD-4F9F-A92E-3398A42AAE1E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Persistence", "Video.Persistence\Video.Persistence.csproj", "{42693521-51AC-4235-9929-D4CCD10D03E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -128,6 +132,14 @@ Global
 		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8A4E7CDD-07E8-4399-B5C4-2004A39489E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{137E92AE-B1AD-4F9F-A92E-3398A42AAE1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{137E92AE-B1AD-4F9F-A92E-3398A42AAE1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{137E92AE-B1AD-4F9F-A92E-3398A42AAE1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{137E92AE-B1AD-4F9F-A92E-3398A42AAE1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42693521-51AC-4235-9929-D4CCD10D03E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42693521-51AC-4235-9929-D4CCD10D03E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42693521-51AC-4235-9929-D4CCD10D03E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42693521-51AC-4235-9929-D4CCD10D03E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

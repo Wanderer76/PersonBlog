@@ -2,6 +2,7 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using Profile.Persistence;
 using Profile.Service.Extensions;
+using Video.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
+builder.Services.AddVideoService();
 
 var app = builder.Build();
 

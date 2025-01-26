@@ -8,10 +8,12 @@ namespace Video.Domain.Entities
     {
         [Key]
         public Guid Id { get; set; }
-        public Guid FromUser { get; set; }
+        public string Username { get; set; }
         public Guid PostId { get; set; }
         public required string CommentText { get; set; }
         public DateTimeOffset CreatedAt { get; } = DateTimeOffset.UtcNow;
+        public bool IsDeleted { get; set; }
+
         public Guid? CommentId { get; set; }
 
         [ForeignKey(nameof(CommentId))]
