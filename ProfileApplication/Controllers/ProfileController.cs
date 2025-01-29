@@ -38,8 +38,8 @@ public class ProfileController : ControllerBase
     public async Task<ActionResult<ProfileModel>> GetProfile()
     {
         var userId = HttpContext.GetUserFromContext();
-        var profileModel = _profileService.GetProfileByUserIdAsync(userId);
-        return Ok(await profileModel);
+        var profileModel = await _profileService.GetProfileByUserIdAsync(userId);
+        return Ok(profileModel);
     }
 
     [HttpGet("profile/{id:guid}")]

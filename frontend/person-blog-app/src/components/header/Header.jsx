@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import './Header.css';
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 
@@ -17,6 +17,6 @@ export class Header extends React.Component {
                 {!JwtTokenService.isAuth() && <a href='/auth' className="right">Авторизация</a>}
                 {JwtTokenService.isAuth() && <a href='/profile' className="right">Профиль</a>}
             </nav>
-        )
+        );
     }
 }

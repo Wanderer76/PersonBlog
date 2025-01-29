@@ -1,12 +1,4 @@
-﻿using Profile.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Profile.Service.Models.Blog
+﻿namespace Profile.Service.Models.Blog
 {
     public class BlogModel
     {
@@ -30,7 +22,7 @@ namespace Profile.Service.Models.Blog
 
     public static class BlogModelMapper
     {
-        public static BlogModel ToBlogModel(this Profile.Domain.Entities.Blog blog)
+        public static BlogModel ToBlogModel(this Domain.Entities.Blog blog)
         {
             return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId);
         }

@@ -1,17 +1,69 @@
 import React, { useState } from "react";
+import { BaseApUrl } from "../../scripts/apiMethod";
+import { saveAccessToken, saveRefreshToken } from "../../scripts/TokenStrorage";
+import { useNavigate } from "react-router-dom";
 
 const SignUpForm = ({ onSwitchToSignIn }) => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+
+  const [registerForm, setRegisterForm] = useState({
+    login: "",
+    password: "",
+    passwordConfirm: "",
+    name: null,
+    surname: null,
+    lastName: null,
+    birthdate: null,
+    email: null
+  });
+
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Регистрация:", { username, email, password, fullName, birthdate });
+    sendAuthRequest(registerForm);
+  //  console.log("Регистрация:", { username, email, password, fullName, birthdate });
     // Здесь можно добавить логику для отправки данных на сервер
   };
+
+  function updateRegisterForm(event) {
+    const key = event.target.name;
+    const value = event.target.value;
+
+    setRegisterForm((prev) => ({
+        ...prev,
+        [key]: value
+    }));
+}
+
+  async function sendAuthRequest(body) {
+    console.log(body);
+    if (body.login === "" && body.password === "") {
+      return
+    }
+    try {
+      const url = BaseApUrl + '/auth/api/Auth/create';
+      const resonse = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (resonse.status === 200) {
+        const data = await resonse.json();
+        saveAccessToken(data.accessToken);
+        saveRefreshToken(data.refreshToken);
+        navigate("/");
+        window.location.reload();
+      }
+      else {
+        console.log("error")
+      }
+    } catch (e) {
+      console.log(e)
+    }
+  }
 
   return (
     <form className="signup" onSubmit={handleSubmit}>
@@ -19,35 +71,62 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
       <input
         type="text"
         placeholder="Юзернейм"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        value={registerForm.login}
+        name="login"
+        onChange={updateRegisterForm}
         required
       />
       <input
         type="email"
         placeholder="Почта"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        value={registerForm.email}
+        name="email"
+        onChange={updateRegisterForm}
         required
       />
       <input
         type="password"
         placeholder="Пароль"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        value={registerForm.password}
+        name="password"
+        onChange={updateRegisterForm}
+        required
+      />
+      <input
+        type="password"
+        placeholder="Повторите пароль"
+        value={registerForm.passwordConfirm}
+        name="passwordConfirm"
+        onChange={updateRegisterForm}
         required
       />
       <input
         type="text"
-        placeholder="ФИО (необязательно)"
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
+        placeholder="Имя (необязательно)"
+        value={registerForm.name}
+        name="name"
+        onChange={updateRegisterForm}
+      />
+      <input
+        type="text"
+        placeholder="Фамилия (необязательно)"
+        value={registerForm.surname}
+        name="surname"
+        onChange={updateRegisterForm}
+      />
+      <input
+        type="text"
+        placeholder="Отчество (необязательно)"
+        value={registerForm.lastName}
+        name="lastname"
+        onChange={updateRegisterForm}
       />
       <input
         type="date"
         placeholder="Дата рождения (необязательно)"
-        value={birthdate}
-        onChange={(e) => setBirthdate(e.target.value)}
+        value={registerForm.birthdate}
+        name="birthdate"
+        onChange={updateRegisterForm}
       />
       <button className="authButton" type="submit">Зарегистрироваться</button>
     </form>

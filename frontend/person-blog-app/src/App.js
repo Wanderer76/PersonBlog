@@ -3,7 +3,7 @@ import './App.css';
 import AuthPage from './pages/auth/AuthPage';
 import { MainPage } from './pages/main/MainPage';
 import { Header } from './components/header/Header';
-import { ProfilePage } from './pages/profile/ProfilePage';
+import ProfilePage from './pages/profile/ProfilePage';
 
 
 

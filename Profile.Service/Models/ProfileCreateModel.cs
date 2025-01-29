@@ -4,10 +4,8 @@ namespace Profile.Service.Models;
 
 public class ProfileCreateModel
 {
-    [Required]
-    public string FirstName { get; set; } = null!;
-    [Required]
-    public string SurName { get; set; } = null!;
+    public string? FirstName { get; set; } 
+    public string? SurName { get; set; } 
     public string? LastName { get; set; }
     public DateTimeOffset? Birthdate { get; set; }
     [Required]

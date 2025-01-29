@@ -1,6 +1,5 @@
 ﻿using Profile.Domain.Entities;
 using Profile.Service.Models.Blog;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Profile.Service.Models
 {

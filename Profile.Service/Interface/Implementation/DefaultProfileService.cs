@@ -31,9 +31,9 @@ namespace Profile.Service.Interface.Implementation
                 Id = Guid.NewGuid(),
                 Birthdate = profileCreateModel.Birthdate,
                 Email = profileCreateModel.Email,
-                FirstName = profileCreateModel.FirstName,
-                SurName = profileCreateModel.SurName,
-                LastName = profileCreateModel.LastName,
+                FirstName = profileCreateModel.FirstName ?? string.Empty,
+                SurName = profileCreateModel.SurName ?? string.Empty,
+                LastName = profileCreateModel.LastName ?? string.Empty,
                 ProfileState = ProfileState.Active,
                 UserId = profileCreateModel.UserId,
                 IsDeleted = false
