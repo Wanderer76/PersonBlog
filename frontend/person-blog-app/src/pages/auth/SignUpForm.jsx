@@ -49,7 +49,7 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         value={birthdate}
         onChange={(e) => setBirthdate(e.target.value)}
       />
-      <button type="submit">Зарегистрироваться</button>
+      <button className="authButton" type="submit">Зарегистрироваться</button>
     </form>
   );
 };

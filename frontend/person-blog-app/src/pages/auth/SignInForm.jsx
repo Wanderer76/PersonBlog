@@ -23,8 +23,7 @@ const SignInForm = ({ onSwitchToSignUp }) => {
         }))
     }
 
-    async function sendAuthRequest(url, body) {
-
+    async function sendAuthRequest(body) {
         if (body.login === "" && body.password === "") {
             return
         }
@@ -53,8 +52,9 @@ const SignInForm = ({ onSwitchToSignUp }) => {
         }
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        await sendAuthRequest(authForm);
         // Здесь можно добавить логику для отправки данных на сервер
     };
 
@@ -62,21 +62,23 @@ const SignInForm = ({ onSwitchToSignUp }) => {
         <form className="signin" onSubmit={handleSubmit}>
             <h2 className="modal-title">Войти</h2>
             <input
-                type="email"
-                placeholder="Почта"
+                // type="email"
+                placeholder="Логин"
+                name="login"
                 value={authForm.login}
                 onChange={updateAuthForm}
                 required
             />
             <input
                 type="password"
+                name="password"
                 placeholder="Пароль"
                 value={authForm.password}
                 onChange={updateAuthForm}
                 required
             />
             <a className="auth-a" href="#">Забыли пароль?</a>
-            <button type="submit">Войти</button>
+            <button className="authButton" type="submit">Войти</button>
         </form>
     );
 };
