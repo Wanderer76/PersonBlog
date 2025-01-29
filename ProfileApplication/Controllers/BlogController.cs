@@ -29,7 +29,7 @@ namespace ProfileApplication.Controllers
 
         [Authorize]
         [HttpPost("create")]
-        public async Task<IActionResult> CreateBlog([FromBody] BlogCreateForm form)
+        public async Task<IActionResult> CreateBlog([FromForm] BlogCreateForm form)
         {
             var userId = HttpContext.GetUserFromContext();
             try

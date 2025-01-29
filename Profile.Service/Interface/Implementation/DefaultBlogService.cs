@@ -11,7 +11,7 @@ namespace Profile.Service.Interface.Implementation
     internal class DefaultBlogService : IBlogService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
-
+       
         public DefaultBlogService(IReadWriteRepository<IProfileEntity> context)
         {
             _context = context;
@@ -38,7 +38,7 @@ namespace Profile.Service.Interface.Implementation
                 Title = model.Title,
                 Description = model.Description,
                 ProfileId = profile.Id,
-                PhotoUrl = model.PhotoUrl,
+                PhotoUrl = null//model.PhotoUrl,
             };
             _context.Add(blog);
             await _context.SaveChangesAsync();

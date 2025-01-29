@@ -7,6 +7,6 @@ namespace ProfileApplication.Models
         [Required]
         public string Title {  get; set; }
         public string? Description { get; set; }
-        public string? PhotoUrl {  get; set; }
+        public IFormFile? PhotoUrl {  get; set; }
     }
 }
