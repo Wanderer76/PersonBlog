@@ -1,3 +1,4 @@
+using Blog.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Profile.Persistence;
@@ -16,6 +17,7 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
+builder.Services.AddBlogServices();
 
 var app = builder.Build();
 

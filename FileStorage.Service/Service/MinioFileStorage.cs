@@ -162,5 +162,10 @@ namespace FileStorage.Service.Service
 
             return result.ObjectName;
         }
+
+        public void Dispose()
+        {
+            _client.Dispose();
+        }
     }
 }

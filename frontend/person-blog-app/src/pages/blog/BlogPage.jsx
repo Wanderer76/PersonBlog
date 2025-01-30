@@ -72,7 +72,7 @@ const CommonProfileData = function (props) {
                 }, [])
         }
         sendRequest();
-    })
+    }, [])
 
     return (
         <div>
@@ -179,7 +179,7 @@ const BlogPosts = function (props) {
                             <td>{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
                             <td>{x.type === 1 && x.isProcessed ? <p>В обработке</p> : getVideo(x)} </td>
                             <td><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
-                            <td><button onClick={() => setEditForm({...x})}>Редактировать</button> </td>
+                            <td><button onClick={() => setEditForm({ ...x })}>Редактировать</button> </td>
                         </tr>
                     })}
                 </tbody>

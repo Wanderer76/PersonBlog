@@ -2,7 +2,7 @@
 
 namespace FileStorage.Service.Service
 {
-    public interface IFileStorage
+    public interface IFileStorage : IDisposable
     {
         Task<string> PutFileAsync(Guid userId, Guid id, Stream input);
         Task<string> PutFileWithResolutionAsync(Guid bucketId, Guid id, Stream input, VideoResolution resolution = VideoResolution.Original);

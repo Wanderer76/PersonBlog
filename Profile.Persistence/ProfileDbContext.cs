@@ -72,8 +72,6 @@ public class ProfileDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<VideoMetadata>();
 
-                entity.HasOne(x => x.Post)
-                    .WithMany(x => x.VideoFiles);
                 entity.HasIndex(x => new
                 {
                     x.PostId,

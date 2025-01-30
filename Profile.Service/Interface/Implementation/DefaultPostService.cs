@@ -102,7 +102,7 @@ namespace Profile.Service.Interface.Implementation
         {
             var fileMetadata = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
-                .SelectMany(x => x.VideoFiles)
+                .Select(x => x.VideoFile)
                 .Where(x => x.Resolution == (VideoResolution)resolution)
                 .FirstAsync();
 
@@ -153,8 +153,8 @@ namespace Profile.Service.Interface.Implementation
             foreach (var post in pagedPosts.Posts)
             {
                 var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
-                var isProcessed = post.VideoFiles.Count != 0 ? post.VideoFiles.Any(a => a.IsProcessed) : false;
-                var videoFile = post.VideoFiles.FirstOrDefault();
+                var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+                var videoFile = post.VideoFile;
                 posts.Add(new PostModel(
                                 post.Id,
                                 post.Type,
@@ -162,7 +162,7 @@ namespace Profile.Service.Interface.Implementation
                                 post.Description,
                                 post.CreatedAt,
                                 previewUrl,
-                                post.VideoFiles.Count != 0 && !isProcessed ?
+                                post.VideoFile != null && !isProcessed ?
                                 new VideoMetadataModel(
                                     videoFile.Id,
                                     videoFile.Length,
@@ -223,7 +223,7 @@ namespace Profile.Service.Interface.Implementation
         public async Task<PostModel> UpdatePostAsync(PostEditDto postEditDto)
         {
             var post = await _context.Get<Post>()
-                .Include(x => x.VideoFiles)
+                .Include(x => x.VideoFile)
                 .FirstOrDefaultAsync(x => x.Id == postEditDto.Id) ?? throw new ArgumentException("Пост не найден");
 
             var blogUserId = await _context.Get<Blog>()
@@ -252,8 +252,8 @@ namespace Profile.Service.Interface.Implementation
             await _context.SaveChangesAsync();
 
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await storage.GetFileUrlAsync(post.Id, post.PreviewId);
-            var isProcessed = post.VideoFiles.Count != 0 ? post.VideoFiles.Any(a => a.IsProcessed) : false;
-            var videoMetadata = post.VideoFiles.FirstOrDefault();
+            var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+            var videoMetadata = post.VideoFile;
             return new PostModel(
                             post.Id,
                             post.Type,
@@ -261,7 +261,7 @@ namespace Profile.Service.Interface.Implementation
                             post.Description,
                             post.CreatedAt,
                             previewUrl,
-                            post.VideoFiles.Count != 0 && !isProcessed ?
+                            post.VideoFile != null && !isProcessed ?
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
@@ -281,8 +281,8 @@ namespace Profile.Service.Interface.Implementation
                 ? null
                 : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
 
-            var videoMetadata = post.VideoFiles.FirstOrDefault();
-            var isProcessed = post.VideoFiles.Count != 0 ? post.VideoFiles.Any(a => a.IsProcessed) : false;
+            var videoMetadata = post.VideoFile;
+            var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
 
             return new PostDetailViewModel(
                 post.Id,
@@ -292,7 +292,7 @@ namespace Profile.Service.Interface.Implementation
                 post.Description,
                 post.Title,
                 post.Type,
-                post.VideoFiles.Count != 0 && !isProcessed ?
+                post.VideoFile != null && !isProcessed ?
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,

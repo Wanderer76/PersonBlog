@@ -21,7 +21,7 @@ namespace Profile.Domain.Entities
 
         public string? PreviewId { get; set; }
 
-        public List<VideoMetadata> VideoFiles { get; set; }
+        public VideoMetadata VideoFile { get; set; }
         public int ViewCount { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
