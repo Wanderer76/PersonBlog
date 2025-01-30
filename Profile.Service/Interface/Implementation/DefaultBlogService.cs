@@ -11,7 +11,7 @@ namespace Profile.Service.Interface.Implementation
     internal class DefaultBlogService : IBlogService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
-       
+
         public DefaultBlogService(IReadWriteRepository<IProfileEntity> context)
         {
             _context = context;
@@ -58,6 +58,15 @@ namespace Profile.Service.Interface.Implementation
             var result = await _context.Get<Blog>()
                 .FirstAsync(x => x.Id == id);
             return result.ToBlogModel();
+        }
+
+        public async Task<BlogModel> GetBlogByPostIdAsync(Guid id)
+        {
+            var blog = await _context.Get<Post>()
+                .Where(x => x.Id == id)
+                .Select(x => x.Blog)
+                .FirstAsync();
+            return blog.ToBlogModel();
         }
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)

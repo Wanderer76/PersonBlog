@@ -16,13 +16,15 @@ namespace Video.Application.Controllers
         private readonly IFileStorage storage;
         private readonly IPostService _postService;
         private readonly IReactionService _videoService;
+        private readonly IBlogService _blogService;
 
-        public VideoController(ILogger<BaseController> logger, IFileStorageFactory factory, IPostService postService, IReactionService videoService)
+        public VideoController(ILogger<BaseController> logger, IFileStorageFactory factory, IPostService postService, IReactionService videoService, IBlogService blogService)
             : base(logger)
         {
             storage = factory.CreateFileStorage();
             _postService = postService;
             _videoService = videoService;
+            _blogService = blogService;
         }
 
         /// <summary>
@@ -78,10 +80,11 @@ namespace Video.Application.Controllers
         public async Task<IActionResult> GetVideoData(Guid postId)
         {
             var post = await _postService.GetDetailPostByIdAsync(postId);
-
+            var blog = await _blogService.GetBlogByPostIdAsync(post.Id);
             return Ok(new
             {
                 Post = post,
+                Blog = blog,
                 Comment = new List<string>()
             });
         }

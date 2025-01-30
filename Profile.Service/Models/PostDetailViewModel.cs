@@ -12,10 +12,12 @@ namespace Profile.Service.Models
         public string? Description { get; }
         public string Title { get; }
         public PostType Type { get; }
+        public int LikeCount { get; }
+        public int DislikeCount { get; }
         public VideoMetadataModel? VideoData { get; }
         public bool IsProcessed { get; }
 
-        public PostDetailViewModel(Guid id, string? previewUrl, DateTimeOffset createdAt, int viewCount, string? description, string title, PostType type, VideoMetadataModel? videoData, bool isProcessed)
+        public PostDetailViewModel(Guid id, string? previewUrl, DateTimeOffset createdAt, int viewCount, string? description, string title, PostType type, int likeCount, int dislikeCount, VideoMetadataModel? videoData, bool isProcessed)
         {
             Id = id;
             PreviewUrl = previewUrl;
@@ -24,6 +26,8 @@ namespace Profile.Service.Models
             Description = description;
             Title = title;
             Type = type;
+            LikeCount = likeCount;
+            DislikeCount = dislikeCount;
             VideoData = videoData;
             IsProcessed = isProcessed;
         }

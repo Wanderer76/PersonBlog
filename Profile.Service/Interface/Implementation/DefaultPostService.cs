@@ -293,6 +293,8 @@ namespace Profile.Service.Interface.Implementation
                 post.Description,
                 post.Title,
                 post.Type,
+                post.LikeCount,
+                post.DislikeCount,
                 post.VideoFile != null && !isProcessed ?
                             new VideoMetadataModel(
                                 videoMetadata.Id,

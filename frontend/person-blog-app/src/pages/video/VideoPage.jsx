@@ -3,11 +3,32 @@ import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import './VideoPage.css';
 import React, { useEffect, useState } from 'react';
 import API, { BaseApUrl } from '../../scripts/apiMethod';
+import { getLocalDateTime } from '../../scripts/LocalDate';
+import logo from '../../defaultProfilePic.png';
 
 export const VideoPage = function (props) {
     const searchParams = useParams();
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [video, setVideoData] = useState([]);
+    const [post, setPostData] = useState({
+        id: null,
+        previewUrl: null,
+        createdAt: null,
+        viewCount: 0,
+        description: null,
+        title: null,
+        type: 1,
+        videoData: {
+            id: null,
+            length: 0,
+            contentType: null,
+            objectName: null
+        },
+        isProcessed: true
+    });
+
+    const [blog, setBlog] = useState({
+    });
 
     function getUrl(postId, objectName) {
         if (postId !== null && objectName !== null)
@@ -18,46 +39,51 @@ export const VideoPage = function (props) {
         API.get(`/video/Video/video/${searchParams.postId}`)
             .then(response => {
                 if (response.status === 200) {
-                    setVideoData([response.data.post]);
+                    setPostData(response.data.post);
+                    setBlog(response.data.blog);
+                    setIsLoading(false)
                 }
             })
 
     }, [])
 
+
+    if (isLoading) {
+        return <></>;
+    }
+
     return (
         <div className="container">
             <div className="main-content">
                 <div className="video-player">
-                    {video.map(post => {
-                        return <VideoPlayer className="myVideo"
-                            thumbnail={post.previewUrl}
-                            path={
-                                {
-                                    url: getUrl(post.id, post.videoData.objectName),
-                                    label: 'd',
-                                    postId: post.id,
-                                    res: 0,
-                                    objectName: post.videoData.objectName
-                                }
+                    <VideoPlayer className="myVideo"
+                        thumbnail={post.previewUrl}
+                        path={
+                            {
+                                url: getUrl(post.id, post.videoData.objectName),
+                                label: 'd',
+                                postId: post.id,
+                                res: 0,
+                                objectName: post.videoData.objectName
                             }
-                        />
-                    })}
+                        }
+                    />
                 </div>
 
                 <div className="video-metadata">
-                    <h1 className="video-title">Удивительные факты о технологиях | Интересный документальный фильм</h1>
+                    <h1 className="video-title">{post.title}</h1>
 
                     <div className="video-stats">
                         <div className="views-date">
-                            <span>1 234 567 просмотров</span> •
-                            <span>5 дней назад</span>
+                            <span>{post.viewCount} Просмотров </span> •
+                            <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                         </div>
                         <div className="video-actions">
                             <button className="action-button">
-                                <span>👍</span> 123K
+                                <span>👍</span> {post.likeCount}
                             </button>
                             <button className="action-button">
-                                <span>👎</span> 456
+                                <span>👎</span> {post.dislikeCount}
                             </button>
                             <button className="action-button">
                                 <span>📁</span> Поделиться
@@ -68,9 +94,9 @@ export const VideoPage = function (props) {
 
                 <div className="channel-info">
                     <div className="channel-left">
-                        <img src="https://picsum.photos/48/48" className="channel-avatar" alt="Аватар канала" />
+                        <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
                         <div>
-                            <div className="channel-name">TechWorld</div>
+                            <div className="channel-name">{blog.name}</div>
                             <div className="subscribers-count">1,23 млн подписчиков</div>
                         </div>
                     </div>
@@ -78,14 +104,13 @@ export const VideoPage = function (props) {
                 </div>
 
                 <div className="video-description">
-                    В этом видео мы рассмотрим удивительные технологические достижения последних лет.
-                    Вы узнаете о новейших разработках в области искусственного интеллекта, квантовых
-                    вычислений и робототехники. Не забудьте подписаться на канал!
+                    <span>Описание: </span>
+                    {post.description}
                 </div>
 
                 <div className="comments-section">
                     <h3>432 комментария</h3>
-                   
+
                     <div className="comment">
                         <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
                         <div className="comment-content">
@@ -93,7 +118,7 @@ export const VideoPage = function (props) {
                             <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
                         </div>
                     </div>
-                    
+
                     <div className="comment">
                         <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
                         <div className="comment-content">
