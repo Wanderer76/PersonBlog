@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import './MainPage.css';
 import API from "../../scripts/apiMethod";
-
-const playUrl = "https://cdn3.iconfinder.com/data/icons/audio-sound-and-video/64/audio-video-outline-play-1024.png";
+import logo from '../../defaultProfilePic.png';
+import { useNavigate } from "react-router-dom";
 
 const MainPage = function () {
 
@@ -21,36 +21,40 @@ const MainPage = function () {
 
     return (
         <>
-            <div className="video-container">
+            <div className="video-container" >
                 <div className="video-grid">
-                    {videos.map(x => createVideoCard(x))}
+                    {videos.map(x => {
+                        return <VideoCard videoCardModel={x} key={x.postId} />
+                    })}
                 </div>
             </div>
         </>)
 
 }
 
-function createVideoCard(videoCardModel) {
-    return <div className="video-card">
-        <div class="thumbnail-container" onClick={(e) => {
-            console.log("asd");
+const VideoCard = function ({ videoCardModel }) {
+    const navigate = useNavigate();
+    return <div key={videoCardModel.postId} className="video-card">
+        <div className="thumbnail-container" onClick={(e) => {
+            navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
         }}>
 
             <img src={videoCardModel.previewUrl} className="thumbnail" alt="Превью видео" />
-            <div class="play-icon"></div>
+            <div className="play-icon"></div>
         </div>
         <div className="video-info">
-
             <h3 className="video-title">{videoCardModel.title}</h3>
             <div className="channel-info">
-                <img src={videoCardModel.blogLogo === null ? 'https://rostov.ucstroitel.ru/upload/iblock/30b/30b1723419475e59e357fe8842575c10.png' : videoCardModel.blogLogo} className="channel-icon" alt="Логотип канала" />
+                <img src={videoCardModel.blogLogo === null ? logo : videoCardModel.blogLogo} className="channel-icon" alt="Логотип канала" />
                 <span className="channel-name">{videoCardModel.blogName}</span>
             </div>
             <div className="video-stats">
                 Просмотров: {videoCardModel.viewCount}
             </div>
         </div>
-    </div>;
+    </div>
+        ;
+    ;
 }
 
 export default MainPage;
