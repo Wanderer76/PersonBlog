@@ -13,7 +13,7 @@ namespace FFmpeg.Service
         const string FFProbePath = "../ffmpeg/ffprobe.exe";
         static FFMpegService()
         {
-            //    Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
+            Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
         }
 
 

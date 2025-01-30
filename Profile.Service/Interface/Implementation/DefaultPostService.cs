@@ -275,6 +275,7 @@ namespace Profile.Service.Interface.Implementation
         public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
         {
             var post = await _context.Get<Post>()
+                .Include(x=>x.VideoFile)
                 .FirstAsync(x => x.Id == postId);
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)

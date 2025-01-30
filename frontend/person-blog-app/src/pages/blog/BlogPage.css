@@ -17,6 +17,13 @@ th,
 td {
   border: 1px solid rgb(160 160 160);
   padding: 8px 10px;
+  
+}
+
+.videoCell{
+  width: 500px;
+  height: 500px;
+  
 }
 
 td:last-of-type {

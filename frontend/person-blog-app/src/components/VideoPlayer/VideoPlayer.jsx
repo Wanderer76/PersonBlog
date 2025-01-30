@@ -3,6 +3,7 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import './qualitySelector/plugin.js';
 import 'hls.js';
+import './Player.css';
 
 
 // Fetch the link to playlist.m3u8 of the video you want to play
@@ -13,9 +14,11 @@ export const VideoPlayer = ({ thumbnail, path }) => {
     autoplay: false,
     controls: true,
     playbackRates: [0.5, 1, 1.5, 2],
-    width: 500,
-    height: 500,
+    // width: 500,
+    // height: 500,
     responsive: true,
+    fluid: true, // Добавить fluid mode
+    aspectRatio: '16:9', // Установить соотношение сторон
     poster: thumbnail,
     plugins: {
       qualitySelectorHls: {

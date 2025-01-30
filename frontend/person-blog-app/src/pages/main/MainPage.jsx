@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './MainPage.css';
 import API from "../../scripts/apiMethod";
 import logo from '../../defaultProfilePic.png';
 import { useNavigate } from "react-router-dom";
 
-const MainPage = function () {
+export const MainPage = function () {
 
-    const [videos, setVideos] = useState([])
+    const [videos, setVideos] = useState([]);
 
-    useState(() => {
+    useEffect(() => {
 
         API.get("/video/recommendations?page=1&limit=20")
             .then(response => {
@@ -36,7 +36,7 @@ const VideoCard = function ({ videoCardModel }) {
     const navigate = useNavigate();
     return <div key={videoCardModel.postId} className="video-card">
         <div className="thumbnail-container" onClick={(e) => {
-            navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
+            window.location.href = `/video/${videoCardModel.postId}/${videoCardModel.videoId}`;
         }}>
 
             <img src={videoCardModel.previewUrl} className="thumbnail" alt="Превью видео" />
@@ -57,4 +57,4 @@ const VideoCard = function ({ videoCardModel }) {
     ;
 }
 
-export default MainPage;
+// export default MainPage;
