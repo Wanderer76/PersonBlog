@@ -5,12 +5,13 @@ import logo from '../../defaultProfilePic.png';
 import { useNavigate } from "react-router-dom";
 
 export const MainPage = function () {
-
     const [videos, setVideos] = useState([]);
+    const [page, setPage] = useState(1);
+    const limit = 40;
 
     useEffect(() => {
 
-        API.get("/video/recommendations?page=1&limit=20")
+        API.get(`/video/recommendations?page=${page}&limit=${limit}`)
             .then(response => {
                 if (response.status === 200) {
                     setVideos(response.data);
@@ -36,7 +37,7 @@ const VideoCard = function ({ videoCardModel }) {
     const navigate = useNavigate();
     return <div key={videoCardModel.postId} className="video-card">
         <div className="thumbnail-container" onClick={(e) => {
-            window.location.href = `/video/${videoCardModel.postId}/${videoCardModel.videoId}`;
+            navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
         }}>
 
             <img src={videoCardModel.previewUrl} className="thumbnail" alt="Превью видео" />
