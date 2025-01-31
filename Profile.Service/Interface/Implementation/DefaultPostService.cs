@@ -1,6 +1,7 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
+using MessageBus;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
@@ -16,11 +17,12 @@ namespace Profile.Service.Interface.Implementation
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
-
-        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory)
+        private readonly IMessageBus _messageBus;
+        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory, IMessageBus messageBus)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
+            _messageBus = messageBus;
         }
 
         public async Task<Guid> CreatePostAsync(PostCreateDto postCreateDto)

@@ -1,4 +1,6 @@
 ﻿using Infrastructure.Models;
+using System.Text;
+using System.Text.Json;
 
 namespace Profile.Domain.Entities
 {

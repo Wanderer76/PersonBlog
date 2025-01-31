@@ -1,8 +1,7 @@
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.FileProviders;
+using MessageBus;
 using Profile.Persistence;
 using Profile.Service.Extensions;
 
@@ -16,7 +15,7 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
-
+builder.Services.AddMessageBus();
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

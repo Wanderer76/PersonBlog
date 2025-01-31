@@ -3,11 +3,13 @@
 using FFmpeg.Service;
 using FFMpeg.Cli;
 using FileStorage.Service;
+using MessageBus;
 using Profile.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddMessageBus();
 //builder.Services.AddFFMpeg(new FFMpegCore.FFOptions
 //{
 //    BinaryFolder = "../ffmpeg",

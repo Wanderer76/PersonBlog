@@ -43,6 +43,17 @@ services:
       - "5432:5432"
     volumes:
         - ../db:/var/lib/postgresql/data
+  rabbitMq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitMq
+    ports:
+      - "5672:5672"
+      - "15672:15672" 
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - ../rabbitMq:/var/lib/rabbitmq
   # mongo:
   #   image: mongo
   #   environment:

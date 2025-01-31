@@ -1,6 +1,7 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
+using MessageBus;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Shared.Persistence;
@@ -12,11 +13,12 @@ namespace FFMpeg.Cli
     {
         private readonly IServiceScopeFactory _serviceScope;
         private readonly IFileStorageFactory _fileStorageFactory;
-
-        public FileChunksCombinerHostedService(IServiceScopeFactory serviceScope, IFileStorageFactory fileStorageFactory)
+        private readonly IMessageBus _messageBus;
+        public FileChunksCombinerHostedService(IServiceScopeFactory serviceScope, IFileStorageFactory fileStorageFactory, IMessageBus messageBus)
         {
             _serviceScope = serviceScope;
             _fileStorageFactory = fileStorageFactory;
+            _messageBus = messageBus;
         }
         public async Task StartAsync(CancellationToken cancellationToken)
         {
@@ -119,7 +121,9 @@ namespace FFMpeg.Cli
             context.Add(videoCreateEvent);
             context.Attach(@event);
             @event.IsCompleted = true;
+            await _messageBus.SendMessageAsync("VideoUploadEvent", videoCreateEvent);
             await context.SaveChangesAsync();
+
             foreach (var chunk in chunks)
             {
                 await storage.RemoveFileAsync(post.Id, chunk.ObjectName);
