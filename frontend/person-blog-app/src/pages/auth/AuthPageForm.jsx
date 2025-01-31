@@ -18,26 +18,26 @@ const AuthPageForm = function () {
 
     return (
         <>
-            <div className={`container ${isSignUp ? "right-panel-active" : ""}`}>
-                <div className="form-container sign-up-container">
+            <div className={`auth-container ${isSignUp ? "right-panel-active" : ""}`}>
+                <div className="auth-form-container auth-sign-up-container">
                     <SignUpForm onSwitchToSignIn={handleSwitchToSignIn} />
                 </div>
-                <div className="form-container sign-in-container">
+                <div className="auth-form-container auth-sign-in-container">
                     <SignInForm onSwitchToSignUp={handleSwitchToSignUp} />
                 </div>
-                <div className="overlay-container">
-                    <div className="overlay">
-                        <div className="overlay-panel overlay-left">
+                <div className="auth-overlay-container">
+                    <div className="auth-overlay">
+                        <div className="auth-overlay-panel auth-overlay-left">
                             <h1>Уже есть аккаунт?</h1>
                             <p>Войдите, чтобы продолжить.</p>
-                            <button id="signIn" className="authButton ghost" onClick={handleSwitchToSignIn}>
+                            <button id="signIn" className="auth-authButton ghost" onClick={handleSwitchToSignIn}>
                                 Войти
                             </button>
                         </div>
-                        <div className="overlay-panel overlay-right">
+                        <div className="auth-overlay-panel auth-overlay-right">
                             <h1>Нет аккаунта?</h1>
                             <p>Зарегистрируйтесь, чтобы начать.</p>
-                            <button id='signUp' className="authButton ghost" onClick={handleSwitchToSignUp}>
+                            <button id='signUp' className="auth-authButton ghost" onClick={handleSwitchToSignUp}>
                                 Зарегистрироваться
                             </button>
                         </div>

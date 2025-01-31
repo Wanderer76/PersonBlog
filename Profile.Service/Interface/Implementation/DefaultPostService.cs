@@ -1,5 +1,6 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
+using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
@@ -61,7 +62,7 @@ namespace Profile.Service.Interface.Implementation
                 {
                     Id = GuidService.GetNewGuid(),
                     FileUrl = fileUrl,
-                    IsCompleted = false,
+                    State = EventState.New,
                     UserProfileId = userProfileId,
                     ObjectName = objectName,
                     FileId = videoMetadata.Id
@@ -275,7 +276,7 @@ namespace Profile.Service.Interface.Implementation
         public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
         {
             var post = await _context.Get<Post>()
-                .Include(x=>x.VideoFile)
+                .Include(x => x.VideoFile)
                 .FirstAsync(x => x.Id == postId);
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)

@@ -75,15 +75,15 @@ export const ProfilePage = function () {
 
 
         return (<>
-            <div className="modal">
-                <div className="createPostForm">
+            <div className="profile-modal">
+                <div className="profile-createPostForm">
                     <p>Создать блог</p>
                     <p>Название</p>
-                    <input className="modalContent" placeholder="Название" name="title" onChange={updateForm} />
+                    <input className="profile-modalContent" placeholder="Название" name="title" onChange={updateForm} />
                     <p>Описание</p>
-                    <input className="modalContent" placeholder="Описание" name="description" onChange={updateForm} />
+                    <input className="profile-modalContent" placeholder="Описание" name="description" onChange={updateForm} />
                     <p>Аватарка</p>
-                    <input className="modalContent" type="file" accept=".jpg,.jpeg,.png" name="photoUrl" onChange={updateForm} />
+                    <input className="profile-modalContent" type="file" accept=".jpg,.jpeg,.png" name="photoUrl" onChange={updateForm} />
                     <br />
 
                     <button onClick={props.onHandleClose}>Закрыть</button>

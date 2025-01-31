@@ -1,19 +1,18 @@
-
-.video-container {
+.mainpage-container {
     width: 95%;
     max-width: 100%;
     margin: 20px auto;
     padding: 0 20px;
 }
 
-.video-grid {
+.mainpage-video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
     padding: 20px 0;
 }
 
-.video-card {
+.mainpage-video-card {
     background: white;
     border-radius: 10px;
     overflow: hidden;
@@ -22,77 +21,73 @@
     padding: 10px;
 }
 
-.video-card:hover {
+.mainpage-video-card:hover {
     transform: translateY(-5px);
 }
 
-.thumbnail {
+.mainpage-thumbnail {
     width: 100%;
-    height: 180px;
+    height: 190px;
     object-fit: cover;
     border-radius: 10px;
     border-color: black;
-    margin-top: 5px;
-    padding: 10px;
-    box-shadow: 0px 0px 0px 2px rgb(0 0 0 / 0.8);
-
+    box-shadow: 0px 0px 5px 1px rgb(0 0 0 / 0.8);
 }
 
-.video-info {
+.mainpage-video-info {
     padding: 12px;
 }
 
-.video-title {
+.mainpage-video-title {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 8px;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     color: #000;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-.channel-info {
+.mainpage-channel-info {
     display: flex;
     align-items: center;
     margin-bottom: 4px;
 }
 
-.channel-icon {
+.mainpage-channel-icon {
     width: 36px;
     height: 36px;
     border-radius: 50%;
     margin-right: 12px;
 }
 
-.channel-name {
+.mainpage-channel-name {
     font-size: 14px;
     color: #606060;
 }
 
-.video-stats {
+.mainpage-video-stats {
     font-size: 13px;
     color: #606060;
     margin-top: 8px;
 }
 
 @media (max-width: 768px) {
-    .video-grid {
+    .mainpage-video-grid {
         grid-template-columns: 1fr;
     }
-    
-    .thumbnail {
+
+    .mainpage-thumbnail {
         height: 200px;
     }
 }
 
-.thumbnail-container {
+.mainpage-thumbnail-container {
     position: relative;
     margin-bottom: 8px;
 }
 
-.play-icon {
+.mainpage-play-icon {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -108,7 +103,7 @@
     justify-content: center;
 }
 
-.play-icon::after {
+.mainpage-play-icon::after {
     content: '';
     width: 0;
     height: 0;
@@ -118,7 +113,7 @@
     margin-left: 5px;
 }
 
-.video-card:hover .play-icon {
+.mainpage-video-card:hover .mainpage-play-icon {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
 }

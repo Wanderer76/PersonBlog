@@ -22,8 +22,8 @@ export const MainPage = function () {
 
     return (
         <>
-            <div className="video-container" >
-                <div className="video-grid">
+            <div className="mainpage-container" >
+                <div className="mainpage-video-grid">
                     {videos.map(x => {
                         return <VideoCard videoCardModel={x} key={x.postId} />
                     })}
@@ -35,21 +35,21 @@ export const MainPage = function () {
 
 const VideoCard = function ({ videoCardModel }) {
     const navigate = useNavigate();
-    return <div key={videoCardModel.postId} className="video-card">
-        <div className="thumbnail-container" onClick={(e) => {
+    return <div key={videoCardModel.postId} className="mainpage-video-card">
+        <div className="mainpage-thumbnail-container" onClick={(e) => {
             navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
         }}>
 
-            <img src={videoCardModel.previewUrl} className="thumbnail" alt="Превью видео" />
-            <div className="play-icon"></div>
+            <img src={videoCardModel.previewUrl} className="mainpage-thumbnail" alt="Превью видео" />
+            <div className="mainpage-play-icon"></div>
         </div>
-        <div className="video-info">
-            <h3 className="video-title">{videoCardModel.title}</h3>
-            <div className="channel-info">
-                <img src={videoCardModel.blogLogo === null ? logo : videoCardModel.blogLogo} className="channel-icon" alt="Логотип канала" />
-                <span className="channel-name">{videoCardModel.blogName}</span>
+        <div className="mainpage-video-info">
+            <h3 className="mainpage-video-title">{videoCardModel.title}</h3>
+            <div className="mainpage-channel-info">
+                <img src={videoCardModel.blogLogo === null ? logo : videoCardModel.blogLogo} className="mainpage-channel-icon" alt="Логотип канала" />
+                <span className="mainpage-channel-name">{videoCardModel.blogName}</span>
             </div>
-            <div className="video-stats">
+            <div className="mainpage-video-stats">
                 Просмотров: {videoCardModel.viewCount}
             </div>
         </div>

@@ -21,7 +21,7 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     sendAuthRequest(registerForm);
-  //  console.log("Регистрация:", { username, email, password, fullName, birthdate });
+    //  console.log("Регистрация:", { username, email, password, fullName, birthdate });
     // Здесь можно добавить логику для отправки данных на сервер
   };
 
@@ -30,10 +30,10 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
     const value = event.target.value;
 
     setRegisterForm((prev) => ({
-        ...prev,
-        [key]: value
+      ...prev,
+      [key]: value
     }));
-}
+  }
 
   async function sendAuthRequest(body) {
     console.log(body);
@@ -66,9 +66,9 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
   }
 
   return (
-    <form className="signup" onSubmit={handleSubmit}>
-      <h2 className="modal-title">Создать аккаунт</h2>
-      <input
+    <form className="auth-signup auth-form" onSubmit={handleSubmit}>
+      <h2 className="auth-modal-title">Создать аккаунт</h2>
+      <input className="auth-input"
         type="text"
         placeholder="Юзернейм"
         value={registerForm.login}
@@ -76,7 +76,7 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         onChange={updateRegisterForm}
         required
       />
-      <input
+      <input className="auth-input"
         type="email"
         placeholder="Почта"
         value={registerForm.email}
@@ -84,7 +84,7 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         onChange={updateRegisterForm}
         required
       />
-      <input
+      <input className="auth-input"
         type="password"
         placeholder="Пароль"
         value={registerForm.password}
@@ -92,7 +92,7 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         onChange={updateRegisterForm}
         required
       />
-      <input
+      <input className="auth-input"
         type="password"
         placeholder="Повторите пароль"
         value={registerForm.passwordConfirm}
@@ -100,35 +100,35 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         onChange={updateRegisterForm}
         required
       />
-      <input
+      <input className="auth-input"
         type="text"
         placeholder="Имя (необязательно)"
         value={registerForm.name}
         name="name"
         onChange={updateRegisterForm}
       />
-      <input
+      <input className="auth-input"
         type="text"
         placeholder="Фамилия (необязательно)"
         value={registerForm.surname}
         name="surname"
         onChange={updateRegisterForm}
       />
-      <input
+      <input className="auth-input"
         type="text"
         placeholder="Отчество (необязательно)"
         value={registerForm.lastName}
         name="lastname"
         onChange={updateRegisterForm}
       />
-      <input
+      <input className="auth-input"
         type="date"
         placeholder="Дата рождения (необязательно)"
         value={registerForm.birthdate}
         name="birthdate"
         onChange={updateRegisterForm}
       />
-      <button className="authButton" type="submit">Зарегистрироваться</button>
+      <button className="auth-authButton" type="submit">Зарегистрироваться</button>
     </form>
   );
 };

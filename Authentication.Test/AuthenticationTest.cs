@@ -46,6 +46,7 @@ namespace Authentication.Test
                 Login = "admin",
                 PasswordConfirm = "admin",
                 Surname = "admin",
+                Email = "admin@mail.ru",
             };
 
             var result = _authService.Register(registerModel).Result;

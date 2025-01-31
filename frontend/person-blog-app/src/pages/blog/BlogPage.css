@@ -1,53 +1,54 @@
-table {
+.blog-table {
   border-collapse: collapse;
   border: 2px solid rgb(140 140 140);
   font-family: sans-serif;
   font-size: 0.8rem;
   letter-spacing: 1px;
   overflow: auto;
+  color: white;
 }
 
-caption {
+.blog-caption {
   caption-side: bottom;
   padding: 10px;
   font-weight: bold;
 }
 
-th,
-td {
+.blog-th,
+.blog-td {
   border: 1px solid rgb(160 160 160);
   padding: 8px 10px;
   
 }
 
-.videoCell{
+.blog-videoCell{
   width: 500px;
   height: 500px;
   
 }
 
-td:last-of-type {
+.blog-td:last-of-type {
   text-align: center;
 }
 
-tbody>tr:nth-of-type(even) {
+.blog-tbody>tr:nth-of-type(even) {
   background-color: grey
 }
 
-tfoot th {
+.blog-tfoot th {
   text-align: right;
 }
 
-tfoot td {
+.blog-tfoot td {
   font-weight: bold;
 }
 
-.video-js .vjs-resolution-button .vjs-icon-placeholder {
+.blog-video-js .vjs-resolution-button .vjs-icon-placeholder {
   font-family: VideoJS;
   font-weight: normal;
   font-style: normal;
 }
 
-.video-js .vjs-resolution-button .vjs-icon-placeholder:before {
+.blog-video-js .vjs-resolution-button .vjs-icon-placeholder:before {
   content: "\f114";
 }

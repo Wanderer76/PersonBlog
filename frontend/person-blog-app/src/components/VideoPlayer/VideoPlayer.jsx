@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import './qualitySelector/plugin.js';
@@ -10,6 +10,9 @@ import './Player.css';
 export const VideoPlayer = ({ thumbnail, path }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
+  let viewRecorded = false;
+  let sessionHash = null;
+
   const options = {
     autoplay: false,
     controls: true,
@@ -57,6 +60,21 @@ export const VideoPlayer = ({ thumbnail, path }) => {
         var player = this;
         var qualities = player.qualityLevels();
 
+        player.on('timeupdate', () => {
+          const watchedTime = player.currentTime();
+          const duration = player.duration();
+
+          if (!sessionHash) {
+            sessionHash = generateDeviceHash(); // Реализация на основе браузерных данных
+          }
+
+          if (!viewRecorded &&
+            (watchedTime > 30 || watchedTime > duration * 0.5)) {
+            console.log("Просмотр защитан " + sessionHash);
+            viewRecorded = true;
+          }
+        })
+
         qualities.on('addqualitylevel', () => {
 
         });
@@ -94,6 +112,14 @@ export const VideoPlayer = ({ thumbnail, path }) => {
     </div>
   );
 }
-
+const generateDeviceHash = () => {
+  const data = [
+      navigator.userAgent,
+      window.screen.width,
+      window.screen.height,
+      new Date().getTimezoneOffset()
+  ].join('|');
+  return btoa(data).slice(0, 32);
+};
 
 export default VideoPlayer;

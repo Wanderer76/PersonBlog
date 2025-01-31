@@ -1,5 +1,6 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
+using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Shared.Persistence;
@@ -110,7 +111,7 @@ namespace FFMpeg.Cli
             {
                 Id = GuidService.GetNewGuid(),
                 FileUrl = fileUrl,
-                IsCompleted = false,
+                State = EventState.New,
                 UserProfileId = profileId,
                 ObjectName = objectName,
                 FileId = videoMetadata.Id

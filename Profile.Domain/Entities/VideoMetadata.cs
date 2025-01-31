@@ -6,5 +6,6 @@ namespace Profile.Domain.Entities
     {
         public bool IsProcessed { get; set; }
         public VideoResolution Resolution { get; set; }
+        public double Duration { get; set; }
     }
 }

@@ -53,7 +53,7 @@ export const VideoPage = function (props) {
     }
 
     return (
-        <div className="container">
+        <div className="video-container">
             <div className="main-content">
                 <div className="video-player">
                     <VideoPlayer className="myVideo"
@@ -61,7 +61,7 @@ export const VideoPage = function (props) {
                         path={
                             {
                                 url: getUrl(post.id, post.videoData.objectName),
-                                label: 'd',
+                                label: '',
                                 postId: post.id,
                                 res: 0,
                                 objectName: post.videoData.objectName

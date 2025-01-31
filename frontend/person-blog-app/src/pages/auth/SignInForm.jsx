@@ -59,9 +59,9 @@ const SignInForm = ({ onSwitchToSignUp }) => {
     };
 
     return (
-        <form className="signin" onSubmit={handleSubmit}>
-            <h2 className="modal-title">Войти</h2>
-            <input
+        <form className="auth-signin auth-form" onSubmit={handleSubmit}>
+            <h2 className="auth-modal-title">Войти</h2>
+            <input className="auth-input"
                 // type="email"
                 placeholder="Логин"
                 name="login"
@@ -69,7 +69,7 @@ const SignInForm = ({ onSwitchToSignUp }) => {
                 onChange={updateAuthForm}
                 required
             />
-            <input
+            <input className="auth-input"
                 type="password"
                 name="password"
                 placeholder="Пароль"
@@ -78,7 +78,7 @@ const SignInForm = ({ onSwitchToSignUp }) => {
                 required
             />
             <a className="auth-a" href="#">Забыли пароль?</a>
-            <button className="authButton" type="submit">Войти</button>
+            <button className="auth-authButton" type="submit">Войти</button>
         </form>
     );
 };

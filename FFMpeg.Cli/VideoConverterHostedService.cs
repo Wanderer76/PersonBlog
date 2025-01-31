@@ -1,6 +1,7 @@
 ﻿using FFmpeg.Service;
 using FFMpeg.Cli.Models;
 using FileStorage.Service.Service;
+using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Shared.Persistence;
@@ -45,7 +46,7 @@ namespace FFMpeg.Cli
                     var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
                     var events = await context.Get<VideoUploadEvent>()
-                        .Where(x => x.IsCompleted == false)
+                        .Where(x => x.State == EventState.New)
                         .Take(10)
                         .ToListAsync();
 
@@ -84,11 +85,19 @@ namespace FFMpeg.Cli
             var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
             var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
             var fileId = GuidService.GetNewGuid();
+            var inputUrl = new Uri(url).AbsoluteUri;
+            var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl);
+            if (videoStream == null)
+            {
+                context.Attach(@event);
+                @event.State = EventState.Error;
+                @event.ErrorMessage = "Не удалось найти видеопоток";
+                await context.SaveChangesAsync();
+                return;
+            }
             try
             {
                 Directory.CreateDirectory(dir);
-                var inputUrl = new Uri(url).AbsoluteUri;
-                var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl);
 
                 var presets = (videoStream == null
                     ? _videoPresets
@@ -111,7 +120,7 @@ namespace FFMpeg.Cli
                     copyStream.Position = 0;
                     var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
                 }
-        
+
                 foreach (string folder in Directory.EnumerateDirectories(dir))
                 {
                     foreach (var file in Directory.EnumerateFiles(folder))
@@ -171,11 +180,12 @@ namespace FFMpeg.Cli
             }
 
             context.Attach(@event);
-            @event.IsCompleted = true;
+            @event.State = EventState.Complete;
 
             context.Attach(fileMetadata);
             fileMetadata.IsProcessed = false;
             fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
+            fileMetadata.Duration = videoStream.Duration;
 
             await context.SaveChangesAsync();
         }
