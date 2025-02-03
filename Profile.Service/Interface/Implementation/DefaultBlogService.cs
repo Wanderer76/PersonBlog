@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using MessageBus;
+using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
 using Profile.Service.Exceptions;
@@ -11,10 +12,12 @@ namespace Profile.Service.Interface.Implementation
     internal class DefaultBlogService : IBlogService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IMessageBus _messageBus;
 
-        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context)
+        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context, IMessageBus messageBus)
         {
             _context = context;
+            _messageBus = messageBus;
         }
 
         public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)
@@ -71,6 +74,10 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
         {
+            //await _messageBus.SendMessageAsync("quueue", new { Name = "asdds", Number = 12321 }, (entity) =>
+            //{
+            //    Console.WriteLine(entity);
+            //});
             var profile = await _context.GetProfileByUserIdAsync(userId) ?? throw new EntityNotFoundException("Профиль не найден");
             var blog = await _context.Get<Blog>()
                 .Where(x => x.ProfileId == profile.Id)

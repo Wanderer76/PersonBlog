@@ -121,8 +121,8 @@ namespace FFMpeg.Cli
             context.Add(videoCreateEvent);
             context.Attach(@event);
             @event.IsCompleted = true;
-            await _messageBus.SendMessageAsync("VideoUploadEvent", videoCreateEvent);
             await context.SaveChangesAsync();
+            await _messageBus.SendMessageAsync("quueue", videoCreateEvent, (e) => { });
 
             foreach (var chunk in chunks)
             {

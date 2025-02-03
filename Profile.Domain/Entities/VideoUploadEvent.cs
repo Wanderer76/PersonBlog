@@ -12,6 +12,12 @@ namespace Profile.Domain.Entities
         public required string ObjectName { get; set; }
         public Guid FileId { get; set; }
         public string? ErrorMessage { get; set; }
+
+        public void SetErrorMessage(string message)
+        {
+            ErrorMessage = message;
+            State = EventState.Error;
+        }
     }
 
 }

@@ -2,7 +2,9 @@
 using FFMpeg.Cli.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
+using MessageBus;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Profile.Domain.Entities;
 using Shared.Persistence;
 using Shared.Services;
@@ -10,60 +12,66 @@ using Xabe.FFmpeg;
 
 namespace FFMpeg.Cli
 {
-    internal class VideoConverterHostedService : IHostedService
+    internal class VideoConverterHostedService : BackgroundService
     {
         private readonly IServiceScopeFactory _serviceScope;
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly IEnumerable<VideoPreset> _videoPresets;
         private readonly string _tempPath;
+        private readonly IMessageBus _messageBus;
 
         public VideoConverterHostedService(IServiceScopeFactory serviceScope,
-            IFileStorageFactory fileStorageFactory, IConfiguration configuration)
+            IFileStorageFactory fileStorageFactory, IConfiguration configuration, IMessageBus messageBus)
         {
             _serviceScope = serviceScope;
             _fileStorageFactory = fileStorageFactory;
             _tempPath = Path.GetFullPath(configuration["TempDir"]!);
             _videoPresets = configuration.GetSection("VideoPresets").Get<List<VideoPreset>>()!;
+            _messageBus = messageBus;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            StartTask(null);
-        }
-
-        private void StartTask(object? state)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _ = ProcessUploadVideoEvents();
+            return Task.CompletedTask;
         }
 
         private async Task ProcessUploadVideoEvents()
         {
-            while (true)
+            var connection = await _messageBus.GetConnectionAsync();
+            var channel = await connection.CreateChannelAsync();
+            //while (true)
             {
                 try
                 {
                     using var scope = _serviceScope.CreateScope();
                     var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
-                    var events = await context.Get<VideoUploadEvent>()
-                        .Where(x => x.State == EventState.New)
-                        .Take(10)
-                        .ToListAsync();
+                    //var events = await context.Get<VideoUploadEvent>()
+                    //    .Where(x => x.State == EventState.New)
+                    //    .Take(10)
+                    //    .ToListAsync();
 
-                    if (events.Count != 0)
+                    await _messageBus.SubscribeAsync<VideoUploadEvent>(channel, "quueue", async (e) =>
                     {
                         var storage = _fileStorageFactory.CreateFileStorage();
+                        await ProcessFile(storage, e);
+                    });
 
-                        foreach (var @event in events)
-                        {
-                            await ProcessFile(storage, @event);
-                        }
+                    //    if (events.Count != 0)
+                    //    {
+                    //        var storage = _fileStorageFactory.CreateFileStorage();
 
-                    }
-                    else
-                    {
-                        await Task.Delay(1000);
-                    }
+                    //        foreach (var @event in events)
+                    //        {
+                    //            await ProcessFile(storage, @event);
+                    //        }
+
+                    //    }
+                    //    else
+                    //    {
+                    //        await Task.Delay(1000);
+                    //    }
                 }
                 catch (Exception ex)
                 {
@@ -74,11 +82,20 @@ namespace FFMpeg.Cli
 
         private async Task ProcessFile(IFileStorage storage, VideoUploadEvent @event)
         {
+
             using var parallelScope = _serviceScope.CreateScope();
             var context = parallelScope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
             var fileMetadata = await context.Get<VideoMetadata>()
-                .FirstAsync(x => x.ObjectName == @event.ObjectName);
+                .FirstOrDefaultAsync(x => x.ObjectName == @event.ObjectName);
+
+            if (fileMetadata == null)
+            {
+                context.Attach(@event);
+                @event.SetErrorMessage("Не удалось найти данные");
+                await context.SaveChangesAsync();
+                return;
+            }
 
             var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
 
