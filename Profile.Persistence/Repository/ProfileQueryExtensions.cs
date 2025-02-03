@@ -33,7 +33,7 @@ namespace Profile.Persistence.Repository
         {
             var totalPostsCount = await context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
-                .Where(x=>x.IsDeleted == false)
+                .Where(x => x.IsDeleted == false)
                 .CountAsync();
 
             var posts = await context.Get<Post>()
@@ -46,6 +46,19 @@ namespace Profile.Persistence.Repository
 
             var pagesCount = totalPostsCount / limit;
             return (pagesCount == 0 ? 1 : pagesCount, posts);
+        }
+
+        public static async Task<IEnumerable<ProfileEventMessages>> GetForUpdate(this ProfileDbContext context)
+        {
+            return await context.ProfileEventMessages
+                .FromSqlRaw(
+                    @"SELECT * FROM ""Profile"".""ProfileEventMessages""
+                        WHERE ""State"" = 0 
+                        ORDER BY ""CreatedAt"" 
+                        FOR UPDATE SKIP LOCKED 
+                        LIMIT 100")
+                .AsTracking()
+                .ToListAsync();
         }
     }
 }

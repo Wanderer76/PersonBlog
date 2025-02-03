@@ -1,4 +1,4 @@
-﻿namespace FFMpeg.Cli.Models
+﻿namespace VideoProcessing.Cli.Models
 {
     public struct VideoPreset
     {

@@ -1,80 +1,40 @@
-﻿using Microsoft.Extensions.Configuration;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using System.Text.Json;
 using System.Text;
-using Shared.Services;
 using RabbitMQ.Client.Events;
-using System.Threading.Channels;
+using MessageBus.Configs;
 
-namespace MessageBus.Internal
+namespace MessageBus
 {
-    internal class RabbitMqMessageBus : IMessageBus
+    public class RabbitMqMessageBus
     {
-        //private readonly IConnection _connection;
-        //private readonly IModel _channel;
         private readonly IConnectionFactory _factory;
-        private readonly string _exchangeName;
 
-        public RabbitMqMessageBus(IConfiguration configuration)
+        public RabbitMqMessageBus(RabbitMqConfig config)
         {
             _factory = new ConnectionFactory
             {
-                HostName = "localhost",
-                Port = 5672,
-                UserName = "admin",
-                Password = "admin",
+                HostName = config.HostName,
+                Port = config.Port,
+                UserName = config.UserName,
+                Password = config.Password,
             };
 
         }
 
-        public async Task<object> SendMessageAsync<T>(string queueName, T message, Action<T> onReceived)
+        public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message, Action<T> onReceived)
         {
             try
             {
                 using var connection = await _factory.CreateConnectionAsync();
-                //var channelOpts = new CreateChannelOptions(
-                //    publisherConfirmationsEnabled: true,
-                //    publisherConfirmationTrackingEnabled: true,
-                //    outstandingPublisherConfirmationsRateLimiter: new ThrottlingRateLimiter(50)
-                //    );
-
                 using var channel = await connection.CreateChannelAsync();
-                //await channel.QueueDeclareAsync(queueName, durable: false,
-                //           exclusive: false,
-                //           autoDelete: false,
-                //           arguments: null);
-                //var consumer = new AsyncEventingBasicConsumer(channel);
-                //var correlationId = GuidService.GetNewGuid().ToString();
-                //consumer.ReceivedAsync += (model, ea) =>
-                //{
-                //    if (ea.BasicProperties.CorrelationId == correlationId)
-                //    {
-                //        var response = Encoding.UTF8.GetString(ea.Body.ToArray());
-                //        return Task.FromResult(response);
-                //    }
-                //    return Task.CompletedTask;
-                //};
-
-
-                //channel.BasicConsumeAsync(queueName,autoAck:true)
-
-                //channel.BasicReturnAsync += (sender, ea) =>
-                //{
-                //    var body = JsonSerializer.Deserialize<T>(ea.Body.Span);
-                //    onReceived(body);
-                //    Console.WriteLine(ea);
-                //    return Task.CompletedTask;
-                //};
-
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-                await channel.BasicPublishAsync(exchange: "test", routingKey: queueName, body: body);
+                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, body: body);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-            return new object();
-
         }
 
         public async Task SubscribeAsync<T>(string queueName, Func<T, Task> messageHandler)
@@ -103,15 +63,22 @@ namespace MessageBus.Internal
             return _factory.CreateConnectionAsync();
         }
 
-        public async Task SubscribeAsync<T>(IChannel channel, string queueName, Func<T, Task> messageHandler)
+        public async Task SubscribeAsync<T>(IChannel channel, string queueName, string exchangeName, string routingKey, Func<T, Task> messageHandler)
         {
-            await channel.QueueBindAsync(queue: queueName, exchange: "test", routingKey: queueName);
+            await channel.QueueBindAsync(queue: queueName, exchange: exchangeName, routingKey: routingKey);
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
-                var body = JsonSerializer.Deserialize<T>(ea.Body.Span);
-                await messageHandler(body);
-                await channel.BasicAckAsync(ea.DeliveryTag, false);
+                try
+                {
+                    var body = JsonSerializer.Deserialize<T>(ea.Body.Span);
+                    await messageHandler(body);
+                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+                }
+                catch (Exception ex)
+                {
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false); // Отправить в DLX
+                }
             };
 
             await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);

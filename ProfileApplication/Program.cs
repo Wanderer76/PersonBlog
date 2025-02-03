@@ -2,8 +2,10 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
+using MessageBus.Configs;
 using Profile.Persistence;
 using Profile.Service.Extensions;
+using ProfileApplication.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,11 +18,13 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
 builder.Services.AddMessageBus();
-
+builder.Services.AddSingleton<RabbitMqConfig>(sp => sp.GetRequiredService<IConfiguration>().GetSection("RabbitMQ").Get<RabbitMqConfig>());
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = long.MaxValue;
 });
+
+builder.Services.AddHostedService<OutboxPublisherService>();
 
 var app = builder.Build();
 
@@ -37,20 +41,6 @@ if (app.Environment.IsDevelopment())
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 }
-
-//app.UseWhen(context => context.Request.Path.StartsWithSegments("/video"), appBuilder =>
-//{
-//    var provider = new FileExtensionContentTypeProvider();
-//    // Add new mappings
-//    provider.Mappings[".m3u8"] = "application/x-mpegURL";
-//    provider.Mappings[".ts"] = "video/MP2T";
-
-//    appBuilder.UseStaticFiles(new StaticFileOptions
-//    {
-//        ContentTypeProvider = provider,
-//        RequestPath = "/uploads"
-//    });
-//});
 
 app.UseHttpsRedirection();
 app.UseRouting();

@@ -19,7 +19,6 @@ builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
 builder.Services.AddBlogServices();
-builder.Services.AddMessageBus();
 
 var app = builder.Build();
 

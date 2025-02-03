@@ -12,12 +12,10 @@ namespace Profile.Service.Interface.Implementation
     internal class DefaultBlogService : IBlogService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
-        private readonly IMessageBus _messageBus;
 
-        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context, IMessageBus messageBus)
+        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context)
         {
             _context = context;
-            _messageBus = messageBus;
         }
 
         public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)

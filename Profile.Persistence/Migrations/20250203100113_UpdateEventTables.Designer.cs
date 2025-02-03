@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Profile.Persistence;
@@ -11,9 +12,11 @@ using Profile.Persistence;
 namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
-    partial class ProfileDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250203100113_UpdateEventTables")]
+    partial class UpdateEventTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -112,7 +115,7 @@ namespace Profile.Persistence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 2, 3, 10, 16, 0, 982, DateTimeKind.Unspecified).AddTicks(5291), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 2, 3, 10, 1, 11, 714, DateTimeKind.Unspecified).AddTicks(7654), new TimeSpan(0, 0, 0, 0, 0)),
                             ProfileId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
                             Title = "Тест"
                         });
@@ -180,37 +183,6 @@ namespace Profile.Persistence.Migrations
                     b.HasIndex("BlogId");
 
                     b.ToTable("Posts", "Profile");
-                });
-
-            modelBuilder.Entity("Profile.Domain.Entities.ProfileEventMessages", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("text");
-
-                    b.Property<string>("EventData")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("EventType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("RetryCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("State")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ProfileEventMessages", "Profile");
                 });
 
             modelBuilder.Entity("Profile.Domain.Entities.Subscriptions", b =>

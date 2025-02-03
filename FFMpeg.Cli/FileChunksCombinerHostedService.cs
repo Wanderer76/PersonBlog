@@ -2,66 +2,103 @@
 using FileStorage.Service.Service;
 using Infrastructure.Models;
 using MessageBus;
+using MessageBus.Configs;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
+using RabbitMQ.Client;
 using Shared.Persistence;
 using Shared.Services;
+using System.Text.Json;
+using System.Threading.Channels;
 
-namespace FFMpeg.Cli
+namespace VideoProcessing.Cli
 {
-    public class FileChunksCombinerHostedService : IHostedService
+    public class FileChunksCombinerHostedService : BackgroundService
     {
         private readonly IServiceScopeFactory _serviceScope;
         private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly IMessageBus _messageBus;
-        public FileChunksCombinerHostedService(IServiceScopeFactory serviceScope, IFileStorageFactory fileStorageFactory, IMessageBus messageBus)
+        private readonly RabbitMqMessageBus _messageBus;
+        private readonly RabbitMqConfig _config;
+
+        public FileChunksCombinerHostedService(IServiceScopeFactory serviceScope, IFileStorageFactory fileStorageFactory, RabbitMqMessageBus messageBus, RabbitMqConfig config)
         {
             _serviceScope = serviceScope;
             _fileStorageFactory = fileStorageFactory;
             _messageBus = messageBus;
+            _config = config;
         }
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            StartTask(null);
-        }
-        private void StartTask(object? state)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _ = ProcessCombineVideoEvents();
+            return Task.CompletedTask;
         }
 
         private async Task ProcessCombineVideoEvents()
         {
-            while (true)
+            //while (true)
+            //{
+            //    try
+            //    {
+            //        using var scope = _serviceScope.CreateScope();
+            //        var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+
+            //        var events = await context.Get<CombineFileChunksEvent>()
+            //            .Where(x => x.IsCompleted == false)
+            //            .Take(10)
+            //            .ToListAsync();
+
+            //        if (events.Count != 0)
+            //        {
+            //            var storage = _fileStorageFactory.CreateFileStorage();
+
+            //            foreach (var @event in events)
+            //            {
+            //                await ProcessChunks(storage, @event);
+            //            }
+
+            //        }
+            //        else
+            //        {
+            //            await Task.Delay(1000);
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        Console.WriteLine(ex.Message);
+            //    }
+            //}
+
+            var connection = await _messageBus.GetConnectionAsync();
+            //var channelOpts = new CreateChannelOptions(
+            // publisherConfirmationsEnabled: true,
+            // publisherConfirmationTrackingEnabled: true,
+            // outstandingPublisherConfirmationsRateLimiter: new ThrottlingRateLimiter(50));
+            var channel = await connection.CreateChannelAsync();
+
+            await channel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
+            await channel.QueueDeclareAsync(_config.FileChunksCombinerQueue, durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueBindAsync(_config.FileChunksCombinerQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
+
+            try
             {
-                try
-                {
-                    using var scope = _serviceScope.CreateScope();
-                    var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+                using var scope = _serviceScope.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
-                    var events = await context.Get<CombineFileChunksEvent>()
-                        .Where(x => x.IsCompleted == false)
-                        .Take(10)
-                        .ToListAsync();
-
-                    if (events.Count != 0)
+                await _messageBus.SubscribeAsync<CombineFileChunksEvent>(channel,
+                    _config.FileChunksCombinerQueue,
+                    _config.ExchangeName,
+                    _config.FileChunksCombinerRoutingKey,
+                    async (e) =>
                     {
                         var storage = _fileStorageFactory.CreateFileStorage();
+                        await ProcessChunks(storage, e);
+                    });
 
-                        foreach (var @event in events)
-                        {
-                            await ProcessChunks(storage, @event);
-                        }
 
-                    }
-                    else
-                    {
-                        await Task.Delay(1000);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
 
@@ -113,16 +150,22 @@ namespace FFMpeg.Cli
             {
                 Id = GuidService.GetNewGuid(),
                 FileUrl = fileUrl,
-                State = EventState.New,
                 UserProfileId = profileId,
                 ObjectName = objectName,
                 FileId = videoMetadata.Id
             };
-            context.Add(videoCreateEvent);
-            context.Attach(@event);
-            @event.IsCompleted = true;
+
+            var videoEvent = new ProfileEventMessages
+            {
+                Id = GuidService.GetNewGuid(),
+                EventData = JsonSerializer.Serialize(videoCreateEvent),
+                EventType = nameof(VideoUploadEvent),
+                State = EventState.Pending,
+            };
+            context.Add(videoEvent);
+            //context.Attach(@event);
+            //@event.IsCompleted = true;
             await context.SaveChangesAsync();
-            await _messageBus.SendMessageAsync("quueue", videoCreateEvent, (e) => { });
 
             foreach (var chunk in chunks)
             {

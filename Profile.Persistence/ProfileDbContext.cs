@@ -14,6 +14,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<VideoUploadEvent> VideoUploadEvents { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
     public DbSet<CombineFileChunksEvent> CombineFileChunksEvents { get; set; }
+    public DbSet<ProfileEventMessages> ProfileEventMessages { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {

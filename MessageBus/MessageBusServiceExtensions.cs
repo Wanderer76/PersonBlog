@@ -1,5 +1,4 @@
-﻿using MessageBus.Internal;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace MessageBus
 {
@@ -7,7 +6,7 @@ namespace MessageBus
     {
         public static void AddMessageBus(this IServiceCollection services)
         {
-            services.AddSingleton<IMessageBus, RabbitMqMessageBus>();
+            services.AddSingleton<RabbitMqMessageBus>();
         }
     }
 }

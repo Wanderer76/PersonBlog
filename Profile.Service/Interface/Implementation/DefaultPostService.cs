@@ -10,6 +10,8 @@ using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
 using Shared.Persistence;
 using Shared.Services;
+using System.Security.AccessControl;
+using System.Text.Json;
 
 namespace Profile.Service.Interface.Implementation
 {
@@ -17,12 +19,10 @@ namespace Profile.Service.Interface.Implementation
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly IMessageBus _messageBus;
-        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory, IMessageBus messageBus)
+        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
-            _messageBus = messageBus;
         }
 
         public async Task<Guid> CreatePostAsync(PostCreateDto postCreateDto)
@@ -64,12 +64,20 @@ namespace Profile.Service.Interface.Implementation
                 {
                     Id = GuidService.GetNewGuid(),
                     FileUrl = fileUrl,
-                    State = EventState.New,
                     UserProfileId = userProfileId,
                     ObjectName = objectName,
                     FileId = videoMetadata.Id
                 };
-                _context.Add(videoCreateEvent);
+
+                var videoEvent = new ProfileEventMessages
+                {
+                    Id = GuidService.GetNewGuid(),
+                    EventData = JsonSerializer.Serialize(videoCreateEvent),
+                    EventType = nameof(VideoUploadEvent),
+                    State = EventState.Pending,
+                };
+
+                _context.Add(videoEvent);
                 _context.Add(videoMetadata);
             }
 
@@ -212,13 +220,22 @@ namespace Profile.Service.Interface.Implementation
 
             if (uploadVideoChunkDto.TotalChunkCount == uploadVideoChunkDto.ChunkNumber)
             {
-                _context.Add(new CombineFileChunksEvent
+                var videoCreateEvent = new CombineFileChunksEvent
                 {
                     Id = GuidService.GetNewGuid(),
                     VideoMetadataId = metadata.Id,
                     IsCompleted = false,
                     CreatedAt = DateTimeOffset.UtcNow
-                });
+                };
+
+                var videoEvent = new ProfileEventMessages
+                {
+                    Id = GuidService.GetNewGuid(),
+                    EventData = JsonSerializer.Serialize(videoCreateEvent),
+                    EventType = nameof(CombineFileChunksEvent),
+                    State = EventState.Pending,
+                };
+                _context.Add(videoEvent);
                 await _context.SaveChangesAsync();
             }
         }

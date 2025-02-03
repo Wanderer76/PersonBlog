@@ -1,16 +1,16 @@
 ﻿using FFmpeg.Service;
-using FFMpeg.Cli.Models;
 using FileStorage.Service.Service;
-using Infrastructure.Models;
 using MessageBus;
+using MessageBus.Configs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Profile.Domain.Entities;
+using RabbitMQ.Client;
 using Shared.Persistence;
 using Shared.Services;
+using VideoProcessing.Cli.Models;
 using Xabe.FFmpeg;
 
-namespace FFMpeg.Cli
+namespace VideoProcessing.Cli
 {
     internal class VideoConverterHostedService : BackgroundService
     {
@@ -18,16 +18,17 @@ namespace FFMpeg.Cli
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly IEnumerable<VideoPreset> _videoPresets;
         private readonly string _tempPath;
-        private readonly IMessageBus _messageBus;
-
+        private readonly RabbitMqMessageBus _messageBus;
+        private readonly RabbitMqConfig _config;
         public VideoConverterHostedService(IServiceScopeFactory serviceScope,
-            IFileStorageFactory fileStorageFactory, IConfiguration configuration, IMessageBus messageBus)
+            IFileStorageFactory fileStorageFactory, IConfiguration configuration, RabbitMqMessageBus messageBus, RabbitMqConfig config)
         {
             _serviceScope = serviceScope;
             _fileStorageFactory = fileStorageFactory;
             _tempPath = Path.GetFullPath(configuration["TempDir"]!);
             _videoPresets = configuration.GetSection("VideoPresets").Get<List<VideoPreset>>()!;
             _messageBus = messageBus;
+            _config = config;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,7 +40,16 @@ namespace FFMpeg.Cli
         private async Task ProcessUploadVideoEvents()
         {
             var connection = await _messageBus.GetConnectionAsync();
-            var channel = await connection.CreateChannelAsync();
+            var channelOpts = new CreateChannelOptions(
+            publisherConfirmationsEnabled: true,
+            publisherConfirmationTrackingEnabled: true,
+            outstandingPublisherConfirmationsRateLimiter: new ThrottlingRateLimiter(50));
+            var channel = await connection.CreateChannelAsync(channelOpts);
+
+            await channel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
+            await channel.QueueDeclareAsync(_config.VideoConverterQueue, durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueBindAsync(_config.VideoConverterQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
+
             //while (true)
             {
                 try
@@ -52,11 +62,15 @@ namespace FFMpeg.Cli
                     //    .Take(10)
                     //    .ToListAsync();
 
-                    await _messageBus.SubscribeAsync<VideoUploadEvent>(channel, "quueue", async (e) =>
-                    {
-                        var storage = _fileStorageFactory.CreateFileStorage();
-                        await ProcessFile(storage, e);
-                    });
+                    await _messageBus.SubscribeAsync<VideoUploadEvent>(channel,
+                        _config.VideoConverterQueue,
+                        _config.ExchangeName,
+                        _config.VideoConverterRoutingKey,
+                        async (e) =>
+                        {
+                            var storage = _fileStorageFactory.CreateFileStorage();
+                            await ProcessFile(storage, e);
+                        });
 
                     //    if (events.Count != 0)
                     //    {
@@ -91,9 +105,8 @@ namespace FFMpeg.Cli
 
             if (fileMetadata == null)
             {
-                context.Attach(@event);
-                @event.SetErrorMessage("Не удалось найти данные");
-                await context.SaveChangesAsync();
+
+                throw new ArgumentException("Не удалось найти данные");
                 return;
             }
 
@@ -106,11 +119,13 @@ namespace FFMpeg.Cli
             var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl);
             if (videoStream == null)
             {
-                context.Attach(@event);
-                @event.State = EventState.Error;
-                @event.ErrorMessage = "Не удалось найти видеопоток";
-                await context.SaveChangesAsync();
-                return;
+                //context.Attach(@event);
+                //@event.State = EventState.Error;
+                //@event.ErrorMessage = "Не удалось найти видеопоток";
+                //await context.SaveChangesAsync();
+                //return;
+                throw new ArgumentException("Не удалось найти видеопоток");
+
             }
             try
             {
@@ -196,8 +211,8 @@ namespace FFMpeg.Cli
                 }
             }
 
-            context.Attach(@event);
-            @event.State = EventState.Complete;
+            //context.Attach(@event);
+            //@event.State = EventState.Complete;
 
             context.Attach(fileMetadata);
             fileMetadata.IsProcessed = false;

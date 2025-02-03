@@ -1,6 +1,6 @@
 ﻿namespace Profile.Domain.Entities
 {
-    public class CombineFileChunksEvent : IProfileEntity
+    public class CombineFileChunksEvent
     {
         public Guid Id { get; set; }
         public Guid VideoMetadataId { get; set; }

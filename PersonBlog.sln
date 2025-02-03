@@ -44,7 +44,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileStorage.Service", "File
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFmpeg.Service", "FFmpeg.Service\FFmpeg.Service.csproj", "{469FD922-1496-411D-986E-48F711AB0DEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFMpeg.Cli", "FFMpeg.Cli\FFMpeg.Cli.csproj", "{8760AF6E-110E-4403-90C9-B1CF71FEF84E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli", "FFMpeg.Cli\VideoProcessing.Cli.csproj", "{8760AF6E-110E-4403-90C9-B1CF71FEF84E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Application", "Video.Application\Video.Application.csproj", "{9A96ABF8-0C6A-4A14-91AD-8105C4B67762}"
 EndProject
