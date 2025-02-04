@@ -75,6 +75,7 @@ namespace ProfileApplication.HostedServices
 
                 foreach (var message in messages)
                 {
+                    var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
                     try
                     {
                         var body = Encoding.UTF8.GetBytes(message.EventData);
@@ -83,7 +84,6 @@ namespace ProfileApplication.HostedServices
                         message.State = Infrastructure.Models.EventState.Processed;
                         await dbContext.SaveChangesAsync();
 
-                        var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
                         sendMessages.TryAdd(nextNumber, message);
                         await channel.BasicPublishAsync(
                            exchange: _settings.ExchangeName,
@@ -95,6 +95,7 @@ namespace ProfileApplication.HostedServices
                     catch (Exception ex)
                     {
                         dbContext.Attach(message);
+                        sendMessages.Remove(nextNumber, out _);
                         if (message.RetryCount == 3)
                         {
                             message.SetErrorMessage(ex.Message);
@@ -118,8 +119,15 @@ namespace ProfileApplication.HostedServices
             var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
             dbContext.Attach(message);
             message.RetryCount++;
-            if (message.RetryCount >= 3)
+            if (message.RetryCount > 3)
+            {
+                message.SetErrorMessage("Не удалось обработать событие");
                 message.State = Infrastructure.Models.EventState.Error;
+            }
+            else
+            {
+                message.State = Infrastructure.Models.EventState.Pending;
+            }
             await dbContext.SaveChangesAsync();
         }
 
@@ -127,7 +135,8 @@ namespace ProfileApplication.HostedServices
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
-            dbContext.Remove(message);
+            dbContext.Attach(message);
+            message.State = Infrastructure.Models.EventState.Complete;
             await dbContext.SaveChangesAsync();
         }
 

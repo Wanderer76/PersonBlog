@@ -19,7 +19,6 @@ namespace MessageBus
                 UserName = config.UserName,
                 Password = config.Password,
             };
-
         }
 
         public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message, Action<T> onReceived)
@@ -35,23 +34,6 @@ namespace MessageBus
             {
                 Console.WriteLine(e.Message);
             }
-        }
-
-        public async Task SubscribeAsync<T>(string queueName, Func<T, Task> messageHandler)
-        {
-            using var connection = await _factory.CreateConnectionAsync();
-            using var channel = await connection.CreateChannelAsync();
-            await channel.QueueBindAsync(queue: queueName, exchange: "test", routingKey: queueName);
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += (model, ea) =>
-            {
-                byte[] body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                Console.WriteLine($" [x] {message}");
-                return Task.CompletedTask;
-            };
-
-            await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
         }
 
         public void Dispose()
@@ -77,7 +59,7 @@ namespace MessageBus
                 }
                 catch (Exception ex)
                 {
-                    await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false); // Отправить в DLX
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
                 }
             };
 
