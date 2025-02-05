@@ -11,9 +11,9 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<Blog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     //public DbSet<FileMetadata> VideoMetadata { get; set; }
-    public DbSet<VideoUploadEvent> VideoUploadEvents { get; set; }
+    //public DbSet<VideoUploadEvent> VideoUploadEvents { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
-    public DbSet<CombineFileChunksEvent> CombineFileChunksEvents { get; set; }
+    //public DbSet<CombineFileChunksEvent> CombineFileChunksEvents { get; set; }
     public DbSet<ProfileEventMessages> ProfileEventMessages { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
@@ -55,7 +55,6 @@ public class ProfileDbContext : BaseDbContext
                         CreatedAt = DateTimeOffset.UtcNow
                     }
                 });
-
             }
             {
                 var entity = modelBuilder.Entity<Subscriptions>();
@@ -98,7 +97,7 @@ public class ProfileDbContext : BaseDbContext
                 //});
             }
             {
-                var entity = modelBuilder.Entity<VideoUploadEvent>();
+                //var entity = modelBuilder.Entity<VideoUploadEvent>();
                 // entity.HasData(new[]
                 //{
                 //     new VideoUploadEvent

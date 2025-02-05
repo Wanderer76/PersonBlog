@@ -5,7 +5,6 @@ import './qualitySelector/plugin.js';
 import 'hls.js';
 import './Player.css';
 
-
 // Fetch the link to playlist.m3u8 of the video you want to play
 export const VideoPlayer = ({ thumbnail, path }) => {
   const videoRef = React.useRef(null);
@@ -17,8 +16,7 @@ export const VideoPlayer = ({ thumbnail, path }) => {
     autoplay: false,
     controls: true,
     playbackRates: [0.5, 1, 1.5, 2],
-    // width: 500,
-    // height: 500,
+    preload: 'none',
     responsive: true,
     fluid: true, // Добавить fluid mode
     aspectRatio: '16:9', // Установить соотношение сторон
@@ -114,10 +112,10 @@ export const VideoPlayer = ({ thumbnail, path }) => {
 }
 const generateDeviceHash = () => {
   const data = [
-      navigator.userAgent,
-      window.screen.width,
-      window.screen.height,
-      new Date().getTimezoneOffset()
+    navigator.userAgent,
+    window.screen.width,
+    window.screen.height,
+    new Date().getTimezoneOffset()
   ].join('|');
   return btoa(data).slice(0, 32);
 };

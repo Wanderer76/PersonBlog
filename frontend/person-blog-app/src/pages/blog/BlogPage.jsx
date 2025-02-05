@@ -87,7 +87,6 @@ const CommonProfileData = function (props) {
 }
 
 const BlogPosts = function (props) {
-
     const hasMounted = useRef(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editForm, setEditForm] = useState(null);
@@ -126,7 +125,7 @@ const BlogPosts = function (props) {
                 JwtTokenService.refreshToken();
                 window.location.reload();
             }
-        }, [])
+        }, [posts])
 
     })
 
@@ -147,42 +146,45 @@ const BlogPosts = function (props) {
 
 
     return (
-        <div>
-            <h4>
-                Посты
-                <br />
-                <button onClick={() => setShowCreateForm(true)}>Создать</button>
-            </h4>
-            {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)}></CreatePostForm>}
-            {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
-            <table className="blog-table">
-                <thead>
-                    <tr className="blog-tr">
-                        <th className="blog-th" scope="col">Название</th>
-                        <th className="blog-th" scope="col">Описание</th>
-                        <th className="blog-th" scope="col">Дата создания</th>
-                        <th className="blog-th" scope="col">Тип</th>
-                        <th className="blog-th" scope="col">Видео</th>
-                        <th className="blog-th" scope="col"></th>
-                        <th className="blog-th" scope="col"></th>
-                    </tr>
-                </thead>
-                <tbody className="blog-tbody">
-                    {posts.map(x => {
-                        const date = new Date(x.createdAt);
-                        return <tr key={x.id}>
-                            <td className="blog-td">{x.title}</td>
-                            <td className="blog-td">{x.description}</td>
-                            <td className="blog-td">{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
-                            <td className="blog-td">{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
-                            <td className="blog-td blog-videoCell">{x.type === 1 && x.isProcessed ? <p>В обработке</p> : getVideo(x)} </td>
-                            <td className="blog-td"><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
-                            <td className="blog-td"><button onClick={() => setEditForm({ ...x })}>Редактировать</button> </td>
+        <>
+            <div>
+                <h4>
+                    Посты
+                    <br />
+                    <button onClick={(e) => setShowCreateForm(true)}>Создать</button>
+                </h4>
+                {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
+                <table className="blog-table">
+                    <thead>
+                        <tr className="blog-tr">
+                            <th className="blog-th" scope="col">Название</th>
+                            <th className="blog-th" scope="col">Описание</th>
+                            <th className="blog-th" scope="col">Дата создания</th>
+                            <th className="blog-th" scope="col">Тип</th>
+                            <th className="blog-th" scope="col">Видео</th>
+                            <th className="blog-th" scope="col"></th>
+                            <th className="blog-th" scope="col"></th>
                         </tr>
-                    })}
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody className="blog-tbody">
+                        {posts.map(x => {
+                            const date = new Date(x.createdAt);
+                            return <tr key={x.id}>
+                                <td className="blog-td">{x.title}</td>
+                                <td className="blog-td">{x.description}</td>
+                                <td className="blog-td">{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
+                                <td className="blog-td">{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
+                                <td className="blog-td blog-videoCell">{x.type === 1 && x.isProcessed ? <p>В обработке</p> : getVideo(x)} </td>
+                                <td className="blog-td"><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
+                                <td className="blog-td"><button onClick={() => setEditForm({ ...x })}>Редактировать</button> </td>
+                            </tr>
+                        })}
+                    </tbody>
+                </table>
+            </div>
+            {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)}></CreatePostForm>}
+
+        </>
     );
 }
 
