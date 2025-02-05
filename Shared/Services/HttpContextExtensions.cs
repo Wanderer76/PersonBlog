@@ -8,10 +8,12 @@ namespace Shared.Services
         {
             return Guid.Parse(context.User.Claims.First(x => x.Type == AppClaimTypes.UserId).Value);
         }
-        public static Guid? GetOptionalUserFromContext(this HttpContext context)
+
+        public static bool TryGetUserFromContext(this HttpContext context, out Guid? userId)
         {
             var user = context.User.Claims.FirstOrDefault(x => x.Type == AppClaimTypes.UserId)?.Value;
-            return user == null ? null : Guid.Parse(user!);
+            userId = user == null ? null : Guid.Parse(user!);
+            return userId != null;
         }
         //public static Guid? GetProfileFromContext(this HttpContext context)
         //{

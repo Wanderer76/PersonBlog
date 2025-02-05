@@ -67,7 +67,7 @@ namespace Video.Application.Controllers
         [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]
         public async Task<IActionResult> GetVideoSegment(Guid postId, string file, string segment)
         {
-            var userId = HttpContext.GetOptionalUserFromContext();
+            HttpContext.TryGetUserFromContext(out var userId);
             var result = new MemoryStream();
             await _videoService.SetViewToPost(postId, userId, segment);
             await storage.ReadFileAsync(postId, $"{file}/{segment}", result);
@@ -79,6 +79,7 @@ namespace Video.Application.Controllers
         [HttpGet("video/{postId:guid}")]
         public async Task<IActionResult> GetVideoData(Guid postId)
         {
+            HttpContext.TryGetUserFromContext(out var userId);
             var post = await _postService.GetDetailPostByIdAsync(postId);
             var blog = await _blogService.GetBlogByPostIdAsync(post.Id);
             return Ok(new
