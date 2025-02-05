@@ -6,7 +6,7 @@ import 'hls.js';
 import './Player.css';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path }) => {
+export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   let viewRecorded = false;
@@ -59,18 +59,7 @@ export const VideoPlayer = ({ thumbnail, path }) => {
         var qualities = player.qualityLevels();
 
         player.on('timeupdate', () => {
-          const watchedTime = player.currentTime();
-          const duration = player.duration();
-
-          if (!sessionHash) {
-            sessionHash = generateDeviceHash(); // Реализация на основе браузерных данных
-          }
-
-          if (!viewRecorded &&
-            (watchedTime > 30 || watchedTime > duration * 0.5)) {
-            console.log("Просмотр защитан " + sessionHash);
-            viewRecorded = true;
-          }
+          onTimeupdate(player);
         })
 
         qualities.on('addqualitylevel', () => {

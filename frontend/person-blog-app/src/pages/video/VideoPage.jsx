@@ -5,10 +5,12 @@ import React, { useEffect, useState } from 'react';
 import API, { BaseApUrl } from '../../scripts/apiMethod';
 import { getLocalDateTime } from '../../scripts/LocalDate';
 import logo from '../../defaultProfilePic.png';
+import { JwtTokenService } from '../../scripts/TokenStrorage';
 
 export const VideoPage = function (props) {
     const searchParams = useParams();
     const [isLoading, setIsLoading] = useState(true);
+    let viewRecorded = false;
 
     const [post, setPostData] = useState({
         id: null,
@@ -48,6 +50,21 @@ export const VideoPage = function (props) {
     }, [])
 
 
+    function setView(player) {
+        const watchedTime = player.currentTime();
+        const duration = player.duration();
+
+        if (!viewRecorded &&
+            (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
+            viewRecorded = true;
+            API.post(`video/Video/setView/${post.id}`, null, {
+                headers: {
+                    'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
+                }
+            })
+        }
+    }
+
     if (isLoading) {
         return <></>;
     }
@@ -67,6 +84,7 @@ export const VideoPage = function (props) {
                                 objectName: post.videoData.objectName
                             }
                         }
+                        onTimeupdate={setView}
                     />
                 </div>
 

@@ -88,5 +88,13 @@ namespace Video.Application.Controllers
                 Comment = new List<string>()
             });
         }
+
+        [HttpPost("setView/{postId:guid}")]
+        public async Task<IActionResult> SetViewToVideo(Guid postId)
+        {
+            HttpContext.TryGetUserFromContext(out var userId);
+
+            return Ok();
+        }
     }
 }

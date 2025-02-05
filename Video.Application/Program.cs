@@ -19,6 +19,8 @@ builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
 builder.Services.AddBlogServices();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -27,13 +29,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
-    app.UseCors(cfg=>cfg.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+    app.UseCors(cfg => cfg.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 }
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
