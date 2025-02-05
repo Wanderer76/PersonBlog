@@ -62,7 +62,6 @@ namespace MessageBus
                     await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
                 }
             };
-
             await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
         }
     }
