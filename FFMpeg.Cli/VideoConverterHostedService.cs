@@ -2,6 +2,7 @@
 using MessageBus;
 using MessageBus.Configs;
 using Profile.Domain.Entities;
+using Profile.Domain.Events;
 using RabbitMQ.Client;
 using Shared.Persistence;
 using VideoProcessing.Cli.Models;
@@ -45,11 +46,13 @@ namespace VideoProcessing.Cli
             var fileChunkChannel = await connection.CreateChannelAsync(channelOpts);
             
             await videoConverterChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
-            await videoConverterChannel.QueueDeclareAsync(_config.VideoConverterQueue, durable: true, exclusive: false, autoDelete: false);
-            await videoConverterChannel.QueueBindAsync(_config.VideoConverterQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
-            await fileChunkChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
-            await fileChunkChannel.QueueDeclareAsync(_config.FileChunksCombinerQueue, durable: true, exclusive: false, autoDelete: false);
-            await fileChunkChannel.QueueBindAsync(_config.FileChunksCombinerQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
+            await videoConverterChannel.QueueDeclareAsync(_config.VideoProcessQueue, durable: true, exclusive: false, autoDelete: false);
+
+            //await fileChunkChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
+            //await fileChunkChannel.QueueDeclareAsync(_config.FileChunksCombinerQueue, durable: true, exclusive: false, autoDelete: false);
+            
+            await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
+            await fileChunkChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
 
             try
             {
@@ -57,7 +60,7 @@ namespace VideoProcessing.Cli
                 var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
                 await _messageBus.SubscribeAsync<VideoUploadEvent>(videoConverterChannel,
-                    _config.VideoConverterQueue,
+                    _config.VideoProcessQueue,
                     _config.ExchangeName,
                     _config.VideoConverterRoutingKey,
                     async (e) =>
@@ -69,7 +72,7 @@ namespace VideoProcessing.Cli
                     });
 
                 await _messageBus.SubscribeAsync<CombineFileChunksEvent>(fileChunkChannel,
-                   _config.FileChunksCombinerQueue,
+                   _config.VideoProcessQueue,
                    _config.ExchangeName,
                    _config.FileChunksCombinerRoutingKey,
                    async (e) =>

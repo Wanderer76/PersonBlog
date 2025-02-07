@@ -56,12 +56,15 @@ export const VideoPage = function (props) {
 
         if (!viewRecorded &&
             (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
-            viewRecorded = true;
             API.post(`video/Video/setView/${post.id}`, null, {
                 headers: {
                     'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
                 }
-            })
+            }).catch(e => { })
+                .finally(() => {
+                    viewRecorded = true;
+
+                })
         }
     }
 

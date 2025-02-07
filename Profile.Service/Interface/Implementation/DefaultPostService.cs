@@ -1,16 +1,15 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
-using MessageBus;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
+using Profile.Domain.Events;
 using Profile.Persistence.Repository;
 using Profile.Service.Models;
 using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
 using Shared.Persistence;
 using Shared.Services;
-using System.Security.AccessControl;
 using System.Text.Json;
 
 namespace Profile.Service.Interface.Implementation
@@ -209,7 +208,7 @@ namespace Profile.Service.Interface.Implementation
         {
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var metadata = await _context.Get<VideoMetadata>()
-                .Where(x => x.IsProcessed == true)
+                .Where(x => x.IsProcessed == false)
                 .FirstAsync(x => x.PostId == uploadVideoChunkDto.PostId);
 
             await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId, GuidService.GetNewGuid(), uploadVideoChunkDto.ChunkData, new VideoChunkUploadingInfo
@@ -324,6 +323,39 @@ namespace Profile.Service.Interface.Implementation
                             ) : null,
                 isProcessed
             );
+        }
+
+        public async Task SetVideoViewed(ViewedVideoModel value)
+        {
+            var dateFromNow = DateTimeOffset.UtcNow.AddMonths(-2);
+            var hasView = await _context.Get<PostViewers>()
+                .Where(x => x.PostId == value.PostId)
+                .Where(x => x.UserId == value.UserId)
+                .Where(x => x.UserIpAddress == value.RemoteIp)
+                .Where(x => x.CreatedAt < dateFromNow)
+                .AnyAsync();
+            if (hasView)
+            {
+                return;
+            }
+
+            var videoViewEvent = new VideoViewEvent
+            {
+                PostId = value.PostId,
+                CreatedAt = DateTimeOffset.UtcNow,
+                RemoteIp = value.RemoteIp,
+                UserId = value.UserId,
+            };
+
+            var videoEvent = new ProfileEventMessages
+            {
+                Id = GuidService.GetNewGuid(),
+                EventData = JsonSerializer.Serialize(videoViewEvent),
+                EventType = nameof(VideoViewEvent),
+                State = EventState.Pending,
+            };
+            _context.Add(videoEvent);
+            await _context.SaveChangesAsync();
         }
     }
 }

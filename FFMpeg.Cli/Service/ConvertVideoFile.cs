@@ -2,6 +2,7 @@
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
+using Profile.Domain.Events;
 using Shared.Persistence;
 using Shared.Services;
 using VideoProcessing.Cli.Models;
@@ -18,8 +19,6 @@ namespace VideoProcessing.Cli.Service
             string tempPath,
             VideoUploadEvent @event)
         {
-
-
             var fileMetadata = await context.Get<VideoMetadata>()
                 .FirstOrDefaultAsync(x => x.ObjectName == @event.ObjectName);
 
@@ -35,11 +34,7 @@ namespace VideoProcessing.Cli.Service
             var dir = Path.Combine(tempPath, fileMetadata.Id.ToString());
             var fileId = GuidService.GetNewGuid();
             var inputUrl = new Uri(url).AbsoluteUri;
-            var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl);
-            if (videoStream == null)
-            {
-                throw new ArgumentException("Не удалось найти видеопоток");
-            }
+            var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
             try
             {
                 Directory.CreateDirectory(dir);
@@ -63,7 +58,7 @@ namespace VideoProcessing.Cli.Service
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
                     copyStream.Position = 0;
-                    var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
+                    var objectName = await storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
                 }
 
                 foreach (string folder in Directory.EnumerateDirectories(dir))
@@ -74,7 +69,7 @@ namespace VideoProcessing.Cli.Service
                         using var copyStream = new MemoryStream();
                         await fileStream.CopyToAsync(copyStream);
                         copyStream.Position = 0;
-                        var objectName = await storage.PutFileWithResolutionAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
+                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
                     }
                 }
 

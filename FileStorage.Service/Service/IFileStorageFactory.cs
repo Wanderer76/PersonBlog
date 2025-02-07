@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 
 namespace FileStorage.Service.Service
 {
@@ -24,5 +23,4 @@ namespace FileStorage.Service.Service
             return new MinioFileStorage(options);
         }
     }
-
 }

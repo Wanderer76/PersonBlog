@@ -6,6 +6,8 @@ using Profile.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using MessageBus;
 using System.Collections.Concurrent;
+using Profile.Domain.Events;
+using Microsoft.OpenApi.Writers;
 
 namespace ProfileApplication.HostedServices
 {
@@ -38,13 +40,11 @@ namespace ProfileApplication.HostedServices
             using var channel = await connection.CreateChannelAsync(channelOpts);
 
             await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
-            using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
 
             channel.BasicAcksAsync += async (sender, ea) =>
             {
-                if (sendMessages.TryGetValue(ea.DeliveryTag, out var value))
+                if (sendMessages.TryRemove(ea.DeliveryTag, out var value))
                 {
                     await ProcessSuccess(value);
                 }
@@ -67,6 +67,28 @@ namespace ProfileApplication.HostedServices
 
             while (!stoppingToken.IsCancellationRequested)
             {
+                //{
+                //    var messagesCount = await channel.MessageCountAsync(_settings.VideoProcessQueue);
+                //    using var localScope = _serviceProvider.CreateScope();
+                //    var writeContext = localScope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+                //    if (messagesCount == 0 && await writeContext.Get<ProfileEventMessages>().AnyAsync(x => x.State == Infrastructure.Models.EventState.Processed))
+                //    {
+                //        var lostMessages = await writeContext.Get<ProfileEventMessages>()
+                //            .Where(x => x.State == Infrastructure.Models.EventState.Processed)
+                //            .ToListAsync();
+
+                //        foreach (var i in lostMessages)
+                //        {
+                //            writeContext.Attach(i);
+                //            i.State = Infrastructure.Models.EventState.Pending;
+                //        }
+                //        await writeContext.SaveChangesAsync();
+                //    }
+                //}
+                using var scope = _serviceProvider.CreateScope();
+
+                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+
                 var messages = await dbContext.Get<ProfileEventMessages>()
                     .Where(m => m.State == Infrastructure.Models.EventState.Pending && m.RetryCount < 3)
                     .OrderBy(m => m.CreatedAt)
@@ -79,12 +101,11 @@ namespace ProfileApplication.HostedServices
                     try
                     {
                         var body = Encoding.UTF8.GetBytes(message.EventData);
-
+                        sendMessages.TryAdd(nextNumber, message);
                         dbContext.Attach(message);
                         message.State = Infrastructure.Models.EventState.Processed;
                         await dbContext.SaveChangesAsync();
 
-                        sendMessages.TryAdd(nextNumber, message);
                         await channel.BasicPublishAsync(
                            exchange: _settings.ExchangeName,
                            routingKey: GetRoutingKey(message),
@@ -142,7 +163,17 @@ namespace ProfileApplication.HostedServices
 
         private string GetRoutingKey(ProfileEventMessages message)
         {
-            return message.EventType == nameof(VideoUploadEvent) ? _settings.VideoConverterRoutingKey : _settings.FileChunksCombinerRoutingKey;
+            switch (message.EventType)
+            {
+                case nameof(VideoUploadEvent):
+                    return _settings.VideoConverterRoutingKey;
+                case nameof(CombineFileChunksEvent):
+                    return _settings.FileChunksCombinerRoutingKey;
+                //case nameof(VideoViewEvent):
+                    //return _settings.FileChunksCombinerRoutingKey;
+                default:
+                    throw new ArgumentException("Неизвестное событие");
+            }
         }
     }
 }

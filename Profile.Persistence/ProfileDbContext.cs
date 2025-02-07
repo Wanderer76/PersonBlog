@@ -10,11 +10,9 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<Subscriptions> Subscriptions { get; set; }
     public DbSet<Blog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
-    //public DbSet<FileMetadata> VideoMetadata { get; set; }
-    //public DbSet<VideoUploadEvent> VideoUploadEvents { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
-    //public DbSet<CombineFileChunksEvent> CombineFileChunksEvents { get; set; }
     public DbSet<ProfileEventMessages> ProfileEventMessages { get; set; }
+    public DbSet<PostViewers> PostViewers { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {
@@ -97,7 +95,8 @@ public class ProfileDbContext : BaseDbContext
                 //});
             }
             {
-                //var entity = modelBuilder.Entity<VideoUploadEvent>();
+                var entity = modelBuilder.Entity<PostViewers>();
+                entity.HasIndex(x => new { x.UserId, x.PostId, x.UserIpAddress, x.CreatedAt });
                 // entity.HasData(new[]
                 //{
                 //     new VideoUploadEvent

@@ -104,14 +104,14 @@ namespace FileStorage.Service.Service
             return result;
         }
 
-        public async Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options, VideoResolution resolution = VideoResolution.Original)
+        public async Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options)
         {
             await CreateBucketIfNotExistAsync(bucketId);
 
             var result = await _client.PutObjectAsync(
                           new Minio.DataModel.Args.PutObjectArgs()
                           .WithBucket(bucketId.ToString())
-                          .WithObject(GeFileNameFromId(id, resolution))
+                          .WithObject(GeFileNameFromId(id, VideoResolution.Original))
                           .WithObjectSize(input.Length)
                           .WithHeaders(new Dictionary<string, string>
                           {
@@ -135,20 +135,20 @@ namespace FileStorage.Service.Service
 
         public async IAsyncEnumerable<(string Objectname, IDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, VideoChunkUploadingInfo options)
         {
-            var a = _client.ListObjectsEnumAsync(new Minio.DataModel.Args.ListObjectsArgs()
+            var objects = _client.ListObjectsEnumAsync(new Minio.DataModel.Args.ListObjectsArgs()
                 .WithBucket(bucketId.ToString())
                 .WithIncludeUserMetadata(true)
                 .WithHeaders(new Dictionary<string, string>
                           {
                               { "FileId", options.FileId.ToString() },
                           }));
-            await foreach (var item in a)
+            await foreach (var item in objects)
             {
                 yield return (item.Key, item.UserMetadata);
             }
         }
 
-        public async Task<string> PutFileWithResolutionAsync(Guid bucketId, string objectName, Stream input)
+        public async Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input)
         {
             await CreateBucketIfNotExistAsync(bucketId);
 

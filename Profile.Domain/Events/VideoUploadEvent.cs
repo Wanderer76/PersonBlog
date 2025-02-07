@@ -1,6 +1,6 @@
-﻿namespace Profile.Domain.Entities
+﻿namespace Profile.Domain.Events
 {
-    public class VideoUploadEvent 
+    public class VideoUploadEvent
     {
         public required Guid Id { get; set; }
         public required string FileUrl { get; set; }

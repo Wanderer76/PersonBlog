@@ -2,8 +2,10 @@ using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Service.Interface;
+using Profile.Service.Models.Post;
 using Shared.Services;
 using Shared.Utils;
+using System.Net;
 using Video.Service.Interface;
 
 namespace Video.Application.Controllers
@@ -35,6 +37,7 @@ namespace Video.Application.Controllers
         /// <returns></returns>
         //TODO добавить кэш
         [HttpGet("video/chunks")]
+        [Obsolete]
         public async Task<IActionResult> GetVideoChunk(Guid postId, int resolution = 480)
         {
             if (!await _postService.HasVideoExistByPostIdAsync(postId))
@@ -69,7 +72,6 @@ namespace Video.Application.Controllers
         {
             HttpContext.TryGetUserFromContext(out var userId);
             var result = new MemoryStream();
-            //await _videoService.SetViewToPost(postId, userId, segment);
             await storage.ReadFileAsync(postId, $"{file}/{segment}", result);
             result.Position = 0;
             return File(result, HLSType);
@@ -93,8 +95,11 @@ namespace Video.Application.Controllers
         public async Task<IActionResult> SetViewToVideo(Guid postId)
         {
             HttpContext.TryGetUserFromContext(out var userId);
-
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            await _postService.SetVideoViewed(new ViewedVideoModel(postId, userId, remoteIp));
             return Ok();
         }
     }
+
+    
 }

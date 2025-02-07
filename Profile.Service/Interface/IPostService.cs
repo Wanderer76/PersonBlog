@@ -16,14 +16,15 @@ namespace Profile.Service.Interface
         /// <param name="length"></param>
         /// <returns>Возвращает id файла</returns>
         /// <param name="output"></param>
+        [Obsolete("Пригоден для .mp4 сейчас не поддерживается")]
         Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
         Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId, int resolution = 0);
-        //Task GetVideoStream(Guid postId, Stream output);
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);
         Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
         Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
         Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
+        Task SetVideoViewed(ViewedVideoModel value);
     }
 }

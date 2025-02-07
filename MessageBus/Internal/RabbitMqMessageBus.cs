@@ -53,8 +53,18 @@ namespace MessageBus
             {
                 try
                 {
-                    var body = JsonSerializer.Deserialize<T>(ea.Body.Span);
-                    await messageHandler(body);
+                    var q = routingKey;
+                    try
+                    {
+                        var a = UTF8Encoding.UTF8.GetString(ea.Body.Span);
+                        var b = typeof(T);
+                        var body = JsonSerializer.Deserialize<T>(ea.Body.Span);
+                        await messageHandler(body);
+                    }
+                    catch (Exception e)
+                    {
+                        throw;
+                    }
                     await channel.BasicAckAsync(ea.DeliveryTag, false);
                 }
                 catch (Exception ex)

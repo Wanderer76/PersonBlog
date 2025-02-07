@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.Entities
+﻿namespace Profile.Domain.Events
 {
     public class CombineFileChunksEvent
     {

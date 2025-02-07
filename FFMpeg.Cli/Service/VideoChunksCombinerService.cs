@@ -3,6 +3,7 @@ using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
+using Profile.Domain.Events;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
@@ -26,14 +27,17 @@ namespace VideoProcessing.Cli.Service
                 .FirstAsync();
 
             var chunks = new List<(long Number, int Size, string ObjectName)>();
+            //var a = await storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).ToListAsync();
 
-            await foreach (var i in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo
-            {
-                FileId = fileId
-            }))
+            await foreach (var i in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).Where(x => x.Headers!=null && x.Headers.Count > 0))
             {
                 chunks.Add((long.Parse(i.Headers["ChunkNumber"]), int.Parse(i.Headers["ChunkSize"]), i.Objectname));
             }
+            if (chunks.Count == 0)
+            {
+                throw new ArgumentException("Не удалось собрать файл");
+            }
+
             var memoryStream = new MemoryStream(chunks.Sum(x => x.Size));
 
             foreach (var chunk in chunks.OrderBy(x => x.Number))

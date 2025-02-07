@@ -2,6 +2,7 @@ using Blog.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using MessageBus;
+using Microsoft.AspNetCore.HttpOverrides;
 using Profile.Persistence;
 using Profile.Service.Extensions;
 using Video.Service;
@@ -31,6 +32,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     app.UseCors(cfg => cfg.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 }
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+    ForwardedHeaders.XForwardedProto
+});
 
 app.UseHttpsRedirection();
 

@@ -43,17 +43,18 @@ export function EditPostForm(props) {
         }).then(response => {
             if (response.status === 200) {
                 console.log(response.data)
-                postId = response.data;
+                postId = response.data.id;
             }
         })
 
-        console.log(postForm);
         if (postForm.video !== null) {
             setShowProgress(true);
+        console.log(postForm.video);
+            
             await uploadFile(postId);
         }
         props.onHandleClose();
-        window.location.reload()
+       // window.location.reload()
     }
 
     async function uploadFile(postId) {
@@ -86,7 +87,7 @@ export function EditPostForm(props) {
         formData.append('postId', postId);
         formData.append('totalSize', totalSize);
         formData.append('chunkData', chunk);
-
+console.log(postId);
         try {
             const response = await API.post('/profile/post/uploadChunk', formData,
                 {

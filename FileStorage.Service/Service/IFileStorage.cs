@@ -6,8 +6,8 @@ namespace FileStorage.Service.Service
     {
         Task<string> PutFileAsync(Guid userId, Guid id, Stream input);
         Task<string> PutFileWithResolutionAsync(Guid bucketId, Guid id, Stream input, VideoResolution resolution = VideoResolution.Original);
-        Task<string> PutFileWithResolutionAsync(Guid bucketId, string objectName, Stream input);
-        Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options,VideoResolution resolution = VideoResolution.Original);
+        Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input);
+        Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options);
         Task<string> GetFileUrlAsync(Guid userId, string objectName);
         Task<string> GetUrlToUploadFileAsync(Guid userId, Guid fileId, VideoResolution resolution = VideoResolution.Original);
         Task ReadFileAsync(Guid userId, string objectName, Stream output);
