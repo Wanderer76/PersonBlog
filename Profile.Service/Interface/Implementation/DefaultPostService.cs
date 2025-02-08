@@ -172,7 +172,7 @@ namespace Profile.Service.Interface.Implementation
                                 post.Description,
                                 post.CreatedAt,
                                 previewUrl,
-                                post.VideoFile != null && !isProcessed ?
+                                post.VideoFile != null && isProcessed ==false ?
                                 new VideoMetadataModel(
                                     videoFile.Id,
                                     videoFile.Length,
@@ -208,7 +208,7 @@ namespace Profile.Service.Interface.Implementation
         {
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var metadata = await _context.Get<VideoMetadata>()
-                .Where(x => x.IsProcessed == false)
+                .Where(x => x.IsProcessed == true)
                 .FirstAsync(x => x.PostId == uploadVideoChunkDto.PostId);
 
             await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId, GuidService.GetNewGuid(), uploadVideoChunkDto.ChunkData, new VideoChunkUploadingInfo

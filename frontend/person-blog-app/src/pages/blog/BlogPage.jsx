@@ -174,7 +174,7 @@ const BlogPosts = function (props) {
                                 <td className="blog-td">{x.description}</td>
                                 <td className="blog-td">{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
                                 <td className="blog-td">{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
-                                <td className="blog-td blog-videoCell">{x.type === 1 && x.isProcessed ? <p>В обработке</p> : getVideo(x)} </td>
+                                <td className="blog-td blog-videoCell">{x.type === 1 && !x.isProcessed ? getVideo(x) : <p>В обработке</p>} </td>
                                 <td className="blog-td"><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
                                 <td className="blog-td"><button onClick={() => setEditForm({ ...x })}>Редактировать</button> </td>
                             </tr>

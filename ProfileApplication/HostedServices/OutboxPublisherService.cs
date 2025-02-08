@@ -8,6 +8,10 @@ using MessageBus;
 using System.Collections.Concurrent;
 using Profile.Domain.Events;
 using Microsoft.OpenApi.Writers;
+using Infrastructure.Models;
+using Shared.Services;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace ProfileApplication.HostedServices
 {
@@ -156,8 +160,36 @@ namespace ProfileApplication.HostedServices
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+            //if (message.EventType == nameof(CombineFileChunksEvent))
+            //{
+            //    var @event = JsonSerializer.Deserialize<CombineFileChunksEvent>(message.EventData);
+            //    var videoMetadata = await dbContext.Get<VideoMetadata>()
+            //        .Where(x => x.Id == @event.VideoMetadataId)
+            //        .Select(x => new
+            //        {
+            //            x.ObjectName,
+            //            x.Id,
+            //            x.Post.Blog.ProfileId
+            //        })
+            //        .FirstAsync();
+            //    var videoEvent = new ProfileEventMessages
+            //    {
+            //        Id = GuidService.GetNewGuid(),
+            //        EventData = JsonSerializer.Serialize(new VideoUploadEvent
+            //        {
+            //            Id = GuidService.GetNewGuid(),
+            //            ObjectName = videoMetadata.ObjectName,
+            //            UserProfileId = videoMetadata.ProfileId,
+            //            FileId = videoMetadata.Id
+            //        }),
+            //        EventType = nameof(VideoUploadEvent),
+            //        State = EventState.Pending,
+            //    };
+            //    dbContext.Add(videoEvent);
+            //}
+
             dbContext.Attach(message);
-            message.State = Infrastructure.Models.EventState.Complete;
+            message.State = EventState.Complete;
             await dbContext.SaveChangesAsync();
         }
 
@@ -170,7 +202,7 @@ namespace ProfileApplication.HostedServices
                 case nameof(CombineFileChunksEvent):
                     return _settings.FileChunksCombinerRoutingKey;
                 //case nameof(VideoViewEvent):
-                    //return _settings.FileChunksCombinerRoutingKey;
+                //return _settings.FileChunksCombinerRoutingKey;
                 default:
                     throw new ArgumentException("Неизвестное событие");
             }

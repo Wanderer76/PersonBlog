@@ -73,12 +73,12 @@ namespace VideoProcessing.Cli.Service
                 State = EventState.Pending,
             };
             context.Add(videoEvent);
-            await context.SaveChangesAsync();
-
+            
             foreach (var chunk in chunks)
             {
                 await storage.RemoveFileAsync(post.Id, chunk.ObjectName);
             }
+            await context.SaveChangesAsync();
         }
 
     }

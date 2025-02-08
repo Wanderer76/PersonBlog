@@ -71,7 +71,7 @@ namespace VideoProcessing.Cli
                         await ConvertVideoFile.ProcessFile(dbContext, storage, _videoPresets, _tempPath, e);
                     });
 
-                await _messageBus.SubscribeAsync<CombineFileChunksEvent>(fileChunkChannel,
+                await _messageBus.SubscribeAsync<CombineFileChunksEvent>(videoConverterChannel,
                    _config.VideoProcessQueue,
                    _config.ExchangeName,
                    _config.FileChunksCombinerRoutingKey,
