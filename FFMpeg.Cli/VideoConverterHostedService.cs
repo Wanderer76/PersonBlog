@@ -6,7 +6,6 @@ using Profile.Domain.Events;
 using RabbitMQ.Client;
 using Shared.Persistence;
 using System.Text.Json;
-using System.Threading.Channels;
 using VideoProcessing.Cli.Models;
 using VideoProcessing.Cli.Service;
 
@@ -40,18 +39,10 @@ namespace VideoProcessing.Cli
         private async Task ProcessUploadVideoEvents()
         {
             var connection = await _messageBus.GetConnectionAsync();
-            var channelOpts = new CreateChannelOptions(
-            publisherConfirmationsEnabled: true,
-            publisherConfirmationTrackingEnabled: true,
-            outstandingPublisherConfirmationsRateLimiter: new ThrottlingRateLimiter(50));
             var videoConverterChannel = await connection.CreateChannelAsync();
-            //var fileChunkChannel = await connection.CreateChannelAsync(channelOpts);
 
             await videoConverterChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
             await videoConverterChannel.QueueDeclareAsync(_config.VideoProcessQueue, durable: true, exclusive: false, autoDelete: false);
-
-            //await fileChunkChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
-            //await fileChunkChannel.QueueDeclareAsync(_config.FileChunksCombinerQueue, durable: true, exclusive: false, autoDelete: false);
 
             await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
             await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
@@ -84,7 +75,6 @@ namespace VideoProcessing.Cli
                         {
                             throw new ArgumentException($"Неизвестный routingKey - {routingKey}");
                         }
-                        await videoConverterChannel.BasicAckAsync(e.DeliveryTag, false);
                     });
             }
             catch (Exception ex)
