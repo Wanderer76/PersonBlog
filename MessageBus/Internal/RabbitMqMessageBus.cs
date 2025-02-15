@@ -45,26 +45,14 @@ namespace MessageBus
             return _factory.CreateConnectionAsync();
         }
 
-        public async Task SubscribeAsync<T>(IChannel channel, string queueName, string exchangeName, string routingKey, Func<T, Task> messageHandler)
+        public async Task SubscribeAsync(IChannel channel, string queueName, Func<BasicDeliverEventArgs, Task> messageHandler)
         {
-            await channel.QueueBindAsync(queue: queueName, exchange: exchangeName, routingKey: routingKey);
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 try
                 {
-                    var q = routingKey;
-                    try
-                    {
-                        var a = UTF8Encoding.UTF8.GetString(ea.Body.Span);
-                        var b = typeof(T);
-                        var body = JsonSerializer.Deserialize<T>(ea.Body.Span);
-                        await messageHandler(body);
-                    }
-                    catch (Exception e)
-                    {
-                        throw;
-                    }
+                    await messageHandler(ea);
                     await channel.BasicAckAsync(ea.DeliveryTag, false);
                 }
                 catch (Exception ex)

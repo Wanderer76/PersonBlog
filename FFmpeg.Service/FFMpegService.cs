@@ -115,7 +115,6 @@ namespace FFmpeg.Service
                 var mapAudioParams = mapAudioParamsBuilder.ToString();
                 var mapVariants = mapVariantsBuilder.ToString().Trim();
 
-
                 var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{fileName}_%v/data%05d.ts -master_pl_name {masterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{fileName}_%v/playlist.m3u8";
 
                 Console.WriteLine($"ffmpeg {ffmpegCommand}");
@@ -149,7 +148,6 @@ namespace FFmpeg.Service
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
-
             };
 
             Process process = new Process { StartInfo = processStartInfo };

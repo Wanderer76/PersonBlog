@@ -5,6 +5,8 @@ using Profile.Domain.Entities;
 using Profile.Domain.Events;
 using RabbitMQ.Client;
 using Shared.Persistence;
+using System.Text.Json;
+using System.Threading.Channels;
 using VideoProcessing.Cli.Models;
 using VideoProcessing.Cli.Service;
 
@@ -42,46 +44,48 @@ namespace VideoProcessing.Cli
             publisherConfirmationsEnabled: true,
             publisherConfirmationTrackingEnabled: true,
             outstandingPublisherConfirmationsRateLimiter: new ThrottlingRateLimiter(50));
-            var videoConverterChannel = await connection.CreateChannelAsync(channelOpts);
-            var fileChunkChannel = await connection.CreateChannelAsync(channelOpts);
-            
+            var videoConverterChannel = await connection.CreateChannelAsync();
+            //var fileChunkChannel = await connection.CreateChannelAsync(channelOpts);
+
             await videoConverterChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
             await videoConverterChannel.QueueDeclareAsync(_config.VideoProcessQueue, durable: true, exclusive: false, autoDelete: false);
 
             //await fileChunkChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
             //await fileChunkChannel.QueueDeclareAsync(_config.FileChunksCombinerQueue, durable: true, exclusive: false, autoDelete: false);
-            
+
             await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
-            await fileChunkChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
+            await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
 
             try
             {
                 using var scope = _serviceScope.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
-                await _messageBus.SubscribeAsync<VideoUploadEvent>(videoConverterChannel,
+                await _messageBus.SubscribeAsync(videoConverterChannel,
                     _config.VideoProcessQueue,
-                    _config.ExchangeName,
-                    _config.VideoConverterRoutingKey,
                     async (e) =>
                     {
+                        var routingKey = e.RoutingKey;
+                        var body = e.Body;
                         using var storage = _fileStorageFactory.CreateFileStorage();
                         using var scope = _serviceScope.CreateScope();
                         var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
-                        await ConvertVideoFile.ProcessFile(dbContext, storage, _videoPresets, _tempPath, e);
+                        if (routingKey == _config.FileChunksCombinerRoutingKey)
+                        {
+                            var message = JsonSerializer.Deserialize<CombineFileChunksEvent>(body.Span)!;
+                            await VideoChunksCombinerService.ProcessChunks(dbContext, storage, message);
+                        }
+                        else if (routingKey == _config.VideoConverterRoutingKey)
+                        {
+                            var message = JsonSerializer.Deserialize<VideoUploadEvent>(body.Span)!;
+                            await ConvertVideoFile.ProcessFile(dbContext, storage, _videoPresets, _tempPath, message);
+                        }
+                        else
+                        {
+                            throw new ArgumentException($"Неизвестный routingKey - {routingKey}");
+                        }
+                        await videoConverterChannel.BasicAckAsync(e.DeliveryTag, false);
                     });
-
-                await _messageBus.SubscribeAsync<CombineFileChunksEvent>(videoConverterChannel,
-                   _config.VideoProcessQueue,
-                   _config.ExchangeName,
-                   _config.FileChunksCombinerRoutingKey,
-                   async (e) =>
-                   {
-                       using var storage = _fileStorageFactory.CreateFileStorage();
-                       using var scope = _serviceScope.CreateScope();
-                       var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
-                       await VideoChunksCombinerService.ProcessChunks(dbContext, storage, e);
-                   });
             }
             catch (Exception ex)
             {
