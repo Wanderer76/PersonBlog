@@ -9,8 +9,10 @@ namespace FFmpeg.Service
     /// </summary>
     public static class FFMpegService
     {
+        //TODO вынести в конфиг
         const string FFMpegPath = "../ffmpeg/ffmpeg.exe";
         const string FFProbePath = "../ffmpeg/ffprobe.exe";
+        const string DefaultEncoder = "libopenh264"; //h264_nvenc - nvidia, h264_qsv - intel, h264_amf - amd 
         static FFMpegService()
         {
             Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
@@ -98,7 +100,7 @@ namespace FFmpeg.Service
                     filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
 
                     string bufsize = rate.Replace("M", "0M").Replace("k", "k");
-                    mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} libx264 -x264-params ""nal - hrd = cbr:force - cfr = 1"" -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 ");
+                    mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} {DefaultEncoder} -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
                     if (inputAudio != null)
                     {
                         mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
@@ -151,13 +153,6 @@ namespace FFmpeg.Service
             };
 
             Process process = new Process { StartInfo = processStartInfo };
-            //process.OutputDataReceived += (sender, e) =>
-            //{
-            //    if (!string.IsNullOrEmpty(e.Data))
-            //    {
-            //        Console.WriteLine($"Output: {e.Data}");
-            //    }
-            //};
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
@@ -165,9 +160,7 @@ namespace FFmpeg.Service
                     Console.Error.WriteLine($"Error: {e.Data}");
                 }
             };
-
             process.Start();
-            //    process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             await process.WaitForExitAsync();
 
