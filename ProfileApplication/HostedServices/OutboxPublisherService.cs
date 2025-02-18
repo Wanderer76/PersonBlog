@@ -16,13 +16,13 @@ namespace ProfileApplication.HostedServices
     public class OutboxPublisherService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMqConfig _settings;
+        private readonly RabbitMqUploadVideoConfig _settings;
         private readonly RabbitMqMessageBus _messageBus;
         private readonly ConcurrentDictionary<ulong, ProfileEventMessages> sendMessages = new();
 
         public OutboxPublisherService(
             IServiceProvider serviceProvider,
-            RabbitMqConfig config,
+            RabbitMqUploadVideoConfig config,
             ILogger<OutboxPublisherService> logger,
             RabbitMqMessageBus messageBus)
         {

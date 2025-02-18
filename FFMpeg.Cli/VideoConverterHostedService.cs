@@ -8,8 +8,8 @@ namespace VideoProcessing.Cli
     internal class VideoConverterHostedService : BackgroundService
     {
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly RabbitMqConfig _config;
-        public VideoConverterHostedService(RabbitMqMessageBus messageBus, RabbitMqConfig config)
+        private readonly RabbitMqUploadVideoConfig _config;
+        public VideoConverterHostedService(RabbitMqMessageBus messageBus, RabbitMqUploadVideoConfig config)
         {
             _messageBus = messageBus;
             _config = config;

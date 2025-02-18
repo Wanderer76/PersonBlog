@@ -16,7 +16,7 @@ namespace MessageBus
         private readonly IServiceScopeFactory _serviceScope;
         private readonly MessageBusSubscriptionInfo _subscriptionInfo;
 
-        public RabbitMqMessageBus(RabbitMqConfig config, IServiceScopeFactory serviceScope, MessageBusSubscriptionInfo subscriptionInfo)
+        public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, MessageBusSubscriptionInfo subscriptionInfo)
         {
             _factory = new ConnectionFactory
             {
