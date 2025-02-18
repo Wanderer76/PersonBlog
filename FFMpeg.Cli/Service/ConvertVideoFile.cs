@@ -1,11 +1,11 @@
 ﻿using FFmpeg.Service;
+using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
 using Shared.Persistence;
 using Shared.Services;
-using VideoProcessing.Cli.Models;
 using Xabe.FFmpeg;
 
 namespace VideoProcessing.Cli.Service
@@ -13,12 +13,15 @@ namespace VideoProcessing.Cli.Service
     public class ConvertVideoFile
     {
         public static async Task ProcessFile(
-            IReadWriteRepository<IProfileEntity> context, 
+            IServiceScope scope,
             IFileStorage storage,
             IEnumerable<VideoPreset> videoPresets,
             string tempPath,
             VideoUploadEvent @event)
         {
+            var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+            var ffmpegService = scope.ServiceProvider.GetRequiredService<IFFMpegService>();
+
             var fileMetadata = await context.Get<VideoMetadata>()
                 .FirstOrDefaultAsync(x => x.ObjectName == @event.ObjectName);
 
@@ -34,7 +37,7 @@ namespace VideoProcessing.Cli.Service
             var dir = Path.Combine(tempPath, fileMetadata.Id.ToString());
             var fileId = GuidService.GetNewGuid();
             var inputUrl = new Uri(url).AbsoluteUri;
-            var videoStream = await FFMpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
+            var videoStream = await ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
             try
             {
                 Directory.CreateDirectory(dir);
@@ -43,14 +46,17 @@ namespace VideoProcessing.Cli.Service
                     ? videoPresets
                     : videoPresets.Where(x => x.Width <= videoStream.Width))
                     .ToList();
+                
+                var hlsOptions = new HlsOptions
+                {
+                    Resolutions = presets.Select(x => x.GetResolution()).ToArray(),
+                    Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
+                    AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
+                    SegmentFileName = fileId.ToString(),
+                    MasterName = fileMetadata.Id.ToString()
+                };
 
-                await FFMpegService.CreateHls(
-                    inputUrl,
-                    dir,
-                    presets.Select(x => x.GetResolution()).ToArray(),
-                    presets.Select(x => x.VideoBitrate).ToArray(),
-                    presets.Select(x => x.AudioBitrate).ToArray(),
-                    fileId.ToString(), fileMetadata.Id.ToString());
+                await ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
 
                 foreach (var file in Directory.GetFiles(dir))
                 {
@@ -97,7 +103,7 @@ namespace VideoProcessing.Cli.Service
 
                 try
                 {
-                    await FFMpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
+                    await ffmpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
                     using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);

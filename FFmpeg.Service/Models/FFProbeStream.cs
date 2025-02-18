@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace FFmpeg.Service
+namespace FFmpeg.Service.Models
 {
     public class FFProbeObject
     {

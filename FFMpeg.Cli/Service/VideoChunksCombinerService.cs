@@ -12,8 +12,10 @@ namespace VideoProcessing.Cli.Service
 {
     public class VideoChunksCombinerService
     {
-        public static async Task ProcessChunks(IReadWriteRepository<IProfileEntity> context, IFileStorage storage, CombineFileChunksEvent @event)
+        public static async Task ProcessChunks(IServiceScope scope, IFileStorage storage, CombineFileChunksEvent @event)
         {
+            var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+
             var fileId = @event.VideoMetadataId;
 
             var post = await context.Get<VideoMetadata>()
@@ -27,9 +29,8 @@ namespace VideoProcessing.Cli.Service
                 .FirstAsync();
 
             var chunks = new List<(long Number, int Size, string ObjectName)>();
-            //var a = await storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).ToListAsync();
 
-            await foreach (var i in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).Where(x => x.Headers!=null && x.Headers.Count > 0))
+            await foreach (var i in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).Where(x => x.Headers != null && x.Headers.Count > 0))
             {
                 chunks.Add((long.Parse(i.Headers["ChunkNumber"]), int.Parse(i.Headers["ChunkSize"]), i.Objectname));
             }
@@ -73,7 +74,7 @@ namespace VideoProcessing.Cli.Service
                 State = EventState.Pending,
             };
             context.Add(videoEvent);
-            
+
             foreach (var chunk in chunks)
             {
                 await storage.RemoveFileAsync(post.Id, chunk.ObjectName);

@@ -1,3 +1,4 @@
+using FFmpeg.Service;
 using FileStorage.Service;
 using MessageBus;
 using MessageBus.Configs;
@@ -10,7 +11,8 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddMessageBus();
 builder.Services.AddFileStorage();
 builder.Services.AddHostedService<VideoConverterHostedService>();
-builder.Services.AddSingleton<RabbitMqConfig>(sp => sp.GetRequiredService<IConfiguration>().GetSection("RabbitMQ").Get<RabbitMqConfig>());
+builder.Services.AddFFMpeg(builder.Configuration);
+builder.Services.AddSingleton<RabbitMqConfig>(sp => sp.GetRequiredService<IConfiguration>().GetSection("RabbitMQ").Get<RabbitMqConfig>()!);
 
 var app = builder.Build();
 app.Run();

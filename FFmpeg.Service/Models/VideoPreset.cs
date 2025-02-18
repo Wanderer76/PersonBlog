@@ -1,4 +1,4 @@
-﻿namespace VideoProcessing.Cli.Models
+﻿namespace FFmpeg.Service.Models
 {
     public struct VideoPreset
     {
@@ -7,6 +7,6 @@
         public string VideoBitrate { get; set; }
         public string AudioBitrate { get; set; }
 
-        public string GetResolution() => $"{Width}x{Height}";
+        public readonly string GetResolution() => $"{Width}x{Height}";
     }
 }

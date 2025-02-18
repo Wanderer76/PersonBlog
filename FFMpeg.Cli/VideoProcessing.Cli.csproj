@@ -13,4 +13,8 @@
     <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>
