@@ -17,8 +17,7 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
-builder.Services.AddMessageBus();
-builder.Services.AddSingleton<RabbitMqConfig>(sp => sp.GetRequiredService<IConfiguration>().GetSection("RabbitMQ").Get<RabbitMqConfig>());
+builder.Services.AddMessageBus(builder.Configuration);
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = long.MaxValue;

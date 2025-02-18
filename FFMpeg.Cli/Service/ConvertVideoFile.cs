@@ -1,6 +1,7 @@
 ﻿using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
+using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
@@ -10,19 +11,26 @@ using Xabe.FFmpeg;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class ConvertVideoFile
+    public class ConvertVideoFile : IEventHandler<VideoUploadEvent>
     {
-        public static async Task ProcessFile(
-            IServiceScope scope,
-            IFileStorage storage,
-            IEnumerable<VideoPreset> videoPresets,
-            string tempPath,
-            VideoUploadEvent @event)
-        {
-            var context = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
-            var ffmpegService = scope.ServiceProvider.GetRequiredService<IFFMpegService>();
+        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IFFMpegService _ffmpegService;
+        private readonly IFileStorage storage;
+        private readonly string _tempPath;
+        private readonly HlsVideoPresets _videoPresets;
 
-            var fileMetadata = await context.Get<VideoMetadata>()
+        public ConvertVideoFile(IReadWriteRepository<IProfileEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+        {
+            this._context = context;
+            this._ffmpegService = ffmpegService;
+            this.storage = storage.CreateFileStorage();
+            _tempPath = Path.GetFullPath(configuration["TempDir"]!);
+            _videoPresets = videoPresets;
+        }
+
+        public async Task Handle(VideoUploadEvent @event)
+        {
+            var fileMetadata = await _context.Get<VideoMetadata>()
                 .FirstOrDefaultAsync(x => x.ObjectName == @event.ObjectName);
 
             if (fileMetadata == null)
@@ -34,17 +42,17 @@ namespace VideoProcessing.Cli.Service
             var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
 
             var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
-            var dir = Path.Combine(tempPath, fileMetadata.Id.ToString());
+            var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
             var fileId = GuidService.GetNewGuid();
             var inputUrl = new Uri(url).AbsoluteUri;
-            var videoStream = await ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
+            var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
             try
             {
                 Directory.CreateDirectory(dir);
 
                 var presets = (videoStream == null
-                    ? videoPresets
-                    : videoPresets.Where(x => x.Width <= videoStream.Width))
+                    ? _videoPresets.VideoPresets
+                    : _videoPresets.VideoPresets.Where(x => x.Width <= videoStream.Width))
                     .ToList();
                 
                 var hlsOptions = new HlsOptions
@@ -56,7 +64,7 @@ namespace VideoProcessing.Cli.Service
                     MasterName = fileMetadata.Id.ToString()
                 };
 
-                await ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
+                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
 
                 foreach (var file in Directory.GetFiles(dir))
                 {
@@ -93,24 +101,24 @@ namespace VideoProcessing.Cli.Service
                 }
             }
 
-            var post = await context.Get<Post>()
+            var post = await _context.Get<Post>()
                        .FirstAsync(x => x.Id == fileMetadata.PostId);
 
             if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
             {
                 var snapshotFileId = GuidService.GetNewGuid();
-                var snapshotFileName = Path.Combine(tempPath, snapshotFileId.ToString() + ".png");
+                var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
 
                 try
                 {
-                    await ffmpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
+                    await _ffmpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
                     using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
                     copyStream.Position = 0;
                     var objectName = await storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
 
-                    context.Attach(post);
+                    _context.Attach(post);
                     post.PreviewId = objectName;
                 }
                 catch (Exception e)
@@ -126,12 +134,12 @@ namespace VideoProcessing.Cli.Service
                 }
             }
 
-            context.Attach(fileMetadata);
+            _context.Attach(fileMetadata);
             fileMetadata.IsProcessed = false;
             fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
             fileMetadata.Duration = videoStream.Duration;
 
-            await context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
         }
         public static string GetRelativePath(string filePath)
         {

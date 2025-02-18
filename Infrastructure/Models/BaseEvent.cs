@@ -1,11 +1,11 @@
 ﻿namespace Infrastructure.Models
 {
-    public abstract class BaseEvent
+    public  class BaseEvent
     {
         public Guid Id { get; set; }
         public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
         public required EventState State { get; set; }
-        public required string EventType { get; set; } // Например, "VideoUploadEvent"
+        public required string EventType { get; set; }
         public required string EventData { get; set; } // Сериализованный JSON события
         public int RetryCount { get; set; }
         public string? ErrorMessage { get; set; }

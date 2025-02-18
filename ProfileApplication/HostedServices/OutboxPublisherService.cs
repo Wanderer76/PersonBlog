@@ -8,6 +8,8 @@ using MessageBus;
 using System.Collections.Concurrent;
 using Profile.Domain.Events;
 using Infrastructure.Models;
+using Xunit.Sdk;
+using System.Text.Json;
 
 namespace ProfileApplication.HostedServices
 {
@@ -43,7 +45,7 @@ namespace ProfileApplication.HostedServices
                 var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
                 var messages = await dbContext.Get<ProfileEventMessages>()
-                    .Where(m => m.State == Infrastructure.Models.EventState.Pending && m.RetryCount < 3)
+                    .Where(static m => m.State == EventState.Pending && m.RetryCount < 3)
                     .OrderBy(m => m.CreatedAt)
                     .Take(100)
                     .ToListAsync(stoppingToken);
@@ -53,18 +55,12 @@ namespace ProfileApplication.HostedServices
                     var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
                     try
                     {
-                        var body = Encoding.UTF8.GetBytes(message.EventData);
+                        var body = JsonSerializer.Serialize(message);
                         sendMessages.TryAdd(nextNumber, message);
                         dbContext.Attach(message);
-                        message.State = Infrastructure.Models.EventState.Processed;
+                        message.State = EventState.Processed;
                         await dbContext.SaveChangesAsync();
-
-                        await channel.BasicPublishAsync(
-                           exchange: _settings.ExchangeName,
-                           routingKey: GetRoutingKey(message),
-                           body: body,
-                           mandatory: true
-                       );
+                        await _messageBus.SendMessageAsync(channel,_settings.ExchangeName,GetRoutingKey(message), message);
                     }
                     catch (Exception ex)
                     {
@@ -77,7 +73,7 @@ namespace ProfileApplication.HostedServices
                         else
                         {
                             message.RetryCount++;
-                            message.State = Infrastructure.Models.EventState.Pending;
+                            message.State = EventState.Pending;
                         }
                         await dbContext.SaveChangesAsync();
                     }
