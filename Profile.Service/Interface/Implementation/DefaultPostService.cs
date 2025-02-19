@@ -1,7 +1,6 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
-using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
@@ -62,7 +61,7 @@ namespace Profile.Service.Interface.Implementation
                 var fileUrl = await storage.GetFileUrlAsync(postId, objectName);
                 var videoCreateEvent = new VideoUploadEvent
                 {
-                    Id = GuidService.GetNewGuid(),
+                    EventId = GuidService.GetNewGuid(),
                     FileUrl = fileUrl,
                     UserProfileId = userProfileId,
                     ObjectName = objectName,
@@ -71,7 +70,7 @@ namespace Profile.Service.Interface.Implementation
 
                 var videoEvent = new ProfileEventMessages
                 {
-                    Id = GuidService.GetNewGuid(),
+                    Id = videoCreateEvent.EventId,
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
                     EventType = nameof(VideoUploadEvent),
                     State = EventState.Pending,
@@ -164,7 +163,7 @@ namespace Profile.Service.Interface.Implementation
             foreach (var post in pagedPosts.Posts)
             {
                 var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
-                var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+                var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
                 var videoFile = post.VideoFile;
                 posts.Add(new PostModel(
                                 post.Id,
@@ -173,14 +172,15 @@ namespace Profile.Service.Interface.Implementation
                                 post.Description,
                                 post.CreatedAt,
                                 previewUrl,
-                                post.VideoFile != null && isProcessed ==false ?
+                                post.VideoFile != null && isProcessed == ProcessState.Complete ?
                                 new VideoMetadataModel(
                                     videoFile.Id,
                                     videoFile.Length,
                                     videoFile.ContentType,
                                     videoFile.ObjectName
                                 ) : null,
-                                isProcessed
+                                isProcessed,
+                                isProcessed == ProcessState.Error ? videoFile?.ErrorMessage : null
                             ));
             }
 
@@ -222,7 +222,7 @@ namespace Profile.Service.Interface.Implementation
             {
                 var videoCreateEvent = new CombineFileChunksEvent
                 {
-                    Id = GuidService.GetNewGuid(),
+                    EventId = GuidService.GetNewGuid(),
                     VideoMetadataId = metadata.Id,
                     IsCompleted = false,
                     CreatedAt = DateTimeOffset.UtcNow
@@ -230,7 +230,7 @@ namespace Profile.Service.Interface.Implementation
 
                 var videoEvent = new ProfileEventMessages
                 {
-                    Id = GuidService.GetNewGuid(),
+                    Id = videoCreateEvent.EventId,
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
                     EventType = nameof(CombineFileChunksEvent),
                     State = EventState.Pending,
@@ -272,7 +272,7 @@ namespace Profile.Service.Interface.Implementation
             await _context.SaveChangesAsync();
 
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await storage.GetFileUrlAsync(post.Id, post.PreviewId);
-            var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+            var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
             var videoMetadata = post.VideoFile;
             return new PostModel(
                             post.Id,
@@ -281,14 +281,15 @@ namespace Profile.Service.Interface.Implementation
                             post.Description,
                             post.CreatedAt,
                             previewUrl,
-                            post.VideoFile != null && !isProcessed ?
+                            post.VideoFile != null && isProcessed == ProcessState.Complete ?
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
                                 videoMetadata.ContentType,
                                 videoMetadata.ObjectName
                             ) : null,
-                            isProcessed
+                            isProcessed,
+                            isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null
                         );
         }
 
@@ -342,6 +343,7 @@ namespace Profile.Service.Interface.Implementation
 
             var videoViewEvent = new VideoViewEvent
             {
+                EventId = GuidService.GetNewGuid(),
                 PostId = value.PostId,
                 CreatedAt = DateTimeOffset.UtcNow,
                 RemoteIp = value.RemoteIp,
@@ -350,7 +352,7 @@ namespace Profile.Service.Interface.Implementation
 
             var videoEvent = new ProfileEventMessages
             {
-                Id = GuidService.GetNewGuid(),
+                Id = videoViewEvent.EventId,
                 EventData = JsonSerializer.Serialize(videoViewEvent),
                 EventType = nameof(VideoViewEvent),
                 State = EventState.Pending,

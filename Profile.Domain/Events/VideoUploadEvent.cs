@@ -2,7 +2,7 @@
 {
     public class VideoUploadEvent
     {
-        public required Guid Id { get; set; }
+        public required Guid EventId { get; set; }
         public string FileUrl { get; set; }
         public Guid UserProfileId { get; set; }
         public required string ObjectName { get; set; }

@@ -31,115 +31,127 @@ namespace VideoProcessing.Cli.Service
         public async Task Handle(VideoUploadEvent @event)
         {
             var fileMetadata = await _context.Get<VideoMetadata>()
-                .FirstOrDefaultAsync(x => x.ObjectName == @event.ObjectName);
-
-            if (fileMetadata == null)
-            {
-
-                throw new ArgumentException("Не удалось найти данные");
-            }
-
-            var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
-
-            var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
-            var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
-            var fileId = GuidService.GetNewGuid();
-            var inputUrl = new Uri(url).AbsoluteUri;
-            var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
+                .FirstAsync(x => x.ObjectName == @event.ObjectName);
+            
+            _context.Attach(fileMetadata);
+            
             try
             {
-                Directory.CreateDirectory(dir);
-
-                var presets = (videoStream == null
-                    ? _videoPresets.VideoPresets
-                    : _videoPresets.VideoPresets.Where(x => x.Width <= videoStream.Width))
-                    .ToList();
-                
-                var hlsOptions = new HlsOptions
+                var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
+                var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
+                var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
+                var fileId = GuidService.GetNewGuid();
+                var inputUrl = new Uri(url).AbsoluteUri;
+                var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
+                try
                 {
-                    Resolutions = presets.Select(x => x.GetResolution()).ToArray(),
-                    Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
-                    AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
-                    SegmentFileName = fileId.ToString(),
-                    MasterName = fileMetadata.Id.ToString()
-                };
+                    Directory.CreateDirectory(dir);
 
-                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
+                    var presets = (videoStream == null
+                        ? _videoPresets.VideoPresets
+                        : _videoPresets.VideoPresets.Where(x => x.Width <= videoStream.Width))
+                        .ToList();
 
-                foreach (var file in Directory.GetFiles(dir))
-                {
-                    using var fileStream = new FileStream(file, FileMode.Open);
-                    using var copyStream = new MemoryStream();
-                    await fileStream.CopyToAsync(copyStream);
-                    copyStream.Position = 0;
-                    var objectName = await storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
-                }
+                    var hlsOptions = new HlsOptions
+                    {
+                        Resolutions = presets.Select(x => x.GetResolution()).ToArray(),
+                        Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
+                        AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
+                        SegmentFileName = fileId.ToString(),
+                        MasterName = fileMetadata.Id.ToString()
+                    };
 
-                foreach (string folder in Directory.EnumerateDirectories(dir))
-                {
-                    foreach (var file in Directory.EnumerateFiles(folder))
+                    await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
+
+                    foreach (var file in Directory.GetFiles(dir))
                     {
                         using var fileStream = new FileStream(file, FileMode.Open);
                         using var copyStream = new MemoryStream();
                         await fileStream.CopyToAsync(copyStream);
                         copyStream.Position = 0;
-                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
+                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
                     }
-                }
 
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                throw;
-            }
-            finally
-            {
-                if (Directory.Exists(dir))
-                {
-                    Directory.Delete(dir, true);
-                }
-            }
+                    foreach (string folder in Directory.EnumerateDirectories(dir))
+                    {
+                        foreach (var file in Directory.EnumerateFiles(folder))
+                        {
+                            using var fileStream = new FileStream(file, FileMode.Open);
+                            using var copyStream = new MemoryStream();
+                            await fileStream.CopyToAsync(copyStream);
+                            copyStream.Position = 0;
+                            var objectName = await storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
+                        }
+                    }
 
-            var post = await _context.Get<Post>()
-                       .FirstAsync(x => x.Id == fileMetadata.PostId);
-
-            if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
-            {
-                var snapshotFileId = GuidService.GetNewGuid();
-                var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
-
-                try
-                {
-                    await _ffmpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
-                    using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
-                    using var copyStream = new MemoryStream();
-                    await fileStream.CopyToAsync(copyStream);
-                    copyStream.Position = 0;
-                    var objectName = await storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
-
-                    _context.Attach(post);
-                    post.PreviewId = objectName;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
+                    throw;
                 }
                 finally
                 {
-                    if (File.Exists(snapshotFileName))
+                    if (Directory.Exists(dir))
                     {
-                        File.Delete(snapshotFileName);
+                        Directory.Delete(dir, true);
                     }
                 }
+
+                var post = await _context.Get<Post>()
+                           .FirstAsync(x => x.Id == fileMetadata.PostId);
+
+                if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
+                {
+                    var snapshotFileId = GuidService.GetNewGuid();
+                    var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
+
+                    try
+                    {
+                        await _ffmpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
+                        using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
+                        using var copyStream = new MemoryStream();
+                        await fileStream.CopyToAsync(copyStream);
+                        copyStream.Position = 0;
+                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
+
+                        _context.Attach(post);
+                        post.PreviewId = objectName;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        throw;
+                    }
+                    finally
+                    {
+                        if (File.Exists(snapshotFileName))
+                        {
+                            File.Delete(snapshotFileName);
+                        }
+                    }
+                }
+
+                fileMetadata.IsProcessed = false;
+                fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
+                fileMetadata.Duration = videoStream.Duration;
+                fileMetadata.ProcessState = ProcessState.Complete;
+
+                await _context.SaveChangesAsync();
             }
+            catch (Exception e)
+            {
+                fileMetadata.ProcessState = ProcessState.Error;
+                fileMetadata.ErrorMessage = "Не удалось собрать файл";
 
-            _context.Attach(fileMetadata);
-            fileMetadata.IsProcessed = false;
-            fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
-            fileMetadata.Duration = videoStream.Duration;
+                var processedEvent = await _context.Get<ProfileEventMessages>()
+                    .FirstAsync(x => x.Id == @event.EventId);
 
-            await _context.SaveChangesAsync();
+                _context.Attach(processedEvent);
+                processedEvent.SetErrorMessage(e.Message);
+                await _context.SaveChangesAsync();
+                throw;
+            }
         }
         public static string GetRelativePath(string filePath)
         {

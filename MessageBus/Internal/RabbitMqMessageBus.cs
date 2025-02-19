@@ -48,28 +48,32 @@ namespace MessageBus
             return _factory.CreateConnectionAsync();
         }
 
-        public async Task SubscribeAsync(IChannel channel, string queueName)
+        public async Task SubscribeAsync(IChannel channel, string queueName,Func<BaseEvent, Exception, Task>? onError = null)
         {
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
-                try
+                using var scope = _serviceScope.CreateScope();
+                var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
+                foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
                 {
-                    using var scope = _serviceScope.CreateScope();
-                    var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
-                    foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
+                    if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
                     {
-                        if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
+                        var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
+                        try
                         {
-                            var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
                             await handler.Handle(handlerBody);
                             await channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
+                        catch (Exception e)
+                        {
+                            if (onError != null)
+                            {
+                                await onError(body, e);
+                            }
+                            await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
-                    await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
                 }
             };
             await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);

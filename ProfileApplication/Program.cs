@@ -2,7 +2,6 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
-using MessageBus.Configs;
 using Profile.Persistence;
 using Profile.Service.Extensions;
 using ProfileApplication.HostedServices;
@@ -18,6 +17,7 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
 builder.Services.AddMessageBus(builder.Configuration);
+
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = long.MaxValue;

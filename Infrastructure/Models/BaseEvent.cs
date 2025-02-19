@@ -8,7 +8,7 @@
         public required string EventType { get; set; }
         public required string EventData { get; set; } // Сериализованный JSON события
         public int RetryCount { get; set; }
-        public string? ErrorMessage { get; set; }
+        public string? ErrorMessage { get; private set; }
 
         public void SetErrorMessage(string message)
         {

@@ -35,7 +35,7 @@ namespace ProfileApplication.HostedServices
             await using var channel = await connection.CreateChannelAsync();
 
             await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
-            
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _serviceProvider.CreateScope();
