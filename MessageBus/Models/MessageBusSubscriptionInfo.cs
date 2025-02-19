@@ -10,9 +10,15 @@ namespace MessageBus.Models
     {
         public readonly Dictionary<string, Type> EventTypes = [];
 
+        public MessageBusSubscriptionInfo() { }
+
         public MessageBusSubscriptionInfo(Dictionary<string, Type> eventTypes)
         {
             EventTypes = eventTypes;
+        }
+        public void AddSubscription(string eventType, Type handlerType)
+        {
+            EventTypes.Add(eventType, handlerType);
         }
     }
 }

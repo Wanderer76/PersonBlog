@@ -13,13 +13,17 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddFileStorage();
 builder.Services.AddHostedService<VideoConverterHostedService>();
 builder.Services.AddFFMpeg(builder.Configuration);
-builder.Services.AddKeyedScoped<IEventHandler, VideoChunksCombinerService>(nameof(CombineFileChunksEvent));
-builder.Services.AddKeyedScoped<IEventHandler, ConvertVideoFile>(nameof(VideoUploadEvent));
-builder.Services.AddMessageBus(builder.Configuration, new Dictionary<string, Type>
-{
-    { nameof(CombineFileChunksEvent), typeof(CombineFileChunksEvent) },
-    { nameof(VideoUploadEvent), typeof(VideoUploadEvent) }
-});
+//builder.Services.AddKeyedScoped<IEventHandler, VideoChunksCombinerService>(nameof(CombineFileChunksEvent));
+//builder.Services.AddKeyedScoped<IEventHandler, ConvertVideoFile>(nameof(VideoUploadEvent));
+//builder.Services.AddMessageBus(builder.Configuration, new Dictionary<string, Type>
+//{
+//    { nameof(CombineFileChunksEvent), typeof(CombineFileChunksEvent) },
+//    { nameof(VideoUploadEvent), typeof(VideoUploadEvent) }
+//});
+
+builder.Services.AddMessageBus(builder.Configuration)
+    .AddSubscription<CombineFileChunksEvent, VideoChunksCombinerService>()
+    .AddSubscription<VideoUploadEvent, ConvertVideoFile>();
 
 
 var app = builder.Build();

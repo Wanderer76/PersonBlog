@@ -7,6 +7,7 @@ using Infrastructure.Models;
 using MessageBus.EventHandler;
 using Microsoft.Extensions.DependencyInjection;
 using MessageBus.Models;
+using Microsoft.Extensions.Options;
 
 namespace MessageBus
 {
@@ -16,7 +17,7 @@ namespace MessageBus
         private readonly IServiceScopeFactory _serviceScope;
         private readonly MessageBusSubscriptionInfo _subscriptionInfo;
 
-        public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, MessageBusSubscriptionInfo subscriptionInfo)
+        public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
         {
             _factory = new ConnectionFactory
             {
@@ -25,7 +26,7 @@ namespace MessageBus
                 UserName = config.UserName,
                 Password = config.Password,
             };
-            _subscriptionInfo = subscriptionInfo;
+            _subscriptionInfo = subscriptionInfo.Value;
             _serviceScope = serviceScope;
         }
 
@@ -55,8 +56,6 @@ namespace MessageBus
                 try
                 {
                     using var scope = _serviceScope.CreateScope();
-
-                    var routingKey = ea.RoutingKey;
                     var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
                     foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
                     {
@@ -64,9 +63,9 @@ namespace MessageBus
                         {
                             var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
                             await handler.Handle(handlerBody);
+                            await channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
                     }
-                    await channel.BasicAckAsync(ea.DeliveryTag, false);
                 }
                 catch (Exception ex)
                 {
