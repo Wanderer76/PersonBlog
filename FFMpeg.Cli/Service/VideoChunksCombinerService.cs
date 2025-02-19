@@ -2,6 +2,7 @@
 using FileStorage.Service.Service;
 using Infrastructure.Models;
 using MessageBus.EventHandler;
+using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;

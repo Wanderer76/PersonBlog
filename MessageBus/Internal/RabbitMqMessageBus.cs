@@ -3,11 +3,11 @@ using System.Text.Json;
 using System.Text;
 using RabbitMQ.Client.Events;
 using MessageBus.Configs;
-using Infrastructure.Models;
 using MessageBus.EventHandler;
 using Microsoft.Extensions.DependencyInjection;
 using MessageBus.Models;
 using Microsoft.Extensions.Options;
+using Infrastructure.Models;
 
 namespace MessageBus
 {

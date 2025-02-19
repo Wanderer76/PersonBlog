@@ -1,5 +1,4 @@
 ﻿using RabbitMQ.Client;
-using System.Text;
 using MessageBus.Configs;
 using Shared.Persistence;
 using Profile.Domain.Entities;
@@ -8,7 +7,6 @@ using MessageBus;
 using System.Collections.Concurrent;
 using Profile.Domain.Events;
 using Infrastructure.Models;
-using Xunit.Sdk;
 using System.Text.Json;
 
 namespace ProfileApplication.HostedServices
@@ -92,11 +90,11 @@ namespace ProfileApplication.HostedServices
             if (message.RetryCount > 3)
             {
                 message.SetErrorMessage("Не удалось обработать событие");
-                message.State = Infrastructure.Models.EventState.Error;
+                message.State = EventState.Error;
             }
             else
             {
-                message.State = Infrastructure.Models.EventState.Pending;
+                message.State = EventState.Pending;
             }
             await dbContext.SaveChangesAsync();
         }

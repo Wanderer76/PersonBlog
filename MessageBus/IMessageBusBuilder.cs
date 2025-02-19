@@ -5,6 +5,5 @@ namespace MessageBus
     public interface IMessageBusBuilder
     {
         public IServiceCollection Services { get; }
-
     }
 }

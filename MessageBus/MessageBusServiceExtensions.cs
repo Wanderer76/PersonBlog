@@ -21,7 +21,6 @@ namespace MessageBus
             where TEvent : class
             where THandle : class, IEventHandler<TEvent>
         {
-
             builder.Services.AddKeyedScoped<IEventHandler, THandle>(typeof(TEvent).Name);
 
             builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
@@ -44,5 +43,4 @@ namespace MessageBus
 
         public IServiceCollection Services => _services;
     }
-
 }
