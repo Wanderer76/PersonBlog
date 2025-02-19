@@ -11,7 +11,7 @@ using Xabe.FFmpeg;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class ConvertVideoFile : IEventHandler<VideoUploadEvent>
+    public class ConvertVideoFile : IEventHandler<VideoConvertEvent>
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFFMpegService _ffmpegService;
@@ -28,7 +28,7 @@ namespace VideoProcessing.Cli.Service
             _videoPresets = videoPresets;
         }
 
-        public async Task Handle(VideoUploadEvent @event)
+        public async Task Handle(VideoConvertEvent @event)
         {
             var fileMetadata = await _context.Get<VideoMetadata>()
                 .FirstAsync(x => x.ObjectName == @event.ObjectName);
@@ -43,60 +43,7 @@ namespace VideoProcessing.Cli.Service
                 var fileId = GuidService.GetNewGuid();
                 var inputUrl = new Uri(url).AbsoluteUri;
                 var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
-                try
-                {
-                    Directory.CreateDirectory(dir);
-
-                    var presets = (videoStream == null
-                        ? _videoPresets.VideoPresets
-                        : _videoPresets.VideoPresets.Where(x => x.Width <= videoStream.Width))
-                        .ToList();
-
-                    var hlsOptions = new HlsOptions
-                    {
-                        Resolutions = presets.Select(x => x.GetResolution()).ToArray(),
-                        Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
-                        AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
-                        SegmentFileName = fileId.ToString(),
-                        MasterName = fileMetadata.Id.ToString()
-                    };
-
-                    await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
-
-                    foreach (var file in Directory.GetFiles(dir))
-                    {
-                        using var fileStream = new FileStream(file, FileMode.Open);
-                        using var copyStream = new MemoryStream();
-                        await fileStream.CopyToAsync(copyStream);
-                        copyStream.Position = 0;
-                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
-                    }
-
-                    foreach (string folder in Directory.EnumerateDirectories(dir))
-                    {
-                        foreach (var file in Directory.EnumerateFiles(folder))
-                        {
-                            using var fileStream = new FileStream(file, FileMode.Open);
-                            using var copyStream = new MemoryStream();
-                            await fileStream.CopyToAsync(copyStream);
-                            copyStream.Position = 0;
-                            var objectName = await storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
-                        }
-                    }
-
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                    throw;
-                }
-                finally
-                {
-                    if (Directory.Exists(dir))
-                    {
-                        Directory.Delete(dir, true);
-                    }
-                }
+                await ProcessHls(fileMetadata, dir, fileId, inputUrl, videoStream);
 
                 var post = await _context.Get<Post>()
                            .FirstAsync(x => x.Id == fileMetadata.PostId);
@@ -153,6 +100,64 @@ namespace VideoProcessing.Cli.Service
                 throw;
             }
         }
+
+        private async Task ProcessHls(VideoMetadata fileMetadata, string dir, Guid fileId, string inputUrl, FFProbeStream videoStream)
+        {
+            try
+            {
+                Directory.CreateDirectory(dir);
+
+                var presets = (videoStream == null
+                    ? _videoPresets.VideoPresets
+                    : _videoPresets.VideoPresets.Where(x => x.Width <= videoStream.Width))
+                    .ToList();
+
+                var hlsOptions = new HlsOptions
+                {
+                    Resolutions = presets.Select(x => x.GetResolution()).ToArray(),
+                    Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
+                    AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
+                    SegmentFileName = fileId.ToString(),
+                    MasterName = fileMetadata.Id.ToString()
+                };
+
+                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
+
+                foreach (var file in Directory.GetFiles(dir))
+                {
+                    using var fileStream = new FileStream(file, FileMode.Open);
+                    using var copyStream = new MemoryStream();
+                    await fileStream.CopyToAsync(copyStream);
+                    copyStream.Position = 0;
+                    var objectName = await storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
+                }
+
+                foreach (string folder in Directory.EnumerateDirectories(dir))
+                {
+                    foreach (var file in Directory.EnumerateFiles(folder))
+                    {
+                        using var fileStream = new FileStream(file, FileMode.Open);
+                        using var copyStream = new MemoryStream();
+                        await fileStream.CopyToAsync(copyStream);
+                        copyStream.Position = 0;
+                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+            finally
+            {
+                if (Directory.Exists(dir))
+                {
+                    Directory.Delete(dir, true);
+                }
+            }
+        }
+
         public static string GetRelativePath(string filePath)
         {
             var directoryName = Path.GetDirectoryName(filePath);

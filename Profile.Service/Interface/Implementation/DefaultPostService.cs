@@ -59,7 +59,7 @@ namespace Profile.Service.Interface.Implementation
                     Resolution = VideoResolution.Original
                 };
                 var fileUrl = await storage.GetFileUrlAsync(postId, objectName);
-                var videoCreateEvent = new VideoUploadEvent
+                var videoCreateEvent = new VideoConvertEvent
                 {
                     EventId = GuidService.GetNewGuid(),
                     FileUrl = fileUrl,
@@ -72,7 +72,7 @@ namespace Profile.Service.Interface.Implementation
                 {
                     Id = videoCreateEvent.EventId,
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(VideoUploadEvent),
+                    EventType = nameof(VideoConvertEvent),
                     State = EventState.Pending,
                 };
 

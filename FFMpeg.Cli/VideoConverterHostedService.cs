@@ -1,6 +1,5 @@
 ﻿using MessageBus;
 using MessageBus.Configs;
-using MessageBus.Models;
 using RabbitMQ.Client;
 
 namespace VideoProcessing.Cli
@@ -25,25 +24,16 @@ namespace VideoProcessing.Cli
         {
             var connection = await _messageBus.GetConnectionAsync();
             var videoConverterChannel = await connection.CreateChannelAsync();
-            var videoConverterErrorChannel = await connection.CreateChannelAsync();
 
             await videoConverterChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
             await videoConverterChannel.QueueDeclareAsync(_config.VideoProcessQueue, durable: true, exclusive: false, autoDelete: false);
-            
-            await videoConverterErrorChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
-            await videoConverterErrorChannel.QueueDeclareAsync(_config.VideoProcessErrorQueue, durable: true, exclusive: false, autoDelete: false);
 
             await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
             await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
 
-            await videoConverterErrorChannel.QueueBindAsync(_config.VideoProcessErrorQueue, _config.ExchangeName, _config.ErrorRoutingKey);
             try
             {
-                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue, async (@event, exception) =>
-                {
-                    @event.SetErrorMessage(exception.Message);
-                    await _messageBus.SendMessageAsync(videoConverterErrorChannel, _config.ExchangeName, _config.ErrorRoutingKey, @event);
-                });
+                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue);
             }
             catch (Exception ex)
             {

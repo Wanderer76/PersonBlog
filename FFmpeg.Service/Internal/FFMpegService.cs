@@ -45,47 +45,41 @@ namespace FFmpeg.Service.Internal
 
             var inputMedia = await GetStreams(input);
             var inputAudio = inputMedia.FirstOrDefault(x => x.CodecType == "audio");
-            try
+            for (int i = 0; i < options.Resolutions.Length; i++)
             {
-                for (int i = 0; i < options.Resolutions.Length; i++)
+                string resolution = options.Resolutions[i];
+                string[] parts = resolution.Split('x');
+                int width = int.Parse(parts[0]);
+                int height = int.Parse(parts[1]);
+                string rate = options.Bitrates[i];
+                string ab = options.AudioBitrates[i];
+
+                filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
+
+                string bufsize = rate.Replace("M", "0M").Replace("k", "k");
+                mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} {fFMpegOptions.DefaultEncoder} -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
+                if (inputAudio != null)
                 {
-                    string resolution = options.Resolutions[i];
-                    string[] parts = resolution.Split('x');
-                    int width = int.Parse(parts[0]);
-                    int height = int.Parse(parts[1]);
-                    string rate = options.Bitrates[i];
-                    string ab = options.AudioBitrates[i];
-
-                    filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
-
-                    string bufsize = rate.Replace("M", "0M").Replace("k", "k");
-                    mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} {fFMpegOptions.DefaultEncoder} -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
-                    if (inputAudio != null)
-                    {
-                        mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
-                        mapVariantsBuilder.Append($"v:{i},a:{i} ");
-                    }
-                    else
-                    {
-                        mapVariantsBuilder.Append($"v:{i} ");
-                    }
+                    mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
+                    mapVariantsBuilder.Append($"v:{i},a:{i} ");
                 }
-
-                var filterComplex = filterComplexBuilder.ToString();
-                var mapVideoParams = mapVideoParamsBuilder.ToString();
-                var mapAudioParams = mapAudioParamsBuilder.ToString();
-                var mapVariants = mapVariantsBuilder.ToString().Trim();
-
-                var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{options.SegmentFileName}_%v/data%05d.ts -master_pl_name {options.MasterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{options.SegmentFileName}_%v/playlist.m3u8";
-
-                Console.WriteLine($"ffmpeg {ffmpegCommand}");
-
-                await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand);
+                else
+                {
+                    mapVariantsBuilder.Append($"v:{i} ");
+                }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine();
-            }
+
+            var filterComplex = filterComplexBuilder.ToString();
+            var mapVideoParams = mapVideoParamsBuilder.ToString();
+            var mapAudioParams = mapAudioParamsBuilder.ToString();
+            var mapVariants = mapVariantsBuilder.ToString().Trim();
+
+            var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{options.SegmentFileName}_%v/data%05d.ts -master_pl_name {options.MasterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{options.SegmentFileName}_%v/playlist.m3u8";
+
+            Console.WriteLine($"ffmpeg {ffmpegCommand}");
+
+            await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand);
+
         }
 
         private async Task<IEnumerable<FFProbeStream>> GetStreams(string inputFile)

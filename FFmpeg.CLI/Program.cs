@@ -23,7 +23,7 @@ builder.Services.AddFFMpeg(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<CombineFileChunksEvent, VideoChunksCombinerService>()
-    .AddSubscription<VideoUploadEvent, ConvertVideoFile>();
+    .AddSubscription<VideoConvertEvent, ConvertVideoFile>();
 
 
 var app = builder.Build();

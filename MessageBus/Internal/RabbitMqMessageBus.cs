@@ -48,13 +48,18 @@ namespace MessageBus
             return _factory.CreateConnectionAsync();
         }
 
-        public async Task SubscribeAsync(IChannel channel, string queueName,Func<BaseEvent, Exception, Task>? onError = null)
+        public async Task SubscribeAsync(IChannel channel, string queueName, SubscribeOptions? options = default)
         {
+            options ??= new SubscribeOptions();
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 using var scope = _serviceScope.CreateScope();
                 var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
+
+                if (options.RoutingKeys.Any() && !options.RoutingKeys.Contains(ea.RoutingKey))
+                    return;
+
                 foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
                 {
                     if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
@@ -67,10 +72,6 @@ namespace MessageBus
                         }
                         catch (Exception e)
                         {
-                            if (onError != null)
-                            {
-                                await onError(body, e);
-                            }
                             await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
                         }
                     }
@@ -78,5 +79,10 @@ namespace MessageBus
             };
             await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
         }
+    }
+
+    public class SubscribeOptions
+    {
+        public IEnumerable<string> RoutingKeys { get; set; } = [];
     }
 }

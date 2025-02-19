@@ -112,7 +112,7 @@ namespace ProfileApplication.HostedServices
         {
             switch (message.EventType)
             {
-                case nameof(VideoUploadEvent):
+                case nameof(VideoConvertEvent):
                     return _settings.VideoConverterRoutingKey;
                 case nameof(CombineFileChunksEvent):
                     return _settings.FileChunksCombinerRoutingKey;

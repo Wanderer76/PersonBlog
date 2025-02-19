@@ -15,9 +15,7 @@ API.interceptors.response.use(
             // Обработка ошибки 401
             console.error('Ошибка авторизации (401):', error);
             var status = await JwtTokenService.refreshToken()
-            if (status === 200)
-                window.location.reload();
-            else {
+            if (status !== 200) {
                 JwtTokenService.cleanAuth();
                 //const navigate = useNavigate();
                 // Проверяем, чтобы не было бесконечной петли редиректов

@@ -1,6 +1,6 @@
 ﻿namespace Profile.Domain.Events
 {
-    public class VideoUploadEvent
+    public class VideoConvertEvent
     {
         public required Guid EventId { get; set; }
         public string FileUrl { get; set; }

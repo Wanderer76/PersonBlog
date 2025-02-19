@@ -44,9 +44,9 @@ namespace VideoProcessing.Cli.Service
 
                 var chunks = new List<(long Number, int Size, string ObjectName)>();
 
-                await foreach (var i in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).Where(x => x.Headers != null && x.Headers.Count > 0))
+                await foreach (var chunk in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).Where(x => x.Headers != null && x.Headers.Count > 0))
                 {
-                    chunks.Add((long.Parse(i.Headers["ChunkNumber"]), int.Parse(i.Headers["ChunkSize"]), i.Objectname));
+                    chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.Objectname));
                 }
                 if (chunks.Count == 0)
                 {
@@ -66,7 +66,7 @@ namespace VideoProcessing.Cli.Service
                 videoMetadata.ObjectName = objectName;
                 videoMetadata.Resolution = VideoResolution.Original;
                 var fileUrl = await storage.GetFileUrlAsync(post.Id, objectName);
-                var videoCreateEvent = new VideoUploadEvent
+                var videoCreateEvent = new VideoConvertEvent
                 {
                     EventId = GuidService.GetNewGuid(),
                     FileUrl = fileUrl,
@@ -79,7 +79,7 @@ namespace VideoProcessing.Cli.Service
                 {
                     Id = videoCreateEvent.EventId,
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(VideoUploadEvent),
+                    EventType = nameof(VideoConvertEvent),
                     State = EventState.Pending,
                 };
                 _context.Add(videoEvent);
