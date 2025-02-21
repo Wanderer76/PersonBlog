@@ -10,6 +10,7 @@ using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
 using Shared.Persistence;
 using FileStorage.Service.Service;
+using Profile.Service.Models;
 
 namespace ProfileApplication.Controllers
 {
@@ -135,7 +136,7 @@ namespace ProfileApplication.Controllers
             return Ok();
 
         }
-      
+
         //public async Task<IActionResult> DeleteVideo(Guid id)
         //{
         //    return Ok();
@@ -147,6 +148,13 @@ namespace ProfileApplication.Controllers
         //    return Ok();
         //}
 
-       
+
+        [HttpGet("blogByPost/{postId:guid}")]
+        [Produces(typeof(BlogModel))]
+        public async Task<IActionResult> GetDetailPostByIdAsync(Guid postId)
+        {
+            var result = await _blogService.GetBlogByPostIdAsync(postId);
+            return Ok(result);
+        }
     }
 }

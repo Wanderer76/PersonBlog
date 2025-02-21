@@ -24,6 +24,7 @@ builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
 builder.Services.AddBlogServices();
+builder.Services.AddHttpClient();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddMessageBus(builder.Configuration);

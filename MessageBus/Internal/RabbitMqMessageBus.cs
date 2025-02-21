@@ -78,6 +78,10 @@ namespace MessageBus
                         }
                     }
                 }
+                else
+                {
+                    await channel.BasicRejectAsync(ea.DeliveryTag, true);
+                }
             };
             await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
         }
