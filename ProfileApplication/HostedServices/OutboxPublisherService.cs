@@ -1,5 +1,4 @@
 ﻿using RabbitMQ.Client;
-using MessageBus.Configs;
 using Shared.Persistence;
 using Profile.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +7,8 @@ using System.Collections.Concurrent;
 using Profile.Domain.Events;
 using Infrastructure.Models;
 using System.Text.Json;
+using MessageBus.Shared.Configs;
+using MassTransit;
 
 namespace ProfileApplication.HostedServices
 {
@@ -15,6 +16,9 @@ namespace ProfileApplication.HostedServices
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMqUploadVideoConfig _settings;
+        private readonly RabbitMqVideoReactionConfig _reactingSettings = new();
+        private readonly IBus _bus;
+
         private readonly RabbitMqMessageBus _messageBus;
         private readonly ConcurrentDictionary<ulong, ProfileEventMessages> sendMessages = new();
 
@@ -31,8 +35,8 @@ namespace ProfileApplication.HostedServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await using var connection = await _messageBus.GetConnectionAsync();
-            await using var channel = await connection.CreateChannelAsync();
+            var connection = await _messageBus.GetConnectionAsync();
+            var channel = await connection.CreateChannelAsync();
 
             await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
 
@@ -50,20 +54,38 @@ namespace ProfileApplication.HostedServices
 
                 foreach (var message in messages)
                 {
-                    var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
+                    //var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
                     try
                     {
-                        var body = JsonSerializer.Serialize(message);
-                        sendMessages.TryAdd(nextNumber, message);
+                        //sendMessages.TryAdd(nextNumber, message);
                         dbContext.Attach(message);
+                        //if (message.EventType == nameof(CombineFileChunksEvent))
+                        //{
+                        //    var body = JsonSerializer.Deserialize<CombineFileChunksEvent>(message.EventData);
+
+                        //    await _bus.Publish(body, ctx =>
+                        //    {
+                        //        ctx.SetRoutingKey(GetRoutingKey(message));
+                        //    });
+                        //}
+                        //else
+                        //{
+                        //    var body = JsonSerializer.Deserialize<VideoConvertEvent>(message.EventData);
+
+                        //    await _bus.Publish(body, ctx =>
+                        //    {
+                        //        ctx.SetRoutingKey(GetRoutingKey(message));
+                        //    });
+                        //}
+
                         message.State = EventState.Processed;
                         await dbContext.SaveChangesAsync();
-                        await _messageBus.SendMessageAsync(channel,_settings.ExchangeName,GetRoutingKey(message), message);
+                        await _messageBus.SendMessageAsync(channel, _settings.ExchangeName, GetRoutingKey(message), message);
                     }
                     catch (Exception ex)
                     {
                         dbContext.Attach(message);
-                        sendMessages.Remove(nextNumber, out _);
+                        //sendMessages.Remove(nextNumber, out _);
                         if (message.RetryCount == 3)
                         {
                             message.SetErrorMessage(ex.Message);

@@ -1,11 +1,14 @@
 using Blog.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
+using Infrastructure.Interface;
 using MessageBus;
 using Microsoft.AspNetCore.HttpOverrides;
 using Profile.Persistence;
 using Profile.Service.Extensions;
+using Video.Persistence;
 using Video.Service;
+using VideoView.Application.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,12 +19,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddVideoPersistence(builder.Configuration);
 builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
 builder.Services.AddBlogServices();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddMessageBus(builder.Configuration);
+builder.Services.AddHostedService<VideoReactionOutbox>();
 
 var app = builder.Build();
 
@@ -31,6 +37,16 @@ if (app.Environment.IsDevelopment())
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
     app.UseCors(cfg => cfg.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+        foreach (var initializer in initializers)
+        {
+            initializer.Initialize();
+        }
+    }
+
 }
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions

@@ -2,13 +2,11 @@ using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Service.Interface;
-using Profile.Service.Models.Post;
 using Shared.Services;
 using Shared.Utils;
-using System.Net;
 using Video.Service.Interface;
 
-namespace Video.Application.Controllers
+namespace VideoView.Application.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -96,10 +94,8 @@ namespace Video.Application.Controllers
         {
             HttpContext.TryGetUserFromContext(out var userId);
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            await _postService.SetVideoViewed(new ViewedVideoModel(postId, userId, remoteIp));
+            await _videoService.SetViewToPost(postId, userId, remoteIp);
             return Ok();
         }
     }
-
-    
 }

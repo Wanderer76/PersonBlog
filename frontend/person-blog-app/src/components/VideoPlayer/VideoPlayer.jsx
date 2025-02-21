@@ -59,7 +59,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
         var qualities = player.qualityLevels();
 
         player.on('timeupdate', () => {
-          onTimeupdate(player);
+           onTimeupdate(player);
         })
 
         qualities.on('addqualitylevel', () => {

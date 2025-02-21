@@ -1,6 +1,7 @@
 ﻿using MessageBus.Configs;
 using MessageBus.EventHandler;
 using MessageBus.Models;
+using MessageBus.Shared.Configs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ namespace MessageBus
             services.AddSingleton<RabbitMqMessageBus>();
             services.AddOptions<MessageBusSubscriptionInfo>().Configure(x => new MessageBusSubscriptionInfo([]));
             services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
+            services.AddSingleton<RabbitMqVideoReactionConfig>();
             services.AddSingleton<RabbitMqUploadVideoConfig>(configuration.GetSection("RabbitMQ:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
             return new MessageBusBuilder(services);
         }

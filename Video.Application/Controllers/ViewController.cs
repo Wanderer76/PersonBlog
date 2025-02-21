@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
 
-namespace Video.Application.Controllers;
+namespace VideoView.Application.Controllers;
 
 //// VideoController.cs
 //[ApiController]

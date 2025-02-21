@@ -327,38 +327,40 @@ namespace Profile.Service.Interface.Implementation
             );
         }
 
-        public async Task SetVideoViewed(ViewedVideoModel value)
+        public Task SetVideoViewed(ViewedVideoModel value)
         {
-            var dateFromNow = DateTimeOffset.UtcNow.AddMonths(-2);
-            var hasView = await _context.Get<PostViewers>()
-                .Where(x => x.PostId == value.PostId)
-                .Where(x => x.UserId == value.UserId)
-                .Where(x => x.UserIpAddress == value.RemoteIp)
-                .Where(x => x.CreatedAt < dateFromNow)
-                .AnyAsync();
-            if (hasView)
-            {
-                return;
-            }
+            throw new NotImplementedException();
+            //var dateFromNow = DateTimeOffset.UtcNow.AddMonths(-2);
+            //var hasView = await _context.Get<PostViewers>()
+            //    .Where(x => x.PostId == value.PostId)
+            //    .Where(x => x.UserId == value.UserId)
+            //    .Where(x => x.UserIpAddress == value.RemoteIp)
+            //    .Where(x => x.CreatedAt < dateFromNow)
+            //    .AnyAsync();
 
-            var videoViewEvent = new VideoViewEvent
-            {
-                EventId = GuidService.GetNewGuid(),
-                PostId = value.PostId,
-                CreatedAt = DateTimeOffset.UtcNow,
-                RemoteIp = value.RemoteIp,
-                UserId = value.UserId,
-            };
+            //if (hasView)
+            //{
+            //    return;
+            //}
 
-            var videoEvent = new ProfileEventMessages
-            {
-                Id = videoViewEvent.EventId,
-                EventData = JsonSerializer.Serialize(videoViewEvent),
-                EventType = nameof(VideoViewEvent),
-                State = EventState.Pending,
-            };
-            _context.Add(videoEvent);
-            await _context.SaveChangesAsync();
+            //var videoViewEvent = new VideoViewEvent
+            //{
+            //    EventId = GuidService.GetNewGuid(),
+            //    PostId = value.PostId,
+            //    CreatedAt = DateTimeOffset.UtcNow,
+            //    RemoteIp = value.RemoteIp,
+            //    UserId = value.UserId,
+            //};
+
+            //var videoEvent = new ProfileEventMessages
+            //{
+            //    Id = videoViewEvent.EventId,
+            //    EventData = JsonSerializer.Serialize(videoViewEvent),
+            //    EventType = nameof(VideoViewEvent),
+            //    State = EventState.Pending,
+            //};
+            //_context.Add(videoEvent);
+            //await _context.SaveChangesAsync();
         }
     }
 }

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Video.Domain.Entities
 {
     //TODO На nosql бдшке
-    public class Comment : IVideoEntity
+    public class Comment : IVideoViewEntity
     {
         [Key]
         public Guid Id { get; set; }

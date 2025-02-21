@@ -1,0 +1,6 @@
+@ReactionProcessing.Cli_HostAddress = http://localhost:5049
+
+GET {{ReactionProcessing.Cli_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

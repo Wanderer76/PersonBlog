@@ -2,7 +2,7 @@
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Video.Application.Controllers
+namespace VideoView.Application.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

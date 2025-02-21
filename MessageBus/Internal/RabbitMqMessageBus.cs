@@ -30,12 +30,15 @@ namespace MessageBus
             _serviceScope = serviceScope;
         }
 
-        public async Task SendMessageAsync<T>(IChannel channel, string exchangeName, string routingKey, T message)
+        public async Task SendMessageAsync<T>(IChannel channel, string exchangeName, string routingKey, T message) where T : BaseEvent
         {
             try
             {
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, body: body, mandatory: true);
+                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
+                {
+                    Persistent = true,
+                }, body: body);
             }
             catch (Exception e)
             {
@@ -54,25 +57,24 @@ namespace MessageBus
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
-                using var scope = _serviceScope.CreateScope();
                 var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
-
-                if (options.RoutingKeys.Any() && !options.RoutingKeys.Contains(ea.RoutingKey))
-                    return;
-
-                foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
+                if (options.RoutingKeys == null || options.RoutingKeys.Any() && options.RoutingKeys.Contains(ea.RoutingKey))
                 {
-                    if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
+                    using var scope = _serviceScope.CreateScope();
+                    foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
                     {
-                        var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
-                        try
+                        if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
                         {
-                            await handler.Handle(handlerBody);
-                            await channel.BasicAckAsync(ea.DeliveryTag, false);
-                        }
-                        catch (Exception e)
-                        {
-                            await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                            try
+                            {
+                                var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
+                                await handler.Handle(handlerBody);
+                                await channel.BasicAckAsync(ea.DeliveryTag, false);
+                            }
+                            catch (Exception e)
+                            {
+                                await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                            }
                         }
                     }
                 }
@@ -83,6 +85,6 @@ namespace MessageBus
 
     public class SubscribeOptions
     {
-        public IEnumerable<string> RoutingKeys { get; set; } = [];
+        public HashSet<string> RoutingKeys { get; set; } = [];
     }
 }

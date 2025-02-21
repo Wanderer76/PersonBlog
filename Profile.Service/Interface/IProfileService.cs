@@ -11,5 +11,6 @@ namespace Profile.Service.Interface
         Task DeleteProfileByUserIdAsync(Guid userId);
         Task SubscribeToBlog(Guid blogId);
         Task UnSubscribeFromBlog(Guid blogId);
+        Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
     }
 }

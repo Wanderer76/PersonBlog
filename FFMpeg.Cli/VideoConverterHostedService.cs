@@ -1,5 +1,6 @@
 ﻿using MessageBus;
 using MessageBus.Configs;
+using MessageBus.Shared.Configs;
 using RabbitMQ.Client;
 
 namespace VideoProcessing.Cli
@@ -33,7 +34,10 @@ namespace VideoProcessing.Cli
 
             try
             {
-                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue);
+                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue, new SubscribeOptions
+                {
+                    RoutingKeys = [_config.VideoConverterRoutingKey, _config.FileChunksCombinerRoutingKey]
+                });
             }
             catch (Exception ex)
             {

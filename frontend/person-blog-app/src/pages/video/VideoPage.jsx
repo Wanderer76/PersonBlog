@@ -50,20 +50,19 @@ export const VideoPage = function (props) {
     }, [])
 
 
-    function setView(player) {
+    async function setView(player) {
         const watchedTime = player.currentTime();
         const duration = player.duration();
 
         if (!viewRecorded &&
             (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
-            API.post(`video/Video/setView/${post.id}`, null, {
+            await API.post(`video/Video/setView/${post.id}`, null, {
                 headers: {
                     'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
                 }
             }).catch(e => { })
                 .finally(() => {
                     viewRecorded = true;
-
                 })
         }
     }

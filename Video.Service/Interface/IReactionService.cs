@@ -5,6 +5,6 @@
     {
         Task SetReactionToPost(Guid postId);
         Task RemoveReactionToPost(Guid postId);
-        Task SetViewToPost(Guid postId, Guid? userId, string segmentNumber);
+        Task SetViewToPost(Guid postId, Guid? userId, string? remoteIp);
     }
 }

@@ -10,4 +10,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MessageBus.Shared\MessageBus.Shared.csproj" />
+    <ProjectReference Include="..\MessageBus\MessageBus.csproj" />
+    <ProjectReference Include="..\Video.Domain\Video.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

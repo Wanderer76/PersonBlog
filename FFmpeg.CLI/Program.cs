@@ -1,7 +1,10 @@
 using FFmpeg.Service;
 using FileStorage.Service;
+using MassTransit;
 using MessageBus;
+using MessageBus.Configs;
 using MessageBus.EventHandler;
+using MessageBus.Shared.Configs;
 using Profile.Domain.Events;
 using Profile.Persistence;
 using VideoProcessing.Cli;
@@ -13,13 +16,50 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddFileStorage();
 builder.Services.AddHostedService<VideoConverterHostedService>();
 builder.Services.AddFFMpeg(builder.Configuration);
-//builder.Services.AddKeyedScoped<IEventHandler, VideoChunksCombinerService>(nameof(CombineFileChunksEvent));
-//builder.Services.AddKeyedScoped<IEventHandler, ConvertVideoFile>(nameof(VideoUploadEvent));
-//builder.Services.AddMessageBus(builder.Configuration, new Dictionary<string, Type>
+
+
+//builder.Services.AddMassTransit(x =>
 //{
-//    { nameof(CombineFileChunksEvent), typeof(CombineFileChunksEvent) },
-//    { nameof(VideoUploadEvent), typeof(VideoUploadEvent) }
+//    x.AddConsumer<VideoChunksCombinerService>();
+//    x.AddConsumer<ConvertVideoFile>();
+    
+//    x.UsingRabbitMq((ctx, cfg) =>
+//    {
+//        var connection = builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!;
+//        var queue = builder.Configuration.GetSection("RabbitMQ:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!;
+//        cfg.Host(connection.HostName, (ushort)connection.Port, "/", h =>
+//        {
+//            h.Username(connection.UserName);
+//            h.Password(connection.Password);
+//        });
+//        cfg.ReceiveEndpoint(queue.VideoProcessQueue, e =>
+//        {
+//            e.PrefetchCount = 20;
+//            e.AutoDelete = false;
+//            e.DiscardSkippedMessages();
+//            e.Bind(queue.ExchangeName, x =>
+//            {
+//                x.Durable = true;
+//                x.ExchangeType = "direct";
+//                x.RoutingKey = queue.VideoConverterRoutingKey;
+//                x.AutoDelete = false;
+//            });
+//            e.Bind(queue.ExchangeName, x =>
+//            {
+//                x.Durable = true;
+//                x.ExchangeType = "direct";
+//                x.RoutingKey = queue.FileChunksCombinerRoutingKey;
+//                x.AutoDelete = false;
+//            });
+
+//            e.ConfigureConsumer<VideoChunksCombinerService>(ctx);
+//            e.ConfigureConsumer<ConvertVideoFile>(ctx);
+
+//        });
+//    });
+
 //});
+
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<CombineFileChunksEvent, VideoChunksCombinerService>()

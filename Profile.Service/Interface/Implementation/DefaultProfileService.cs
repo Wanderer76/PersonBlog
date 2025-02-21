@@ -102,5 +102,16 @@ namespace Profile.Service.Interface.Implementation
 
             return profile.ToProfileModel();
         }
+
+        public async Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
+        {
+            if(userId==null&& ipAddress==null)
+            {
+                return true;
+            }
+            return await _context.Get<PostViewers>()
+                .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
+                .AnyAsync();
+        }
     }
 }

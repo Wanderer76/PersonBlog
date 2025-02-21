@@ -1,0 +1,58 @@
+﻿using MessageBus;
+using MessageBus.Configs;
+using MessageBus.Shared.Configs;
+using MessageBus.Shared.Events;
+using RabbitMQ.Client;
+using Shared.Persistence;
+using Shared.Services;
+using System.Text.Json;
+using Video.Domain.Entities;
+using Video.Domain.Events;
+
+namespace Video.Service.Interface.Default
+{
+    internal class DefaultReactionService : IReactionService
+    {
+        private readonly IReadWriteRepository<IVideoViewEntity> _context;
+        private readonly RabbitMqMessageBus _messageBus;
+        private readonly RabbitMqVideoReactionConfig _reactionConfig;
+
+        public DefaultReactionService(IReadWriteRepository<IVideoViewEntity> context, RabbitMqMessageBus messageBus, RabbitMqVideoReactionConfig reactionConfig)
+        {
+            _context = context;
+            _messageBus = messageBus;
+            _reactionConfig = reactionConfig;
+        }
+
+        public Task RemoveReactionToPost(Guid postId)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task SetReactionToPost(Guid postId)
+        {
+            return Task.CompletedTask;
+        }
+
+        public async Task SetViewToPost(Guid postId, Guid? userId, string? remoteIp)
+        {
+            await using var connection = await _messageBus.GetConnectionAsync();
+            await using var channel = await connection.CreateChannelAsync();
+            await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
+            var now = DateTimeOffset.UtcNow;
+            var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), userId, postId, now, remoteIp);
+            var videoEvent = new VideoEvent
+            {
+                Id = eventData.EventId,
+                EventType = nameof(UserViewedPostEvent),
+                State = Infrastructure.Models.EventState.Pending,
+                EventData = JsonSerializer.Serialize(eventData),
+            };
+            //await _messageBus.SendMessageAsync(channel, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey, videoEvent);
+            _context.Add(videoEvent);
+            await _context.SaveChangesAsync();
+        }
+    }
+}
