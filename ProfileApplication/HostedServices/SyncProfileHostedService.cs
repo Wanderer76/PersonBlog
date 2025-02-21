@@ -4,18 +4,16 @@ using RabbitMQ.Client;
 
 namespace ProfileApplication.HostedServices
 {
-    public class EventHandlerHostedService : BackgroundService
+    public class SyncProfileHostedService : BackgroundService
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMqVideoReactionConfig _reactingSettings = new();
         private readonly RabbitMqMessageBus _messageBus;
         private IChannel _channel;
 
-        public EventHandlerHostedService(IServiceProvider serviceProvider, RabbitMqVideoReactionConfig reactingSettings)
+        public SyncProfileHostedService(RabbitMqVideoReactionConfig reactingSettings, RabbitMqMessageBus messageBus)
         {
-            _serviceProvider = serviceProvider;
             _reactingSettings = reactingSettings;
-            _messageBus = serviceProvider.GetRequiredService<RabbitMqMessageBus>();
+            _messageBus = messageBus;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

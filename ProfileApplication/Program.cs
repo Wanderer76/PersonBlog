@@ -31,7 +31,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 });
 
 builder.Services.AddHostedService<OutboxPublisherService>()
-    .AddHostedService<EventHandlerHostedService>();
+    .AddHostedService<SyncProfileHostedService>();
 
 //builder.Services.AddMassTransit(x =>
 //{
