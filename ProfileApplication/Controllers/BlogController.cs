@@ -15,7 +15,7 @@ using Profile.Service.Models;
 namespace ProfileApplication.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class BlogController : BaseController
     {
         private readonly IPostService _postService;

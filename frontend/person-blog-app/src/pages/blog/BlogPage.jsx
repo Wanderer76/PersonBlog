@@ -47,7 +47,7 @@ const CommonProfileData = function (props) {
     })
 
     useEffect(() => {
-        const url = "/profile/Blog/detail";
+        const url = "/profile/api/Blog/detail";
         if (hasMounted.current) return;
 
         async function sendRequest() {
@@ -107,7 +107,7 @@ const BlogPosts = function (props) {
     }])
 
     useEffect(() => {
-        const url = `/profile/Blog/posts/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
+        const url = `/profile/api/Blog/posts/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
         if (hasMounted.current) return;
 
         API.get(url, {

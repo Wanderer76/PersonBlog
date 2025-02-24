@@ -23,7 +23,8 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
 builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>();
+    .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>()
+    .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -62,7 +63,7 @@ builder.Services.AddHostedService<OutboxPublisherService>()
 //                x.RoutingKey = queue.FileChunksCombinerRoutingKey;
 //                x.AutoDelete = false;
 //            });
-            
+
 //        });
 //    });
 //});

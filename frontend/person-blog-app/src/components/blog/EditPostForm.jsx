@@ -5,7 +5,7 @@ import API from "../../scripts/apiMethod";
 
 export function EditPostForm(props) {
 
-    const [postForm, setPostForm] = useState({...props.post,video:null});
+    const [postForm, setPostForm] = useState({ ...props.post, video: null });
     const [uploadProgress, setUploadProgress] = useState(0);
     const [maxProgress, setMaxProgress] = useState(0);
     const [showProgress, setShowProgress] = useState(false);
@@ -23,7 +23,7 @@ export function EditPostForm(props) {
     }
 
     async function sendForm() {
-        const url = "/profile/Blog/post/edit";
+        const url = "/profile/api/Blog/post/edit";
         let formData = new FormData();
         var postId = postForm.id;
         Object.keys(postForm).forEach((key) => {
@@ -49,12 +49,12 @@ export function EditPostForm(props) {
 
         if (postForm.video !== null) {
             setShowProgress(true);
-        console.log(postForm.video);
-            
+            console.log(postForm.video);
+
             await uploadFile(postId);
         }
         props.onHandleClose();
-       // window.location.reload()
+        // window.location.reload()
     }
 
     async function uploadFile(postId) {
@@ -87,7 +87,7 @@ export function EditPostForm(props) {
         formData.append('postId', postId);
         formData.append('totalSize', totalSize);
         formData.append('chunkData', chunk);
-console.log(postId);
+        console.log(postId);
         try {
             const response = await API.post('/profile/post/uploadChunk', formData,
                 {

@@ -14,13 +14,12 @@ namespace VideoView.Application.HostedServices
     public class VideoReactionOutbox : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMqVideoReactionConfig _settings;
+        private readonly RabbitMqVideoReactionConfig _settings = new();
         private readonly RabbitMqMessageBus _messageBus;
 
-        public VideoReactionOutbox(IServiceProvider serviceProvider, RabbitMqVideoReactionConfig config, RabbitMqMessageBus messageBus)
+        public VideoReactionOutbox(IServiceProvider serviceProvider, RabbitMqMessageBus messageBus)
         {
             _serviceProvider = serviceProvider;
-            _settings = config;
             _messageBus = messageBus;
         }
 

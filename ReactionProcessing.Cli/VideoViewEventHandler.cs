@@ -17,16 +17,15 @@ namespace ReactionProcessing.Cli
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly RabbitMqVideoReactionConfig _reactionConfig;
+        private readonly RabbitMqVideoReactionConfig _reactionConfig = new();
         private readonly IReadWriteRepository<IVideoViewEntity> videoViewRepository;
 
         //private const string prof = "http://localhost:7892/profile/api/Profile/hasView";
 
-        public VideoViewEventHandler(IHttpClientFactory httpClientFactory, RabbitMqMessageBus messageBus, RabbitMqVideoReactionConfig reactionConfig, IReadWriteRepository<IVideoViewEntity> videoViewRepository)
+        public VideoViewEventHandler(IHttpClientFactory httpClientFactory, RabbitMqMessageBus messageBus, IReadWriteRepository<IVideoViewEntity> videoViewRepository)
         {
             _httpClientFactory = httpClientFactory;
             _messageBus = messageBus;
-            _reactionConfig = reactionConfig;
             this.videoViewRepository = videoViewRepository;
         }
 

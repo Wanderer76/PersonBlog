@@ -18,11 +18,11 @@ namespace VideoView.Application.Controllers
         private readonly IReactionService _videoService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        private const string postManifest = "http://localhost:7892/profile/api/Post/manifest";
-        private const string detailPost = "http://localhost:7892/profile/api/Post/detail";
-        private const string commonBlog = "http://localhost:7892/profile/Blog/blogByPost";
+        private const string postManifest = "api/Post/manifest";
+        private const string detailPost = "api/Post/detail";
+        private const string commonBlog = "api/Blog/blogByPost";
 
-        public VideoController(ILogger<BaseController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory)
+        public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory)
             : base(logger)
         {
             storage = factory.CreateFileStorage();
@@ -61,7 +61,7 @@ namespace VideoView.Application.Controllers
         [HttpGet("video/v2/{postId}/chunks/{file}")]
         public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string? file)
         {
-            var fileName = file ?? (await _httpClientFactory.CreateClient().GetFromJsonAsync<FileMetadataModel>($"{postManifest}/{postId}"))!.ObjectName;
+            var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{postManifest}/{postId}"))!.ObjectName;
             var result = new MemoryStream();
             await storage.ReadFileAsync(postId, fileName, result);
             result.Position = 0;
@@ -82,16 +82,24 @@ namespace VideoView.Application.Controllers
         public async Task<IActionResult> GetVideoData(Guid postId)
         {
             HttpContext.TryGetUserFromContext(out var userId);
-            using var client = _httpClientFactory.CreateClient();
+            using var client = _httpClientFactory.CreateClient("Profile");
             var post = client.GetFromJsonAsync<PostDetailViewModel>($"{detailPost}/{postId}");
             var blog = client.GetFromJsonAsync<BlogModel>($"{commonBlog}/{postId}");
-            await Task.WhenAll([post, blog]).ConfigureAwait(false);
-            return Ok(new
+            try
             {
-                Post = await post.ConfigureAwait(false),
-                Blog = await blog.ConfigureAwait(false),
-                Comment = new List<string>()
-            });
+                await Task.WhenAll([post, blog]).ConfigureAwait(false);
+                return Ok(new
+                {
+                    Post = await post.ConfigureAwait(false),
+                    Blog = await blog.ConfigureAwait(false),
+                    Comment = new List<string>()
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost("setView/{postId:guid}")]

@@ -22,7 +22,7 @@ export function CreatePostForm(props) {
     }
 
     async function sendForm() {
-        const url = "/profile/Blog/post/create";
+        const url = "/profile/api/Blog/post/create";
         let formData = new FormData();
         var postId = null;
         Object.keys(postForm).forEach((key) => {

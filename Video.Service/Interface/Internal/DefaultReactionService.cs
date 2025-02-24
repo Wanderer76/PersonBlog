@@ -15,13 +15,12 @@ namespace Video.Service.Interface.Default
     {
         private readonly IReadWriteRepository<IVideoViewEntity> _context;
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly RabbitMqVideoReactionConfig _reactionConfig;
+        private readonly RabbitMqVideoReactionConfig _reactionConfig = new();
 
-        public DefaultReactionService(IReadWriteRepository<IVideoViewEntity> context, RabbitMqMessageBus messageBus, RabbitMqVideoReactionConfig reactionConfig)
+        public DefaultReactionService(IReadWriteRepository<IVideoViewEntity> context, RabbitMqMessageBus messageBus)
         {
             _context = context;
             _messageBus = messageBus;
-            _reactionConfig = reactionConfig;
         }
 
         public Task RemoveReactionToPost(Guid postId)

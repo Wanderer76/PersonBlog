@@ -10,9 +10,8 @@ namespace ProfileApplication.HostedServices
         private readonly RabbitMqMessageBus _messageBus;
         private IChannel _channel;
 
-        public SyncProfileHostedService(RabbitMqVideoReactionConfig reactingSettings, RabbitMqMessageBus messageBus)
+        public SyncProfileHostedService(RabbitMqMessageBus messageBus)
         {
-            _reactingSettings = reactingSettings;
             _messageBus = messageBus;
         }
 

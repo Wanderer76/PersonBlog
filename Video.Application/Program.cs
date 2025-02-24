@@ -24,7 +24,10 @@ builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
 builder.Services.AddBlogServices();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient("Profile", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:7892/profile/");
+});
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddMessageBus(builder.Configuration);

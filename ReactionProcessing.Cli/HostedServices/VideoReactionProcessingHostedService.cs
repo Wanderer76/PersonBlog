@@ -7,13 +7,12 @@ namespace ReactionProcessing.Cli.HostedServices
     public class VideoReactionProcessingHostedService : BackgroundService
     {
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly RabbitMqVideoReactionConfig _config;
+        private readonly RabbitMqVideoReactionConfig _config = new();
         private IChannel channel;
 
-        public VideoReactionProcessingHostedService(RabbitMqMessageBus messageBus, RabbitMqVideoReactionConfig config)
+        public VideoReactionProcessingHostedService(RabbitMqMessageBus messageBus)
         {
             _messageBus = messageBus;
-            _config = config;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)

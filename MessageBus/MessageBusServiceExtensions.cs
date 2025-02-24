@@ -4,6 +4,7 @@ using MessageBus.Models;
 using MessageBus.Shared.Configs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace MessageBus
 {
@@ -14,10 +15,18 @@ namespace MessageBus
             services.AddSingleton<RabbitMqMessageBus>();
             services.AddOptions<MessageBusSubscriptionInfo>().Configure(x => new MessageBusSubscriptionInfo([]));
             services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
-            services.AddSingleton<RabbitMqVideoReactionConfig>();
-            services.AddSingleton<RabbitMqUploadVideoConfig>(configuration.GetSection("RabbitMQ:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
+            //services.AddSingleton<RabbitMqVideoReactionConfig>();
             return new MessageBusBuilder(services);
         }
+
+        public static IMessageBusBuilder AddConnectionConfig<TConfig>(this IMessageBusBuilder builder, TConfig section)
+            where TConfig : class
+        {
+            builder.Services.AddSingleton<TConfig>(section);
+            return builder;
+        }
+
+
 
         public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder)
             where TEvent : class

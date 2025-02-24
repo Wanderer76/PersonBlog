@@ -53,7 +53,7 @@ export const ProfilePage = function () {
         }
 
         async function sendForm(e) {
-            const url = "/profile/Blog/create";
+            const url = "/profile/api/Blog/create";
             let formData = new FormData();
             Object.keys(form).forEach((key) => {
                 formData.append(key, form[key])

@@ -22,7 +22,7 @@ builder.Services.AddFFMpeg(builder.Configuration);
 //{
 //    x.AddConsumer<VideoChunksCombinerService>();
 //    x.AddConsumer<ConvertVideoFile>();
-    
+
 //    x.UsingRabbitMq((ctx, cfg) =>
 //    {
 //        var connection = builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!;
@@ -63,7 +63,8 @@ builder.Services.AddFFMpeg(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<CombineFileChunksEvent, VideoChunksCombinerService>()
-    .AddSubscription<VideoConvertEvent, ConvertVideoFile>();
+    .AddSubscription<VideoConvertEvent, ConvertVideoFile>()
+    .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
 
 
 var app = builder.Build();
