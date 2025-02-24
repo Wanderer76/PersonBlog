@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Profile.Domain.Events;
 using Profile.Persistence;
 using Profile.Service.Extensions;
+using ProfileApplication.Handlers;
 using ProfileApplication.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);

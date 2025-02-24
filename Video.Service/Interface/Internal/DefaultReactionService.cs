@@ -28,9 +28,24 @@ namespace Video.Service.Interface.Default
             return Task.CompletedTask;
         }
 
-        public Task SetReactionToPost(Guid postId)
+        public async Task SetReactionToPost(ReactionCreateModel reaction)
         {
-            return Task.CompletedTask;
+            await using var connection = await _messageBus.GetConnectionAsync();
+            await using var channel = await connection.CreateChannelAsync();
+            await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
+            var now = DateTimeOffset.UtcNow;
+            var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), reaction.UserId, reaction.PostId, now, reaction.RemoteIp, reaction.IsLike);
+            var videoEvent = new VideoEvent
+            {
+                Id = eventData.EventId,
+                EventType = nameof(UserViewedPostEvent),
+                State = Infrastructure.Models.EventState.Pending,
+                EventData = JsonSerializer.Serialize(eventData),
+            };
+            _context.Add(videoEvent);
+            await _context.SaveChangesAsync();
         }
 
         public async Task SetViewToPost(Guid postId, Guid? userId, string? remoteIp)
@@ -49,7 +64,6 @@ namespace Video.Service.Interface.Default
                 State = Infrastructure.Models.EventState.Pending,
                 EventData = JsonSerializer.Serialize(eventData),
             };
-            //await _messageBus.SendMessageAsync(channel, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey, videoEvent);
             _context.Add(videoEvent);
             await _context.SaveChangesAsync();
         }

@@ -10,7 +10,7 @@ import { JwtTokenService } from '../../scripts/TokenStrorage';
 export const VideoPage = function (props) {
     const searchParams = useParams();
     const [isLoading, setIsLoading] = useState(true);
-    let viewRecorded = false;
+    let viewRecorded = false; let inProgress = false;
 
     const [post, setPostData] = useState({
         id: null,
@@ -26,8 +26,13 @@ export const VideoPage = function (props) {
             contentType: null,
             objectName: null
         },
-        isProcessed: true
+        isProcessed: true,
     });
+
+    const [userView, setUserView] = useState({
+        isViewed: true,
+        isLike: false
+    })
 
     const [blog, setBlog] = useState({
     });
@@ -43,26 +48,81 @@ export const VideoPage = function (props) {
                 if (response.status === 200) {
                     setPostData(response.data.post);
                     setBlog(response.data.blog);
+                    setUserView(response.data.userPostInfo)
                     setIsLoading(false)
+                    viewRecorded = response.data.userPostInfo.isViewed;
                 }
             })
 
     }, [])
+
+    async function setReaction(isLike) {
+        await API.post(`video/Video/setReaction/${post.id}?isLike=${isLike}`, null, {
+            headers: {
+                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
+            }
+        }).catch(e => { })
+            .finally(() => {
+
+            })
+
+        if (isLike === true) {
+            if (userView.isLike === true) {
+                // Если лайк уже был поставлен - снимаем его
+                setPostData((prev) => ({
+                    ...prev,
+                    likeCount: prev.likeCount - 1,
+                }));
+            } else {
+                // Если был дизлайк или не было реакции
+                setPostData((prev) => ({
+                    ...prev,
+                    likeCount: prev.likeCount + 1,
+                    dislikeCount: userView.isLike === false
+                        ? prev.dislikeCount - 1
+                        : prev.dislikeCount,
+                }));
+            }
+        } else {
+            if (userView.isLike === false) {
+                // Если дизлайк уже был поставлен - снимаем его
+                setPostData((prev) => ({
+                    ...prev,
+                    dislikeCount: prev.dislikeCount - 1,
+                }));
+            } else {
+                // Если был лайк или не было реакции
+                setPostData((prev) => ({
+                    ...prev,
+                    dislikeCount: prev.dislikeCount + 1,
+                    likeCount: userView.isLike === true
+                        ? prev.likeCount - 1
+                        : prev.likeCount,
+                }));
+            }
+        }
+        setUserView((prev) => ({
+            ...prev,
+            'isLike': prev.isLike === isLike ? null : isLike
+        }))
+    }
 
 
     async function setView(player) {
         const watchedTime = player.currentTime();
         const duration = player.duration();
 
-        if (!viewRecorded &&
+        if (!viewRecorded && userView.isViewed === false && !inProgress &&
             (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
-            await API.post(`video/Video/setView/${post.id}`, null, {
+            inProgress = true;
+            await API.post(`video/Video/setReaction/${post.id} ${userView.isLike == null ? '' : `?isLike=${userView.isLike}`}`, null, {
                 headers: {
                     'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
                 }
             }).catch(e => { })
                 .finally(() => {
                     viewRecorded = true;
+                    inProgress = false;
                 })
         }
     }
@@ -99,10 +159,10 @@ export const VideoPage = function (props) {
                             <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                         </div>
                         <div className="video-actions">
-                            <button className="action-button">
+                            <button className={`action-button ${userView.isLike === true ? 'action-button-active' : ''}`} onClick={() => { setReaction(true); }}>
                                 <span>👍</span> {post.likeCount}
                             </button>
-                            <button className="action-button">
+                            <button className={`action-button ${userView.isLike === false ? 'action-button-active' : ''}`} onClick={() => { setReaction(false); }}>
                                 <span>👎</span> {post.dislikeCount}
                             </button>
                             <button className="action-button">

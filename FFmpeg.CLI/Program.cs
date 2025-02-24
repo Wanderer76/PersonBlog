@@ -1,9 +1,6 @@
 using FFmpeg.Service;
 using FileStorage.Service;
-using MassTransit;
 using MessageBus;
-using MessageBus.Configs;
-using MessageBus.EventHandler;
 using MessageBus.Shared.Configs;
 using Profile.Domain.Events;
 using Profile.Persistence;

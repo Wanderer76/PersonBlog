@@ -9,14 +9,10 @@ namespace Profile.Service.Extensions
         public static void AddProfileServices(this IServiceCollection services)
         {
             services.AddScoped<IProfileService, DefaultProfileService>();
-            services.AddScoped<IPostService,DefaultPostService>();
+            services.AddScoped<IPostService, DefaultPostService>();
             services.AddScoped<IBlogService, DefaultBlogService>();
             services.AddScoped<IVideoService, DefaultVideoService>();
-            //services.AddFFMpeg(new FFOptions
-            //{
-            //    BinaryFolder = "../ffmpeg",
-                
-            //});
+            services.AddScoped<IUserPostService, DefaultUserPostService>();
         }
     }
 }

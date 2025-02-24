@@ -1,6 +1,6 @@
 using MessageBus;
 using MessageBus.Shared.Events;
-using ReactionProcessing.Cli;
+using ReactionProcessing.Cli.Handlers;
 using ReactionProcessing.Cli.HostedServices;
 using Video.Persistence;
 

@@ -104,6 +104,10 @@
     font-size: 14px;
 }
 
+.action-button-active{
+background-color: #ff4b2b;
+}
+
 .subscribe-button {
     background: #ff4b2b;
     color: white;

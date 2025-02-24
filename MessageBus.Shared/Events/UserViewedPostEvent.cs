@@ -25,6 +25,12 @@ namespace MessageBus.Shared.Events
             ViewedAt = viewedAt;
             RemoteIp = remoteIp;
         }
+
+        public UserViewedPostEvent(Guid id, Guid? userId, Guid postId, DateTimeOffset viewedAt, string? remoteIp, bool? isLike)
+            : this(id, userId, postId, viewedAt, remoteIp)
+        {
+            IsLike = isLike;
+        }
     }
 
     public class UserViewedSyncEvent : UserViewedPostEvent

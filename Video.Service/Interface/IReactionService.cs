@@ -3,8 +3,16 @@
     //TODO данный сервис должен отправлять сообщения о событиях, логики быть не должно
     public interface IReactionService
     {
-        Task SetReactionToPost(Guid postId);
+        Task SetReactionToPost(ReactionCreateModel reaction);
         Task RemoveReactionToPost(Guid postId);
         Task SetViewToPost(Guid postId, Guid? userId, string? remoteIp);
+    }
+
+    public class ReactionCreateModel
+    {
+        public Guid PostId { get; set; }
+        public Guid? UserId { get; set; }
+        public string? RemoteIp { get; set; }
+        public bool? IsLike { get; set; }
     }
 }

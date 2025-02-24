@@ -7,11 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
-using System.Web;
 using Video.Domain.Entities;
 using Video.Domain.Events;
 
-namespace ReactionProcessing.Cli
+namespace ReactionProcessing.Cli.Handlers
 {
     public class VideoViewEventHandler : IEventHandler<UserViewedPostEvent>
     {
@@ -19,9 +18,6 @@ namespace ReactionProcessing.Cli
         private readonly RabbitMqMessageBus _messageBus;
         private readonly RabbitMqVideoReactionConfig _reactionConfig = new();
         private readonly IReadWriteRepository<IVideoViewEntity> videoViewRepository;
-
-        //private const string prof = "http://localhost:7892/profile/api/Profile/hasView";
-
         public VideoViewEventHandler(IHttpClientFactory httpClientFactory, RabbitMqMessageBus messageBus, IReadWriteRepository<IVideoViewEntity> videoViewRepository)
         {
             _httpClientFactory = httpClientFactory;
@@ -49,7 +45,7 @@ namespace ReactionProcessing.Cli
                     PostId = @event.PostId,
                     IsLike = @event.IsLike,
                     UserId = userId,
-                    UserIpAddress = ipAddress
+                    UserIpAddress = ipAddress,
                 };
                 videoViewRepository.Add(hasView);
             }
@@ -62,7 +58,7 @@ namespace ReactionProcessing.Cli
             }
 
             @event.EventId = GuidService.GetNewGuid();
-
+            @event.IsLike = hasView.IsLike;
 
             var syncEvent = new VideoEvent
             {
@@ -75,39 +71,6 @@ namespace ReactionProcessing.Cli
             videoViewRepository.Add(syncEvent);
 
             await videoViewRepository.SaveChangesAsync();
-
-            //await _messageBus.SendMessageAsync(channel, _reactionConfig.ExchangeName, _reactionConfig.SyncRoutingKey, syncEvent);
-
-            //using var client = _httpClientFactory.CreateClient("ProfileClient");
-
-            //var builder = new UriBuilder(prof);
-
-            //var query = HttpUtility.ParseQueryString(builder.Query);
-            //if (userId.HasValue)
-            //    query["userId"] = userId.ToString();
-            //if (ipAddress != null)
-            //    query["ipAddress"] = ipAddress;
-
-            //builder.Query = query.ToString();
-            //using var message = new HttpRequestMessage
-            //{
-            //    Method = HttpMethod.Get,
-            //    RequestUri = builder.Uri,
-
-            //};
-            //var response = await client.SendAsync(message);
-
-            //if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            //{
-            //    var stream = await response.Content.ReadAsStreamAsync();
-
-            //    var hasView = JsonSerializer.Deserialize<bool>(stream);
-            //    if (!hasView)
-            //    {
-            //        //await using var connection = await _messageBus.GetConnectionAsync();
-            //        //await using var channel = await connection.CreateChannelAsync();
-            //        //await _messageBus.SendMessageAsync(channel, _reactionConfig.ExchangeName, _reactionConfig.RoutingKey,);
-            //    }
         }
 
     }

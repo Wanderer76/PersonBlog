@@ -5,6 +5,7 @@ using Profile.Service.Models;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
 using Shared.Services;
+using System.Web;
 using Video.Service.Interface;
 
 namespace VideoView.Application.Controllers
@@ -18,9 +19,10 @@ namespace VideoView.Application.Controllers
         private readonly IReactionService _videoService;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        private const string postManifest = "api/Post/manifest";
-        private const string detailPost = "api/Post/detail";
-        private const string commonBlog = "api/Blog/blogByPost";
+        private const string PostManifest = "api/Post/manifest";
+        private const string DetailPost = "api/Post/detail";
+        private const string UserPostInfo = "api/Post/userInfo";
+        private const string CommonBlog = "api/Blog/blogByPost";
 
         public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory)
             : base(logger)
@@ -61,7 +63,7 @@ namespace VideoView.Application.Controllers
         [HttpGet("video/v2/{postId}/chunks/{file}")]
         public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string? file)
         {
-            var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{postManifest}/{postId}"))!.ObjectName;
+            var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}"))!.ObjectName;
             var result = new MemoryStream();
             await storage.ReadFileAsync(postId, fileName, result);
             result.Position = 0;
@@ -81,17 +83,29 @@ namespace VideoView.Application.Controllers
         [HttpGet("video/{postId:guid}")]
         public async Task<IActionResult> GetVideoData(Guid postId)
         {
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             HttpContext.TryGetUserFromContext(out var userId);
             using var client = _httpClientFactory.CreateClient("Profile");
-            var post = client.GetFromJsonAsync<PostDetailViewModel>($"{detailPost}/{postId}");
-            var blog = client.GetFromJsonAsync<BlogModel>($"{commonBlog}/{postId}");
+            var post = client.GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
+            var blog = client.GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}");
+
+            var query = HttpUtility.ParseQueryString(string.Empty);
+            if (userId.HasValue)
+            {
+                query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
+            }
+            query["address"] = HttpUtility.UrlEncode(remoteIp);
+
+            var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query.ToString()}");
+
             try
             {
-                await Task.WhenAll([post, blog]).ConfigureAwait(false);
+                await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
                 return Ok(new
                 {
                     Post = await post.ConfigureAwait(false),
                     Blog = await blog.ConfigureAwait(false),
+                    UserPostInfo = await userInfo.ConfigureAwait(false),
                     Comment = new List<string>()
                 });
             }
@@ -108,6 +122,21 @@ namespace VideoView.Application.Controllers
             HttpContext.TryGetUserFromContext(out var userId);
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _videoService.SetViewToPost(postId, userId, remoteIp);
+            return Ok();
+        }
+
+        [HttpPost("setReaction/{postId:guid}")]
+        public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
+        {
+            HttpContext.TryGetUserFromContext(out var userId);
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            await _videoService.SetReactionToPost(new ReactionCreateModel
+            {
+                IsLike = isLike,
+                PostId = postId,
+                RemoteIp = remoteIp,
+                UserId = userId
+            });
             return Ok();
         }
     }
