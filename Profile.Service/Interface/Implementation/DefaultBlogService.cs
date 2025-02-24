@@ -39,7 +39,8 @@ namespace Profile.Service.Interface.Implementation
                 Title = model.Title,
                 Description = model.Description,
                 ProfileId = profile.Id,
-                PhotoUrl = null//model.PhotoUrl,
+                PhotoUrl = null,//model.PhotoUrl,
+                Subscriptions = []
             };
             _context.Add(blog);
             await _context.SaveChangesAsync();
@@ -56,7 +57,8 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<BlogModel> GetBlogAsync(Guid id)
         {
-            var result = await _context.Get<Blog>()
+            var result = await _context.Get<Blog>().Include(x => x.Subscriptions)
+
                 .FirstAsync(x => x.Id == id);
             return result.ToBlogModel();
         }
@@ -66,8 +68,18 @@ namespace Profile.Service.Interface.Implementation
             var blog = await _context.Get<Post>()
                 .Where(x => x.Id == id)
                 .Select(x => x.Blog)
+                .Select(x => new
+                {
+                    Id = x.Id,
+                    Title = x.Title,
+                    Subscriptions = x.Subscriptions.Count,
+                    CreatedAt = x.CreatedAt,
+                    Description = x.Description,
+                    ProfileId = x.ProfileId,
+                    PhotoUrl = x.PhotoUrl,
+                })
                 .FirstAsync();
-            return blog.ToBlogModel();
+            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.Subscriptions);
         }
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
@@ -79,6 +91,7 @@ namespace Profile.Service.Interface.Implementation
             var profile = await _context.GetProfileByUserIdAsync(userId) ?? throw new EntityNotFoundException("Профиль не найден");
             var blog = await _context.Get<Blog>()
                 .Where(x => x.ProfileId == profile.Id)
+                .Include(x => x.Subscriptions)
                 .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
 
             return blog.ToBlogModel();

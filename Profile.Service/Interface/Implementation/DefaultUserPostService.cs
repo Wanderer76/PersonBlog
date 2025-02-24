@@ -22,7 +22,13 @@ namespace Profile.Service.Interface.Implementation
                     .Where(x => x.PostId == postId)
                     .Where(x => x.UserId == userId || x.UserIpAddress == address)
                     .FirstOrDefaultAsync();
-                return new UserViewInfo(hasView != null, hasView?.IsLike);
+
+                var hasSub = userId.HasValue && await _readRepository.Get<Subscriptions>()
+                    .Active()
+                    .ByUserId(userId.Value)
+                    .AnyAsync();
+
+                return new UserViewInfo(hasView != null, hasView?.IsLike, hasSub);
             }
             else
             {

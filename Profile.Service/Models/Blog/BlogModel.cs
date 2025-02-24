@@ -9,7 +9,9 @@
         public string? PhotoUrl { get; }
         public Guid ProfileId { get; }
 
-        public BlogModel(Guid id, string name, string? description, DateTimeOffset createdAt, string? photoUrl, Guid profileId)
+        public int SubscribersCount { get; }
+
+        public BlogModel(Guid id, string name, string? description, DateTimeOffset createdAt, string? photoUrl, Guid profileId, int subscribersCount)
         {
             Id = id;
             Name = name;
@@ -17,6 +19,7 @@
             CreatedAt = createdAt;
             PhotoUrl = photoUrl;
             ProfileId = profileId;
+            SubscribersCount = subscribersCount;
         }
     }
 
@@ -24,7 +27,7 @@
     {
         public static BlogModel ToBlogModel(this Domain.Entities.Blog blog)
         {
-            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId);
+            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.Subscriptions.Count);
         }
     }
 }

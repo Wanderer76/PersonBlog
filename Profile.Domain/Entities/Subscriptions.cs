@@ -16,9 +16,14 @@ namespace Profile.Domain.Entities
 
         [ForeignKey(nameof(ProfileId))]
         public required AppProfile Profile { get; set; }
-        
+
         [ForeignKey(nameof(BlogId))]
         public required Blog Blog { get; set; }
+    }
 
+    public static class SubscriptionsQueryFilters
+    {
+        public static IQueryable<Subscriptions> Active(this IQueryable<Subscriptions> query) => query.Where(x => x.SubscriptionEndDate == null);
+        public static IQueryable<Subscriptions> ByUserId(this IQueryable<Subscriptions> query, Guid userId) => query.Where(x => x.Profile.UserId == userId);
     }
 }

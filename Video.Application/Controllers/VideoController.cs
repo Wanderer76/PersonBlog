@@ -73,7 +73,6 @@ namespace VideoView.Application.Controllers
         [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]
         public async Task<IActionResult> GetVideoSegment(Guid postId, string file, string segment)
         {
-            HttpContext.TryGetUserFromContext(out var userId);
             var result = new MemoryStream();
             await storage.ReadFileAsync(postId, $"{file}/{segment}", result);
             result.Position = 0;
@@ -103,9 +102,9 @@ namespace VideoView.Application.Controllers
                 await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
                 return Ok(new
                 {
-                    Post = await post.ConfigureAwait(false),
-                    Blog = await blog.ConfigureAwait(false),
-                    UserPostInfo = await userInfo.ConfigureAwait(false),
+                    Post = await post,
+                    Blog = await blog,
+                    UserPostInfo = await userInfo,
                     Comment = new List<string>()
                 });
             }

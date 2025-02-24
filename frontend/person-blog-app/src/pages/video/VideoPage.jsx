@@ -177,10 +177,10 @@ export const VideoPage = function (props) {
                         <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
                         <div>
                             <div className="channel-name">{blog.name}</div>
-                            <div className="subscribers-count">1,23 млн подписчиков</div>
+                            <div className="subscribers-count">{blog.subscribersCount} млн подписчиков</div>
                         </div>
                     </div>
-                    <button className="subscribe-button">Подписаться</button>
+                    <button className="subscribe-button">{userView.isSubscribe ? 'Вы подписаны' : 'Подписаться'}</button>
                 </div>
 
                 <div className="video-description">
