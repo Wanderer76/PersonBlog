@@ -4,7 +4,7 @@ import AuthPage from './pages/auth/AuthPage';
 import { MainPage } from './pages/main/MainPage';
 import { Header } from './components/header/Header';
 import ProfilePage from './pages/profile/ProfilePage';
-import { VideoPage } from './pages/video/VideoPage';
+import { VideoPage } from './pages/post/PostPage';
 
 
 

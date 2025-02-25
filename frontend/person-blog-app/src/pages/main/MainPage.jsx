@@ -53,9 +53,7 @@ const VideoCard = function ({ videoCardModel }) {
                 Просмотров: {videoCardModel.viewCount}
             </div>
         </div>
-    </div>
-        ;
-    ;
+    </div>;
 }
 
 // export default MainPage;

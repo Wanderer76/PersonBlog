@@ -46,6 +46,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
   };
 
   useEffect(() => {
+    console.log("renderVideo " + path.postId)
     // Make sure Video.js player is only initialized once
     if (!playerRef.current) {
       // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode. 
@@ -57,15 +58,12 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
       playerRef.current = videojs(videoElement, options, function () {
         var player = this;
         var qualities = player.qualityLevels();
-
         player.on('timeupdate', () => {
           onTimeupdate(player);
         })
 
         qualities.on('addqualitylevel', () => {
 
-        });
-        qualities.on('change', (a) => {
         });
 
       });
@@ -75,8 +73,10 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
 
       player.autoplay(options.autoplay);
       player.src(options.sources);
+      player.poster(options.poster);
+
     }
-  }, [options, videoRef, path]);
+  }, [options, videoRef, path.postId]);
 
   React.useEffect(() => {
     const player = playerRef.current;

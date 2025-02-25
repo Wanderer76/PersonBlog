@@ -1,6 +1,6 @@
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
-import './VideoPage.css';
+import './PostPage.css';
 import React, { useEffect, useState } from 'react';
 import API, { BaseApUrl } from '../../scripts/apiMethod';
 import { getLocalDateTime } from '../../scripts/LocalDate';
@@ -11,7 +11,9 @@ export const VideoPage = function (props) {
     const searchParams = useParams();
     const [isLoading, setIsLoading] = useState(true);
     let viewRecorded = false; let inProgress = false;
-
+    const [recommendations, setRecommendations] = useState([]);
+    const limit = 40;
+    const navigate = useNavigate();
     const [post, setPostData] = useState({
         id: null,
         previewUrl: null,
@@ -57,9 +59,17 @@ export const VideoPage = function (props) {
                     setIsLoading(false)
                     viewRecorded = response.data.userPostInfo.isViewed;
                 }
-            })
+            });
 
-    }, [])
+        API.get(`/video/recommendations?page=${1}&limit=${limit}`)
+            .then(response => {
+                if (response.status === 200) {
+                    setRecommendations(response.data);
+                }
+            });
+
+
+    }, [searchParams.videoId])
 
     async function setReaction(isLike) {
         await API.post(`video/Video/setReaction/${post.id}?isLike=${isLike}`, null, {
@@ -163,7 +173,8 @@ export const VideoPage = function (props) {
     return (
         <div className="video-container">
             <div className="main-content">
-                <VideoWindow post={post} getUrl={getUrl} setView={setView} />
+
+                {videoWindow()}
                 {videoMetadata(post, userView, setReaction)}
                 {channelInfo(blog, handleSubscribe, userView)}
 
@@ -195,51 +206,44 @@ export const VideoPage = function (props) {
             </div>
 
             <aside className="sidebar">
-                <div className="recommended-video">
-                    <img src="https://picsum.photos/168/94?1" className="recommended-thumbnail" alt="Превью" />
-                    <div className="recommended-info">
-                        <div className="recommended-title">Будущее искусственного интеллекта: что нас ждет?</div>
-                        <div className="recommended-channel">TechVision</div>
-                        <div className="recommended-stats">256K просмотров • 2 дня назад</div>
-                    </div>
-                </div>
+                {recommendations.map(video => {
+                    return <VideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
+                })}
 
-                <div className="recommended-video">
-                    <img src="https://picsum.photos/168/94?2" className="recommended-thumbnail" alt="Превью" />
-                    <div className="recommended-info">
-                        <div className="recommended-title">10 технологий, которые изменят мир</div>
-                        <div className="recommended-channel">Future Tech</div>
-                        <div className="recommended-stats">1,2M просмотров • 1 неделя назад</div>
-                    </div>
-                </div>
             </aside>
         </div>
     );
-}
 
-class VideoWindow extends React.Component {
 
-    constructor(props) {
-        super(props);
-        this.post = props.post;
-        this.getUrl = props.getUrl;
-        this.setView = props.setView;
-    }
-
-    render() {
+    function videoWindow() {
         return <div className="video-player">
             <VideoPlayer className="myVideo"
-                thumbnail={this.post.previewUrl}
+                thumbnail={post.previewUrl}
                 path={{
-                    url: this.getUrl(this.post.id, this.post.videoData.objectName),
+                    url: getUrl(post.id, post.videoData.objectName),
                     label: '',
-                    postId: this.post.id,
-                    autoplay: true,
-                    objectName: this.post.videoData.objectName
+                    postId: post.id,
+                    autoplay: false,
+                    objectName: post.videoData.objectName
                 }}
-                onTimeupdate={this.setView} />
+                onTimeupdate={setView} />
         </div>;
     }
+}
+
+const VideoCard = function ({ videoCardModel, navigate }) {
+
+    return <div className="recommended-video" onClick={(e) => {
+        e.preventDefault();
+        navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
+    }}>
+        <img src={videoCardModel.previewUrl} className="recommended-thumbnail" alt="Превью" />
+        <div className="recommended-info">
+            <div className="recommended-title">{videoCardModel.title}</div>
+            <div className="recommended-channel">{videoCardModel.blogName}</div>
+            <div className="recommended-stats"> {videoCardModel.viewCount} просмотров • 2 дня назад</div>
+        </div>
+    </div>
 }
 
 function videoMetadata(post, userView, setReaction) {
