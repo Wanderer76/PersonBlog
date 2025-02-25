@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Infrastructure.Cache.Services;
+using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
 using Profile.Service.Exceptions;
@@ -8,13 +9,18 @@ using Shared.Services;
 
 namespace Profile.Service.Services.Implementation
 {
-    internal class DefaultBlogService : IBlogService
+    internal sealed class DefaultBlogService : IBlogService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly ICacheService _cacheService;
 
-        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context)
+        private string GetBlogByIdKey(Guid id) => $"Blog:{id}";
+        private string GetBlogByUserIdKey(Guid id) => $"Blog:UserId{id}";
+
+        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context, ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
 
         public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)
@@ -56,9 +62,14 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogAsync(Guid id)
         {
-            var result = await _context.Get<Blog>().Include(x => x.Subscriptions)
+            var result = await _cacheService.GetCachedData<Blog>(GetBlogByIdKey(id));
+            if (result == null)
+            {
+                result = await _context.Get<Blog>()
+                    .FirstAsync(x => x.Id == id);
 
-                .FirstAsync(x => x.Id == id);
+                await _cacheService.SetCachedData(GetBlogByIdKey(id), result, TimeSpan.FromMinutes(10));
+            }
             return result.ToBlogModel();
         }
 
@@ -73,16 +84,17 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
         {
-            //await _messageBus.SendMessageAsync("quueue", new { Name = "asdds", Number = 12321 }, (entity) =>
-            //{
-            //    Console.WriteLine(entity);
-            //});
-            var profile = await _context.GetProfileByUserIdAsync(userId) ?? throw new EntityNotFoundException("Профиль не найден");
-            var blog = await _context.Get<Blog>()
-                .Where(x => x.ProfileId == profile.Id)
-                .Include(x => x.Subscriptions)
-                .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
+            var blog = await _cacheService.GetCachedData<Blog>(GetBlogByUserIdKey(userId));
 
+            if (blog == null)
+            {
+                var profile = await _context.GetProfileByUserIdAsync(userId) ?? throw new EntityNotFoundException("Профиль не найден");
+                blog = await _context.Get<Blog>()
+                    .Where(x => x.ProfileId == profile.Id)
+                    .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
+
+                await _cacheService.SetCachedData(GetBlogByUserIdKey(userId),blog,TimeSpan.FromMinutes(10));
+            }
             return blog.ToBlogModel();
         }
 

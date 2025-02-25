@@ -14,6 +14,7 @@
       <ProjectReference Include="..\FFmpeg.Service\FFmpeg.Service.csproj" />
       <ProjectReference Include="..\FileStorage.Service\FileStorage.Service.csproj" />
       <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+      <ProjectReference Include="..\Infrastucture.Cache\Infrastructure.Cache.csproj" />
       <ProjectReference Include="..\MessageBus\MessageBus.csproj" />
       <ProjectReference Include="..\Profile.Domain\Profile.Domain.csproj" />
       <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />

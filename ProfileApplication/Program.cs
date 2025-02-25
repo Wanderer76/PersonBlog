@@ -1,4 +1,5 @@
 using FileStorage.Service;
+using Infrastructure.Cache;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
@@ -19,6 +20,8 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage();
+builder.Services.AddRedisCache(builder.Configuration);
+
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>()
     .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);

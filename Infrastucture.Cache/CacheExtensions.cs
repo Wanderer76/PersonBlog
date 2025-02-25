@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Cache.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace Infrastructure.Cache
 {
@@ -14,6 +15,12 @@ namespace Infrastructure.Cache
                 options.Configuration = configuration["Redis:ConnectionString"];
                 options.InstanceName = configuration["Redis:InstanceName"];
             });
+            services.AddSingleton<IConnectionMultiplexer>(provider =>
+            {
+                var connectionString = configuration["Redis:ConnectionString"]!;
+                return ConnectionMultiplexer.Connect(connectionString);
+            });
+
         }
     }
 }

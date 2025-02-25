@@ -50,7 +50,6 @@ namespace Blog.Service.Service.Implementaion
                     using var fileStorage = _fileStorageFactory.CreateFileStorage();
                     var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId) : null;
                     var profileUrl = post.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PhotoUrl) : null;
-
                     postMetadata.TryAdd(post.Id, (previewUrl, profileUrl));
                 }))
                 .ToList();
