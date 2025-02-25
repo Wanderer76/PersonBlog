@@ -10,7 +10,7 @@ namespace VideoView.Application.Controllers
     {
         private readonly IRecommendationService _recommendationService;
 
-        public RecommendationController(ILogger<BaseController> logger, IRecommendationService recommendationService) : base(logger)
+        public RecommendationController(ILogger<RecommendationController> logger, IRecommendationService recommendationService) : base(logger)
         {
             _recommendationService = recommendationService;
         }

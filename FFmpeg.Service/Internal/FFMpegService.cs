@@ -17,7 +17,7 @@ namespace FFmpeg.Service.Internal
 
         public async Task GeneratePreview(string input, string outputFilePath)
         {
-            var result = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Snapshot(input, outputFilePath, TimeSpan.FromSeconds(1));
+            var result = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Snapshot(input, outputFilePath, TimeSpan.FromSeconds(0));
             await result.Start();
         }
         public async Task<FFProbeStream?> GetVideoMediaInfo(string input)
@@ -31,7 +31,7 @@ namespace FFmpeg.Service.Internal
         {
             options.AssertFound("Опции равны null");
             string inputUrl = input;
-            StringBuilder filterComplexBuilder = new StringBuilder();
+            var filterComplexBuilder = new StringBuilder();
             filterComplexBuilder.Append("[0:v]split=").Append(options.Resolutions.Length);
             for (int i = 1; i <= options.Resolutions.Length; i++)
             {
