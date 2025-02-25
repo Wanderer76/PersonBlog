@@ -68,18 +68,8 @@ namespace Profile.Service.Interface.Implementation
             var blog = await _context.Get<Post>()
                 .Where(x => x.Id == id)
                 .Select(x => x.Blog)
-                .Select(x => new
-                {
-                    Id = x.Id,
-                    Title = x.Title,
-                    Subscriptions = x.Subscriptions.Count,
-                    CreatedAt = x.CreatedAt,
-                    Description = x.Description,
-                    ProfileId = x.ProfileId,
-                    PhotoUrl = x.PhotoUrl,
-                })
                 .FirstAsync();
-            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.Subscriptions);
+            return blog.ToBlogModel();
         }
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)

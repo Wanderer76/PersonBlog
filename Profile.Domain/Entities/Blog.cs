@@ -13,9 +13,10 @@ namespace Profile.Domain.Entities
         public DateTimeOffset CreatedAt { get; set; }
         public string? PhotoUrl { get; set; }
         public Guid ProfileId { get; set; }
-
+        public int SubscriptionsCount {  get; set; }
+        
         [ForeignKey(nameof(ProfileId))]
         public AppProfile Profile { get; set; }
-        public List<Subscriptions> Subscriptions { get; set; }
+        public List<Subscription> Subscriptions { get; set; }
     }
 }

@@ -14,6 +14,12 @@ namespace Profile.Service.Interface.Implementation
     internal class DefaultAdminService : IAdminService
     {
         private readonly IReadWriteRepository<IProfileEntity> _readWriteRepository;
+
+        public DefaultAdminService(IReadWriteRepository<IProfileEntity> readWriteRepository)
+        {
+            _readWriteRepository = readWriteRepository;
+        }
+
         public async Task<IEnumerable<ProfileModel>> GetAllProfilesAsync(int offset, int limit)
         {
             var profiles = await _readWriteRepository.GetAllProfilesPagedAsync(offset, limit);

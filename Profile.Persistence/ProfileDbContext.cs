@@ -7,7 +7,7 @@ namespace Profile.Persistence;
 public class ProfileDbContext : BaseDbContext
 {
     public DbSet<AppProfile> Profiles { get; set; }
-    public DbSet<Subscriptions> Subscriptions { get; set; }
+    public DbSet<Subscription> Subscriptions { get; set; }
     public DbSet<Blog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
@@ -55,7 +55,7 @@ public class ProfileDbContext : BaseDbContext
                 });
             }
             {
-                var entity = modelBuilder.Entity<Subscriptions>();
+                var entity = modelBuilder.Entity<Subscription>();
                 entity.HasIndex(x => new { x.ProfileId, x.BlogId }).IsUnique();
             }
             {

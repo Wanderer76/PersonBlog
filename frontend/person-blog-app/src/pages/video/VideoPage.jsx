@@ -31,7 +31,8 @@ export const VideoPage = function (props) {
 
     const [userView, setUserView] = useState({
         isViewed: true,
-        isLike: false
+        isLike: false,
+        isSubscribe: false
     })
 
     const [blog, setBlog] = useState({
@@ -43,7 +44,11 @@ export const VideoPage = function (props) {
     }
 
     useEffect(() => {
-        API.get(`/video/Video/video/${searchParams.postId}`)
+        API.get(`/video/Video/video/${searchParams.postId}`, {
+            headers: {
+                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
+            }
+        })
             .then(response => {
                 if (response.status === 200) {
                     setPostData(response.data.post);
@@ -127,6 +132,26 @@ export const VideoPage = function (props) {
         }
     }
 
+    async function handleSubscribe() {
+        let current = userView.isSubscribe;
+        await API.post(`profile/api/Subscription/${userView.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`, null, {
+            headers: {
+                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
+            }
+        })
+            .finally(() => {
+                setUserView((prev => ({
+                    ...prev,
+                    isSubscribe: !current
+                })))
+                setBlog((prev => ({
+                    ...prev,
+                    subscribersCount: !current ? prev.subscribersCount + 1 : prev.subscribersCount - 1
+                })))
+
+            })
+    }
+
     if (isLoading) {
         return <></>;
     }
@@ -177,10 +202,10 @@ export const VideoPage = function (props) {
                         <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
                         <div>
                             <div className="channel-name">{blog.name}</div>
-                            <div className="subscribers-count">{blog.subscribersCount} млн подписчиков</div>
+                            <div className="subscribers-count">{blog.subscribersCount} подписчиков</div>
                         </div>
                     </div>
-                    <button className="subscribe-button">{userView.isSubscribe ? 'Вы подписаны' : 'Подписаться'}</button>
+                    <button className="subscribe-button" onClick={() => handleSubscribe()}>{userView.isSubscribe ? 'Вы подписаны' : 'Подписаться'}</button>
                 </div>
 
                 <div className="video-description">

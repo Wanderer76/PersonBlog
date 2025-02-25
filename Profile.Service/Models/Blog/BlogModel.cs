@@ -27,7 +27,7 @@
     {
         public static BlogModel ToBlogModel(this Domain.Entities.Blog blog)
         {
-            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.Subscriptions.Count);
+            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.SubscriptionsCount);
         }
     }
 }

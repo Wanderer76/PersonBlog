@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using System.Data;
 
 namespace Shared.Persistence;
 
@@ -14,6 +16,8 @@ public interface IWriteRepository<TEntity> where TEntity : class
     void Remove(TEntity entity);
     int SaveChanges();
     Task<int> SaveChangesAsync();
+    Task<IDbContextTransaction> BeginTransactionAsync();
+    Task CommitAsync();
 }
 
 public interface IReadWriteRepository<TEntity> : IReadRepository<TEntity>, IWriteRepository<TEntity>
@@ -61,6 +65,16 @@ public class DefaultRepository<TContext, TEntity> : IReadWriteRepository<TEntity
     {
         _context.Remove(entity);
     }
+
+    public Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return _context.Database.BeginTransactionAsync();
+    } 
+    public async Task CommitAsync()
+    {
+        await _context.Database.CommitTransactionAsync();
+    }
+
 }
 
 public class DefaultReadRepository<TContext, TDbEntity> : IReadRepository<TDbEntity>
@@ -112,5 +126,13 @@ public class DefaultWriteRepository<TContext, TEntity> : IWriteRepository<TEntit
     public void Remove(TEntity entity)
     {
         _context.Remove(entity);
+    }
+    public Task<IDbContextTransaction> BeginTransactionAsync()
+    {
+        return _context.Database.BeginTransactionAsync();
+    }
+    public async Task CommitAsync()
+    {
+        await _context.Database.CommitTransactionAsync();
     }
 }
