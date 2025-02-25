@@ -1,6 +1,7 @@
 ﻿using Blog.Service.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace VideoView.Application.Controllers
 {
@@ -9,10 +10,11 @@ namespace VideoView.Application.Controllers
     public class RecommendationController : BaseController
     {
         private readonly IRecommendationService _recommendationService;
-
-        public RecommendationController(ILogger<RecommendationController> logger, IRecommendationService recommendationService) : base(logger)
+        private readonly IDistributedCache _cache;
+        public RecommendationController(ILogger<RecommendationController> logger, IRecommendationService recommendationService, IDistributedCache cache) : base(logger)
         {
             _recommendationService = recommendationService;
+            _cache = cache;
         }
 
         [HttpGet("/recommendations")]

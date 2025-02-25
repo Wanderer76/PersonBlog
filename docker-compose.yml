@@ -54,6 +54,27 @@ services:
       RABBITMQ_DEFAULT_PASS: admin
     volumes:
       - ../rabbitMq:/var/lib/rabbitmq
+  redis:
+    image: redis:7.4.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=admin
+      - REDIS_USER=admin
+      - REDIS_USER_PASSWORD=admin
+    volumes:
+    - ../redisdata:/data
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: redis_insight_container
+    restart: always
+    ports:
+      - "5540:5540"
+    volumes:
+      - ../redis_insight_data:/db
+    depends_on:
+      - redis
   # mongo:
   #   image: mongo
   #   environment:

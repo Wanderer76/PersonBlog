@@ -1,7 +1,6 @@
 ﻿using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
-using MassTransit;
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +12,7 @@ using System.Text.Json;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class VideoChunksCombinerService : IEventHandler<CombineFileChunksEvent>, IConsumer<CombineFileChunksEvent>
+    public class VideoChunksCombinerService : IEventHandler<CombineFileChunksEvent>
     {
         private readonly IFileStorage storage;
         private readonly IReadWriteRepository<IProfileEntity> _context;
@@ -23,12 +22,7 @@ namespace VideoProcessing.Cli.Service
             this.storage = storage.CreateFileStorage();
             this._context = context;
         }
-
-        public async Task Consume(ConsumeContext<CombineFileChunksEvent> context)
-        {
-            await Handle(context.Message);
-        }
-
+      
         public async Task Handle(CombineFileChunksEvent @event)
         {
             var fileId = @event.VideoMetadataId;

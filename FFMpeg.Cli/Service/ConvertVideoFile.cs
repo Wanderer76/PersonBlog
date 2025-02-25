@@ -1,7 +1,6 @@
 ﻿using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
-using MassTransit;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
@@ -12,7 +11,7 @@ using Xabe.FFmpeg;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class ConvertVideoFile : IEventHandler<VideoConvertEvent>, IConsumer<VideoConvertEvent>
+    public class ConvertVideoFile : IEventHandler<VideoConvertEvent>
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFFMpegService _ffmpegService;
@@ -183,10 +182,6 @@ namespace VideoProcessing.Cli.Service
                 return Path.GetFileName(filePath);
             }
         }
-
-        public async Task Consume(ConsumeContext<VideoConvertEvent> context)
-        {
-            await Handle(context.Message);
-        }
+       
     }
 }

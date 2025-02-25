@@ -1,13 +1,9 @@
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
-using MassTransit;
 using MessageBus;
-using MessageBus.Configs;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
-using Microsoft.Extensions.Configuration;
-using Profile.Domain.Events;
 using Profile.Persistence;
 using Profile.Service.Extensions;
 using ProfileApplication.Handlers;

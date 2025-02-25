@@ -6,9 +6,7 @@ using MessageBus;
 using System.Collections.Concurrent;
 using Profile.Domain.Events;
 using Infrastructure.Models;
-using System.Text.Json;
 using MessageBus.Shared.Configs;
-using MassTransit;
 
 namespace ProfileApplication.HostedServices
 {
@@ -17,7 +15,6 @@ namespace ProfileApplication.HostedServices
         private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMqUploadVideoConfig _settings;
         private readonly RabbitMqVideoReactionConfig _reactingSettings = new();
-        private readonly IBus _bus;
 
         private readonly RabbitMqMessageBus _messageBus;
         private readonly ConcurrentDictionary<ulong, ProfileEventMessages> sendMessages = new();
@@ -54,30 +51,9 @@ namespace ProfileApplication.HostedServices
 
                 foreach (var message in messages)
                 {
-                    //var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
                     try
                     {
-                        //sendMessages.TryAdd(nextNumber, message);
                         dbContext.Attach(message);
-                        //if (message.EventType == nameof(CombineFileChunksEvent))
-                        //{
-                        //    var body = JsonSerializer.Deserialize<CombineFileChunksEvent>(message.EventData);
-
-                        //    await _bus.Publish(body, ctx =>
-                        //    {
-                        //        ctx.SetRoutingKey(GetRoutingKey(message));
-                        //    });
-                        //}
-                        //else
-                        //{
-                        //    var body = JsonSerializer.Deserialize<VideoConvertEvent>(message.EventData);
-
-                        //    await _bus.Publish(body, ctx =>
-                        //    {
-                        //        ctx.SetRoutingKey(GetRoutingKey(message));
-                        //    });
-                        //}
-
                         message.State = EventState.Processed;
                         await dbContext.SaveChangesAsync();
                         await _messageBus.SendMessageAsync(channel, _settings.ExchangeName, GetRoutingKey(message), message);
@@ -85,7 +61,6 @@ namespace ProfileApplication.HostedServices
                     catch (Exception ex)
                     {
                         dbContext.Attach(message);
-                        //sendMessages.Remove(nextNumber, out _);
                         if (message.RetryCount == 3)
                         {
                             message.SetErrorMessage(ex.Message);

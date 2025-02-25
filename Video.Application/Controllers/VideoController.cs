@@ -1,10 +1,13 @@
 using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Profile.Service.Models;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
 using Shared.Services;
+using System.Text;
+using System.Text.Json;
 using System.Web;
 using Video.Service.Interface;
 
@@ -24,12 +27,15 @@ namespace VideoView.Application.Controllers
         private const string UserPostInfo = "api/Post/userInfo";
         private const string CommonBlog = "api/Blog/blogByPost";
 
-        public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory)
+        private readonly IDistributedCache _cache;
+
+        public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory, IDistributedCache cache)
             : base(logger)
         {
             storage = factory.CreateFileStorage();
             _videoService = videoService;
             _httpClientFactory = httpClientFactory;
+            _cache = cache;
         }
 
         /// <summary>
@@ -82,31 +88,37 @@ namespace VideoView.Application.Controllers
         [HttpGet("video/{postId:guid}")]
         public async Task<IActionResult> GetVideoData(Guid postId)
         {
-            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            HttpContext.TryGetUserFromContext(out var userId);
-            using var client = _httpClientFactory.CreateClient("Profile");
-            var post = client.GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
-            var blog = client.GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}");
-
-            var query = HttpUtility.ParseQueryString(string.Empty);
-            if (userId.HasValue)
-            {
-                query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
-            }
-            query["address"] = HttpUtility.UrlEncode(remoteIp);
-
-            var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query.ToString()}");
-
+            var cacheVideData = await _cache.GetStringAsync(postId.ToString());
             try
             {
-                await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
-                return Ok(new
+                if (cacheVideData == null)
                 {
-                    Post = await post,
-                    Blog = await blog,
-                    UserPostInfo = await userInfo,
-                    Comment = new List<string>()
-                });
+                    var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+                    HttpContext.TryGetUserFromContext(out var userId);
+                    using var client = _httpClientFactory.CreateClient("Profile");
+                    var post = client.GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
+                    var blog = client.GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}");
+
+                    var query = HttpUtility.ParseQueryString(string.Empty);
+                    if (userId.HasValue)
+                    {
+                        query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
+                    }
+                    query["address"] = HttpUtility.UrlEncode(remoteIp);
+
+                    var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query.ToString()}");
+
+
+                    await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
+                    var result = new VideoDataViewModel(await post, await blog, await userInfo, new List<string>());
+                    await _cache.SetStringAsync(postId.ToString(), JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                    });
+                    return Ok(result);
+                }
+                else
+                    return Ok(JsonSerializer.Deserialize<VideoDataViewModel>(cacheVideData));
             }
             catch (Exception ex)
             {
@@ -140,3 +152,5 @@ namespace VideoView.Application.Controllers
         }
     }
 }
+
+internal record VideoDataViewModel(PostDetailViewModel? Post, BlogModel? Blog, UserViewInfo? UserPostInfo, List<string> Comment);
