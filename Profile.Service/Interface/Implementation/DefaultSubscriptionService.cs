@@ -19,11 +19,19 @@ namespace Profile.Service.Interface.Implementation
             var profile = await _readWriteRepository.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == userId);
 
+            var isCurrentUserBlog = await _readWriteRepository.Get<Blog>()
+                .Where(x => x.Id == blogId && x.ProfileId == profile.Id)
+                .AnyAsync();
+
+            if (isCurrentUserBlog)
+            {
+                throw new ArgumentException("Вы не можете подписаться на свой канал");
+            }
+
             var hasSubscription = await _readWriteRepository.Get<Subscription>()
                 .Where(x => x.ProfileId == profile.Id && x.BlogId == blogId)
                 .Where(x => x.SubscriptionEndDate != null)
                 .FirstOrDefaultAsync();
-
 
             if (hasSubscription != null)
                 throw new ArgumentException("У вас уже есть подписка на канал");

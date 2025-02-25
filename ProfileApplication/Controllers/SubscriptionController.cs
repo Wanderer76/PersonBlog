@@ -20,17 +20,31 @@ namespace ProfileApplication.Controllers
         [Authorize]
         public async Task<IActionResult> SubscribeToBlog(Guid blogId)
         {
-            var userId = HttpContext.GetUserFromContext();
-            await _subscriptionService.SubscribeToBlogAsync(blogId, userId);
-            return Ok();
+            try
+            {
+                var userId = HttpContext.GetUserFromContext();
+                await _subscriptionService.SubscribeToBlogAsync(blogId, userId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
         [HttpPost("unsubscribe/{blogId:guid}")]
         [Authorize]
         public async Task<IActionResult> UnSubscribeToBlog(Guid blogId)
         {
-            var userId = HttpContext.GetUserFromContext();
-            await _subscriptionService.UnSubscribeToBlogAsync(blogId, userId);
-            return Ok();
+            try
+            {
+                var userId = HttpContext.GetUserFromContext();
+                await _subscriptionService.UnSubscribeToBlogAsync(blogId, userId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         //получение всего контента от блогов

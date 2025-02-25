@@ -13,7 +13,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
   let sessionHash = null;
 
   const options = {
-    autoplay: false,
+    autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,
     playbackRates: [0.5, 1, 1.5, 2],
     preload: 'none',
@@ -59,7 +59,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
         var qualities = player.qualityLevels();
 
         player.on('timeupdate', () => {
-           onTimeupdate(player);
+          onTimeupdate(player);
         })
 
         qualities.on('addqualitylevel', () => {

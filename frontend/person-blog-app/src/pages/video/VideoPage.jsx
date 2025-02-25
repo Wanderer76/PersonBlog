@@ -133,13 +133,17 @@ export const VideoPage = function (props) {
     }
 
     async function handleSubscribe() {
-        let current = userView.isSubscribe;
+        const current = userView.isSubscribe;
+        var isError = false;
         await API.post(`profile/api/Subscription/${userView.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`, null, {
             headers: {
                 'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
             }
-        })
-            .finally(() => {
+        }).catch(e => {
+            isError = true
+            alert(e.response.data)
+        }).finally(() => {
+            if (!isError) {
                 setUserView((prev => ({
                     ...prev,
                     isSubscribe: !current
@@ -148,8 +152,8 @@ export const VideoPage = function (props) {
                     ...prev,
                     subscribersCount: !current ? prev.subscribersCount + 1 : prev.subscribersCount - 1
                 })))
-
-            })
+            }
+        })
     }
 
     if (isLoading) {
@@ -159,54 +163,9 @@ export const VideoPage = function (props) {
     return (
         <div className="video-container">
             <div className="main-content">
-                <div className="video-player">
-                    <VideoPlayer className="myVideo"
-                        thumbnail={post.previewUrl}
-                        path={
-                            {
-                                url: getUrl(post.id, post.videoData.objectName),
-                                label: '',
-                                postId: post.id,
-                                res: 0,
-                                objectName: post.videoData.objectName
-                            }
-                        }
-                        onTimeupdate={setView}
-                    />
-                </div>
-
-                <div className="video-metadata">
-                    <h1 className="video-title">{post.title}</h1>
-
-                    <div className="video-stats">
-                        <div className="views-date">
-                            <span>{post.viewCount} Просмотров </span> •
-                            <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
-                        </div>
-                        <div className="video-actions">
-                            <button className={`action-button ${userView.isLike === true ? 'action-button-active' : ''}`} onClick={() => { setReaction(true); }}>
-                                <span>👍</span> {post.likeCount}
-                            </button>
-                            <button className={`action-button ${userView.isLike === false ? 'action-button-active' : ''}`} onClick={() => { setReaction(false); }}>
-                                <span>👎</span> {post.dislikeCount}
-                            </button>
-                            <button className="action-button">
-                                <span>📁</span> Поделиться
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="channel-info">
-                    <div className="channel-left">
-                        <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
-                        <div>
-                            <div className="channel-name">{blog.name}</div>
-                            <div className="subscribers-count">{blog.subscribersCount} подписчиков</div>
-                        </div>
-                    </div>
-                    <button className="subscribe-button" onClick={() => handleSubscribe()}>{userView.isSubscribe ? 'Вы подписаны' : 'Подписаться'}</button>
-                </div>
+                <VideoWindow post={post} getUrl={getUrl} setView={setView} />
+                {videoMetadata(post, userView, setReaction)}
+                {channelInfo(blog, handleSubscribe, userView)}
 
                 <div className="video-description">
                     <span>Описание: </span>
@@ -257,3 +216,67 @@ export const VideoPage = function (props) {
         </div>
     );
 }
+
+class VideoWindow extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.post = props.post;
+        this.getUrl = props.getUrl;
+        this.setView = props.setView;
+    }
+
+    render() {
+        return <div className="video-player">
+            <VideoPlayer className="myVideo"
+                thumbnail={this.post.previewUrl}
+                path={{
+                    url: this.getUrl(this.post.id, this.post.videoData.objectName),
+                    label: '',
+                    postId: this.post.id,
+                    autoplay: true,
+                    objectName: this.post.videoData.objectName
+                }}
+                onTimeupdate={this.setView} />
+        </div>;
+    }
+}
+
+function videoMetadata(post, userView, setReaction) {
+    return <div className="video-metadata">
+        <h1 className="video-title">{post.title}</h1>
+
+        <div className="video-stats">
+            <div className="views-date">
+                <span>{post.viewCount} Просмотров </span> •
+                <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
+            </div>
+            <div className="video-actions">
+                <button className={`action-button ${userView.isLike === true ? 'action-button-active' : ''}`} onClick={() => { setReaction(true); }}>
+                    <span>👍</span> {post.likeCount}
+                </button>
+                <button className={`action-button ${userView.isLike === false ? 'action-button-active' : ''}`} onClick={() => { setReaction(false); }}>
+                    <span>👎</span> {post.dislikeCount}
+                </button>
+                <button className="action-button">
+                    <span>📁</span> Поделиться
+                </button>
+            </div>
+        </div>
+    </div>;
+}
+
+
+function channelInfo(blog, handleSubscribe, userView) {
+    return <div className="channel-info">
+        <div className="channel-left">
+            <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
+            <div>
+                <div className="channel-name">{blog.name}</div>
+                <div className="subscribers-count">{blog.subscribersCount} подписчиков</div>
+            </div>
+        </div>
+        <button className="subscribe-button" onClick={() => handleSubscribe()}>{userView.isSubscribe ? 'Вы подписаны' : 'Подписаться'}</button>
+    </div>;
+}
+
