@@ -70,10 +70,20 @@ namespace VideoView.Application.Controllers
         public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string? file)
         {
             var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}"))!.ObjectName;
-            var result = new MemoryStream();
-            await storage.ReadFileAsync(postId, fileName, result);
-            result.Position = 0;
-            return File(result, HLSType);
+
+            var data = await _cache.GetAsync(fileName);
+            if (data == null)
+            {
+                var result = new MemoryStream();
+                await storage.ReadFileAsync(postId, fileName, result);
+                result.Position = 0;
+                data = result.ToArray();
+                await _cache.SetAsync(fileName, data, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                });
+            }
+            return File(data, HLSType);
         }
 
         [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]

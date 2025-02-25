@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Profile.Service.Interface;
-using Profile.Service.Interface.Implementation;
+using Profile.Service.Services;
+using Profile.Service.Services.Implementation;
 
 namespace Profile.Service.Extensions
 {

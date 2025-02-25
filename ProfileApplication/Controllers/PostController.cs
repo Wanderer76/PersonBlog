@@ -1,8 +1,8 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Service.Interface;
 using Profile.Service.Models;
 using Profile.Service.Models.File;
+using Profile.Service.Services;
 using System.Text;
 
 namespace ProfileApplication.Controllers

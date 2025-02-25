@@ -8,11 +8,12 @@ using Profile.Persistence.Repository;
 using Profile.Service.Models;
 using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
+using Profile.Service.Services;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
 
-namespace Profile.Service.Interface.Implementation
+namespace Profile.Service.Services.Implementation
 {
     internal class DefaultPostService : IPostService
     {

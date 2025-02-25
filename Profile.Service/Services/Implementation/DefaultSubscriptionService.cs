@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
+using Profile.Service.Services;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Profile.Service.Interface.Implementation
+namespace Profile.Service.Services.Implementation
 {
     internal class DefaultSubscriptionService : ISubscriptionService
     {

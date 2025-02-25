@@ -5,13 +5,8 @@ using Profile.Service.Models.File;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Profile.Service.Interface
+namespace Profile.Service.Services.Implementation
 {
-    public interface IVideoService
-    {
-        Task<VideoMetadata> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk);
-    }
-
     internal class DefaultVideoService : IVideoService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;

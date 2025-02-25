@@ -2,8 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence;
-using Profile.Service.Interface.Implementation;
 using Profile.Service.Models;
+using Profile.Service.Services.Implementation;
 using Profile.Test.Mocks;
 using Shared.Persistence;
 using Xunit;

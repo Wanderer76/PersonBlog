@@ -1,5 +1,4 @@
-﻿using MessageBus;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
 using Profile.Service.Exceptions;
@@ -7,7 +6,7 @@ using Profile.Service.Models.Blog;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Profile.Service.Interface.Implementation
+namespace Profile.Service.Services.Implementation
 {
     internal class DefaultBlogService : IBlogService
     {

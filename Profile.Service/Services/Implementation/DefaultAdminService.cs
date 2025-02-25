@@ -3,13 +3,8 @@ using Profile.Domain.Entities;
 using Profile.Persistence.Repository;
 using Profile.Service.Models;
 using Shared.Persistence;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Profile.Service.Interface.Implementation
+namespace Profile.Service.Services.Implementation
 {
     internal class DefaultAdminService : IAdminService
     {

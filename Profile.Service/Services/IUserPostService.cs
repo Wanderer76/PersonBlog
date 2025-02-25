@@ -1,6 +1,6 @@
 ﻿using Profile.Service.Models;
 
-namespace Profile.Service.Interface
+namespace Profile.Service.Services
 {
     public interface IUserPostService
     {

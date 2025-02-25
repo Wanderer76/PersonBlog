@@ -29,7 +29,7 @@ builder.Services.AddHttpClient("Profile", x =>
 {
     x.BaseAddress = new Uri("http://localhost:7892/profile/");
 });
-builder.Services.AddRedisCahce(builder.Configuration);
+builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddMessageBus(builder.Configuration);

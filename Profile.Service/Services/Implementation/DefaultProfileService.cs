@@ -2,11 +2,12 @@
 using Profile.Domain.Entities;
 using Profile.Service.Models;
 using Profile.Service.Models.Blog;
+using Profile.Service.Services;
 using Shared.Persistence;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Profile.Test")]
 
-namespace Profile.Service.Interface.Implementation
+namespace Profile.Service.Services.Implementation
 {
     internal class DefaultProfileService : IProfileService
     {
@@ -105,7 +106,7 @@ namespace Profile.Service.Interface.Implementation
 
         public async Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
         {
-            if(userId==null&& ipAddress==null)
+            if (userId == null && ipAddress == null)
             {
                 return true;
             }

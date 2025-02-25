@@ -1,12 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Infrastructure.Cache.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Infrastructure.Cache
 {
     public static class CacheExtensions
     {
-        public static void AddRedisCahce(this IServiceCollection services, IConfiguration configuration)
+        public static void AddRedisCache(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddSingleton<ICacheService, DefaultCacheService>();
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = configuration["Redis:ConnectionString"];
@@ -14,11 +16,4 @@ namespace Infrastructure.Cache
             });
         }
     }
-
-    file class RedisConfig
-    {
-        string ConnectionString;
-        string InstanceName;
-    }
-
 }

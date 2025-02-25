@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Entities;
-using Profile.Service.Interface;
 using Profile.Service.Models.Post;
 using ProfileApplication.Models;
 using Shared.Services;
@@ -11,6 +10,7 @@ using Profile.Service.Models.File;
 using Shared.Persistence;
 using FileStorage.Service.Service;
 using Profile.Service.Models;
+using Profile.Service.Services;
 
 namespace ProfileApplication.Controllers
 {

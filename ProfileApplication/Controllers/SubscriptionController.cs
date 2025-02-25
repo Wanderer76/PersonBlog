@@ -1,7 +1,7 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Service.Interface;
+using Profile.Service.Services;
 using Shared.Services;
 
 namespace ProfileApplication.Controllers

@@ -2,7 +2,7 @@
 using Profile.Service.Models.File;
 using Profile.Service.Models.Post;
 
-namespace Profile.Service.Interface
+namespace Profile.Service.Services
 {
     //TODO добавить кеширование
     public interface IPostService

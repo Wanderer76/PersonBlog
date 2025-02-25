@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Service.Models;
+using Profile.Service.Services;
 using Shared.Persistence;
 
-namespace Profile.Service.Interface.Implementation
+namespace Profile.Service.Services.Implementation
 {
     internal class DefaultUserPostService : IUserPostService
     {
