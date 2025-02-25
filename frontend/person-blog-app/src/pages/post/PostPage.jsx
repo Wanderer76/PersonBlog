@@ -61,7 +61,7 @@ export const VideoPage = function (props) {
                 }
             });
 
-        API.get(`/video/recommendations?page=${1}&limit=${limit}`)
+        API.get(`/video/recommendations?page=${1}&limit=${limit}&currentPostId=${searchParams.postId}`)
             .then(response => {
                 if (response.status === 200) {
                     setRecommendations(response.data);

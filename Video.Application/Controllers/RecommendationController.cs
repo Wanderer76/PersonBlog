@@ -16,9 +16,9 @@ namespace VideoView.Application.Controllers
         }
 
         [HttpGet("/recommendations")]
-        public async Task<IActionResult> GetRecommendedPosts(int page, int limit)
+        public async Task<IActionResult> GetRecommendedPosts(int page, int limit, Guid? currentPostId)
         {
-            return Ok(await _recommendationService.GetRecommendations(page, limit));
+            return Ok(await _recommendationService.GetRecommendations(page, limit, currentPostId));
         }
     }
 }

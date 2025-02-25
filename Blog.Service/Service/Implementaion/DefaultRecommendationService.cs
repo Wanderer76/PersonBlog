@@ -72,5 +72,13 @@ namespace Blog.Service.Service.Implementaion
                 };
             }).ToList();
         }
+
+        public async Task<IEnumerable<VideoCardModel>> GetRecommendations(int page, int pageSize, Guid? currentPostId)
+        {
+            var recommendations = await GetRecommendations(page, pageSize);
+            return recommendations.Count() > 2 && recommendations.Any(x => x.PostId == currentPostId)
+                ? recommendations.Where(x => x.PostId != currentPostId)
+                : recommendations;
+        }
     }
 }

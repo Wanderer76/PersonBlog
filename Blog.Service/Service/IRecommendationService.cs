@@ -5,5 +5,6 @@ namespace Blog.Service.Service
     public interface IRecommendationService
     {
         Task<IEnumerable<VideoCardModel>> GetRecommendations(int page, int pageSize);
+        Task<IEnumerable<VideoCardModel>> GetRecommendations(int page, int pageSize, Guid? currentPostId);
     }
 }
