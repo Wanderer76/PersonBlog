@@ -10,14 +10,12 @@ export const MainPage = function () {
     const limit = 40;
 
     useEffect(() => {
-
         API.get(`/video/recommendations?page=${page}&limit=${limit}`)
             .then(response => {
                 if (response.status === 200) {
                     setVideos(response.data);
                 }
             });
-
     }, [])
 
     return (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BaseApUrl } from "../../scripts/apiMethod";
+import API, { BaseApUrl } from "../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 import { saveAccessToken, saveRefreshToken } from "../../scripts/TokenStrorage";
 
@@ -28,17 +28,17 @@ const SignInForm = ({ onSwitchToSignUp }) => {
             return
         }
         try {
-            const url = BaseApUrl + '/auth/api/Auth/login';
-            const resonse = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(body)
-            });
+            const resonse = await API.post('/auth/api/Auth/login',
+                JSON.stringify(body),
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
 
             if (resonse.status === 200) {
-                const data = await resonse.json();
+                const data = await resonse.data;
                 saveAccessToken(data.accessToken);
                 saveRefreshToken(data.refreshToken);
                 navigate("/");

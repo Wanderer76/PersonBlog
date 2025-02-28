@@ -182,7 +182,7 @@ namespace Profile.Service.Services.Implementation
             return new PostPagedListViewModel
             {
                 TotalPageCount = pagedPosts.TotalPagesCount,
-                Posts = cachedPosts
+                Posts = cachedPosts.OrderBy(x=>x.CreatedAt),
             };
         }
 

@@ -5,12 +5,13 @@ export const BaseApUrl = 'http://localhost:7892'
 
 const API = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
-    withCredentials: false,
+    withCredentials: true,
 });
 
 API.interceptors.request.use(config => {
     config.headers = {
-        ["Authorization"]: JwtTokenService.getFormatedTokenForHeader()
+        ["Authorization"]: JwtTokenService.getFormatedTokenForHeader(),
+        'Content-Type': 'application/json'
     };
     return config;
 });

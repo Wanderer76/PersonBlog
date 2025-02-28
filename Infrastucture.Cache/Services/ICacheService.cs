@@ -25,8 +25,8 @@ namespace Infrastructure.Cache.Services
 
         public async Task<T?> GetCachedData<T>(string key)
         {
-            var result = await _cache.GetAsync(key);
-            if (result == null)
+            var result = await _redis.GetDatabase().StringGetAsync(key);
+            if (!result.HasValue)
             {
                 return default;
             }
@@ -52,8 +52,16 @@ namespace Infrastructure.Cache.Services
 
         public async Task SetCachedData<T>(string key, T data, TimeSpan ttl) where T : notnull
         {
-            var result = JsonSerializer.Serialize(data);
-            await _redis.GetDatabase().StringSetAsync(key, Encoding.UTF8.GetBytes(result), ttl);
+            try
+            {
+                var result = JsonSerializer.Serialize(data);
+
+                await _redis.GetDatabase().StringSetAsync(key, Encoding.UTF8.GetBytes(result), ttl);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("");
+            }
         }
     }
 

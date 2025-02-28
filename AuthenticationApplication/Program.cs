@@ -1,5 +1,6 @@
 using Authentication.Peristence;
 using Authentication.Service;
+using Infrastructure.Cache;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 
@@ -12,6 +13,7 @@ builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddService();
+builder.Services.AddRedisCache(builder.Configuration);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
