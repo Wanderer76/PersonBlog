@@ -5,7 +5,14 @@ export const BaseApUrl = 'http://localhost:7892'
 
 const API = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
+    withCredentials: false,
+});
 
+API.interceptors.request.use(config => {
+    config.headers = {
+        ["Authorization"]: JwtTokenService.getFormatedTokenForHeader()
+    };
+    return config;
 });
 
 API.interceptors.response.use(

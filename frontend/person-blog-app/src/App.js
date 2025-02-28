@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css';
 import AuthPage from './pages/auth/AuthPage';
 import { MainPage } from './pages/main/MainPage';
-import { Header } from './components/header/Header';
+import Header from './components/header/Header';
 import ProfilePage from './pages/profile/ProfilePage';
 import { VideoPage } from './pages/post/PostPage';
 

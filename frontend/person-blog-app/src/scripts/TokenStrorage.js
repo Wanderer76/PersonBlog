@@ -21,7 +21,8 @@ export function getRefreshToken() {
 
 export class JwtTokenService {
     static getFormatedTokenForHeader() {
-        return "Bearer " + getAccessToken();
+        let token = getAccessToken();
+        return token === null ? null : "Bearer " + token;
     }
 
     static async refreshToken() {

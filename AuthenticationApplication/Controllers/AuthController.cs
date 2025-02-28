@@ -2,6 +2,7 @@
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Services;
 
 namespace AuthenticationApplication.Controllers;
 
@@ -14,6 +15,16 @@ public class AuthController : ControllerBase
     public AuthController(IAuthService authService)
     {
         _authService = authService;
+    }
+
+
+    [HttpGet("session")]
+    public async Task<IActionResult> CreateSession()
+    {
+        Response.Cookies.Append("sessionId", GuidService.GetNewGuid().ToString(), new CookieOptions
+        {
+        });
+        return Ok();
     }
 
     [HttpPost("create")]

@@ -1,6 +1,7 @@
 ﻿using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
+using Infrastructure.Cache.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
@@ -16,16 +17,18 @@ namespace VideoProcessing.Cli.Service
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFFMpegService _ffmpegService;
         private readonly IFileStorage storage;
+        private readonly ICacheService _cacheService;
         private readonly string _tempPath;
         private readonly HlsVideoPresets _videoPresets;
 
-        public ConvertVideoFile(IReadWriteRepository<IProfileEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+        public ConvertVideoFile(IReadWriteRepository<IProfileEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, ICacheService cacheService)
         {
             this._context = context;
             this._ffmpegService = ffmpegService;
             this.storage = storage.CreateFileStorage();
             _tempPath = Path.GetFullPath(configuration["TempDir"]!);
             _videoPresets = videoPresets;
+            _cacheService = cacheService;
         }
 
         public async Task Handle(VideoConvertEvent @event)
@@ -83,8 +86,8 @@ namespace VideoProcessing.Cli.Service
                 fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
                 fileMetadata.Duration = videoStream.Duration;
                 fileMetadata.ProcessState = ProcessState.Complete;
-
                 await _context.SaveChangesAsync();
+                await _cacheService.RemoveCachedData($"PostModel:{post.Id}");
             }
             catch (Exception e)
             {
@@ -182,6 +185,6 @@ namespace VideoProcessing.Cli.Service
                 return Path.GetFileName(filePath);
             }
         }
-       
+
     }
 }

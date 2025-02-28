@@ -1,5 +1,6 @@
 using FFmpeg.Service;
 using FileStorage.Service;
+using Infrastructure.Cache;
 using MessageBus;
 using MessageBus.Shared.Configs;
 using Profile.Domain.Events;
@@ -13,7 +14,7 @@ builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddFileStorage();
 builder.Services.AddHostedService<VideoConverterHostedService>();
 builder.Services.AddFFMpeg(builder.Configuration);
-
+builder.Services.AddRedisCache(builder.Configuration);
 
 //builder.Services.AddMassTransit(x =>
 //{
