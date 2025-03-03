@@ -22,11 +22,7 @@ export const ProfilePage = function () {
 
     useState(() => {
 
-        API.get("profile/api/Profile/profile", {
-            headers: {
-                'Authorization': JwtTokenService.getFormatedTokenForHeader()
-            }
-        }).then(response => {
+        API.get("profile/api/Profile/profile").then(response => {
             if (response.status === 200) {
                 console.log(response.data);
                 setProfile(response.data);
@@ -58,10 +54,9 @@ export const ProfilePage = function () {
             Object.keys(form).forEach((key) => {
                 formData.append(key, form[key])
             });
-
             await API.post(url, formData, {
                 headers: {
-                    'Authorization': JwtTokenService.getFormatedTokenForHeader()
+                    'Content-Type': 'multipart/form-data'
                 }
             }).then(response => {
                 if (response.status === 200) {

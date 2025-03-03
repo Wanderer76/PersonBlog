@@ -9,10 +9,7 @@ const API = axios.create({
 });
 
 API.interceptors.request.use(config => {
-    config.headers = {
-        ["Authorization"]: JwtTokenService.getFormatedTokenForHeader(),
-        'Content-Type': 'application/json'
-    };
+    config.headers.Authorization = JwtTokenService.getFormatedTokenForHeader();
     return config;
 });
 

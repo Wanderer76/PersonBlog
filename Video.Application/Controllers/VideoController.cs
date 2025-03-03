@@ -1,13 +1,12 @@
 using FileStorage.Service.Service;
+using Infrastructure.Cache.Models;
+using Infrastructure.Cache.Services;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Distributed;
 using Profile.Service.Models;
 using Profile.Service.Models.Blog;
 using Profile.Service.Models.File;
 using Shared.Services;
-using System.Text;
-using System.Text.Json;
 using System.Web;
 using Video.Service.Interface;
 
@@ -27,9 +26,9 @@ namespace VideoView.Application.Controllers
         private const string UserPostInfo = "api/Post/userInfo";
         private const string CommonBlog = "api/Blog/blogByPost";
 
-        private readonly IDistributedCache _cache;
+        private readonly ICacheService _cache;
 
-        public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory, IDistributedCache cache)
+        public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory, ICacheService cache)
             : base(logger)
         {
             storage = factory.CreateFileStorage();
@@ -71,17 +70,14 @@ namespace VideoView.Application.Controllers
         {
             var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}"))!.ObjectName;
 
-            var data = await _cache.GetAsync(fileName);
+            var data = await _cache.GetCachedDataAsync<byte[]?>(fileName);
             if (data == null)
             {
                 var result = new MemoryStream();
                 await storage.ReadFileAsync(postId, fileName, result);
                 result.Position = 0;
                 data = result.ToArray();
-                await _cache.SetAsync(fileName, data, new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-                });
+                await _cache.SetCachedDataAsync(fileName, data, TimeSpan.FromMinutes(5));
             }
             return File(data, HLSType);
         }
@@ -96,39 +92,61 @@ namespace VideoView.Application.Controllers
         }
 
         [HttpGet("video/{postId:guid}")]
-        public async Task<IActionResult> GetVideoData(Guid postId)
+        public async Task<IActionResult> GetPostData(Guid postId)
         {
-            var cacheVideData = await _cache.GetStringAsync(postId.ToString());
             try
             {
-                if (cacheVideData == null)
+                var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+                HttpContext.TryGetUserFromContext(out var userId);
+                using var client = _httpClientFactory.CreateClient("Profile");
+                var session = GetUserSession();
+                var userInfoCache = session == null ? null : await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
+
+                var postCached = await _cache.GetCachedDataAsync<PostDetailViewModel>($"{nameof(PostDetailViewModel)}:{postId}");
+                var post = postCached == null
+                    ? client.GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}")
+                    : Task.FromResult(postCached);
+
+                var blogCache = await _cache.GetCachedDataAsync<BlogModel>($"{nameof(BlogModel)}:{postId}");
+                var blog = blogCache == null
+                    ? client.GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}")
+                    : Task.FromResult(blogCache);
+
+                var query = HttpUtility.ParseQueryString(string.Empty);
+                if (userId.HasValue)
                 {
-                    var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-                    HttpContext.TryGetUserFromContext(out var userId);
-                    using var client = _httpClientFactory.CreateClient("Profile");
-                    var post = client.GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
-                    var blog = client.GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}");
-
-                    var query = HttpUtility.ParseQueryString(string.Empty);
-                    if (userId.HasValue)
-                    {
-                        query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
-                    }
-                    query["address"] = HttpUtility.UrlEncode(remoteIp);
-
-                    var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query.ToString()}");
-
-
-                    await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
-                    var result = new VideoDataViewModel(await post, await blog, await userInfo, new List<string>());
-                    await _cache.SetStringAsync(postId.ToString(), JsonSerializer.Serialize(result), new DistributedCacheEntryOptions
-                    {
-                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
-                    });
-                    return Ok(result);
+                    query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
                 }
-                else
-                    return Ok(JsonSerializer.Deserialize<VideoDataViewModel>(cacheVideData));
+                query["address"] = HttpUtility.UrlEncode(remoteIp);
+
+
+                var currentPostViewCache = userInfoCache?.PostViews?.FirstOrDefault(x => x.PostId == postId);
+                var userInfo = currentPostViewCache == null
+                    ? client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query.ToString()}")!
+                    : Task.FromResult(userInfoCache!.PostViews
+                    .Where(x => x.PostId == postId)
+                    .Select(x => new UserViewInfo(x.IsViewed, x.IsLike, x.IsSubscribe))
+                    .First());
+
+                await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
+                var result = new VideoDataViewModel(await post, await blog, await userInfo, new List<string>());
+
+                if (postCached == null)
+                {
+                    await _cache.SetCachedDataAsync($"{nameof(PostDetailViewModel)}:{postId}", result.Post, TimeSpan.FromMinutes(10));
+                }
+
+                if (blogCache == null)
+                {
+                    await _cache.SetCachedDataAsync($"{nameof(BlogModel)}:{postId}", result.Blog!, TimeSpan.FromHours(1));
+                }
+
+                if (userInfoCache != null && currentPostViewCache == null)
+                {
+                    userInfoCache.PostViews.Add(new PostView(postId, result.UserPostInfo.IsViewed, result.UserPostInfo.IsLike, result.UserPostInfo.IsSubscribe));
+                    await _cache.SetCachedDataAsync(GetSessionKey(session!), userInfoCache, TimeSpan.FromMinutes(10));
+                }
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -143,6 +161,22 @@ namespace VideoView.Application.Controllers
             HttpContext.TryGetUserFromContext(out var userId);
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _videoService.SetViewToPost(postId, userId, remoteIp);
+
+            var session = GetUserSession();
+            if (session != null)
+            {
+                var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
+                if (userSession != null)
+                {
+                    var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
+                    if (postViewed != null)
+                    {
+                        postViewed.IsViewed = true;
+                        await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
+                    }
+                }
+            }
+
             return Ok();
         }
 
@@ -158,6 +192,23 @@ namespace VideoView.Application.Controllers
                 RemoteIp = remoteIp,
                 UserId = userId
             });
+
+            var session = GetUserSession();
+            if (session != null)
+            {
+                var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
+                if (userSession != null)
+                {
+                    var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
+                    if (postViewed != null)
+                    {
+                        postViewed.IsViewed = true;
+                        postViewed.IsLike = isLike;
+                        await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
+                    }
+                }
+            }
+
             return Ok();
         }
     }

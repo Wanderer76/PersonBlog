@@ -38,9 +38,10 @@ export function CreatePostForm(props) {
 
         await API.post(url, formData, {
             headers: {
-                'Authorization': JwtTokenService.getFormatedTokenForHeader()
+                ['Content-Type']: 'multipart/form-data'
             }
-        }).then(response => {
+        }
+        ).then(response => {
             if (response.status === 200) {
                 console.log(response.data)
                 postId = response.data;
@@ -89,7 +90,9 @@ export function CreatePostForm(props) {
         try {
             const response = await API.post('/profile/post/uploadChunk', formData,
                 {
-                    headers: { 'Authorization': JwtTokenService.getFormatedTokenForHeader() }
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
                 });
             console.log(response);
             if (response.status !== 200) throw new Error('Upload failed');

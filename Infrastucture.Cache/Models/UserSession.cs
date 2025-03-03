@@ -17,6 +17,7 @@ namespace Infrastructure.Cache.Models
     }
     public class PostView
     {
+        public Guid PostId { get; set; }
         public bool IsViewed { get; set; }
         public bool? IsLike { get; set; }
         public bool IsSubscribe { get; set; }
@@ -26,8 +27,9 @@ namespace Infrastructure.Cache.Models
 
         }
 
-        public PostView(bool isViewed, bool? isLike, bool isSubscribe)
+        public PostView(Guid postId, bool isViewed, bool? isLike, bool isSubscribe)
         {
+            PostId = postId;
             IsViewed = isViewed;
             IsLike = isLike;
             IsSubscribe = isSubscribe;

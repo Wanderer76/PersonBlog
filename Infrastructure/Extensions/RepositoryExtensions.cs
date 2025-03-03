@@ -5,7 +5,7 @@ namespace Infrastructure.Extensions
 {
     public static class RepositoryExtensions
     {
-        public static void AddRepository<TDbContext,TEntity>(this IServiceCollection services)
+        public static void AddRepository<TDbContext, TEntity>(this IServiceCollection services)
             where TEntity : class
             where TDbContext : BaseDbContext
         {

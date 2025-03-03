@@ -3,55 +3,32 @@ using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
 using Infrastructure.Cache.Models;
 using Infrastructure.Cache.Services;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Services;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AuthenticationApplication.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
     private readonly ICacheService _cacheService;
-    public AuthController(IAuthService authService, ICacheService cacheService)
+    
+    public AuthController(ILogger<AuthController> logger, IAuthService authService, ICacheService cacheService)
+    : base(logger)
     {
         _authService = authService;
         _cacheService = cacheService;
     }
 
-
     [HttpGet("session")]
     public async Task<IActionResult> CreateSession()
     {
-        var hasSession = Request.Cookies.TryGetValue("sessionId", out var session);
+        var session = GetUserSession();
         await RefreshSession(session);
-
         return Ok();
-    }
-
-    private async Task RefreshSession(string? session, string? token = null)
-    {
-        if (session != null)
-        {
-            var data = await _cacheService.GetCachedData<UserSession>($"Session:{session}")!;
-            if (token != null)
-            {
-                data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
-            }
-            await _cacheService.SetCachedData($"Session:{session}", data!, TimeSpan.FromHours(1));
-        }
-        else
-        {
-            var sessionId = GuidService.GetNewGuid().ToString();
-            await _cacheService.SetCachedData($"Session:{sessionId}", new UserSession(), TimeSpan.FromHours(1));
-            Response.Cookies.Append("sessionId", sessionId, new CookieOptions
-            {
-                SameSite = SameSiteMode.Strict,
-                HttpOnly = true
-            });
-        }
     }
 
     [HttpPost("create")]
@@ -82,4 +59,28 @@ public class AuthController : ControllerBase
         await RefreshSession(session);
         return Ok(response);
     }
+
+    private async Task RefreshSession(string? session, string? token = null)
+    {
+        if (session != null)
+        {
+            var data = await _cacheService.GetCachedDataAsync<UserSession>($"Session:{session}")!;
+            if (token != null)
+            {
+                data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
+            }
+            await _cacheService.SetCachedDataAsync($"Session:{session}", data!, TimeSpan.FromHours(1));
+        }
+        else
+        {
+            var sessionId = GuidService.GetNewGuid().ToString();
+            await _cacheService.SetCachedDataAsync($"Session:{sessionId}", new UserSession(), TimeSpan.FromHours(1));
+            Response.Cookies.Append("sessionId", sessionId, new CookieOptions
+            {
+                SameSite = SameSiteMode.Strict,
+                HttpOnly = true
+            });
+        }
+    }
+
 }

@@ -92,7 +92,7 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId, int resolution = 0)
         {
-            var fileMetadata = await _cacheService.GetCachedData<VideoMetadata>($"VideoMetadata:{postId}");
+            var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"VideoMetadata:{postId}");
             if (fileMetadata == null)
             {
                 fileMetadata = await _context.Get<Post>()
@@ -100,7 +100,7 @@ namespace Profile.Service.Services.Implementation
                     .Select(x => x.VideoFile)
                     .Where(x => x.Resolution == (VideoResolution)resolution)
                     .FirstAsync();
-                await _cacheService.SetCachedData($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
+                await _cacheService.SetCachedDataAsync($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
             }
 
             return new FileMetadataModel(
@@ -138,7 +138,6 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
         {
-
             var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, page, limit);
 
             var profileId = await _context.Get<Blog>()
@@ -148,7 +147,7 @@ namespace Profile.Service.Services.Implementation
 
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var posts = new List<PostModel>(pagedPosts.Posts.Count());
-            var cachedPosts = (await _cacheService.GetCachedData<PostModel>(pagedPosts.Posts.Select(x => $"PostModel:{x.Id}"))).ToList();
+            var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => $"{nameof(PostModel)}:{x.Id}"))).ToList();
             if (cachedPosts.Count != pagedPosts.Posts.Count())
             {
                 foreach (var post in pagedPosts.Posts.ExceptBy(cachedPosts.Select(x => x.Id), x => x.Id))
@@ -175,14 +174,14 @@ namespace Profile.Service.Services.Implementation
                                 );
                     posts.Add(postModel);
                     cachedPosts.Add(postModel);
-                    await _cacheService.SetCachedData($"PostModel:{postModel.Id}", postModel, TimeSpan.FromHours(10));
+                    await _cacheService.SetCachedDataAsync($"{nameof(PostModel)}:{postModel.Id}", postModel, TimeSpan.FromHours(10));
 
                 }
             }
             return new PostPagedListViewModel
             {
                 TotalPageCount = pagedPosts.TotalPagesCount,
-                Posts = cachedPosts.OrderBy(x=>x.CreatedAt),
+                Posts = cachedPosts.OrderByDescending(x => x.CreatedAt),
             };
         }
 
@@ -197,16 +196,17 @@ namespace Profile.Service.Services.Implementation
                 post.IsDeleted = true;
             }
 
+            await _cacheService.RemoveCachedDataAsync($"{nameof(PostModel)}:{id}");
             await _context.SaveChangesAsync();
-            await _cacheService.RemoveCachedData($"PostModel:{id}");
         }
 
         public async Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
         {
             var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var metadata = await _context.Get<VideoMetadata>()
-                .Where(x => x.IsProcessed == true)
-                .FirstAsync(x => x.PostId == uploadVideoChunkDto.PostId);
+            var cacheMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"{nameof(VideoMetadata)}:{uploadVideoChunkDto.PostId}");
+            var metadata = cacheMetadata ?? await _context.Get<VideoMetadata>()
+                    .Where(x => x.IsProcessed == true)
+                    .FirstAsync(x => x.PostId == uploadVideoChunkDto.PostId);
 
             await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId, GuidService.GetNewGuid(), uploadVideoChunkDto.ChunkData, new VideoChunkUploadingInfo
             {
@@ -288,7 +288,7 @@ namespace Profile.Service.Services.Implementation
                             isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null
                         );
 
-            await _cacheService.SetCachedData($"PostModel:{result.Id}", result, TimeSpan.FromHours(10));
+            await _cacheService.SetCachedDataAsync($"PostModel:{result.Id}", result, TimeSpan.FromHours(10));
 
             return result;
         }
@@ -298,7 +298,9 @@ namespace Profile.Service.Services.Implementation
             var post = await _context.Get<Post>()
                 .Include(x => x.VideoFile)
                 .FirstAsync(x => x.Id == postId);
+
             var fileStorage = _fileStorageFactory.CreateFileStorage();
+            
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
                 ? null
                 : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);

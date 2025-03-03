@@ -62,13 +62,13 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogAsync(Guid id)
         {
-            var result = await _cacheService.GetCachedData<Blog>(GetBlogByIdKey(id));
+            var result = await _cacheService.GetCachedDataAsync<Blog>(GetBlogByIdKey(id));
             if (result == null)
             {
                 result = await _context.Get<Blog>()
                     .FirstAsync(x => x.Id == id);
 
-                await _cacheService.SetCachedData(GetBlogByIdKey(id), result, TimeSpan.FromMinutes(10));
+                await _cacheService.SetCachedDataAsync(GetBlogByIdKey(id), result, TimeSpan.FromMinutes(10));
             }
             return result.ToBlogModel();
         }
@@ -84,7 +84,7 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
         {
-            var blog = await _cacheService.GetCachedData<Blog>(GetBlogByUserIdKey(userId));
+            var blog = await _cacheService.GetCachedDataAsync<Blog>(GetBlogByUserIdKey(userId));
 
             if (blog == null)
             {
@@ -93,7 +93,7 @@ namespace Profile.Service.Services.Implementation
                     .Where(x => x.ProfileId == profile.Id)
                     .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
 
-                await _cacheService.SetCachedData(GetBlogByUserIdKey(userId),blog,TimeSpan.FromMinutes(10));
+                await _cacheService.SetCachedDataAsync(GetBlogByUserIdKey(userId),blog,TimeSpan.FromMinutes(10));
             }
             return blog.ToBlogModel();
         }

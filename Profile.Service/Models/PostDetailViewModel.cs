@@ -8,12 +8,12 @@ namespace Profile.Service.Models
         public Guid Id { get; }
         public string? PreviewUrl { get; }
         public DateTimeOffset CreatedAt { get; }
-        public int ViewCount { get; }
+        public int ViewCount { get; set; }
         public string? Description { get; }
         public string Title { get; }
         public PostType Type { get; }
-        public int LikeCount { get; }
-        public int DislikeCount { get; }
+        public int LikeCount { get; set; }
+        public int DislikeCount { get; set; }
         public VideoMetadataModel? VideoData { get; }
         public bool IsProcessed { get; }
 

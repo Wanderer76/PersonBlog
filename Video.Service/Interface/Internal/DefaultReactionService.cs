@@ -1,5 +1,4 @@
 ﻿using MessageBus;
-using MessageBus.Configs;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
 using RabbitMQ.Client;

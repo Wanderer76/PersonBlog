@@ -87,7 +87,7 @@ namespace VideoProcessing.Cli.Service
                 fileMetadata.Duration = videoStream.Duration;
                 fileMetadata.ProcessState = ProcessState.Complete;
                 await _context.SaveChangesAsync();
-                await _cacheService.RemoveCachedData($"PostModel:{post.Id}");
+                await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
             }
             catch (Exception e)
             {

@@ -42,7 +42,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
-    //app.UseCors(cfg => cfg.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
     using (var scope = app.Services.CreateScope())
     {

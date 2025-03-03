@@ -1,4 +1,5 @@
 ﻿using FileStorage.Service.Models;
+using Infrastructure.Cache.Services;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Service.Models.File;
@@ -10,14 +11,24 @@ namespace Profile.Service.Services.Implementation
     internal class DefaultVideoService : IVideoService
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
-
-        public DefaultVideoService(IReadWriteRepository<IProfileEntity> context)
+        private readonly ICacheService _cacheService;
+        public DefaultVideoService(IReadWriteRepository<IProfileEntity> context, ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
 
         public async Task<VideoMetadata> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
         {
+            var cacheKey = $"{nameof(VideoMetadata)}:{uploadVideoChunk.PostId}";
+
+            var cacheResult = await _cacheService.GetCachedDataAsync<VideoMetadata>(cacheKey);
+
+            if (cacheResult != null)
+            {
+                return cacheResult;
+            }
+
             var metadata = await _context.Get<VideoMetadata>()
                 .FirstOrDefaultAsync(x => x.PostId == uploadVideoChunk.PostId);
 
@@ -29,23 +40,35 @@ namespace Profile.Service.Services.Implementation
 
             if (metadata == null)
             {
-                metadata = new VideoMetadata
+                try
                 {
-                    Id = GuidService.GetNewGuid(),
-                    FileExtension = uploadVideoChunk.FileExtension,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    ContentType = uploadVideoChunk.ContentType,
-                    PostId = uploadVideoChunk.PostId,
-                    IsProcessed = true,
-                    Name = uploadVideoChunk.FileName,
-                    Resolution = VideoResolution.Original,
-                    ObjectName = string.Empty
-                };
-                _context.Add(metadata);
-                await _context.SaveChangesAsync();
+                    metadata = new VideoMetadata
+                    {
+                        Id = GuidService.GetNewGuid(),
+                        FileExtension = uploadVideoChunk.FileExtension,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        ContentType = uploadVideoChunk.ContentType,
+                        PostId = uploadVideoChunk.PostId,
+                        IsProcessed = true,
+                        Name = uploadVideoChunk.FileName,
+                        Resolution = VideoResolution.Original,
+                        ObjectName = string.Empty
+                    };
+                    await _cacheService.SetCachedDataAsync(cacheKey, metadata, TimeSpan.FromMinutes(10));
+                    _context.Add(metadata);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    await _cacheService.RemoveCachedDataAsync(cacheKey);
+                }
+            }
+            else
+            {
+                await _cacheService.SetCachedDataAsync(cacheKey, metadata, TimeSpan.FromMinutes(10));
             }
 
-            return metadata;
+            return metadata!;
         }
     }
 }

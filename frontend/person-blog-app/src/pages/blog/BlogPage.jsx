@@ -51,12 +51,7 @@ const CommonProfileData = function (props) {
         if (hasMounted.current) return;
 
         async function sendRequest() {
-            await API.get(url, {
-                headers: {
-                    'Authorization': JwtTokenService.getFormatedTokenForHeader(),
-                    'Content-Type': 'appplication/json'
-                },
-            }).then(response => {
+            await API.get(url).then(response => {
                 if (response.status === 200) {
                     hasMounted.current = true;
                     return response.data

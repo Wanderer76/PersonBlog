@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
-
 using ReadContext = Shared.Persistence.IReadRepository<Profile.Domain.Entities.IProfileEntity>;
 
 namespace Profile.Persistence.Repository
@@ -37,9 +36,9 @@ namespace Profile.Persistence.Repository
                 .CountAsync();
 
             var posts = await context.Get<Post>()
-                .Include(x => x.VideoFile)
                 .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                 .OrderByDescending(x => x.CreatedAt)
+                .Include(x => x.VideoFile)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync();

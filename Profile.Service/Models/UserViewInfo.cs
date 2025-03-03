@@ -4,7 +4,6 @@
     {
         public bool IsViewed { get; set; }
         public bool? IsLike { get; set; }
-
         public bool IsSubscribe { get; set; }
 
 

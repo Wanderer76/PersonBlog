@@ -7,10 +7,10 @@ namespace Infrastructure.Cache.Services
 {
     public interface ICacheService
     {
-        Task<T?> GetCachedData<T>(string key);
-        Task<IEnumerable<T>> GetCachedData<T>(IEnumerable<string> keys);
-        Task SetCachedData<T>(string key, T data, TimeSpan ttl) where T : notnull;
-        Task RemoveCachedData(string key);
+        Task<T?> GetCachedDataAsync<T>(string key);
+        Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<string> keys);
+        Task SetCachedDataAsync<T>(string key, T data, TimeSpan ttl) where T : notnull;
+        Task RemoveCachedDataAsync(string key);
     }
 
     internal class DefaultCacheService : ICacheService
@@ -23,7 +23,7 @@ namespace Infrastructure.Cache.Services
             _redis = redis;
         }
 
-        public async Task<T?> GetCachedData<T>(string key)
+        public async Task<T?> GetCachedDataAsync<T>(string key)
         {
             var result = await _redis.GetDatabase().StringGetAsync(key);
             if (!result.HasValue)
@@ -33,24 +33,24 @@ namespace Infrastructure.Cache.Services
             return JsonSerializer.Deserialize<T>(result);
         }
 
-        public async Task<IEnumerable<T>> GetCachedData<T>(IEnumerable<string> keys)
+        public async Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<string> keys)
         {
             var db = _redis.GetDatabase();
             var redisKeys = keys.Select(x => new RedisKey($"{x}")).ToArray();
             var result = await db.StringGetAsync(redisKeys);
-            return result == null 
+            return result == null
                 ? []
                 : result
                 .Where(x => x.HasValue)
                 .Select(obj => JsonSerializer.Deserialize<T>(obj!)!);
         }
 
-        public async Task RemoveCachedData(string key)
+        public async Task RemoveCachedDataAsync(string key)
         {
             await _redis.GetDatabase().StringGetDeleteAsync(new RedisKey(key));
         }
 
-        public async Task SetCachedData<T>(string key, T data, TimeSpan ttl) where T : notnull
+        public async Task SetCachedDataAsync<T>(string key, T data, TimeSpan ttl) where T : notnull
         {
             try
             {
