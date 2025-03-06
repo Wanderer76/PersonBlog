@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Infrastructure.Cache.Services;
+using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using ReadContext = Shared.Persistence.IReadRepository<Profile.Domain.Entities.IProfileEntity>;
 
@@ -20,12 +21,20 @@ namespace Profile.Persistence.Repository
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public static async Task<AppProfile?> GetProfileByUserIdAsync(this ReadContext context, Guid userId)
+        public static async Task<AppProfile?> GetProfileByUserIdAsync(this ReadContext context, ICacheService cache, Guid userId)
         {
-            return await context.Get<AppProfile>()
-                .Where(x => x.IsDeleted == false)
-                .Where(x => x.UserId == userId)
-                .FirstOrDefaultAsync();
+            var profile = await cache.GetCachedDataAsync<AppProfile>($"{nameof(AppProfile)}:{userId}");
+            if (profile == null)
+            {
+                profile = await context.Get<AppProfile>()
+                    .Where(x => x.IsDeleted == false)
+                    .Where(x => x.UserId == userId)
+                    .FirstOrDefaultAsync();
+
+                if (profile != null)
+                    await cache.SetCachedDataAsync($"{nameof(AppProfile)}:{userId}", profile, TimeSpan.FromMinutes(10));
+            }
+            return profile;
         }
 
         public static async Task<(int TotalPagesCount, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, int page, int limit)

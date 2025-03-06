@@ -5,7 +5,6 @@ using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using Shared.Persistence;
-using System.Text.Json;
 using Video.Domain.Entities;
 using Video.Domain.Events;
 

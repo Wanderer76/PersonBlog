@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Shared
 {
-    public abstract class BaseEntity
+    public abstract class BaseEntity<TId> where TId : notnull
     {
+        [Key]
+        public TId Id { get; set; }
+
         public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
         public bool IsDeleted { get; set; } = false;
     }

@@ -13,8 +13,9 @@ namespace Infrastructure.Cache.Models
 
         public bool IsAnonymous => UserId != null;
 
-        public List<PostView> PostViews { get; set; } = new List<PostView>();
+        public List<PostView> PostViews { get; } = new List<PostView>();
     }
+
     public class PostView
     {
         public Guid PostId { get; set; }

@@ -1,12 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Shared;
+using System.ComponentModel.DataAnnotations;
 
 namespace Profile.Domain.Entities;
 
-public class AppProfile : IProfileEntity
+public class AppProfile : BaseEntity<Guid>, IProfileEntity
 {
-    [Key]
-    public Guid Id { get; set; }
-
     [Required]
     public string FirstName { get; set; } = string.Empty;
 
@@ -21,11 +19,29 @@ public class AppProfile : IProfileEntity
 
     public DateTimeOffset? Birthdate { get; set; }
 
-    public Guid UserId { get; set; } = Guid.Empty;
+    public Guid UserId { get; set; }
 
-    public bool IsDeleted { get; set; }
     public string? PhotoUrl { get; set; }
 
     public ProfileState ProfileState { get; set; }
-    public List<Subscription> Subscriptions { get; set; }
+    public List<Subscription> Subscriptions { get; set; } = [];
+
+    internal AppProfile(DateTimeOffset? birthdate, string email, string firstName, string surName, string? lastName, Guid userId)
+    {
+        Id = userId;
+        Birthdate = birthdate;
+        Email = email;
+        FirstName = firstName;
+        SurName = surName;
+        LastName = lastName;
+        UserId = userId;
+        IsDeleted = false;
+        ProfileState = ProfileState.Active;
+
+    }
+
+    public static AppProfile Create(DateTimeOffset? birthdate, string email, string firstName, string surName, string? lastName, Guid userId)
+    {
+        return new AppProfile(birthdate, email, firstName, surName, lastName, userId);
+    }
 }

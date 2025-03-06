@@ -29,15 +29,14 @@ public class ProfileDbContext : BaseDbContext
 
                 entity.HasData(new[]
                 {
-                    new AppProfile
-                    {
-                        Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
-                        UserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                        Email = "ateplinsky@mail.ru",
-                        ProfileState = ProfileState.Active,
-                        FirstName = "Артём",
-                        SurName="Теплинский",
-                    }
+                    AppProfile.Create(
+                    birthdate:null,
+                        userId: Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+                        email :"ateplinsky@mail.ru",
+                        firstName :"Артём",
+                        surName:"Теплинский",
+                        lastName:null)
+
                 });
             }
             {

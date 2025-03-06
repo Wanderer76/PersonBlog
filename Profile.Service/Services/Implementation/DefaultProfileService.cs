@@ -27,18 +27,14 @@ namespace Profile.Service.Services.Implementation
                 throw new ArgumentException("Пользователь уже существует");
             }
 
-            var profile = new AppProfile
-            {
-                Id = Guid.NewGuid(),
-                Birthdate = profileCreateModel.Birthdate,
-                Email = profileCreateModel.Email,
-                FirstName = profileCreateModel.FirstName ?? string.Empty,
-                SurName = profileCreateModel.SurName ?? string.Empty,
-                LastName = profileCreateModel.LastName ?? string.Empty,
-                ProfileState = ProfileState.Active,
-                UserId = profileCreateModel.UserId,
-                IsDeleted = false
-            };
+            var profile = AppProfile.Create(
+                birthdate: profileCreateModel.Birthdate,
+                email: profileCreateModel.Email,
+                firstName: profileCreateModel.FirstName ?? string.Empty,
+                surName: profileCreateModel.SurName ?? string.Empty,
+                lastName: profileCreateModel.LastName ?? string.Empty,
+                userId: profileCreateModel.UserId
+            );
             _context.Add(profile);
             await _context.SaveChangesAsync();
             return profile.ToProfileModel();
