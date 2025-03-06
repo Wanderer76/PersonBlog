@@ -18,6 +18,7 @@ namespace ReactionProcessing.Cli.Handlers
         private readonly RabbitMqMessageBus _messageBus;
         private readonly RabbitMqVideoReactionConfig _reactionConfig = new();
         private readonly IReadWriteRepository<IVideoViewEntity> videoViewRepository;
+
         public VideoViewEventHandler(IHttpClientFactory httpClientFactory, RabbitMqMessageBus messageBus, IReadWriteRepository<IVideoViewEntity> videoViewRepository)
         {
             _httpClientFactory = httpClientFactory;

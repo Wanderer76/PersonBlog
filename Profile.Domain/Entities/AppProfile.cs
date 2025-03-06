@@ -26,6 +26,8 @@ public class AppProfile : BaseEntity<Guid>, IProfileEntity
     public ProfileState ProfileState { get; set; }
     public List<Subscription> Subscriptions { get; set; } = [];
 
+    public AppProfile() { }
+
     internal AppProfile(DateTimeOffset? birthdate, string email, string firstName, string surName, string? lastName, Guid userId)
     {
         Id = userId;

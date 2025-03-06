@@ -72,7 +72,7 @@ export const VideoPage = function (props) {
     }, [searchParams.videoId])
 
     async function setReaction(isLike) {
-        await API.post(`video/Video/setReaction/${post.id}?isLike=${isLike}`, null, {
+        await API.post(`profile/api/Post/setReaction/${post.id}?isLike=${isLike}`, null, {
             headers: {
                 'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
             }
@@ -145,11 +145,7 @@ export const VideoPage = function (props) {
     async function handleSubscribe() {
         const current = userView.isSubscribe;
         var isError = false;
-        await API.post(`profile/api/Subscription/${userView.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`, null, {
-            headers: {
-                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
-            }
-        }).catch(e => {
+        await API.post(`profile/api/Subscription/${userView.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`).catch(e => {
             isError = true
             alert(e.response.data)
         }).finally(() => {

@@ -2,7 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Profile.Service.Models;
 using Profile.Service.Models.File;
+using Profile.Service.Models.Post;
 using Profile.Service.Services;
+using Shared.Services;
 using System.Text;
 
 namespace ProfileApplication.Controllers
@@ -37,10 +39,42 @@ namespace ProfileApplication.Controllers
 
         [HttpGet("userInfo/{postId:guid}")]
         [Produces(typeof(UserViewInfo))]
-        public async Task<IActionResult> GetDetailPostByIdAsync(Guid postId,Guid? userId, string?address)
+        public async Task<IActionResult> GetDetailPostByIdAsync(Guid postId, Guid? userId, string? address)
         {
-            var result = await _userPostService.GetUserViewPostInfoAsync(postId,userId,address);
+            var result = await _userPostService.GetUserViewPostInfoAsync(postId, userId, address);
             return Ok(result);
+        }
+
+        [HttpPost("setReaction/{postId:guid}")]
+        public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
+        {
+            HttpContext.TryGetUserFromContext(out var userId);
+            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            await _postService.SetReactionToPost(new ReactionCreateModel
+            {
+                IsLike = isLike,
+                PostId = postId,
+                RemoteIp = remoteIp,
+                UserId = userId
+            });
+
+            //var session = GetUserSession();
+            //if (session != null)
+            //{
+            //    var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
+            //    if (userSession != null)
+            //    {
+            //        var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
+            //        if (postViewed != null)
+            //        {
+            //            postViewed.IsViewed = true;
+            //            postViewed.IsLike = isLike;
+            //            await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
+            //        }
+            //    }
+            //}
+
+            return Ok();
         }
     }
 }

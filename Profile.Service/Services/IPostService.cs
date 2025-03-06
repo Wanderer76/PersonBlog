@@ -26,5 +26,6 @@ namespace Profile.Service.Services
         Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
         Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
         Task SetVideoViewed(ViewedVideoModel value);
+        Task SetReactionToPost(ReactionCreateModel value);
     }
 }

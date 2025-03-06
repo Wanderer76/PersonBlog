@@ -26,6 +26,8 @@ namespace Profile.Domain.Entities
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
 
+        private Post() { }
+
         public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title)
         {
             Id = id;
