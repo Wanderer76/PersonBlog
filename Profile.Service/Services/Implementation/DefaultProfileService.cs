@@ -106,7 +106,7 @@ namespace Profile.Service.Services.Implementation
             {
                 return true;
             }
-            return await _context.Get<PostViewers>()
+            return await _context.Get<PostViewer>()
                 .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
                 .AnyAsync();
         }

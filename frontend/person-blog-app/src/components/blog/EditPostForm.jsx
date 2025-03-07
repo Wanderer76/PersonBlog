@@ -23,7 +23,7 @@ export function EditPostForm(props) {
     }
 
     async function sendForm() {
-        const url = "/profile/api/Blog/post/edit";
+        const url = "/profile/api/Post/edit";
         let formData = new FormData();
         var postId = postForm.id;
         Object.keys(postForm).forEach((key) => {
@@ -89,7 +89,7 @@ export function EditPostForm(props) {
         formData.append('chunkData', chunk);
         console.log(postId);
         try {
-            const response = await API.post('/profile/post/uploadChunk', formData,
+            const response = await API.post('/profile/api/Post/uploadChunk', formData,
                 {
                     headers: { 'Authorization': JwtTokenService.getFormatedTokenForHeader() }
                 });

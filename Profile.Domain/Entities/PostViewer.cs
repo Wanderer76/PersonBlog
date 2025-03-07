@@ -2,7 +2,7 @@
 
 namespace Profile.Domain.Entities
 {
-    public class PostViewers : IProfileEntity
+    public class PostViewer : IProfileEntity
     {
         [Key]
         public Guid Id { get; set; }
@@ -10,6 +10,7 @@ namespace Profile.Domain.Entities
         public Guid? UserId { get; set; }
         public Guid? ProfileId { get; set; }
         public bool? IsLike { get; set; }
+        public bool IsViewed { get; set; }
         public string UserIpAddress {  get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }

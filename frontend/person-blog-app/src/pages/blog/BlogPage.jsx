@@ -102,7 +102,7 @@ const BlogPosts = function (props) {
     }])
 
     useEffect(() => {
-        const url = `/profile/api/Blog/posts/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
+        const url = `/profile/api/Post/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
         if (hasMounted.current) return;
 
         API.get(url, {
@@ -125,7 +125,7 @@ const BlogPosts = function (props) {
     })
 
     async function handleRemove(id) {
-        const url = `profile/post/delete/${id}`;
+        const url = `profile/api/Post/delete/${id}`;
         const response = await API.delete(url, {
             headers: {
                 Authorization: JwtTokenService.getFormatedTokenForHeader()

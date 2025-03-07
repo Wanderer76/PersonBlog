@@ -24,7 +24,7 @@ namespace ProfileApplication.Handlers
             var post = await _context.Get<Post>()
                 .FirstAsync(x => x.Id == @event.PostId);
 
-            var existView = await _context.Get<PostViewers>()
+            var existView = await _context.Get<PostViewer>()
                 .Where(x => x.PostId == post.Id)
                 .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
                 .FirstOrDefaultAsync();
@@ -49,20 +49,29 @@ namespace ProfileApplication.Handlers
                 {
                     post.DislikeCount++;
                 }
-                post.ViewCount++;
-                existView = new PostViewers
+                if (@event.IsViewed)
+                {
+                    post.ViewCount++;
+                }
+                existView = new PostViewer
                 {
                     Id = GuidService.GetNewGuid(),
                     PostId = @event.PostId,
                     IsLike = @event.IsLike,
                     UserId = userId,
                     UserIpAddress = ipAddress,
-                    ProfileId = profileId
+                    ProfileId = profileId,
+                    IsViewed = @event.IsViewed,
                 };
                 _context.Add(existView);
             }
             else
             {
+                if (@event.IsViewed)
+                {
+                    post.ViewCount++;
+                }
+
                 if (@event.IsLike.HasValue)
                 {
                     if (@event.IsLike == true)
@@ -94,6 +103,7 @@ namespace ProfileApplication.Handlers
                 existView.UserId = userId;
                 existView.UserIpAddress = ipAddress;
                 existView.ProfileId = profileId;
+                existView.IsViewed = @event.IsViewed;
             }
 
             await _context.SaveChangesAsync();

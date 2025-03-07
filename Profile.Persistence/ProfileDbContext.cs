@@ -12,7 +12,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<Post> Posts { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
     public DbSet<ProfileEventMessages> ProfileEventMessages { get; set; }
-    public DbSet<PostViewers> PostViewers { get; set; }
+    public DbSet<PostViewer> PostViewers { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {
@@ -94,7 +94,7 @@ public class ProfileDbContext : BaseDbContext
                 //});
             }
             {
-                var entity = modelBuilder.Entity<PostViewers>();
+                var entity = modelBuilder.Entity<PostViewer>();
                 entity.HasIndex(x => new { x.UserId, x.PostId, x.UserIpAddress, x.CreatedAt });
                 // entity.HasData(new[]
                 //{

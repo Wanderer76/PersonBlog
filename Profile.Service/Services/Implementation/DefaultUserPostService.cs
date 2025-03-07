@@ -19,7 +19,7 @@ namespace Profile.Service.Services.Implementation
         {
             if (userId.HasValue || address != null)
             {
-                var hasView = await _readRepository.Get<PostViewers>()
+                var hasView = await _readRepository.Get<PostViewer>()
                     .Where(x => x.PostId == postId)
                     .Where(x => x.UserId == userId || x.UserIpAddress == address)
                     .FirstOrDefaultAsync();

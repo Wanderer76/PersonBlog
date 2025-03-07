@@ -38,7 +38,7 @@ namespace ReactionProcessing.Cli.Handlers
                 .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
                 .FirstOrDefaultAsync();
 
-            if (hasView == null)
+            if (hasView == null && @event.IsViewed)
             {
                 hasView = new PostViewer
                 {

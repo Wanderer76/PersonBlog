@@ -72,14 +72,7 @@ export const VideoPage = function (props) {
     }, [searchParams.videoId])
 
     async function setReaction(isLike) {
-        await API.post(`profile/api/Post/setReaction/${post.id}?isLike=${isLike}`, null, {
-            headers: {
-                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
-            }
-        }).catch(e => { })
-            .finally(() => {
-
-            })
+        await API.post(`profile/api/Post/setReaction/${post.id}?isLike=${isLike}`)
 
         if (isLike === true) {
             if (userView.isLike === true) {
@@ -130,11 +123,7 @@ export const VideoPage = function (props) {
         if (!viewRecorded && userView.isViewed === false && !inProgress &&
             (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
             inProgress = true;
-            await API.post(`video/Video/setReaction/${post.id} ${userView.isLike == null ? '' : `?isLike=${userView.isLike}`}`, null, {
-                headers: {
-                    'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
-                }
-            }).catch(e => { })
+            await API.post(`video/Video/setView/${post.id}`).catch(e => { })
                 .finally(() => {
                     viewRecorded = true;
                     inProgress = false;

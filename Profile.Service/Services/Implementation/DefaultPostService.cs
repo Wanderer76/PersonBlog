@@ -373,7 +373,7 @@ namespace Profile.Service.Services.Implementation
             var post = await _context.Get<Post>()
                 .FirstAsync(x => x.Id == @event.PostId);
 
-            var existView = await _context.Get<PostViewers>()
+            var existView = await _context.Get<PostViewer>()
                 .Where(x => x.PostId == post.Id)
                 .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
                 .FirstOrDefaultAsync();
@@ -399,7 +399,7 @@ namespace Profile.Service.Services.Implementation
                     post.DislikeCount++;
                 }
                 post.ViewCount++;
-                existView = new PostViewers
+                existView = new PostViewer
                 {
                     Id = GuidService.GetNewGuid(),
                     PostId = @event.PostId,

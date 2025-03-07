@@ -65,11 +65,19 @@ public class AuthController : BaseController
         if (session != null)
         {
             var data = await _cacheService.GetCachedDataAsync<UserSession>($"Session:{session}")!;
-            if (token != null)
+            if (data == null)
             {
-                data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
+                await _cacheService.RemoveCachedDataAsync($"Session:{session}");
+                Response.Cookies.Delete("sessionId");
             }
-            await _cacheService.SetCachedDataAsync($"Session:{session}", data!, TimeSpan.FromHours(1));
+            else
+            {
+                if (token != null)
+                {
+                    data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
+                }
+                await _cacheService.SetCachedDataAsync($"Session:{session}", data!, TimeSpan.FromHours(1));
+            }   
         }
         else
         {

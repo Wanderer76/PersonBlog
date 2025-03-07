@@ -22,7 +22,7 @@ export function CreatePostForm(props) {
     }
 
     async function sendForm() {
-        const url = "/profile/api/Blog/post/create";
+        const url = "/profile/api/Post/create";
         let formData = new FormData();
         var postId = null;
         Object.keys(postForm).forEach((key) => {
@@ -88,7 +88,7 @@ export function CreatePostForm(props) {
         formData.append('chunkData', chunk);
 
         try {
-            const response = await API.post('/profile/post/uploadChunk', formData,
+            const response = await API.post('/profile/api/Post/uploadChunk', formData,
                 {
                     headers: {
                         'Content-Type': 'multipart/form-data'
