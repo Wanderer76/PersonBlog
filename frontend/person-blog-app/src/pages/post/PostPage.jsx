@@ -205,7 +205,7 @@ export const VideoPage = function (props) {
             <VideoPlayer className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
-                    url: getUrl(post.id, post.videoData.objectName),
+                    url: getUrl(post.id,post.videoData.objectName),
                     label: '',
                     postId: post.id,
                     autoplay: false,

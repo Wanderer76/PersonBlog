@@ -31,7 +31,7 @@ namespace Profile.Service.Services.Implementation
 
             var hasSubscription = await _readWriteRepository.Get<Subscription>()
                 .Where(x => x.ProfileId == profile.Id && x.BlogId == blogId)
-                .Where(x => x.SubscriptionEndDate != null)
+                .Where(x => x.SubscriptionEndDate == null)
                 .FirstOrDefaultAsync();
 
             if (hasSubscription != null)
