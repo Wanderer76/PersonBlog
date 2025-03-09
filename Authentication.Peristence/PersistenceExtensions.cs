@@ -11,7 +11,7 @@ public static class PersistenceExtensions
     public static void AddAuthenticationPersistence(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration["ConnectionStrings:AuthenticationDbContext"]!;
-        services.AddRepository<AuthenticationDbContext, IAuthEntity>();
+        services.AddDefaultRepository<AuthenticationDbContext, IAuthEntity>();
         services.AddNpgSqlDbContext<AuthenticationDbContext>(connectionString);
         services.AddScoped<IDbInitializer,AuthDbInitializer>();
         //services.AddDbContext<AuthenticationDbContext>(option =>

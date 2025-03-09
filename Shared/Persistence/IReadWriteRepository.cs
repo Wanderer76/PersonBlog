@@ -29,50 +29,52 @@ public class DefaultRepository<TContext, TEntity> : IReadWriteRepository<TEntity
     where TEntity : class
     where TContext : BaseDbContext
 {
-    private readonly TContext _context;
+    private readonly IReadRepository<TEntity> _readRepository;
+    private readonly IWriteRepository<TEntity> _writeRepository;
 
-    public DefaultRepository(TContext context)
+    public DefaultRepository(IReadRepository<TEntity> readRepository, IWriteRepository<TEntity> writeRepository)
     {
-        _context = context;
+        _readRepository = readRepository;
+        _writeRepository = writeRepository;
     }
 
     public IQueryable<TDbEntity> Get<TDbEntity>() where TDbEntity : class, TEntity
     {
-        return _context.Set<TDbEntity>().AsNoTrackingWithIdentityResolution();
+        return _readRepository.Get<TDbEntity>();
     }
 
     public void Attach(TEntity entity)
     {
-        _context.Attach(entity);
+        _writeRepository.Attach(entity);
     }
 
     public void Add(TEntity entity)
     {
-        _context.Add(entity);
+        _writeRepository.Add(entity);
     }
 
     public int SaveChanges()
     {
-        return _context.SaveChanges();
+        return _writeRepository.SaveChanges();
     }
 
     public Task<int> SaveChangesAsync()
     {
-        return _context.SaveChangesAsync();
+        return _writeRepository.SaveChangesAsync();
     }
 
     public void Remove(TEntity entity)
     {
-        _context.Remove(entity);
+        _writeRepository.Remove(entity);
     }
 
     public Task<IDbContextTransaction> BeginTransactionAsync()
     {
-        return _context.Database.BeginTransactionAsync();
-    } 
+        return _writeRepository.BeginTransactionAsync();
+    }
     public async Task CommitAsync()
     {
-        await _context.Database.CommitTransactionAsync();
+        await _writeRepository.CommitAsync();
     }
 
 }

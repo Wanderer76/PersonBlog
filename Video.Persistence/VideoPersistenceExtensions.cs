@@ -16,7 +16,7 @@ namespace Video.Persistence
             //services.AddDbContextPool<ProfileDbContext>(option =>
             //option.UseInMemoryDatabase("Profile"));
             //services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();
-            services.AddRepository<VideoDbContext, IVideoViewEntity>();
+            services.AddDefaultRepository<VideoDbContext, IVideoViewEntity>();
         }
     }
 }

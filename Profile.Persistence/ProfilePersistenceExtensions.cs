@@ -16,7 +16,7 @@ namespace Profile.Persistence
             //services.AddDbContextPool<ProfileDbContext>(option =>
             //option.UseInMemoryDatabase("Profile"));
             //services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();
-            services.AddRepository<ProfileDbContext, IProfileEntity>();
+            services.AddDefaultRepository<ProfileDbContext, IProfileEntity>();
         }
     }
 }
