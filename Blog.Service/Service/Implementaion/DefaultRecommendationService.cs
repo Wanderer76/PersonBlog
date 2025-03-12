@@ -5,19 +5,19 @@ using Profile.Domain.Entities;
 using Shared.Persistence;
 using System.Collections.Concurrent;
 
-namespace Blog.Service.Service.Implementaion
+namespace Recommendation.Service.Service.Implementaion
 {
     internal class DefaultRecommendationService : IRecommendationService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadRepository<IProfileEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
-        public DefaultRecommendationService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory)
+        public DefaultRecommendationService(IReadRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
         }
 
-        public async Task<IEnumerable<VideoCardModel>> GetRecommendations(int page, int limit)
+        public async Task<IEnumerable<VideoCardModel>> GetRecommendationsAsync(int page, int limit)
         {
             var newestPosts = await _context.Get<Post>()
                 .Include(x => x.VideoFile)
@@ -72,9 +72,9 @@ namespace Blog.Service.Service.Implementaion
             }).ToList();
         }
 
-        public async Task<IEnumerable<VideoCardModel>> GetRecommendations(int page, int pageSize, Guid? currentPostId)
+        public async Task<IEnumerable<VideoCardModel>> GetRecommendationsAsync(int page, int pageSize, Guid? currentPostId)
         {
-            var recommendations = await GetRecommendations(page, pageSize);
+            var recommendations = await GetRecommendationsAsync(page, pageSize);
             return recommendations.Count() > 2 && recommendations.Any(x => x.PostId == currentPostId)
                 ? recommendations.Where(x => x.PostId != currentPostId)
                 : recommendations;

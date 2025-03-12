@@ -1,12 +1,14 @@
-﻿using Blog.Service.Service;
-using Infrastructure.Models;
+﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Recommendation.Service.Service;
 
 namespace Blog.Application.Controllers
 {
     /// <summary>
     /// Тут будут методы для просмотра/комментирования контента
     /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
     public class ContentController : BaseController
     {
         private readonly IRecommendationService _recommendationService;
@@ -24,6 +26,13 @@ namespace Blog.Application.Controllers
         {
             return Ok();
         }
+
+        [HttpGet("recommendations")]
+        public async Task<IActionResult> GetRecommendations(int page, int pageSize, Guid? currentPostId)
+        {
+            return Ok(await _recommendationService.GetRecommendationsAsync(page, pageSize, currentPostId));
+        }
+
 
         //public async Task<IActionResult> AddCommentToPost(CommentCreateForm form)
         //{

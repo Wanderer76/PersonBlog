@@ -5,7 +5,7 @@ using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
-using Profile.Persistence.Repository;
+using Profile.Persistence.Repository.Quries;
 using Profile.Service.Models;
 using Profile.Service.Models.File;
 using Profile.Service.Models.Post;

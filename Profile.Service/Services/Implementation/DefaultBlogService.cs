@@ -1,7 +1,7 @@
 ﻿using Infrastructure.Cache.Services;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
-using Profile.Persistence.Repository;
+using Profile.Persistence.Repository.Quries;
 using Profile.Service.Exceptions;
 using Profile.Service.Models.Blog;
 using Shared.Persistence;

@@ -1,6 +1,6 @@
-using Blog.Service;
 using FileStorage.Service;
 using Profile.Persistence;
+using Recommendation.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 

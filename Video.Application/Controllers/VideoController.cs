@@ -114,7 +114,7 @@ namespace VideoView.Application.Controllers
                 query["address"] = HttpUtility.UrlEncode(remoteIp);
 
 
-                var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query.ToString()}");
+                var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query}");
 
                 await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
                 var result = new VideoDataViewModel(await post, await blog, await userInfo, new List<string>());

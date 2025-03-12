@@ -25,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authentication.Service", "A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authentication.Test", "Authentication.Test\Authentication.Test.csproj", "{024BA0A7-362C-416D-8CD7-14E71ABBE212}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blog.Application", "VideoChannel.Application\Blog.Application.csproj", "{5F8C10B5-5F5C-404E-9F03-E5416479FF18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Recommendation.Application", "VideoChannel.Application\Recommendation.Application.csproj", "{5F8C10B5-5F5C-404E-9F03-E5416479FF18}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{46B45E6F-2994-42A8-9FEB-69C8D854785E}"
 	ProjectSection(SolutionItems) = preProject
@@ -54,7 +54,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Service", "Video.Serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Video.Persistence", "Video.Persistence\Video.Persistence.csproj", "{42693521-51AC-4235-9929-D4CCD10D03E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Service", "Blog.Service\Blog.Service.csproj", "{E655E964-5926-4B1F-8289-86A2B2AD0997}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recommendation.Service", "Blog.Service\Recommendation.Service.csproj", "{E655E964-5926-4B1F-8289-86A2B2AD0997}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageBus", "MessageBus\MessageBus.csproj", "{1B48286F-2E48-4928-9108-00F2DE377D38}"
 EndProject

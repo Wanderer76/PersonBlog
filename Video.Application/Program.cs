@@ -1,12 +1,10 @@
-using Blog.Service;
 using FileStorage.Service;
 using Infrastructure.Cache;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using Microsoft.AspNetCore.HttpOverrides;
-using Profile.Persistence;
-using Profile.Service.Extensions;
+using Recommendation.Service;
 using Video.Persistence;
 using Video.Service;
 using VideoView.Application.HostedServices;
@@ -19,16 +17,19 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddVideoPersistence(builder.Configuration);
-builder.Services.AddProfileServices();
 builder.Services.AddFileStorage();
 builder.Services.AddVideoService();
-builder.Services.AddBlogServices();
+
 builder.Services.AddHttpClient("Profile", x =>
 {
     x.BaseAddress = new Uri("http://localhost:7892/profile/");
 });
+builder.Services.AddHttpClient("Recommendation", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5209/api/");
+});
+
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();

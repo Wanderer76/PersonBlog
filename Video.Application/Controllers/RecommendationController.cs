@@ -1,7 +1,7 @@
-﻿using Blog.Service.Service;
+﻿using Blog.Service.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Distributed;
+using System.Web;
 
 namespace VideoView.Application.Controllers
 {
@@ -9,18 +9,27 @@ namespace VideoView.Application.Controllers
     [Route("api/[controller]")]
     public class RecommendationController : BaseController
     {
-        private readonly IRecommendationService _recommendationService;
-        private readonly IDistributedCache _cache;
-        public RecommendationController(ILogger<RecommendationController> logger, IRecommendationService recommendationService, IDistributedCache cache) : base(logger)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public RecommendationController(ILogger<RecommendationController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
-            _recommendationService = recommendationService;
-            _cache = cache;
+            _httpClientFactory = httpClientFactory;
         }
 
         [HttpGet("/recommendations")]
         public async Task<IActionResult> GetRecommendedPosts(int page, int limit, Guid? currentPostId)
         {
-            return Ok(await _recommendationService.GetRecommendations(page, limit, currentPostId));
+            using var client = _httpClientFactory.CreateClient("Recommendation");
+            var query = HttpUtility.ParseQueryString(string.Empty);
+            if (currentPostId.HasValue)
+            {
+                query["currentPostId"] = HttpUtility.UrlEncode(currentPostId.Value.ToString());
+            }
+            query["page"] = HttpUtility.UrlEncode(page.ToString());
+            query["pageSize"] = HttpUtility.UrlEncode(limit.ToString());
+
+            var result = await client.GetFromJsonAsync<IEnumerable<VideoCardModel>>($"Content/recommendations?{query}");
+            return Ok(result);
         }
     }
 }

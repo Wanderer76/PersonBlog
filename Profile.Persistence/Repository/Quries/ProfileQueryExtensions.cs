@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using ReadContext = Shared.Persistence.IReadRepository<Profile.Domain.Entities.IProfileEntity>;
 
-namespace Profile.Persistence.Repository
+namespace Profile.Persistence.Repository.Quries
 {
     public static class ProfileQueryExtensions
     {
