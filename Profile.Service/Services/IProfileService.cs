@@ -12,5 +12,8 @@ namespace Profile.Service.Services
         Task SubscribeToBlog(Guid blogId);
         Task UnSubscribeFromBlog(Guid blogId);
         Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
+
+        Task SubscribeToLevel(Guid blogId, Guid levelId);
+        Task UnSubscribeToLevel(Guid blogId, Guid levelId);
     }
 }

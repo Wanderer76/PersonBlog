@@ -18,7 +18,7 @@ namespace Profile.Service.Services
         /// <param name="output"></param>
         [Obsolete("Пригоден для .mp4 сейчас не поддерживается")]
         Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
-        Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId, int resolution = 0);
+        Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId);
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);

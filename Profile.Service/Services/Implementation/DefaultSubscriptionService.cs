@@ -29,7 +29,7 @@ namespace Profile.Service.Services.Implementation
                 throw new ArgumentException("Вы не можете подписаться на свой канал");
             }
 
-            var hasSubscription = await _readWriteRepository.Get<Subscription>()
+            var hasSubscription = await _readWriteRepository.Get<Subscriber>()
                 .Where(x => x.ProfileId == profile.Id && x.BlogId == blogId)
                 .Where(x => x.SubscriptionEndDate == null)
                 .FirstOrDefaultAsync();
@@ -37,7 +37,7 @@ namespace Profile.Service.Services.Implementation
             if (hasSubscription != null)
                 throw new ArgumentException("У вас уже есть подписка на канал");
 
-            var newSubscription = new Subscription
+            var newSubscription = new Subscriber
             {
                 Id = GuidService.GetNewGuid(),
                 BlogId = blogId,
@@ -65,7 +65,7 @@ namespace Profile.Service.Services.Implementation
             var profile = await _readWriteRepository.Get<AppProfile>()
                           .FirstAsync(x => x.UserId == userId);
 
-            var hasActiveSubscription = await _readWriteRepository.Get<Subscription>()
+            var hasActiveSubscription = await _readWriteRepository.Get<Subscriber>()
                 .Where(x => x.ProfileId == profile.Id && x.BlogId == blogId)
                 .Where(x => x.SubscriptionEndDate == null)
                 .FirstOrDefaultAsync();

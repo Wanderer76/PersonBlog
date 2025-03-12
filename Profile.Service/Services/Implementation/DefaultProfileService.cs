@@ -110,5 +110,15 @@ namespace Profile.Service.Services.Implementation
                 .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
                 .AnyAsync();
         }
+
+        public Task SubscribeToLevel(Guid blogId, Guid levelId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UnSubscribeToLevel(Guid blogId, Guid levelId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

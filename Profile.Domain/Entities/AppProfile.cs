@@ -20,11 +20,10 @@ public class AppProfile : BaseEntity<Guid>, IProfileEntity
     public DateTimeOffset? Birthdate { get; set; }
 
     public Guid UserId { get; set; }
-
     public string? PhotoUrl { get; set; }
-
     public ProfileState ProfileState { get; set; }
-    public List<Subscription> Subscriptions { get; set; } = [];
+
+    public List<ProfileSubscription> PaymentSubscriptions { get; set; } = [];
 
     public AppProfile() { }
 

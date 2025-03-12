@@ -24,7 +24,7 @@ namespace Profile.Service.Services.Implementation
                     .Where(x => x.UserId == userId || x.UserIpAddress == address)
                     .FirstOrDefaultAsync();
 
-                var hasSub = userId.HasValue && await _readRepository.Get<Subscription>()
+                var hasSub = userId.HasValue && await _readRepository.Get<Subscriber>()
                     .Active()
                     .ByUserId(userId.Value)
                     .AnyAsync();

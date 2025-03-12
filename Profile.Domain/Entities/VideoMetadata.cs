@@ -14,7 +14,7 @@ namespace Profile.Domain.Entities
         public Guid PostId { get; set; }
 
         [ForeignKey(nameof(PostId))]
-        public Post Post { get; set; }
+        public Post Post { get; set; } = null!;
     }
 
     public enum ProcessState

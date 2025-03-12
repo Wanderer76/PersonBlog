@@ -17,6 +17,6 @@ namespace Profile.Domain.Entities
         
         [ForeignKey(nameof(ProfileId))]
         public AppProfile Profile { get; set; }
-        public List<Subscription> Subscriptions { get; set; }
+        public List<Subscriber> Subscriptions { get; set; }
     }
 }

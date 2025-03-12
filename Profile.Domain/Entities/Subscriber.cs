@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Profile.Domain.Entities
 {
-    public class Subscription : IProfileEntity
+    public class Subscriber : IProfileEntity
     {
         [Key]
         public required Guid Id { get; set; }
@@ -23,7 +23,7 @@ namespace Profile.Domain.Entities
 
     public static class SubscriptionsQueryFilters
     {
-        public static IQueryable<Subscription> Active(this IQueryable<Subscription> query) => query.Where(x => x.SubscriptionEndDate == null);
-        public static IQueryable<Subscription> ByUserId(this IQueryable<Subscription> query, Guid userId) => query.Where(x => x.Profile.UserId == userId);
+        public static IQueryable<Subscriber> Active(this IQueryable<Subscriber> query) => query.Where(x => x.SubscriptionEndDate == null);
+        public static IQueryable<Subscriber> ByUserId(this IQueryable<Subscriber> query, Guid userId) => query.Where(x => x.Profile.UserId == userId);
     }
 }

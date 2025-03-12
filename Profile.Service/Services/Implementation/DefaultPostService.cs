@@ -43,63 +43,74 @@ namespace Profile.Service.Services.Implementation
             var now = DateTimeOffset.UtcNow;
             var storage = _fileStorageFactory.CreateFileStorage();
 
-            if (postCreateDto.Video != null)
+            //if (postCreateDto.Video != null)
+            //{
+            //    var video = postCreateDto.Video!;
+            //    videoId = GuidService.GetNewGuid();
+
+            //    var objectName = await storage.PutFileWithResolutionAsync(postId, videoId!.Value, video.OpenReadStream());
+
+            //    var videoMetadata = new VideoMetadata
+            //    {
+            //        Id = videoId.Value,
+            //        ContentType = video.ContentType,
+            //        CreatedAt = now,
+            //        Length = video.Length,
+            //        Name = video.Name,
+            //        PostId = postId,
+            //        ObjectName = objectName,
+            //        FileExtension = Path.GetExtension(video.FileName),
+            //        Resolution = VideoResolution.Original
+            //    };
+            //    var fileUrl = await storage.GetFileUrlAsync(postId, objectName);
+            //    var videoCreateEvent = new VideoConvertEvent
+            //    {
+            //        EventId = GuidService.GetNewGuid(),
+            //        FileUrl = fileUrl,
+            //        UserProfileId = userProfileId,
+            //        ObjectName = objectName,
+            //        FileId = videoMetadata.Id
+            //    };
+
+            //    var videoEvent = new ProfileEventMessages
+            //    {
+            //        Id = videoCreateEvent.EventId,
+            //        EventData = JsonSerializer.Serialize(videoCreateEvent),
+            //        EventType = nameof(VideoConvertEvent),
+            //        State = EventState.Pending,
+            //    };
+
+            //    _context.Add(videoEvent);
+            //    _context.Add(videoMetadata);
+            //}
+
+            var hasSubscription = await _context.Get<SubscriptionLevel>()
+                .Where(x => x.BlogId == blog.Id)
+                .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
+                .Where(x => x.IsDeleted == false)
+                .AnyAsync();
+
+            if (!hasSubscription)
             {
-                var video = postCreateDto.Video!;
-                videoId = GuidService.GetNewGuid();
-
-                var objectName = await storage.PutFileWithResolutionAsync(postId, videoId!.Value, video.OpenReadStream());
-
-                var videoMetadata = new VideoMetadata
-                {
-                    Id = videoId.Value,
-                    ContentType = video.ContentType,
-                    CreatedAt = now,
-                    Length = video.Length,
-                    Name = video.Name,
-                    PostId = postId,
-                    ObjectName = objectName,
-                    FileExtension = Path.GetExtension(video.FileName),
-                    Resolution = VideoResolution.Original
-                };
-                var fileUrl = await storage.GetFileUrlAsync(postId, objectName);
-                var videoCreateEvent = new VideoConvertEvent
-                {
-                    EventId = GuidService.GetNewGuid(),
-                    FileUrl = fileUrl,
-                    UserProfileId = userProfileId,
-                    ObjectName = objectName,
-                    FileId = videoMetadata.Id
-                };
-
-                var videoEvent = new ProfileEventMessages
-                {
-                    Id = videoCreateEvent.EventId,
-                    EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(VideoConvertEvent),
-                    State = EventState.Pending,
-                };
-
-                _context.Add(videoEvent);
-                _context.Add(videoMetadata);
+                throw new ArgumentException("Не существует текущего уровня подписки");
             }
-            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title);
+
+            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title, postCreateDto.SubscriptionLevelId);
             _context.Add(post);
             await _context.SaveChangesAsync();
 
             return postId;
         }
 
-        public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId, int resolution = 0)
+        public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId)
         {
             var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"VideoMetadata:{postId}");
             if (fileMetadata == null)
             {
-                fileMetadata = await _context.Get<Post>()
-                    .Where(x => x.Id == postId)
-                    .Select(x => x.VideoFile)
-                    .Where(x => x.Resolution == (VideoResolution)resolution)
+                fileMetadata = await _context.Get<VideoMetadata>()
+                    .Where(x => x.PostId == postId)
                     .FirstAsync();
+
                 await _cacheService.SetCachedDataAsync($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
             }
 
@@ -300,7 +311,7 @@ namespace Profile.Service.Services.Implementation
                 .FirstAsync(x => x.Id == postId);
 
             var fileStorage = _fileStorageFactory.CreateFileStorage();
-            
+
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
                 ? null
                 : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);

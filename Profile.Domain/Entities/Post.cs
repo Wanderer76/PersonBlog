@@ -20,15 +20,22 @@ namespace Profile.Domain.Entities
         public Blog Blog { get; set; }
 
         public string? PreviewId { get; set; }
+        public Guid VideoFileId { get; set; }
+        public Guid? SubscriptionId { get; set; }
 
-        public VideoMetadata VideoFile { get; set; }
         public int ViewCount { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
 
+        [ForeignKey(nameof(VideoFileId))]
+        public VideoMetadata VideoFile { get; set; }
+
+        [ForeignKey(nameof(SubscriptionId))]
+        public SubscriptionLevel? Subscription { get; set; }
+
         private Post() { }
 
-        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title)
+        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title, Guid? subscriptionId)
         {
             Id = id;
             BlogId = blogId;
@@ -37,6 +44,7 @@ namespace Profile.Domain.Entities
             Description = description;
             IsDeleted = isDeleted;
             Title = title;
+            SubscriptionId = subscriptionId;
         }
     }
 
