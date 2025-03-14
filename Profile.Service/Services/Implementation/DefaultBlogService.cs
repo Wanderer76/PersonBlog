@@ -1,13 +1,13 @@
-﻿using Infrastructure.Cache.Services;
+﻿using Blog.Domain.Entities;
+using Blog.Persistence.Repository.Quries;
+using Blog.Service.Exceptions;
+using Blog.Service.Models.Blog;
+using Infrastructure.Cache.Services;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Persistence.Repository.Quries;
-using Profile.Service.Exceptions;
-using Profile.Service.Models.Blog;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal sealed class DefaultBlogService : IBlogService
     {
@@ -27,17 +27,17 @@ namespace Profile.Service.Services.Implementation
         {
             var profile = await _context.GetProfileByUserIdAsync(_cacheService, model.UserId) ?? throw new EntityNotFoundException("Профиль не найден");
 
-            var isBlogAlreadyExists = await _context.Get<Blog>()
+            var isBlogAlreadyExists = await _context.Get<PersonBlog>()
                 .AnyAsync(x => x.ProfileId == profile.Id);
 
             if (isBlogAlreadyExists)
             {
-                throw new BlogAlreaddyExistsException("У данного пользователя уже существует блог");
+                throw new BlogAlreadyExistsException("У данного пользователя уже существует блог");
             }
 
             var blogId = GuidService.GetNewGuid();
 
-            var blog = new Blog
+            var blog = new PersonBlog
             {
                 Id = blogId,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -54,7 +54,7 @@ namespace Profile.Service.Services.Implementation
 
         public async Task DeleteBlogAsync(Guid id)
         {
-            var blog = await _context.Get<Blog>()
+            var blog = await _context.Get<PersonBlog>()
                 .FirstAsync(x => x.Id == id);
             _context.Remove(blog);
             await _context.SaveChangesAsync();
@@ -62,10 +62,10 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogAsync(Guid id)
         {
-            var result = await _cacheService.GetCachedDataAsync<Blog>(GetBlogByIdKey(id));
+            var result = await _cacheService.GetCachedDataAsync<PersonBlog>(GetBlogByIdKey(id));
             if (result == null)
             {
-                result = await _context.Get<Blog>()
+                result = await _context.Get<PersonBlog>()
                     .FirstAsync(x => x.Id == id);
 
                 await _cacheService.SetCachedDataAsync(GetBlogByIdKey(id), result, TimeSpan.FromMinutes(10));
@@ -84,11 +84,11 @@ namespace Profile.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
         {
-            var blog = await _cacheService.GetCachedDataAsync<Blog>(GetBlogByUserIdKey(userId));
+            var blog = await _cacheService.GetCachedDataAsync<PersonBlog>(GetBlogByUserIdKey(userId));
             if (blog == null)
             {
                 var profile = await _context.GetProfileByUserIdAsync(_cacheService, userId) ?? throw new EntityNotFoundException("Профиль не найден");
-                blog = await _context.Get<Blog>()
+                blog = await _context.Get<PersonBlog>()
                     .Where(x => x.ProfileId == profile.Id)
                     .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
 

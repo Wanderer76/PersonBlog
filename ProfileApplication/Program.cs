@@ -1,3 +1,8 @@
+using Authentication.Service;
+using Blog.API.Handlers;
+using Blog.API.HostedServices;
+using Blog.Persistence;
+using Blog.Service.Extensions;
 using FileStorage.Service;
 using Infrastructure.Cache;
 using Infrastructure.Extensions;
@@ -5,10 +10,6 @@ using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
-using Profile.Persistence;
-using Profile.Service.Extensions;
-using ProfileApplication.Handlers;
-using ProfileApplication.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddProfileServices();
+builder.Services.AddUserSessionServices();
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();

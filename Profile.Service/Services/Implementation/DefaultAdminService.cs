@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Persistence.Repository.Quries;
-using Profile.Service.Models;
+﻿using Blog.Domain.Entities;
+using Blog.Persistence.Repository.Quries;
+using Blog.Service.Models;
+using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal class DefaultAdminService : IAdminService
     {

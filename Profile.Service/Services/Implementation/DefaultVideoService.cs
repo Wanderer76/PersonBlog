@@ -1,12 +1,12 @@
-﻿using FileStorage.Service.Models;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models.File;
+using FileStorage.Service.Models;
 using Infrastructure.Cache.Services;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Service.Models.File;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal class DefaultVideoService : IVideoService
     {

@@ -1,18 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
+﻿using Blog.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
-namespace Profile.Persistence;
+namespace Blog.Persistence;
 
 public class ProfileDbContext : BaseDbContext
 {
     public DbSet<AppProfile> Profiles { get; set; }
     public DbSet<Subscriber> Subscribers { get; set; }
-    public DbSet<Blog> Blogs { get; set; }
+    public DbSet<PersonBlog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
     public DbSet<ProfileEventMessages> ProfileEventMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
+    public DbSet<ProfileSubscription> ProfileSubscriptions { get; set; }
+    public DbSet<SubscriptionLevel> SubscriptionLevels { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {
@@ -40,15 +42,15 @@ public class ProfileDbContext : BaseDbContext
                 });
             }
             {
-                var entity = modelBuilder.Entity<Blog>();
+                var entity = modelBuilder.Entity<PersonBlog>();
                 entity.HasIndex(x => x.ProfileId).IsUnique();
                 entity.HasData(new[]
                {
-                    new Blog
+                    new PersonBlog
                     {
                         Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
                         Title = "Тест",
-                        ProfileId =Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d2e"),
+                        ProfileId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
                         CreatedAt = DateTimeOffset.UtcNow
                     }
                 });
@@ -108,6 +110,10 @@ public class ProfileDbContext : BaseDbContext
                 //         FileId = Guid.Parse("5ce1c7bb-d7e7-497c-8a20-2b8c503d4426"),
                 //     }
                 // });
+            }
+            {
+                var entity = modelBuilder.Entity<ProfileSubscription>();
+                entity.HasKey(x => new { x.ProfileId, x.SubscriptionLevelId });
             }
         }
     }

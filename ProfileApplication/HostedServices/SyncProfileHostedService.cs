@@ -2,7 +2,7 @@
 using MessageBus;
 using RabbitMQ.Client;
 
-namespace ProfileApplication.HostedServices
+namespace Blog.API.HostedServices
 {
     public class SyncProfileHostedService : BackgroundService
     {

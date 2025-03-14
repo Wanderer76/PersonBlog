@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Profile.Domain.Entities
+namespace Blog.Domain.Entities
 {
     public class Post : IProfileEntity
     {
@@ -17,10 +17,10 @@ namespace Profile.Domain.Entities
         public bool IsDeleted { get; set; }
 
         [ForeignKey(nameof(BlogId))]
-        public Blog Blog { get; set; }
+        public PersonBlog Blog { get; set; }
 
         public string? PreviewId { get; set; }
-        public Guid VideoFileId { get; set; }
+        public Guid? VideoFileId { get; set; }
         public Guid? SubscriptionId { get; set; }
 
         public int ViewCount { get; set; }
@@ -28,7 +28,7 @@ namespace Profile.Domain.Entities
         public int DislikeCount { get; set; }
 
         [ForeignKey(nameof(VideoFileId))]
-        public VideoMetadata VideoFile { get; set; }
+        public VideoMetadata? VideoFile { get; set; }
 
         [ForeignKey(nameof(SubscriptionId))]
         public SubscriptionLevel? Subscription { get; set; }

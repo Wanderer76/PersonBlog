@@ -1,14 +1,14 @@
 ﻿using RabbitMQ.Client;
 using Shared.Persistence;
-using Profile.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using MessageBus;
 using System.Collections.Concurrent;
-using Profile.Domain.Events;
 using Infrastructure.Models;
 using MessageBus.Shared.Configs;
+using Blog.Domain.Entities;
+using Blog.Domain.Events;
 
-namespace ProfileApplication.HostedServices
+namespace Blog.API.HostedServices
 {
     public class OutboxPublisherService : BackgroundService
     {

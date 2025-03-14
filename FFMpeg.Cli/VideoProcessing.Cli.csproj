@@ -12,7 +12,7 @@
     <ProjectReference Include="..\Infrastucture.Cache\Infrastructure.Cache.csproj" />
     <ProjectReference Include="..\MessageBus.Shared\MessageBus.Shared.csproj" />
     <ProjectReference Include="..\MessageBus\MessageBus.csproj" />
-    <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />
+    <ProjectReference Include="..\Profile.Persistence\Blog.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -5,15 +5,15 @@ VisualStudioVersion = 17.11.35222.181
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthenticationApplication", "AuthenticationApplication\AuthenticationApplication.csproj", "{518B3F85-8081-45CB-AB10-02D0EF62DACE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProfileApplication", "ProfileApplication\ProfileApplication.csproj", "{1B88B955-9EF6-4174-8EB8-FACAD2932FEF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blog.API", "ProfileApplication\Blog.API.csproj", "{1B88B955-9EF6-4174-8EB8-FACAD2932FEF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Profile.Domain", "Profile.Domain\Profile.Domain.csproj", "{677A44D9-2AC8-4551-A32E-D59660451616}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blog.Domain", "Profile.Domain\Blog.Domain.csproj", "{677A44D9-2AC8-4551-A32E-D59660451616}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "Shared\Shared.csproj", "{AC4A61AC-B1D4-4AF5-BFD7-5438C9397916}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Profile.Persistence", "Profile.Persistence\Profile.Persistence.csproj", "{9CBAC222-8BF2-4A7C-98F6-9385D6DE8770}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blog.Persistence", "Profile.Persistence\Blog.Persistence.csproj", "{9CBAC222-8BF2-4A7C-98F6-9385D6DE8770}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Profile.Service", "Profile.Service\Profile.Service.csproj", "{66717701-6C71-46C4-B70B-67E997026426}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blog.Service", "Profile.Service\Blog.Service.csproj", "{66717701-6C71-46C4-B70B-67E997026426}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Authentication.Domain", "Authentication.Domain\Authentication.Domain.csproj", "{DA775968-8932-4192-9599-9093F3A21311}"
 EndProject

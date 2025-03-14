@@ -1,4 +1,4 @@
-﻿namespace Profile.Service.Models.Post
+﻿namespace Blog.Service.Models.Post
 {
     public class VideoMetadataModel
     {
@@ -7,7 +7,7 @@
         public string ContentType { get; }
         public string ObjectName { get; }
 
-        public VideoMetadataModel(Guid id, long length, string contentType,string objectName)
+        public VideoMetadataModel(Guid id, long length, string contentType, string objectName)
         {
             Id = id;
             Length = length;

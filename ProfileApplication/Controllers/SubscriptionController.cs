@@ -1,10 +1,10 @@
-﻿using Infrastructure.Models;
+﻿using Blog.Service.Services;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Service.Services;
 using Shared.Services;
 
-namespace ProfileApplication.Controllers
+namespace Blog.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -48,6 +48,7 @@ namespace ProfileApplication.Controllers
         }
 
         //получение всего контента от блогов
+        [HttpGet("subscriptionContent")]
         [Authorize]
         public async Task<IActionResult> GetSubscriptionsContent(int page, int offset)
         {

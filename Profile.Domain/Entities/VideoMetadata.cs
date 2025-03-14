@@ -2,7 +2,7 @@
 using Shared.Models;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Profile.Domain.Entities
+namespace Blog.Domain.Entities
 {
     public sealed class VideoMetadata : FileMetadata, IProfileEntity
     {

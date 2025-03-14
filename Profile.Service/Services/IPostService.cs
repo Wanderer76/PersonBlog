@@ -1,8 +1,8 @@
-﻿using Profile.Service.Models;
-using Profile.Service.Models.File;
-using Profile.Service.Models.Post;
+﻿using Blog.Service.Models;
+using Blog.Service.Models.File;
+using Blog.Service.Models.Post;
 
-namespace Profile.Service.Services
+namespace Blog.Service.Services
 {
     //TODO добавить кеширование
     public interface IPostService

@@ -1,9 +1,9 @@
-﻿using Infrastructure.Cache.Services;
+﻿using Blog.Domain.Entities;
+using Infrastructure.Cache.Services;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using ReadContext = Shared.Persistence.IReadRepository<Profile.Domain.Entities.IProfileEntity>;
+using ReadContext = Shared.Persistence.IReadRepository<Blog.Domain.Entities.IProfileEntity>;
 
-namespace Profile.Persistence.Repository.Quries
+namespace Blog.Persistence.Repository.Quries
 {
     public static class ProfileQueryExtensions
     {

@@ -1,7 +1,7 @@
 ﻿using Shared;
 using System.ComponentModel.DataAnnotations;
 
-namespace Profile.Domain.Entities;
+namespace Blog.Domain.Entities;
 
 public class AppProfile : BaseEntity<Guid>, IProfileEntity
 {

@@ -1,11 +1,11 @@
-﻿using FFmpeg.Service;
+﻿using Blog.Domain.Entities;
+using Blog.Domain.Events;
+using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Cache.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Domain.Events;
 using Shared.Persistence;
 using Shared.Services;
 using Xabe.FFmpeg;
@@ -50,6 +50,7 @@ namespace VideoProcessing.Cli.Service
 
                 var post = await _context.Get<Post>()
                            .FirstAsync(x => x.Id == fileMetadata.PostId);
+                _context.Attach(post);
 
                 if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
                 {
@@ -65,7 +66,6 @@ namespace VideoProcessing.Cli.Service
                         copyStream.Position = 0;
                         var objectName = await storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
 
-                        _context.Attach(post);
                         post.PreviewId = objectName;
                     }
                     catch (Exception e)
@@ -86,6 +86,7 @@ namespace VideoProcessing.Cli.Service
                 fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
                 fileMetadata.Duration = videoStream.Duration;
                 fileMetadata.ProcessState = ProcessState.Complete;
+                post.VideoFileId = fileMetadata.Id;
                 await _context.SaveChangesAsync();
                 await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
             }

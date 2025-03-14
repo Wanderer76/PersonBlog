@@ -12,7 +12,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthenticationPersistence(builder.Configuration);
-builder.Services.AddService();
+builder.Services.AddAuthServices();
+builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
 var app = builder.Build();
 

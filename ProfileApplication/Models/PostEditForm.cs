@@ -1,4 +1,4 @@
-﻿namespace ProfileApplication.Models
+﻿namespace Blog.API.Models
 {
     public class PostEditForm : PostCreateForm
     {

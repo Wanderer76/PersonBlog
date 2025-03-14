@@ -1,14 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Profile.Domain.Entities
+namespace Blog.Domain.Entities
 {
     public class Subscriber : IProfileEntity
     {
         [Key]
         public required Guid Id { get; set; }
         public required Guid ProfileId { get; set; }
-
         public required Guid BlogId { get; set; }
 
         public DateTimeOffset SubscriptionStartDate { get; set; }
@@ -18,7 +17,7 @@ namespace Profile.Domain.Entities
         public AppProfile Profile { get; set; }
 
         [ForeignKey(nameof(BlogId))]
-        public Blog Blog { get; set; }
+        public PersonBlog Blog { get; set; }
     }
 
     public static class SubscriptionsQueryFilters

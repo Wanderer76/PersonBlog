@@ -1,11 +1,11 @@
-﻿using MessageBus.EventHandler;
+﻿using Blog.Domain.Entities;
+using MessageBus.EventHandler;
 using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace ProfileApplication.Handlers
+namespace Blog.API.Handlers
 {
     public class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
     {
@@ -76,13 +76,13 @@ namespace ProfileApplication.Handlers
                 {
                     if (@event.IsLike == true)
                     {
-                        post.LikeCount = Math.Max(post.LikeCount + ((existView?.IsLike == true) ? -1 : 1), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + ((existView?.IsLike == false) ? -1 : 0), 0);
+                        post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 1), 0);
+                        post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 0), 0);
                     }
                     else
                     {
-                        post.LikeCount = Math.Max(post.LikeCount + ((existView?.IsLike == true) ? -1 : 0), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + ((existView?.IsLike == false) ? -1 : 1), 0);
+                        post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 0), 0);
+                        post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 1), 0);
                     }
                 }
                 else

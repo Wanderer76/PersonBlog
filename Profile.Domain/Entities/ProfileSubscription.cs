@@ -1,7 +1,7 @@
 ﻿using Shared.Services;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Profile.Domain.Entities
+namespace Blog.Domain.Entities
 {
     public class ProfileSubscription : IProfileEntity
     {
@@ -13,7 +13,7 @@ namespace Profile.Domain.Entities
 
         [ForeignKey(nameof(SubscriptionLevelId))]
         public SubscriptionLevel SubscriptionLevel { get; set; }
-        
+
         [ForeignKey(nameof(ProfileId))]
         public AppProfile Profile { get; set; }
 

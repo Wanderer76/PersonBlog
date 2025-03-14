@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Profile.Service.Models.Blog
+namespace Blog.Service.Models.Blog
 {
     public class BlogCreateDto
     {

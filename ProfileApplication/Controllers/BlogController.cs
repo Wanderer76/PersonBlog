@@ -1,21 +1,25 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProfileApplication.Models;
 using Shared.Services;
-using Profile.Service.Models.Blog;
-using Profile.Service.Services;
+using Blog.API.Models;
+using Blog.Domain.Services.Models;
+using Blog.Domain.Services;
+using Blog.Service.Models.Blog;
+using Blog.Service.Services;
 
-namespace ProfileApplication.Controllers
+namespace Blog.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class BlogController : BaseController
     {
         private readonly IBlogService _blogService;
-        public BlogController(ILogger<BaseController> logger, IBlogService blogService) : base(logger)
+        private readonly ISubscriptionLevelService _subscriptionLevelService;
+        public BlogController(ILogger<BaseController> logger, IBlogService blogService, ISubscriptionLevelService subscriptionLevelService) : base(logger)
         {
             _blogService = blogService;
+            _subscriptionLevelService = subscriptionLevelService;
         }
 
         [Authorize]
@@ -53,6 +57,25 @@ namespace ProfileApplication.Controllers
         //{
         //    return Ok();
         //}
+
+        [HttpGet("subscriptionLevelCreate")]
+        //[Authorize]
+        public async Task<IActionResult> CreateSubscriptionLevel()
+        {
+            var result = await _subscriptionLevelService.GetAllSubscriptionsAsync();
+            return Ok(new
+            {
+                SubscriptionLevels = result
+            });
+        }
+
+        [HttpPost("subscriptionLevelCreate")]
+        //[Authorize]
+        public async Task<IActionResult> CreateSubscriptionLevel([FromBody] SubscriptionCreateDto form)
+        {
+            var result = await _subscriptionLevelService.CreateSubscriptionAsync(form);
+            return Ok(result);
+        }
 
 
         [HttpGet("blogByPost/{postId:guid}")]

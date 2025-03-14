@@ -1,7 +1,7 @@
-﻿using Blog.Service.Models;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models;
 using FileStorage.Service.Service;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
 using Shared.Persistence;
 using System.Collections.Concurrent;
 

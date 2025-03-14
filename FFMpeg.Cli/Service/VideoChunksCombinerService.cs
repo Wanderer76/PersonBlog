@@ -1,11 +1,11 @@
-﻿using FileStorage.Service.Models;
+﻿using Blog.Domain.Entities;
+using Blog.Domain.Events;
+using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Domain.Events;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
@@ -37,7 +37,7 @@ namespace VideoProcessing.Cli.Service
             {
                 var post = videoMetadata.Post;
 
-                var profileId = await _context.Get<Blog>()
+                var profileId = await _context.Get<PersonBlog>()
                     .Where(x => x.Id == post.BlogId)
                     .Select(x => x.ProfileId)
                     .FirstAsync();

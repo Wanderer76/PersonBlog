@@ -1,10 +1,10 @@
+using Blog.Domain.Events;
+using Blog.Persistence;
 using FFmpeg.Service;
 using FileStorage.Service;
 using Infrastructure.Cache;
 using MessageBus;
 using MessageBus.Shared.Configs;
-using Profile.Domain.Events;
-using Profile.Persistence;
 using VideoProcessing.Cli;
 using VideoProcessing.Cli.Service;
 

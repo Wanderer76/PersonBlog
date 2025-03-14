@@ -1,11 +1,11 @@
+using Authentication.Domain.Interfaces.Models;
+using Blog.Service.Models;
+using Blog.Service.Models.Blog;
+using Blog.Service.Models.File;
 using FileStorage.Service.Service;
-using Infrastructure.Cache.Models;
 using Infrastructure.Cache.Services;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Service.Models;
-using Profile.Service.Models.Blog;
-using Profile.Service.Models.File;
 using Shared.Services;
 using System.Web;
 using Video.Service.Interface;
@@ -134,20 +134,7 @@ namespace VideoView.Application.Controllers
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _videoService.SetViewToPost(postId, userId, remoteIp);
 
-            var session = GetUserSession();
-            if (session != null)
-            {
-                var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
-                if (userSession != null)
-                {
-                    var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
-                    if (postViewed != null)
-                    {
-                        postViewed.IsViewed = true;
-                        await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
-                    }
-                }
-            }
+           
 
             return Ok();
         }

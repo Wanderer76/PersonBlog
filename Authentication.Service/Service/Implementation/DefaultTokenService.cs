@@ -61,7 +61,7 @@ namespace Authentication.Service.Service.Implementation
                 TokenType = TokenTypes.Access,
                 Login = user.Login,
                 CreatedAt = DateTimeOffset.UtcNow,
-                ExpiredAt = DateTimeOffset.UtcNow.AddHours(1),
+                ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(1),
                 RoleId = user.AppUserRoles.First().UserRoleId
             };
             refreshToken = new Token
@@ -71,7 +71,7 @@ namespace Authentication.Service.Service.Implementation
                 TokenType = TokenTypes.Refresh,
                 Login = user.Login,
                 CreatedAt = DateTimeOffset.UtcNow,
-                ExpiredAt = DateTimeOffset.UtcNow.AddHours(2),
+                ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(4),
                 RoleId = user.AppUserRoles.First().UserRoleId
             };
             _context.Add(accessToken);

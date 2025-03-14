@@ -1,13 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Service.Models;
-using Profile.Service.Models.Blog;
-using Profile.Service.Services;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models;
+using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using System.Runtime.CompilerServices;
+using Blog.Service.Models.Blog;
 [assembly: InternalsVisibleTo("Profile.Test")]
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal class DefaultProfileService : IProfileService
     {
@@ -55,7 +54,7 @@ namespace Profile.Service.Services.Implementation
             var profile = await _context.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == userId);
 
-            var blog = await _context.Get<Blog>()
+            var blog = await _context.Get<PersonBlog>()
                 .FirstOrDefaultAsync(x => x.ProfileId == profile.Id);
 
             return profile.ToProfileModel(blog?.ToBlogModel());
@@ -70,16 +69,6 @@ namespace Profile.Service.Services.Implementation
                 .FirstOrDefaultAsync();
 
             return profileId;
-        }
-
-        public Task SubscribeToBlog(Guid blogId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task UnSubscribeFromBlog(Guid blogId)
-        {
-            throw new NotImplementedException();
         }
 
         public async Task<ProfileModel> UpdateProfileAsync(ProfileUpdateModel profileEditModel)
@@ -109,16 +98,6 @@ namespace Profile.Service.Services.Implementation
             return await _context.Get<PostViewer>()
                 .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
                 .AnyAsync();
-        }
-
-        public Task SubscribeToLevel(Guid blogId, Guid levelId)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task UnSubscribeToLevel(Guid blogId, Guid levelId)
-        {
-            throw new NotImplementedException();
         }
     }
 }

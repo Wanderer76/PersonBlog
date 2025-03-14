@@ -1,6 +1,6 @@
-﻿using Profile.Domain.Entities;
+﻿using Blog.Domain.Entities;
 
-namespace Profile.Service.Models.Post
+namespace Blog.Service.Models.Post
 {
     public class PostModel
     {

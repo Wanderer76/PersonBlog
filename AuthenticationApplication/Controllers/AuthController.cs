@@ -1,7 +1,8 @@
-﻿using Authentication.Service.Models;
+﻿using Authentication.Domain.Interfaces;
+using Authentication.Domain.Interfaces.Models;
+using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
-using Infrastructure.Cache.Models;
 using Infrastructure.Cache.Services;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -15,19 +16,21 @@ public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
     private readonly ICacheService _cacheService;
-    
-    public AuthController(ILogger<AuthController> logger, IAuthService authService, ICacheService cacheService)
+    private readonly IUserSession _userSession;
+
+    public AuthController(ILogger<AuthController> logger, IAuthService authService, ICacheService cacheService, IUserSession userSession)
     : base(logger)
     {
         _authService = authService;
         _cacheService = cacheService;
+        _userSession = userSession;
     }
 
     [HttpGet("session")]
     public async Task<IActionResult> CreateSession()
     {
         var session = GetUserSession();
-        await RefreshSession(session);
+        await _userSession.UpdateUserSession(session);
         return Ok();
     }
 
@@ -43,9 +46,9 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Login(LoginModel loginModel)
     {
-        var hasSession = Request.Cookies.TryGetValue("sessionId", out var session);
+        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Authenticate(loginModel);
-        await RefreshSession(session, response.AccessToken);
+        await _userSession.UpdateUserSession(session);
         return Ok(response);
     }
 
@@ -54,41 +57,9 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Refresh(string refreshToken)
     {
-        var hasSession = Request.Cookies.TryGetValue("sessionId", out var session);
+        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Refresh(refreshToken);
-        await RefreshSession(session);
+        await _userSession.UpdateUserSession(session);
         return Ok(response);
     }
-
-    private async Task RefreshSession(string? session, string? token = null)
-    {
-        if (session != null)
-        {
-            var data = await _cacheService.GetCachedDataAsync<UserSession>($"Session:{session}")!;
-            if (data == null)
-            {
-                await _cacheService.RemoveCachedDataAsync($"Session:{session}");
-                Response.Cookies.Delete("sessionId");
-            }
-            else
-            {
-                if (token != null)
-                {
-                    data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
-                }
-                await _cacheService.SetCachedDataAsync($"Session:{session}", data!, TimeSpan.FromHours(1));
-            }   
-        }
-        else
-        {
-            var sessionId = GuidService.GetNewGuid().ToString();
-            await _cacheService.SetCachedDataAsync($"Session:{sessionId}", new UserSession(), TimeSpan.FromHours(1));
-            Response.Cookies.Append("sessionId", sessionId, new CookieOptions
-            {
-                SameSite = SameSiteMode.Strict,
-                HttpOnly = true
-            });
-        }
-    }
-
 }

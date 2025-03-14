@@ -1,10 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Service.Services;
+﻿using Blog.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal class DefaultSubscriptionService : ISubscriptionService
     {
@@ -20,7 +19,7 @@ namespace Profile.Service.Services.Implementation
             var profile = await _readWriteRepository.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == userId);
 
-            var isCurrentUserBlog = await _readWriteRepository.Get<Blog>()
+            var isCurrentUserBlog = await _readWriteRepository.Get<PersonBlog>()
                 .Where(x => x.Id == blogId && x.ProfileId == profile.Id)
                 .AnyAsync();
 
@@ -48,7 +47,7 @@ namespace Profile.Service.Services.Implementation
             try
             {
                 _readWriteRepository.Add(newSubscription);
-                await _readWriteRepository.Get<Blog>()
+                await _readWriteRepository.Get<PersonBlog>()
                    .Where(x => x.Id == blogId)
                    .ExecuteUpdateAsync(blog => blog.SetProperty(u => u.SubscriptionsCount, u => u.SubscriptionsCount + 1));
                 await _readWriteRepository.SaveChangesAsync();
@@ -78,7 +77,7 @@ namespace Profile.Service.Services.Implementation
             {
                 _readWriteRepository.Attach(hasActiveSubscription);
                 hasActiveSubscription.SubscriptionEndDate = DateTimeOffset.UtcNow;
-                await _readWriteRepository.Get<Blog>()
+                await _readWriteRepository.Get<PersonBlog>()
                    .Where(x => x.Id == blogId)
                    .ExecuteUpdateAsync(blog => blog.SetProperty(u => u.SubscriptionsCount, u => u.SubscriptionsCount - 1));
                 await _readWriteRepository.SaveChangesAsync();
@@ -88,6 +87,41 @@ namespace Profile.Service.Services.Implementation
             {
                 await transaction.RollbackAsync();
             }
+        }
+
+        public async Task SubscribeToLevel(Guid userId, Guid blogId, Guid levelId)
+        {
+            var subscriptionLevels = await _readWriteRepository.Get<SubscriptionLevel>()
+                .Where(x => x.BlogId == blogId && x.IsDeleted == false)
+                .ToListAsync();
+
+            var profile = await _readWriteRepository.Get<AppProfile>()
+                .Where(x => x.UserId == userId)
+                .Include(x => x.PaymentSubscriptions.Where(s => s.SubscriptionLevel.BlogId == blogId && s.IsActive))
+                .FirstAsync();
+
+            var subscriptions = profile.PaymentSubscriptions.ToList();
+
+            if (subscriptions.Any(x => x.SubscriptionLevelId == levelId))
+            {
+                throw new ArgumentException("Уже есть активная подписка");
+            }
+
+            var selectedSubscriptionLevel = subscriptionLevels
+                .Where(x => x.NextLevelId == levelId)
+                .FirstOrDefault();
+
+            if (selectedSubscriptionLevel != null && subscriptions.Any(x => x.SubscriptionLevelId == selectedSubscriptionLevel.Id))
+            {
+                var old = subscriptions.First(x => x.SubscriptionLevelId == selectedSubscriptionLevel.Id);
+                _readWriteRepository.Attach(old);
+                old.UpdatedAt = DateTimeService.Now();
+                old.IsActive = false;
+            }
+
+            var result = new ProfileSubscription(profile.Id, levelId);
+            _readWriteRepository.Add(result);
+            await _readWriteRepository.SaveChangesAsync();
         }
     }
 }

@@ -18,11 +18,12 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Authentication.Service\Authentication.Service.csproj" />
       <ProjectReference Include="..\FileStorage.Service\FileStorage.Service.csproj" />
       <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
       <ProjectReference Include="..\MessageBus.Shared\MessageBus.Shared.csproj" />
-      <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />
-      <ProjectReference Include="..\Profile.Service\Profile.Service.csproj" />
+      <ProjectReference Include="..\Profile.Persistence\Blog.Persistence.csproj" />
+      <ProjectReference Include="..\Profile.Service\Blog.Service.csproj" />
     </ItemGroup>
 
 </Project>

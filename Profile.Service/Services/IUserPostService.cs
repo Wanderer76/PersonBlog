@@ -1,6 +1,6 @@
-﻿using Profile.Service.Models;
+﻿using Blog.Service.Models;
 
-namespace Profile.Service.Services
+namespace Blog.Service.Services
 {
     public interface IUserPostService
     {

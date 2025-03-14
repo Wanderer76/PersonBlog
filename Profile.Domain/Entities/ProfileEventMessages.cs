@@ -1,6 +1,6 @@
 ﻿using Infrastructure.Models;
 
-namespace Profile.Domain.Entities
+namespace Blog.Domain.Entities
 {
     public class ProfileEventMessages : BaseEvent, IProfileEntity
     {

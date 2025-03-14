@@ -1,6 +1,6 @@
-﻿using Profile.Service.Models;
+﻿using Blog.Service.Models;
 
-namespace Profile.Service.Services
+namespace Blog.Service.Services
 {
     public interface IProfileService
     {
@@ -9,11 +9,6 @@ namespace Profile.Service.Services
         Task<Guid?> GetProfileIdByUserIdIfExistsAsync(Guid userId);
         Task<ProfileModel> UpdateProfileAsync(ProfileUpdateModel profileEditModel);
         Task DeleteProfileByUserIdAsync(Guid userId);
-        Task SubscribeToBlog(Guid blogId);
-        Task UnSubscribeFromBlog(Guid blogId);
         Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
-
-        Task SubscribeToLevel(Guid blogId, Guid levelId);
-        Task UnSubscribeToLevel(Guid blogId, Guid levelId);
     }
 }

@@ -1,6 +1,5 @@
-﻿using Profile.Domain.Entities;
-
-namespace Profile.Service.Models
+﻿
+namespace Blog.Service.Models
 {
     public class ProfileEditModel
     {

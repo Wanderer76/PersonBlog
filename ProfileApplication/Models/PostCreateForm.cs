@@ -1,7 +1,7 @@
-﻿using Profile.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using System.ComponentModel.DataAnnotations;
 
-namespace ProfileApplication.Models
+namespace Blog.API.Models
 {
     public class PostCreateForm
     {
@@ -12,6 +12,6 @@ namespace ProfileApplication.Models
         public IFormFile? Video { get; set; }
         public IFormFile? PreviewId { get; set; }
         public IFormFileCollection? Files { get; set; }
-        public bool IsPartial {  get; set; }
+        public bool IsPartial { get; set; }
     }
 }

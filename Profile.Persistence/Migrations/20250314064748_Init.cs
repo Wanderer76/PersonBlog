@@ -24,6 +24,7 @@ namespace Profile.Persistence.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: true),
                     ProfileId = table.Column<Guid>(type: "uuid", nullable: true),
                     IsLike = table.Column<bool>(type: "boolean", nullable: true),
+                    IsViewed = table.Column<bool>(type: "boolean", nullable: false),
                     UserIpAddress = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -62,13 +63,41 @@ namespace Profile.Persistence.Migrations
                     LastName = table.Column<string>(type: "text", nullable: true),
                     Birthdate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     PhotoUrl = table.Column<string>(type: "text", nullable: true),
-                    ProfileState = table.Column<int>(type: "integer", nullable: false)
+                    ProfileState = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Profiles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SubscriptionLevels",
+                schema: "Profile",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    BlogId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    Price = table.Column<double>(type: "double precision", nullable: false),
+                    ImageId = table.Column<string>(type: "text", nullable: true),
+                    NextLevelId = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubscriptionLevels", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_SubscriptionLevels_SubscriptionLevels_NextLevelId",
+                        column: x => x.NextLevelId,
+                        principalSchema: "Profile",
+                        principalTable: "SubscriptionLevels",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -81,13 +110,74 @@ namespace Profile.Persistence.Migrations
                     Description = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     PhotoUrl = table.Column<string>(type: "text", nullable: true),
-                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubscriptionsCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Blogs", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Blogs_Profiles_ProfileId",
+                        column: x => x.ProfileId,
+                        principalSchema: "Profile",
+                        principalTable: "Profiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProfileSubscriptions",
+                schema: "Profile",
+                columns: table => new
+                {
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubscriptionLevelId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProfileSubscriptions", x => new { x.ProfileId, x.SubscriptionLevelId });
+                    table.ForeignKey(
+                        name: "FK_ProfileSubscriptions_Profiles_ProfileId",
+                        column: x => x.ProfileId,
+                        principalSchema: "Profile",
+                        principalTable: "Profiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProfileSubscriptions_SubscriptionLevels_SubscriptionLevelId",
+                        column: x => x.SubscriptionLevelId,
+                        principalSchema: "Profile",
+                        principalTable: "SubscriptionLevels",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Subscribers",
+                schema: "Profile",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BlogId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SubscriptionStartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    SubscriptionEndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Subscribers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Subscribers_Blogs_BlogId",
+                        column: x => x.BlogId,
+                        principalSchema: "Profile",
+                        principalTable: "Blogs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Subscribers_Profiles_ProfileId",
                         column: x => x.ProfileId,
                         principalSchema: "Profile",
                         principalTable: "Profiles",
@@ -108,6 +198,8 @@ namespace Profile.Persistence.Migrations
                     Description = table.Column<string>(type: "text", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     PreviewId = table.Column<string>(type: "text", nullable: true),
+                    VideoFileId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SubscriptionId = table.Column<Guid>(type: "uuid", nullable: true),
                     ViewCount = table.Column<int>(type: "integer", nullable: false),
                     LikeCount = table.Column<int>(type: "integer", nullable: false),
                     DislikeCount = table.Column<int>(type: "integer", nullable: false)
@@ -122,36 +214,12 @@ namespace Profile.Persistence.Migrations
                         principalTable: "Blogs",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Subscriptions",
-                schema: "Profile",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uuid", nullable: false),
-                    BlogId = table.Column<Guid>(type: "uuid", nullable: false),
-                    SubscriptionStartDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    SubscriptionEndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Subscriptions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Subscriptions_Blogs_BlogId",
-                        column: x => x.BlogId,
+                        name: "FK_Posts_SubscriptionLevels_SubscriptionId",
+                        column: x => x.SubscriptionId,
                         principalSchema: "Profile",
-                        principalTable: "Blogs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Subscriptions_Profiles_ProfileId",
-                        column: x => x.ProfileId,
-                        principalSchema: "Profile",
-                        principalTable: "Profiles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalTable: "SubscriptionLevels",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -165,12 +233,12 @@ namespace Profile.Persistence.Migrations
                     Duration = table.Column<double>(type: "double precision", nullable: false),
                     ErrorMessage = table.Column<string>(type: "text", nullable: true),
                     ProcessState = table.Column<int>(type: "integer", nullable: false),
+                    PostId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     FileExtension = table.Column<string>(type: "text", nullable: false),
                     Length = table.Column<long>(type: "bigint", nullable: false),
                     ContentType = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    PostId = table.Column<Guid>(type: "uuid", nullable: false),
                     ObjectName = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
@@ -188,14 +256,14 @@ namespace Profile.Persistence.Migrations
             migrationBuilder.InsertData(
                 schema: "Profile",
                 table: "Profiles",
-                columns: new[] { "Id", "Birthdate", "Email", "FirstName", "IsDeleted", "LastName", "PhotoUrl", "ProfileState", "SurName", "UserId" },
-                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"), null, "ateplinsky@mail.ru", "Артём", false, null, null, 0, "Теплинский", new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e") });
+                columns: new[] { "Id", "Birthdate", "CreatedAt", "Email", "FirstName", "IsDeleted", "LastName", "PhotoUrl", "ProfileState", "SurName", "UserId" },
+                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"), null, new DateTimeOffset(new DateTime(2025, 3, 14, 6, 47, 47, 815, DateTimeKind.Unspecified).AddTicks(2160), new TimeSpan(0, 0, 0, 0, 0)), "ateplinsky@mail.ru", "Артём", false, null, null, 0, "Теплинский", new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e") });
 
             migrationBuilder.InsertData(
                 schema: "Profile",
                 table: "Blogs",
-                columns: new[] { "Id", "CreatedAt", "Description", "PhotoUrl", "ProfileId", "Title" },
-                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"), new DateTimeOffset(new DateTime(2025, 2, 20, 10, 54, 32, 539, DateTimeKind.Unspecified).AddTicks(9465), new TimeSpan(0, 0, 0, 0, 0)), null, null, new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d2e"), "Тест" });
+                columns: new[] { "Id", "CreatedAt", "Description", "PhotoUrl", "ProfileId", "SubscriptionsCount", "Title" },
+                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"), new DateTimeOffset(new DateTime(2025, 3, 14, 6, 47, 47, 815, DateTimeKind.Unspecified).AddTicks(2774), new TimeSpan(0, 0, 0, 0, 0)), null, null, new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"), 0, "Тест" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blogs_ProfileId",
@@ -211,6 +279,18 @@ namespace Profile.Persistence.Migrations
                 column: "BlogId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Posts_SubscriptionId",
+                schema: "Profile",
+                table: "Posts",
+                column: "SubscriptionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Posts_VideoFileId",
+                schema: "Profile",
+                table: "Posts",
+                column: "VideoFileId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PostViewers_UserId_PostId_UserIpAddress_CreatedAt",
                 schema: "Profile",
                 table: "PostViewers",
@@ -224,24 +304,29 @@ namespace Profile.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Subscriptions_BlogId",
+                name: "IX_ProfileSubscriptions_SubscriptionLevelId",
                 schema: "Profile",
-                table: "Subscriptions",
+                table: "ProfileSubscriptions",
+                column: "SubscriptionLevelId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subscribers_BlogId",
+                schema: "Profile",
+                table: "Subscribers",
                 column: "BlogId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Subscriptions_ProfileId_BlogId",
+                name: "IX_Subscribers_ProfileId_BlogId",
                 schema: "Profile",
-                table: "Subscriptions",
+                table: "Subscribers",
                 columns: new[] { "ProfileId", "BlogId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_VideoMetadata_PostId",
+                name: "IX_SubscriptionLevels_NextLevelId",
                 schema: "Profile",
-                table: "VideoMetadata",
-                column: "PostId",
-                unique: true);
+                table: "SubscriptionLevels",
+                column: "NextLevelId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VideoMetadata_PostId_Resolution_ContentType",
@@ -249,11 +334,40 @@ namespace Profile.Persistence.Migrations
                 table: "VideoMetadata",
                 columns: new[] { "PostId", "Resolution", "ContentType" },
                 unique: true);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Posts_VideoMetadata_VideoFileId",
+                schema: "Profile",
+                table: "Posts",
+                column: "VideoFileId",
+                principalSchema: "Profile",
+                principalTable: "VideoMetadata",
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Blogs_Profiles_ProfileId",
+                schema: "Profile",
+                table: "Blogs");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Posts_Blogs_BlogId",
+                schema: "Profile",
+                table: "Posts");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Posts_SubscriptionLevels_SubscriptionId",
+                schema: "Profile",
+                table: "Posts");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Posts_VideoMetadata_VideoFileId",
+                schema: "Profile",
+                table: "Posts");
+
             migrationBuilder.DropTable(
                 name: "PostViewers",
                 schema: "Profile");
@@ -263,7 +377,23 @@ namespace Profile.Persistence.Migrations
                 schema: "Profile");
 
             migrationBuilder.DropTable(
-                name: "Subscriptions",
+                name: "ProfileSubscriptions",
+                schema: "Profile");
+
+            migrationBuilder.DropTable(
+                name: "Subscribers",
+                schema: "Profile");
+
+            migrationBuilder.DropTable(
+                name: "Profiles",
+                schema: "Profile");
+
+            migrationBuilder.DropTable(
+                name: "Blogs",
+                schema: "Profile");
+
+            migrationBuilder.DropTable(
+                name: "SubscriptionLevels",
                 schema: "Profile");
 
             migrationBuilder.DropTable(
@@ -272,14 +402,6 @@ namespace Profile.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Posts",
-                schema: "Profile");
-
-            migrationBuilder.DropTable(
-                name: "Blogs",
-                schema: "Profile");
-
-            migrationBuilder.DropTable(
-                name: "Profiles",
                 schema: "Profile");
         }
     }

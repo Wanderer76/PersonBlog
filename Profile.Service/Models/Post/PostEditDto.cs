@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace Profile.Service.Models.Post
+namespace Blog.Service.Models.Post
 {
     public class PostEditDto
     {
@@ -12,11 +12,11 @@ namespace Profile.Service.Models.Post
 
         public PostEditDto(Guid id, Guid userId, string? description, string title, IFormFile? previewId)
         {
-            this.Id = id;
-            this.UserId = userId;
-            this.Description = description;
-            this.Title = title;
-            this.PreviewId = previewId;
+            Id = id;
+            UserId = userId;
+            Description = description;
+            Title = title;
+            PreviewId = previewId;
         }
     }
 }

@@ -1,6 +1,6 @@
-﻿using Profile.Service.Models.Blog;
+﻿using Blog.Service.Models.Blog;
 
-namespace Profile.Service.Services
+namespace Blog.Service.Services
 {
     public interface IBlogService
     {

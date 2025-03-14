@@ -1,4 +1,6 @@
-﻿namespace Profile.Service.Models.Blog
+﻿using Blog.Domain.Entities;
+
+namespace Blog.Service.Models.Blog
 {
     public class BlogModel
     {
@@ -25,7 +27,7 @@
 
     public static class BlogModelMapper
     {
-        public static BlogModel ToBlogModel(this Domain.Entities.Blog blog)
+        public static BlogModel ToBlogModel(this PersonBlog blog)
         {
             return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.SubscriptionsCount);
         }

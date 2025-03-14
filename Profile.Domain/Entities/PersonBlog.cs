@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Profile.Domain.Entities
+namespace Blog.Domain.Entities
 {
-    public class Blog : IProfileEntity
+    public class PersonBlog : IProfileEntity
     {
         [Key]
         public Guid Id { get; set; }
@@ -13,8 +13,8 @@ namespace Profile.Domain.Entities
         public DateTimeOffset CreatedAt { get; set; }
         public string? PhotoUrl { get; set; }
         public Guid ProfileId { get; set; }
-        public int SubscriptionsCount {  get; set; }
-        
+        public int SubscriptionsCount { get; set; }
+
         [ForeignKey(nameof(ProfileId))]
         public AppProfile Profile { get; set; }
         public List<Subscriber> Subscriptions { get; set; }

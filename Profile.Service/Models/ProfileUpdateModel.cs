@@ -1,4 +1,4 @@
-﻿namespace Profile.Service.Models
+﻿namespace Blog.Service.Models
 {
     public class ProfileUpdateModel : ProfileCreateModel
     {

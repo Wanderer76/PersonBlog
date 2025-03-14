@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.Events
+﻿namespace Blog.Domain.Events
 {
     public class VideoConvertEvent
     {

@@ -28,8 +28,7 @@ export class JwtTokenService {
     static async refreshToken() {
         const url = `${BaseApUrl}/auth/api/Auth/refresh?refreshToken=` + getRefreshToken();
         console.log(url)
-
-        if (this.isAuth()) {
+        try {
             var response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -41,12 +40,13 @@ export class JwtTokenService {
                 saveAccessToken(data.accessToken);
                 saveRefreshToken(data.refreshToken);
             }
-            if (response.status === 401) {
+            else if (response.status === 401) {
                 this.cleanAuth();
             }
             return response.status;
+        } catch (e) {
+            return 401;
         }
-        return 401;
     }
 
     static cleanAuth() {

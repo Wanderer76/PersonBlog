@@ -1,4 +1,4 @@
-﻿namespace Profile.Service.Models.Post
+﻿namespace Blog.Service.Models.Post
 {
     public class ReactionCreateModel
     {

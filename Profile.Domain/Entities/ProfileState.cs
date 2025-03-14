@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.Entities;
+﻿namespace Blog.Domain.Entities;
 
 public enum ProfileState
 {

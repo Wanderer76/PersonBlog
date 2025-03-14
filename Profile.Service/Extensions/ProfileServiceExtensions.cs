@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Profile.Service.Services;
-using Profile.Service.Services.Implementation;
+﻿using Blog.Domain.Services;
+using Blog.Service.Services;
+using Blog.Service.Services.Implementation;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Profile.Service.Extensions
+namespace Blog.Service.Extensions
 {
     public static class ProfileServiceExtensions
     {
@@ -14,6 +15,7 @@ namespace Profile.Service.Extensions
             services.AddScoped<IVideoService, DefaultVideoService>();
             services.AddScoped<IUserPostService, DefaultUserPostService>();
             services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
+            services.AddScoped<ISubscriptionLevelService, DefaultSubscriptionLevelService>();
         }
     }
 }

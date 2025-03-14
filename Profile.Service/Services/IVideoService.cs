@@ -1,7 +1,7 @@
-﻿using Profile.Domain.Entities;
-using Profile.Service.Models.File;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models.File;
 
-namespace Profile.Service.Services
+namespace Blog.Service.Services
 {
     public interface IVideoService
     {

@@ -5,15 +5,15 @@ import { MainPage } from './pages/main/MainPage';
 import Header from './components/header/Header';
 import ProfilePage from './pages/profile/ProfilePage';
 import { VideoPage } from './pages/post/PostPage';
-
-
+import API from './scripts/apiMethod';
+import { useEffect } from 'react';
 
 
 function App() {
   return (
     <div className="App">
-      <Header />
       <BrowserRouter>
+        <Header />
         <Routes>
           <Route path="/" element={<MainPage />} />
           <Route path="/video/:postId/:videoId" element={<VideoPage />} />

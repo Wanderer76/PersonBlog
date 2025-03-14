@@ -1,15 +1,16 @@
-﻿using Infrastructure.Models;
+﻿using Blog.API.Models;
+using Blog.Domain.Entities;
+using Blog.Domain.Services;
+using Blog.Service.Models;
+using Blog.Service.Models.File;
+using Blog.Service.Models.Post;
+using Blog.Service.Services;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Entities;
-using Profile.Service.Models;
-using Profile.Service.Models.File;
-using Profile.Service.Models.Post;
-using Profile.Service.Services;
-using ProfileApplication.Models;
 using Shared.Services;
 
-namespace ProfileApplication.Controllers
+namespace Blog.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -18,11 +19,14 @@ namespace ProfileApplication.Controllers
         private readonly IPostService _postService;
         private readonly IUserPostService _userPostService;
         private readonly IVideoService _videoService;
-        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService) : base(logger)
+        private readonly ISubscriptionLevelService _subscriptionLevelService;
+
+        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService) : base(logger)
         {
             _postService = postService;
             _userPostService = userPostService;
             _videoService = videoService;
+            _subscriptionLevelService = subscriptionLevelService;
         }
 
         [HttpGet("manifest/{postId:guid}")]
@@ -88,11 +92,15 @@ namespace ProfileApplication.Controllers
             return Ok(result);
         }
 
-        //[HttpPut("edit")]
-        //public async Task<IActionResult> EditBlog([FromBody] BlogCreateForm form)
-        //{
-        //    return Ok();
-        //}
+        [HttpGet("create")]
+        public async Task<IActionResult> GetCreatePostModel()
+        {
+            var result = await _subscriptionLevelService.GetAllSubscriptionsAsync();
+            return Ok(new
+            {
+                SubscriptionLevels = result
+            });
+        }
 
         [HttpPost("create")]
         [Authorize]

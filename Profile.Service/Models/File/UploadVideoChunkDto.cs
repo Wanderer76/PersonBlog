@@ -1,4 +1,4 @@
-﻿namespace Profile.Service.Models.File
+﻿namespace Blog.Service.Models.File
 {
     public class UploadVideoChunkDto
     {

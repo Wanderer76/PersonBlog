@@ -1,4 +1,4 @@
-﻿namespace Profile.Service.Exceptions
+﻿namespace Blog.Service.Exceptions
 {
     [Serializable]
     internal class EntityNotFoundException : Exception

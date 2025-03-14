@@ -1,10 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Service.Models;
-using Profile.Service.Services;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models;
+using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal class DefaultUserPostService : IUserPostService
     {

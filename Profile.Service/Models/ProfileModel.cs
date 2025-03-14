@@ -1,7 +1,7 @@
-﻿using Profile.Domain.Entities;
-using Profile.Service.Models.Blog;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models.Blog;
 
-namespace Profile.Service.Models
+namespace Blog.Service.Models
 {
     public class ProfileModel
     {

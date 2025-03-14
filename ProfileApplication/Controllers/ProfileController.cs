@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Blog.Service.Models;
+using Blog.Service.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Service.Models;
-using Profile.Service.Services;
 using Shared.Services;
 
-namespace ProfileApplication.Controllers;
+namespace Blog.API.Controllers;
 
 
 [ApiController]

@@ -1,10 +1,10 @@
-﻿using Infrastructure.Extensions;
+﻿using Blog.Domain.Entities;
+using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Profile.Domain.Entities;
 
-namespace Profile.Persistence
+namespace Blog.Persistence
 {
     public static class ProfilePersistenceExtensions
     {
@@ -12,7 +12,7 @@ namespace Profile.Persistence
         {
             var connectionString = configuration["ConnectionStrings:ProfileDbContext"]!;
             services.AddNpgSqlDbContext<ProfileDbContext>(connectionString);
-            services.AddScoped<IDbInitializer,ProfileDbInitializer>();
+            services.AddScoped<IDbInitializer, ProfileDbInitializer>();
             //services.AddDbContextPool<ProfileDbContext>(option =>
             //option.UseInMemoryDatabase("Profile"));
             //services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();

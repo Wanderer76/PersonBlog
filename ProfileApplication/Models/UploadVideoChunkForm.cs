@@ -1,6 +1,6 @@
-﻿using Profile.Service.Models.File;
+﻿using Blog.Service.Models.File;
 
-namespace ProfileApplication.Models
+namespace Blog.API.Models
 {
     public class UploadVideoChunkForm
     {

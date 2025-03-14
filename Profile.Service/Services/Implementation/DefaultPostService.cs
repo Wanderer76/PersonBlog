@@ -1,19 +1,19 @@
-﻿using FileStorage.Service.Models;
+﻿using Blog.Domain.Entities;
+using Blog.Domain.Events;
+using Blog.Persistence.Repository.Quries;
+using Blog.Service.Models;
+using Blog.Service.Models.File;
+using Blog.Service.Models.Post;
+using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Cache.Services;
 using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
-using Profile.Domain.Entities;
-using Profile.Domain.Events;
-using Profile.Persistence.Repository.Quries;
-using Profile.Service.Models;
-using Profile.Service.Models.File;
-using Profile.Service.Models.Post;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
 
-namespace Profile.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation
 {
     internal class DefaultPostService : IPostService
     {
@@ -35,7 +35,7 @@ namespace Profile.Service.Services.Implementation
                 .Select(x => x.Id)
                 .FirstAsync();
 
-            var blog = await _context.Get<Blog>()
+            var blog = await _context.Get<PersonBlog>()
             .FirstAsync(x => x.ProfileId == userProfileId);
 
             var postId = GuidService.GetNewGuid();
@@ -84,11 +84,12 @@ namespace Profile.Service.Services.Implementation
             //    _context.Add(videoMetadata);
             //}
 
-            var hasSubscription = await _context.Get<SubscriptionLevel>()
+            var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<SubscriptionLevel>()
                 .Where(x => x.BlogId == blog.Id)
                 .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
                 .Where(x => x.IsDeleted == false)
-                .AnyAsync();
+                .AnyAsync()
+                : true;
 
             if (!hasSubscription)
             {
@@ -151,7 +152,7 @@ namespace Profile.Service.Services.Implementation
         {
             var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, page, limit);
 
-            var profileId = await _context.Get<Blog>()
+            var profileId = await _context.Get<PersonBlog>()
                 .Where(x => x.Id == blogId)
                 .Select(x => x.ProfileId)
                 .FirstAsync();
@@ -253,7 +254,7 @@ namespace Profile.Service.Services.Implementation
                 .Include(x => x.VideoFile)
                 .FirstOrDefaultAsync(x => x.Id == postEditDto.Id) ?? throw new ArgumentException("Пост не найден");
 
-            var blogUserId = await _context.Get<Blog>()
+            var blogUserId = await _context.Get<PersonBlog>()
                 .Where(x => x.Id == post.BlogId)
                 .Select(x => x.Profile.UserId)
                 .FirstAsync();
@@ -427,13 +428,13 @@ namespace Profile.Service.Services.Implementation
                 {
                     if (@event.IsLike == true)
                     {
-                        post.LikeCount = Math.Max(post.LikeCount + ((existView?.IsLike == true) ? -1 : 1), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + ((existView?.IsLike == false) ? -1 : 0), 0);
+                        post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 1), 0);
+                        post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 0), 0);
                     }
                     else
                     {
-                        post.LikeCount = Math.Max(post.LikeCount + ((existView?.IsLike == true) ? -1 : 0), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + ((existView?.IsLike == false) ? -1 : 1), 0);
+                        post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 0), 0);
+                        post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 1), 0);
                     }
                 }
                 else

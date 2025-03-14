@@ -1,7 +1,7 @@
-﻿using Profile.Domain.Entities;
-using Profile.Service.Models.Post;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models.Post;
 
-namespace Profile.Service.Models
+namespace Blog.Service.Models
 {
     public class PostDetailViewModel
     {

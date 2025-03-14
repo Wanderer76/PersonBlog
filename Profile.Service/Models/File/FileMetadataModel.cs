@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Profile.Service.Models.File
+﻿namespace Blog.Service.Models.File
 {
     public class FileMetadataModel
     {
@@ -13,7 +7,7 @@ namespace Profile.Service.Models.File
         public string ContentType { get; }
         public long Length { get; }
         public string Name { get; }
-        public DateTimeOffset CreatedAt { get;}
+        public DateTimeOffset CreatedAt { get; }
 
         public FileMetadataModel(string contentType, long length, string name, DateTimeOffset createdAt, Guid id, string objectName)
         {

@@ -1,7 +1,7 @@
 ﻿using Infrastructure.Interface;
 using Microsoft.EntityFrameworkCore;
 
-namespace Profile.Persistence
+namespace Blog.Persistence
 {
     internal class ProfileDbInitializer : IDbInitializer
     {
