@@ -5,7 +5,7 @@ namespace Conference.Domain.Entities
     public class ConferenceParticipant : IConferenceEntity
     {
         public Guid? UserId { get; }
-        public string SessionId { get; }
+        public Guid SessionId { get; }
         public Guid ConferenceRoomId { get; }
 
         [ForeignKey(nameof(ConferenceRoomId))]
@@ -16,7 +16,7 @@ namespace Conference.Domain.Entities
             
         }
 
-        public ConferenceParticipant(Guid? userId, string sessionId, Guid conferenceRoomId)
+        public ConferenceParticipant(Guid? userId, Guid sessionId, Guid conferenceRoomId)
         {
             UserId = userId;
             SessionId = sessionId;

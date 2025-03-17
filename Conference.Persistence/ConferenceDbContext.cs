@@ -1,4 +1,5 @@
 ﻿using Conference.Domain.Entities;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Persistence;
@@ -68,7 +69,6 @@ namespace Conference.Persistence
           where TContext : BaseDbContext
     {
         private readonly TContext _conferenceEntities;
-
         public ReadConferenceContext(TContext conferenceEntities)
         {
             _conferenceEntities = conferenceEntities;
@@ -76,7 +76,6 @@ namespace Conference.Persistence
 
         IQueryable<TEntity> IReadRepository<IConferenceEntity>.Get<TEntity>()
         {
-            Console.WriteLine($"GetEntity - {typeof(TEntity)}");
             return _conferenceEntities.Set<TEntity>();
         }
     }

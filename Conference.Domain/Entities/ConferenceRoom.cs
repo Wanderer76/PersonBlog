@@ -16,7 +16,7 @@ namespace Conference.Domain.Entities
 
         public ConferenceRoom()
         {
-            
+
         }
 
         public ConferenceRoom(Guid postId, string url, bool isActive, List<ConferenceParticipant> participants)
@@ -41,5 +41,19 @@ namespace Conference.Domain.Entities
 
             _participants.Remove(participant);
         }
+    }
+
+    public readonly struct ConferenceRoomKey
+    {
+        public const string Key = nameof(ConferenceRoom);
+
+        private readonly Guid _id;
+
+        public ConferenceRoomKey(Guid id)
+        {
+            _id = id;
+        }
+
+        public static implicit operator string(ConferenceRoomKey key) => $"{Key}:{key._id}";
     }
 }

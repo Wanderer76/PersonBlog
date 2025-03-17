@@ -8,9 +8,9 @@ namespace Conference.API.Controllers
     [Route("[controller]")]
     public class ConferenceRoomController : BaseController
     {
-
         private readonly ILogger<ConferenceRoomController> _logger;
         private readonly IConferenceRoomService _conferenceRoomService;
+        
         public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IConferenceRoomService conferenceRoomService)
             : base(logger)
         {
