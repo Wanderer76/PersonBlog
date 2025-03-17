@@ -69,7 +69,7 @@ export const VideoPage = function (props) {
             });
 
 
-    }, [searchParams.videoId])
+    }, [searchParams.postId])
 
     async function setReaction(isLike) {
         await API.post(`profile/api/Post/setReaction/${post.id}?isLike=${isLike}`)
@@ -220,7 +220,7 @@ const VideoCard = function ({ videoCardModel, navigate }) {
 
     return <div className="recommended-video" onClick={(e) => {
         e.preventDefault();
-        navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
+        navigate(`/video/${videoCardModel.postId}`);
     }}>
         <img src={videoCardModel.previewUrl} className="recommended-thumbnail" alt="Превью" />
         <div className="recommended-info">

@@ -35,7 +35,7 @@ const VideoCard = function ({ videoCardModel }) {
     const navigate = useNavigate();
     return <div key={videoCardModel.postId} className="mainpage-video-card">
         <div className="mainpage-thumbnail-container" onClick={(e) => {
-            navigate(`/video/${videoCardModel.postId}/${videoCardModel.videoId}`);
+            navigate(`/video/${videoCardModel.postId}`);
         }}>
 
             <img src={videoCardModel.previewUrl} className="mainpage-thumbnail" alt="Превью видео" />

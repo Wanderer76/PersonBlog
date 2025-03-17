@@ -5,8 +5,6 @@ import { MainPage } from './pages/main/MainPage';
 import Header from './components/header/Header';
 import ProfilePage from './pages/profile/ProfilePage';
 import { VideoPage } from './pages/post/PostPage';
-import API from './scripts/apiMethod';
-import { useEffect } from 'react';
 
 
 function App() {
@@ -16,7 +14,7 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<MainPage />} />
-          <Route path="/video/:postId/:videoId" element={<VideoPage />} />
+          <Route path="/video/:postId" element={<VideoPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>

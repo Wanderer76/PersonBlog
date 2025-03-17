@@ -19,9 +19,9 @@ namespace Authentication.Service.Service.Implementation
 
         public async Task<UserSession> GetUserSessionAsync()
         {
-            var hasSession = _contextAccessor.HttpContext.Request.Cookies.TryGetValue("sessionId", out var session);
+            var hasSession = _contextAccessor.HttpContext.Request.Cookies.TryGetValue(new SessionKey(), out var session);
             return hasSession
-                ? await _cacheService.GetCachedDataAsync<UserSession>($"Session:{session}")
+                ? (await _cacheService.GetCachedDataAsync<UserSession>($"{new SessionKey()}:{session}"))!
                 : throw new Exception();
         }
 
@@ -35,11 +35,11 @@ namespace Authentication.Service.Service.Implementation
         {
             if (session != null)
             {
-                var data = await _cacheService.GetCachedDataAsync<UserSession>($"Session:{session}")!;
+                var data = await _cacheService.GetCachedDataAsync<UserSession>($"{new SessionKey()}:{session}")!;
                 if (data == null)
                 {
-                    await _cacheService.RemoveCachedDataAsync($"Session:{session}");
-                    _contextAccessor.HttpContext?.Response.Cookies.Delete("sessionId");
+                    await _cacheService.RemoveCachedDataAsync($"{new SessionKey()}:{session}");
+                    _contextAccessor.HttpContext?.Response.Cookies.Delete(new SessionKey());
                 }
                 else
                 {
@@ -47,14 +47,14 @@ namespace Authentication.Service.Service.Implementation
                     {
                         data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
                     }
-                    await _cacheService.SetCachedDataAsync($"Session:{session}", data!, TimeSpan.FromHours(1));
+                    await _cacheService.SetCachedDataAsync($"{new SessionKey()}:{session}", data!, TimeSpan.FromHours(1));
                 }
             }
             else
             {
                 var sessionId = GuidService.GetNewGuid().ToString();
-                await _cacheService.SetCachedDataAsync($"Session:{sessionId}", new UserSession(), TimeSpan.FromHours(1));
-                _contextAccessor.HttpContext?.Response.Cookies.Append("sessionId", sessionId, new CookieOptions
+                await _cacheService.SetCachedDataAsync($"{new SessionKey()}:{sessionId}", new UserSession(), TimeSpan.FromHours(1));
+                _contextAccessor.HttpContext?.Response.Cookies.Append(new SessionKey(), sessionId, new CookieOptions
                 {
                     SameSite = SameSiteMode.Strict,
                     HttpOnly = true

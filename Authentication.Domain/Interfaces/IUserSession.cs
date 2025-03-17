@@ -1,13 +1,17 @@
 ﻿using Authentication.Domain.Interfaces.Models;
-using Infrastructure.Cache.Services;
-using Microsoft.AspNetCore.Http;
-using Shared.Services;
 
 namespace Authentication.Domain.Interfaces
 {
-    public struct SessionKey
+    public readonly struct SessionKey
     {
-        public const string Key = "sessionId";
+        private readonly string Key = "sessionId";
+
+        public SessionKey()
+        {
+
+        }
+
+        public static implicit operator string(SessionKey sessionKey) => sessionKey.Key;
     }
 
     public interface IUserSession

@@ -46,7 +46,7 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Login(LoginModel loginModel)
     {
-        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
+        var hasSession = Request.Cookies.TryGetValue(new SessionKey(), out var session);
         var response = await _authService.Authenticate(loginModel);
         await _userSession.UpdateUserSession(session);
         return Ok(response);
@@ -57,7 +57,7 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Refresh(string refreshToken)
     {
-        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
+        var hasSession = Request.Cookies.TryGetValue(new SessionKey(), out var session);
         var response = await _authService.Refresh(refreshToken);
         await _userSession.UpdateUserSession(session);
         return Ok(response);

@@ -2,7 +2,6 @@ import axios from 'axios';
 import { JwtTokenService } from './TokenStrorage';
 
 export const BaseApUrl = 'http://localhost:7892'
-let isRefreshing = false;
 const API = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
     withCredentials: true,
@@ -16,6 +15,7 @@ API.interceptors.request.use(config => {
 API.interceptors.response.use(
     (response) => response,
     async (error) => {
+        let isRefreshing = false;
         const originalRequest = error.config;
         if (error.response && error.response.status === 401) {
             originalRequest._retry = true;
