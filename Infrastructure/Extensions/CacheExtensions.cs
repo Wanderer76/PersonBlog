@@ -1,9 +1,9 @@
-﻿using Infrastructure.Cache.Services;
+﻿using Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 
-namespace Infrastructure.Cache
+namespace Infrastructure.Extensions
 {
     public static class CacheExtensions
     {

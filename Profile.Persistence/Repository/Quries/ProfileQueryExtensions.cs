@@ -1,5 +1,5 @@
 ﻿using Blog.Domain.Entities;
-using Infrastructure.Cache.Services;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using ReadContext = Shared.Persistence.IReadRepository<Blog.Domain.Entities.IProfileEntity>;
 

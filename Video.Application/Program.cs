@@ -1,5 +1,4 @@
 using FileStorage.Service;
-using Infrastructure.Cache;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;

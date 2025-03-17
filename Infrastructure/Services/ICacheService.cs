@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using System.Text;
 using System.Text.Json;
 
-namespace Infrastructure.Cache.Services
+namespace Infrastructure.Services
 {
     public interface ICacheService
     {

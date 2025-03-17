@@ -2,7 +2,7 @@
 using Blog.Persistence.Repository.Quries;
 using Blog.Service.Exceptions;
 using Blog.Service.Models.Blog;
-using Infrastructure.Cache.Services;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;

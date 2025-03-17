@@ -62,8 +62,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactionProcessing.Cli", "R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageBus.Shared", "MessageBus.Shared\MessageBus.Shared.csproj", "{B9B73095-B069-4E9B-89A5-D9022BDEAD86}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure.Cache", "Infrastucture.Cache\Infrastructure.Cache.csproj", "{9DAE87A7-713C-4530-9F1F-ABEF0FA38BC1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Domain", "Conference.Domain\Conference.Domain.csproj", "{AC678521-224B-4338-989E-C5D32320C44C}"
 EndProject
 Global
@@ -168,10 +166,6 @@ Global
 		{B9B73095-B069-4E9B-89A5-D9022BDEAD86}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9B73095-B069-4E9B-89A5-D9022BDEAD86}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9B73095-B069-4E9B-89A5-D9022BDEAD86}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9DAE87A7-713C-4530-9F1F-ABEF0FA38BC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9DAE87A7-713C-4530-9F1F-ABEF0FA38BC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9DAE87A7-713C-4530-9F1F-ABEF0FA38BC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9DAE87A7-713C-4530-9F1F-ABEF0FA38BC1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AC678521-224B-4338-989E-C5D32320C44C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AC678521-224B-4338-989E-C5D32320C44C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AC678521-224B-4338-989E-C5D32320C44C}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -1,6 +1,5 @@
 using Authentication.Peristence;
 using Authentication.Service;
-using Infrastructure.Cache;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 

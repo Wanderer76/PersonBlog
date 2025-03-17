@@ -25,7 +25,6 @@
       <ProjectReference Include="..\Authentication.Peristence\Authentication.Peristence.csproj" />
       <ProjectReference Include="..\Authentication.Service\Authentication.Service.csproj" />
       <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-      <ProjectReference Include="..\Infrastucture.Cache\Infrastructure.Cache.csproj" />
       <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 

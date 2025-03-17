@@ -4,7 +4,6 @@ using Blog.API.HostedServices;
 using Blog.Persistence;
 using Blog.Service.Extensions;
 using FileStorage.Service;
-using Infrastructure.Cache;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;

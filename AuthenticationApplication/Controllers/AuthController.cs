@@ -1,9 +1,9 @@
 ﻿using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
-using Infrastructure.Cache.Services;
 using Infrastructure.Interface;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
 

@@ -3,7 +3,7 @@ using Blog.Domain.Events;
 using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
-using Infrastructure.Cache.Services;
+using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;

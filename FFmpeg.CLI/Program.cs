@@ -2,7 +2,7 @@ using Blog.Domain.Events;
 using Blog.Persistence;
 using FFmpeg.Service;
 using FileStorage.Service;
-using Infrastructure.Cache;
+using Infrastructure.Extensions;
 using MessageBus;
 using MessageBus.Shared.Configs;
 using VideoProcessing.Cli;
