@@ -11,6 +11,11 @@ namespace Conference.Domain.Entities
         [ForeignKey(nameof(ConferenceRoomId))]
         public ConferenceRoom ConferenceRoom { get; }
 
+        public ConferenceParticipant()
+        {
+            
+        }
+
         public ConferenceParticipant(Guid? userId, string sessionId, Guid conferenceRoomId)
         {
             UserId = userId;

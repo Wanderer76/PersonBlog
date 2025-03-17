@@ -12,7 +12,12 @@ namespace Conference.Domain.Entities
         private List<ConferenceParticipant> _participants { get; set; } = [];
 
         [NotMapped]
-        public IReadOnlyList<ConferenceParticipant> Participants { get => _participants.AsReadOnly(); }
+        public IReadOnlyList<ConferenceParticipant> Participants { get => _participants; }
+
+        public ConferenceRoom()
+        {
+            
+        }
 
         public ConferenceRoom(Guid postId, string url, bool isActive, List<ConferenceParticipant> participants)
         {

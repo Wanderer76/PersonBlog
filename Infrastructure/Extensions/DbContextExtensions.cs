@@ -18,5 +18,11 @@ namespace Infrastructure.Extensions
                 x.MigrationsHistoryTable($"_{schemaName}_MigrationsHistory", schemaName);
             }));
         }
+
+        public static void AddInMemoryDbContext<TDbContext>(this IServiceCollection services, string dbName)
+            where TDbContext : BaseDbContext
+        {
+            services.AddDbContextPool<TDbContext>(option => option.UseInMemoryDatabase(dbName));
+        }
     }
 }

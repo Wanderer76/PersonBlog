@@ -4,7 +4,9 @@ namespace Conference.Domain.Services
 {
     public interface IConferenceRoomService
     {
-        Task<CreateConferenceViewModel> CreateConferenceRoom(Guid creatorUserId, Guid postId);
-        Task AddParticipantToConference(Guid id, string sessionId);
+        Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid creatorUserId, Guid postId);
+        Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id);
+        Task AddParticipantToConferenceAsync(Guid id, Guid sessionId);
+        Task RemoveParticipantToConferenceAsync(Guid id, Guid sessionId);
     }
 }
