@@ -1,4 +1,3 @@
-using Authentication.Domain.Interfaces.Models;
 using Blog.Service.Models;
 using Blog.Service.Models.Blog;
 using Blog.Service.Models.File;
@@ -6,6 +5,7 @@ using FileStorage.Service.Service;
 using Infrastructure.Cache.Services;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Models;
 using Shared.Services;
 using System.Web;
 using Video.Service.Interface;

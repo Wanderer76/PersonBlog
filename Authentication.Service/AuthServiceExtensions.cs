@@ -1,5 +1,4 @@
-﻿using Authentication.Domain.Interfaces;
-using Authentication.Service.Service;
+﻿using Authentication.Service.Service;
 using Authentication.Service.Service.Implementation;
 using AuthenticationApplication.Service;
 using AuthenticationApplication.Service.ApiClient;
@@ -16,12 +15,6 @@ namespace Authentication.Service
             services.AddTransient<IProfileApiAsyncClient, DefaultProfileApiAsyncClient>();
             services.AddScoped<ITokenService, DefaultTokenService>();
 
-        }
-
-        public static void AddUserSessionServices(this IServiceCollection services)
-        {
-            services.AddScoped<IUserSession, DefaultUserSession>();
-            services.AddHttpContextAccessor();
         }
     }
 }

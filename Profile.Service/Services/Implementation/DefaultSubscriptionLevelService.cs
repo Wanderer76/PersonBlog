@@ -1,8 +1,8 @@
-﻿using Authentication.Domain.Interfaces;
-using Blog.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models;
 using Infrastructure.Cache.Services;
+using Infrastructure.Interface;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;

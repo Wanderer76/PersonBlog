@@ -1,12 +1,11 @@
-﻿using Authentication.Domain.Interfaces;
-using Authentication.Domain.Interfaces.Models;
-using Authentication.Service.Models;
+﻿using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
 using Infrastructure.Cache.Services;
+using Infrastructure.Interface;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Services;
+using Shared.Models;
 
 namespace AuthenticationApplication.Controllers;
 
@@ -46,7 +45,7 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Login(LoginModel loginModel)
     {
-        var hasSession = Request.Cookies.TryGetValue(new SessionKey(), out var session);
+        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Authenticate(loginModel);
         await _userSession.UpdateUserSession(session);
         return Ok(response);
@@ -57,7 +56,7 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Refresh(string refreshToken)
     {
-        var hasSession = Request.Cookies.TryGetValue(new SessionKey(), out var session);
+        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Refresh(refreshToken);
         await _userSession.UpdateUserSession(session);
         return Ok(response);

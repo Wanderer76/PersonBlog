@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Infrastructure.Interface;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Extensions
 {
@@ -26,6 +22,11 @@ namespace Infrastructure.Extensions
                         IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey()
                     };
                 });
+        }
+        public static void AddUserSessionServices(this IServiceCollection services)
+        {
+            services.AddScoped<IUserSession, DefaultUserSession>();
+            services.AddHttpContextAccessor();
         }
     }
 }
