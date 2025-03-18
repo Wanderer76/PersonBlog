@@ -1,11 +1,12 @@
 ﻿using Conference.Domain.Entities;
 using Conference.Domain.Models;
 using Conference.Domain.Services;
-using Infrastructure.Interface;
+using Conference.Service.Extensions;
+using Infrastructure.Extensions;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Shared.Models;
 using Shared.Persistence;
+using Shared.Services;
 
 namespace Conference.Service
 {
@@ -23,28 +24,50 @@ namespace Conference.Service
         public async Task AddParticipantToConferenceAsync(Guid id, Guid sessionId)
         {
             var cacheKey = new ConferenceRoomKey(id);
-            var conference = await _cacheService.GetCachedDataAsync<ConferenceRoom>(cacheKey);
+            var conference = await _cacheService.GetConferenceRoomCacheAsync(cacheKey);
             conference ??= await _readWriteRepository.Get<ConferenceRoom>()
                     .Include(x => x.Participants)
                     .FirstAsync(x => x.Id == id);
 
             if (!conference.Participants.Any(x => x.SessionId == sessionId))
             {
-                var session = await _cacheService.GetCachedDataAsync<UserSession>(new SessionKey(sessionId));
+                var session = (await _cacheService.GetUserSessionCachedAsync(sessionId))!;
                 conference.AddParticipant(new ConferenceParticipant(session.UserId, session.SessionId, conference.Id));
                 await _readWriteRepository.SaveChangesAsync();
-                await _cacheService.SetCachedDataAsync(cacheKey, conference, TimeSpan.FromMinutes(10));
+                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
         }
 
-        public Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid creatorUserId, Guid postId)
+        public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid sessionId, Guid postId)
         {
-            throw new NotImplementedException();
+            var roomId = GuidService.GetNewGuid();
+            var creatorUser = (await _cacheService.GetUserSessionCachedAsync(sessionId))!;
+            if (creatorUser.UserId.HasValue)
+            {
+                var creator = new ConferenceParticipant(creatorUser.UserId!.Value, sessionId, roomId);
+                var conference = new ConferenceRoom(roomId, postId,"", true, creator);
+                _readWriteRepository.Add(conference);
+                await _readWriteRepository.SaveChangesAsync();
+                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
+                return new ConferenceViewModel(conference.Id, conference.Url);
+            }
+            else
+            {
+                throw new ArgumentException("Пользователь должен быть авторизован");
+            }
         }
 
-        public Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id)
+        public async Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id)
         {
-            throw new NotImplementedException();
+            var conference = await _cacheService.GetConferenceRoomCacheAsync(new ConferenceRoomKey(id));
+            if (conference == null)
+            {
+                conference ??= await _readWriteRepository.Get<ConferenceRoom>()
+                        .Include(x => x.Participants)
+                        .FirstAsync(x => x.Id == id);
+                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
+            }
+            return new ConferenceViewModel(conference.Id,conference.Url);
         }
 
         public Task RemoveParticipantToConferenceAsync(Guid id, Guid sessionId)

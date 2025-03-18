@@ -7,9 +7,6 @@ import API from "../../scripts/apiMethod";
 
 const Header = function () {
     const navigate = useNavigate();
-    useEffect(() => {
-        API.get("auth/api/Auth/session", { withCredentials: true })
-    }, []);
 
     return (
         <nav className="navbar">

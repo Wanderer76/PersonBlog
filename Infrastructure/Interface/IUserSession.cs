@@ -39,11 +39,11 @@ namespace Infrastructure.Interface
         {
             if (session != null)
             {
-                var data = await _cacheService.GetCachedDataAsync<UserSession>($"{new SessionKey()}:{session}")!;
+                var data = await _cacheService.GetCachedDataAsync<UserSession>(new SessionKey(session))!;
                 if (data == null)
                 {
                     await _cacheService.RemoveCachedDataAsync(new SessionKey(session));
-                    _contextAccessor.HttpContext?.Response.Cookies.Delete(new SessionKey());
+                    _contextAccessor.HttpContext?.Response.Cookies.Delete(SessionKey.Key);
                 }
                 else
                 {
