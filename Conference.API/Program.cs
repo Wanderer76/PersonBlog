@@ -1,5 +1,6 @@
 using Conference.Persistence.Extensions;
 using Conference.Service.Extensions;
+using Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddConferencePersistence(builder.Configuration);
 builder.Services.AddConferenceService();
+builder.Services.AddUserSessionServices();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();
+builder.Services.AddRedisCache(builder.Configuration);
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -20,8 +25,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

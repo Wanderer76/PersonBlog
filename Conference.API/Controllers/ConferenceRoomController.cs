@@ -1,6 +1,9 @@
+using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Infrastructure.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Services;
 
 namespace Conference.API.Controllers
 {
@@ -10,7 +13,7 @@ namespace Conference.API.Controllers
     {
         private readonly ILogger<ConferenceRoomController> _logger;
         private readonly IConferenceRoomService _conferenceRoomService;
-        
+
         public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IConferenceRoomService conferenceRoomService)
             : base(logger)
         {
@@ -18,11 +21,21 @@ namespace Conference.API.Controllers
             _conferenceRoomService = conferenceRoomService;
         }
 
-        [HttpGet(Name = "Index")]
-        public async Task<IActionResult> Index()
+        [HttpPost("createConferenceToPost")]
+        [Produces<ConferenceViewModel>]
+        [Authorize]
+        public async Task<IActionResult> Index(Guid postId)
         {
-            await _conferenceRoomService.AddParticipantToConferenceAsync(Guid.NewGuid(), Guid.NewGuid());
-            return Ok();
+            var result = await _conferenceRoomService.CreateConferenceRoomAsync(Guid.Parse(GetUserSession()!), postId);
+            return Ok(result);
+        }
+
+        [HttpGet("joinLink")]
+        [Produces<ConferenceViewModel>]
+        public async Task<IActionResult> GetConferenceRoomAsync(Guid roomId)
+        {
+            var result = await _conferenceRoomService.GetConferenceRoomByIdAsync(roomId);
+            return Ok(result);
         }
     }
 }

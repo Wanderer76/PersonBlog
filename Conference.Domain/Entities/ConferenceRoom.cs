@@ -12,7 +12,6 @@ namespace Conference.Domain.Entities
         public bool IsActive { get; set; }
         private List<ConferenceParticipant> _participants { get; set; } = [];
 
-        [NotMapped]
         public IReadOnlyList<ConferenceParticipant> Participants { get => _participants; }
 
         public ConferenceRoom()

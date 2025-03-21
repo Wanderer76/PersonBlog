@@ -45,11 +45,11 @@ namespace Conference.Service
             if (creatorUser.UserId.HasValue)
             {
                 var creator = new ConferenceParticipant(creatorUser.UserId!.Value, sessionId, roomId);
-                var conference = new ConferenceRoom(roomId, postId,"", true, creator);
+                var conference = new ConferenceRoom(roomId, postId, "", true, creator);
                 _readWriteRepository.Add(conference);
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-                return new ConferenceViewModel(conference.Id, conference.Url);
+                return new ConferenceViewModel(conference.Id, conference.Url, conference.PostId);
             }
             else
             {
@@ -67,7 +67,7 @@ namespace Conference.Service
                         .FirstAsync(x => x.Id == id);
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
-            return new ConferenceViewModel(conference.Id,conference.Url);
+            return new ConferenceViewModel(conference.Id, conference.Url, conference.PostId);
         }
 
         public Task RemoveParticipantToConferenceAsync(Guid id, Guid sessionId)

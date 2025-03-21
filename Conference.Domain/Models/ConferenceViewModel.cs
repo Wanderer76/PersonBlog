@@ -4,11 +4,13 @@
     {
         public Guid Id { get; }
         public string Url { get; }
-
-        public ConferenceViewModel(Guid id, string url)
+        public Guid PostId { get; }
+        
+        public ConferenceViewModel(Guid id, string url, Guid postId)
         {
             Url = url;
             Id = id;
+            PostId = postId;
         }
     }
 }
