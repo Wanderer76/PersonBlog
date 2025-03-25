@@ -2,8 +2,10 @@
 using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Conference.Service.Extensions;
+using Conference.Service.Hubs;
 using Infrastructure.Extensions;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -14,11 +16,13 @@ namespace Conference.Service
     {
         private readonly IReadWriteRepository<IConferenceEntity> _readWriteRepository;
         private readonly ICacheService _cacheService;
+        private readonly IHubContext<ChatHub,IChatHub> hubContext;
 
-        public DefaultConferenceService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService)
+        public DefaultConferenceService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService, IHubContext<ChatHub, IChatHub> hubContext)
         {
             _readWriteRepository = readWriteRepository;
             _cacheService = cacheService;
+            this.hubContext = hubContext;
         }
 
         public async Task AddParticipantToConferenceAsync(Guid id, Guid sessionId)
@@ -36,6 +40,7 @@ namespace Conference.Service
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
+            await hubContext.Clients.All.OnConferenceConnect($"Присоединилось пользователей: {conference.Participants.Count}");
         }
 
         public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid sessionId, Guid postId)

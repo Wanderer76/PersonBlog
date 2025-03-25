@@ -1,5 +1,6 @@
 using Conference.Persistence.Extensions;
 using Conference.Service.Extensions;
+using Conference.Service.Hubs;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -17,6 +18,7 @@ builder.Services.AddUserSessionServices();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCors();
+builder.Services.AddSignalR();
 builder.Services.AddRedisCache(builder.Configuration);
 var app = builder.Build();
 
@@ -32,6 +34,9 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor |
     ForwardedHeaders.XForwardedProto
 });
+
+app.MapHub<ChatHub>("chat");
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

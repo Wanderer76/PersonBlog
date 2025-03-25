@@ -9,9 +9,7 @@ namespace Conference.Domain.Entities
         public Guid PostId { get; set; }
         public string Url { get; set; }
         public bool IsActive { get; set; }
-        private List<ConferenceParticipant> _participants { get; set; } = [];
-
-        public IReadOnlyList<ConferenceParticipant> Participants { get => _participants; }
+        public List<ConferenceParticipant> Participants { get; set; }
 
         public ConferenceRoom()
         {
@@ -26,19 +24,19 @@ namespace Conference.Domain.Entities
             IsDeleted = false;
             Url = url;
             IsActive = isActive;
-            _participants = [creator];
+            Participants = [creator];
         }
 
         public void AddParticipant(ConferenceParticipant participant)
         {
 
-            _participants.Add(participant);
+            Participants.Add(participant);
         }
 
         public void RemoveParticipant(ConferenceParticipant participant)
         {
 
-            _participants.Remove(participant);
+            Participants.Remove(participant);
         }
 
         public ConferenceRoomKey GetCacheKey() => new(Id);

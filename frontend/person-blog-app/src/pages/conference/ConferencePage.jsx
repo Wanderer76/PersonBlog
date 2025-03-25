@@ -4,15 +4,17 @@ import { getLocalDateTime } from "../../scripts/LocalDate";
 import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
 import logo from '../../defaultProfilePic.png';
 import API, { BaseApUrl } from "../../scripts/apiMethod";
-import axios from "axios";
+import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 
 export const ConferencePage = function () {
     const conferenceId = useParams();
     const [post, setPost] = useState();
     const [blog, setBlog] = useState();
+    const [messages, setMessages] = useState([]);
+    const [connection, setConnection] = useState(null);
 
     useEffect(() => {
-        axios.get(`http://localhost:5193/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
+        API.get(`http://localhost:5193/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
             .then(async response => {
                 const postId = response.data.postId
                 await API.get(`/video/Video/video/${postId}`)
@@ -21,7 +23,25 @@ export const ConferencePage = function () {
                         setBlog(response.data.blog);
                     })
             })
+        const connection_chat = new HubConnectionBuilder()
+            .withUrl("http://localhost:5193/chat", {
+                skipNegotiation: true,
+                transport: HttpTransportType.WebSockets
+            })
 
+            .configureLogging(LogLevel.Debug)
+            .withAutomaticReconnect()
+            .build();
+        connection_chat.on("onconferenceconnect", function (message) {
+            console.log(message);
+            console.log("message");
+            setMessages([message]);
+        });
+        connection_chat.start().then(() => {
+            setConnection(connection_chat);
+            console.log("SignalR Connected.")
+
+        });
     }, []);
 
     if (post == null || blog == null)
@@ -64,7 +84,7 @@ export const ConferencePage = function () {
 
             <aside className="sidebar">
                 <p>Чат</p>
-
+                {messages.map(x => <><p>{x}</p><br /></>)}
             </aside>
         </div>
     );
@@ -98,7 +118,7 @@ export const ConferencePage = function () {
                     <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                 </div>
                 <div className="video-actions">
-                    <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href)}}>
+                    <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href) }}>
                         <span>📁</span> Ссылка для присоединения
                     </button>
                 </div>
@@ -117,8 +137,6 @@ export const ConferencePage = function () {
             </div>
         </div>;
     }
-
-
 }
 
 
