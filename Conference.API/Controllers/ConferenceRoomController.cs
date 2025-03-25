@@ -3,7 +3,6 @@ using Conference.Domain.Services;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Services;
 
 namespace Conference.API.Controllers
 {

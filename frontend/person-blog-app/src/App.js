@@ -7,12 +7,13 @@ import ProfilePage from './pages/profile/ProfilePage';
 import { VideoPage } from './pages/post/PostPage';
 import { useEffect, useState } from 'react';
 import API from './scripts/apiMethod';
+import ConferencePage from './pages/conference/ConferencePage';
 
 
 const Session = function ({ children }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    API.get("auth/api/Auth/session", { withCredentials: true }) .then(response => {
+    API.get("auth/api/Auth/session", { withCredentials: true }).then(response => {
       setLoading(false);
     })
   }, []);
@@ -36,6 +37,7 @@ function App() {
             <Route path="/video/:postId" element={<VideoPage />} />
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/conference/:id" element={<ConferencePage />} />
           </Routes>
         </BrowserRouter>
       </Session>

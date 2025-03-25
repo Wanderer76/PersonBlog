@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
+using Shared.Services;
 using StackExchange.Redis;
 using System.Text;
 using System.Text.Json;
@@ -8,9 +9,13 @@ namespace Infrastructure.Services
     public interface ICacheService
     {
         Task<T?> GetCachedDataAsync<T>(string key);
+        //Task<T?> GetCachedDataAsync<T>(ICacheKey key);
         Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<string> keys);
+        //Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<ICacheKey> keys);
         Task SetCachedDataAsync<T>(string key, T data, TimeSpan ttl) where T : notnull;
+        //Task SetCachedDataAsync<T>(ICacheKey key, T data, TimeSpan ttl) where T : notnull;
         Task RemoveCachedDataAsync(string key);
+        //Task RemoveCachedDataAsync(ICacheKey key);
     }
 
     internal class DefaultCacheService : ICacheService
@@ -45,9 +50,24 @@ namespace Infrastructure.Services
                 .Select(obj => JsonSerializer.Deserialize<T>(obj!)!);
         }
 
+        public Task<T?> GetCachedDataAsync<T>(ICacheKey key)
+        {
+            return GetCachedDataAsync<T>(key.GetKey());
+        }
+
+        public Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<ICacheKey> keys)
+        {
+            return GetCachedDataAsync<T>(keys.Select(x => x.GetKey()));
+        }
+
         public async Task RemoveCachedDataAsync(string key)
         {
             await _redis.GetDatabase().StringGetDeleteAsync(new RedisKey(key));
+        }
+
+        public Task RemoveCachedDataAsync(ICacheKey key)
+        {
+            return RemoveCachedDataAsync(key.GetKey());
         }
 
         public async Task SetCachedDataAsync<T>(string key, T data, TimeSpan ttl) where T : notnull
@@ -63,7 +83,11 @@ namespace Infrastructure.Services
                 Console.WriteLine("");
             }
         }
-    }
 
+        public Task SetCachedDataAsync<T>(ICacheKey key, T data, TimeSpan ttl) where T : notnull
+        {
+            return SetCachedDataAsync(key.GetKey(), data, ttl);
+        }
+    }
 
 }

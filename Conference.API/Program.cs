@@ -1,6 +1,7 @@
 using Conference.Persistence.Extensions;
 using Conference.Service.Extensions;
 using Infrastructure.Extensions;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,7 @@ builder.Services.AddConferenceService();
 builder.Services.AddUserSessionServices();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 var app = builder.Build();
 
@@ -24,7 +26,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseCors(policy => policy.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+    ForwardedHeaders.XForwardedProto
+});
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

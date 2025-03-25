@@ -1,13 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Shared;
 using Shared.Services;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Conference.Domain.Entities
 {
     public class ConferenceRoom : BaseEntity<Guid>, IConferenceEntity
     {
-        public Guid PostId { get; }
+        public Guid PostId { get; set; }
         public string Url { get; set; }
         public bool IsActive { get; set; }
         private List<ConferenceParticipant> _participants { get; set; } = [];
@@ -22,9 +21,9 @@ namespace Conference.Domain.Entities
         public ConferenceRoom(Guid id, Guid postId, string url, bool isActive, ConferenceParticipant creator)
         {
             Id = id;
+            PostId = postId;
             CreatedAt = DateTimeService.Now();
             IsDeleted = false;
-            PostId = postId;
             Url = url;
             IsActive = isActive;
             _participants = [creator];
@@ -51,7 +50,7 @@ namespace Conference.Domain.Entities
         OnlyAuth
     }
 
-    public readonly struct ConferenceRoomKey
+    public readonly struct ConferenceRoomKey : ICacheKey
     {
         public const string Key = nameof(ConferenceRoom);
 
@@ -62,6 +61,11 @@ namespace Conference.Domain.Entities
             _id = id;
         }
 
-        public static implicit operator string(ConferenceRoomKey key) => $"{Key}:{key._id}";
+        public string GetKey()
+        {
+            return $"{Key}:{_id}";
+        }
+
+        public static implicit operator string(ConferenceRoomKey key) => key.GetKey();
     }
 }

@@ -6,6 +6,7 @@ import API, { BaseApUrl } from '../../scripts/apiMethod';
 import { getLocalDateTime } from '../../scripts/LocalDate';
 import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
+import axios from 'axios';
 
 export const VideoPage = function (props) {
     const searchParams = useParams();
@@ -160,7 +161,7 @@ export const VideoPage = function (props) {
             <div className="main-content">
 
                 {videoWindow()}
-                {videoMetadata(post, userView, setReaction)}
+                {videoMetadata(post, userView, setReaction, navigate)}
                 {channelInfo(blog, handleSubscribe, userView)}
 
                 <div className="video-description">
@@ -205,7 +206,7 @@ export const VideoPage = function (props) {
             <VideoPlayer className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
-                    url: getUrl(post.id,post.videoData.objectName),
+                    url: getUrl(post.id, post.videoData.objectName),
                     label: '',
                     postId: post.id,
                     autoplay: false,
@@ -231,7 +232,18 @@ const VideoCard = function ({ videoCardModel, navigate }) {
     </div>
 }
 
-function videoMetadata(post, userView, setReaction) {
+async function createConference(postId, navigate) {
+    const response = await API.post(`http://localhost:5193/ConferenceRoom/createConferenceToPost?postId=${postId}`, null, {
+        headers: { Authorization: JwtTokenService.getFormatedTokenForHeader() }
+    });
+
+    if (response.status === 200) {
+        navigate(`/conference/${response.data.id}`)
+    }
+
+}
+
+function videoMetadata(post, userView, setReaction, navigate) {
     return <div className="video-metadata">
         <h1 className="video-title">{post.title}</h1>
 
@@ -249,6 +261,10 @@ function videoMetadata(post, userView, setReaction) {
                 </button>
                 <button className="action-button">
                     <span>📁</span> Поделиться
+                </button>
+
+                <button className="action-button" onClick={() => { createConference(post.id, navigate) }}>
+                    <span>📁</span> Совместный просмотр
                 </button>
             </div>
         </div>
