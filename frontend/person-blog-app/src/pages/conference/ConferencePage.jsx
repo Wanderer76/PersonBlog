@@ -24,7 +24,7 @@ export const ConferencePage = function () {
                     })
             })
         const connection_chat = new HubConnectionBuilder()
-            .withUrl("http://localhost:5193/chat", {
+            .withUrl("http://localhost:5193/conference?id=" + conferenceId.id, {
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets
             })
@@ -32,15 +32,26 @@ export const ConferencePage = function () {
             .configureLogging(LogLevel.Debug)
             .withAutomaticReconnect()
             .build();
+
         connection_chat.on("onconferenceconnect", function (message) {
             console.log(message);
             console.log("message");
             setMessages([message]);
         });
+
+        connection_chat.onclose(() => {
+            console.log("close")
+            connection_chat.invoke("CloseConnectionAsync", conferenceId.id)
+        })
+
+        connection_chat.onreconnecting(() => {
+            console.log("close")
+            connection_chat.invoke("CloseConnectionAsync", conferenceId.id)
+        })
+
         connection_chat.start().then(() => {
             setConnection(connection_chat);
             console.log("SignalR Connected.")
-
         });
     }, []);
 

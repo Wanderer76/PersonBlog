@@ -34,7 +34,7 @@ namespace Conference.API.Controllers
         public async Task<IActionResult> GetConferenceRoomAsync(Guid roomId)
         {
             var result = await _conferenceRoomService.GetConferenceRoomByIdAsync(roomId);
-            await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, Guid.Parse(GetUserSession()!));
+            //await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, Guid.Parse(GetUserSession()!));
             return Ok(result);
         }
 

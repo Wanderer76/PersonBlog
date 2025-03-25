@@ -4,19 +4,20 @@ namespace Conference.Domain.Entities
 {
     public class ConferenceParticipant : IConferenceEntity
     {
-        public Guid? UserId { get; }
-        public Guid SessionId { get; }
-        public Guid ConferenceRoomId { get; }
+        public Guid SessionId { get; set; }
+
+        public Guid? UserId { get; set; }
+        public Guid ConferenceRoomId { get; set; }
 
         [ForeignKey(nameof(ConferenceRoomId))]
-        public ConferenceRoom ConferenceRoom { get; }
+        public ConferenceRoom ConferenceRoom { get; set; }
 
         public ConferenceParticipant()
         {
             
         }
 
-        public ConferenceParticipant(Guid? userId, Guid sessionId, Guid conferenceRoomId)
+        public ConferenceParticipant(Guid sessionId, Guid? userId, Guid conferenceRoomId)
         {
             UserId = userId;
             SessionId = sessionId;

@@ -21,7 +21,7 @@ namespace Conference.Persistence
             base.OnModelCreating(modelBuilder);
             {
                 var entity = modelBuilder.Entity<ConferenceParticipant>();
-                entity.HasKey(x => new { x.ConferenceRoomId, x.SessionId, x.UserId });
+                entity.HasKey(x => new { x.ConferenceRoomId, x.SessionId });
             }
         }
     }

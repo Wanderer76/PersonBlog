@@ -35,7 +35,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders.XForwardedProto
 });
 
-app.MapHub<ChatHub>("chat");
+app.MapHub<ConferenceHub>("/conference");
 
 app.UseRouting();
 app.UseAuthentication();

@@ -1,6 +1,6 @@
 ﻿namespace Conference.Domain.Services
 {
-    public interface IChatHub
+    public interface IConferenceHub
     {
         Task OnConferenceConnect(string message);
     }
