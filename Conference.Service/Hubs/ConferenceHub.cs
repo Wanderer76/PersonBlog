@@ -92,6 +92,19 @@ namespace Conference.Service.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
+        public async Task Seek(double time)
+        {
+            var connectionId = Context.ConnectionId;
+            var httpContext = Context.GetHttpContext();
+            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
+            var conferenceId = value.First()!;
+            //var sessionId = TryGetSession();
+            var key = new ConferenceChatModelCacheKey(Guid.Parse(conferenceId));
+            var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
+            await Clients.GroupExcept(conferenceId, [connectionId]).OnTimeSeek(time);
+            //await Clients.Group(conferenceId).OnTimeSeek(time);
+        }
+
         private Guid? TryGetSession()
         {
             var context = Context.GetHttpContext();

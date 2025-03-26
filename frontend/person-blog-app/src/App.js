@@ -18,7 +18,6 @@ const Session = function ({ children }) {
     })
   }, []);
 
-  console.log(children);
   if (loading) {
     return <></>;
   }

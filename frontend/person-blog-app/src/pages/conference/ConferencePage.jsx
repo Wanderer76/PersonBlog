@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getLocalDateTime } from "../../scripts/LocalDate";
 import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
@@ -12,6 +12,8 @@ export const ConferencePage = function () {
     const [blog, setBlog] = useState();
     const [messages, setMessages] = useState([]);
     const [connection, setConnection] = useState(null);
+    const playerRef = useRef(null);
+    const isSeeking = useRef(false); // Флаг блокировки обновлений
 
     useEffect(() => {
         API.get(`http://localhost:5193/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
@@ -39,6 +41,13 @@ export const ConferencePage = function () {
                     console.log("message");
                     setMessages([message]);
                 });
+
+
+                connection_chat.on("OnTimeSeek", function (time) {
+                    if (!isSeeking.current)
+                        handleSignalRSeek(time);
+                });
+
                 setConnection(connection_chat);
             })
         // connection_chat.onclose(() => {
@@ -51,6 +60,18 @@ export const ConferencePage = function () {
         //         console.log("SignalR Connected.")
         //     });
     }, []);
+
+    function handleSignalRSeek(time) {
+        if (playerRef.current) {
+            isSeeking.current = true;
+            playerRef.current.currentTime(time)
+            setTimeout(() => isSeeking.current = false, 500)
+            // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
+        } else {
+            console.warn("Seek function not available.");
+        }
+    }
+
 
     useEffect(() => {
         const startConnection = async () => {
@@ -71,7 +92,7 @@ export const ConferencePage = function () {
         <div className="video-container">
             <div className="main-content">
 
-                {videoWindow()}
+                {videoWindow(connection)}
                 {videoMetadata(post)}
                 {channelInfo(blog)}
 
@@ -104,7 +125,7 @@ export const ConferencePage = function () {
 
             <aside className="sidebar">
                 <p>Чат</p>
-                {messages.map(x => <><p>{x}</p><br /></>)}
+                {messages.map((x, i) => <div key={i}><p >{x}</p><br /></div>)}
             </aside>
         </div>
     );
@@ -114,7 +135,7 @@ export const ConferencePage = function () {
             return `${BaseApUrl}/video/Video/video/v2/${postId}/chunks/${objectName}`;
     }
 
-    function videoWindow() {
+    function videoWindow(connection) {
         return <div className="video-player">
             <VideoPlayer className="myVideo"
                 thumbnail={post.previewUrl}
@@ -125,10 +146,17 @@ export const ConferencePage = function () {
                     autoplay: false,
                     objectName: post.videoData.objectName
                 }}
-                onTimeupdate={() => { }} />
+                setPlayerRef={(e) => {
+                    console.log('setPlayerRef')
+                    playerRef.current = e
+                }}
+                onUserSeek={(time) => {
+                    console.log(time)
+                    connection.invoke("Seek", time);
+                }} />
         </div>;
     }
-    
+
     function videoMetadata(post) {
         return <div className="video-metadata">
             <h1 className="video-title">{post.title}</h1>
@@ -158,6 +186,7 @@ export const ConferencePage = function () {
             </div>
         </div>;
     }
+
 }
 
 

@@ -6,28 +6,16 @@ import 'hls.js';
 import './Player.css';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onSeek }) => {
+export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, onSeek, setPlayerRef }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   let viewRecorded = false;
   let sessionHash = null;
 
-
-  useEffect(() => {
-    if (onSeek) {
-      onSeek(seekVideo); // Call the callback with the seekVideo function
-    }
-
-    return () => {
-      if (onSeek) {
-        onSeek(null); // Remove the callback function
-      }
-    };
-  }, [onSeek]);
-
-  const seekVideo = (time) => {
+  const seekVideo = function (time) {
     if (playerRef.current) {
       try {
+        console.log('set SeekTime -' + time)
         playerRef.current.currentTime(time);
       } catch (error) {
         console.error("Error seeking video:", error);
@@ -36,6 +24,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onSeek }) => {
       console.warn("Player not ready to seek.");
     }
   };
+
   const options = {
     autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,
@@ -70,7 +59,6 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onSeek }) => {
   };
 
   useEffect(() => {
-    console.log("renderVideo " + path.postId)
     // Make sure Video.js player is only initialized once
     if (!playerRef.current) {
       // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode. 
@@ -82,22 +70,31 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onSeek }) => {
       playerRef.current = videojs(videoElement, options, function () {
         var player = this;
         var qualities = player.qualityLevels();
+
         player.on('timeupdate', () => {
           if (onTimeupdate != null)
             onTimeupdate(player);
         })
 
+        player.on('seeked', () => {
+          if (onUserSeek != undefined && onUserSeek != null) {
+            onUserSeek(player.currentTime());
+          }
+        })
+        if (setPlayerRef != undefined && setPlayerRef != null) {
+          setPlayerRef(player)
+        }
         // player.on("loadedmetadata", function () {
         //   player.currentTime(10);
         // });
 
-        player.seek = seekVideo;
+        // player.seek = seekVideo;
         qualities.on('addqualitylevel', () => {
 
         });
 
       });
-
+     
     } else {
       const player = playerRef.current;
 
