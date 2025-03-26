@@ -16,44 +16,53 @@ export const ConferencePage = function () {
     useEffect(() => {
         API.get(`http://localhost:5193/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
             .then(async response => {
-                const postId = response.data.postId
+                const postId = response.data.postId;
+
                 await API.get(`/video/Video/video/${postId}`)
                     .then(response => {
                         setPost(response.data.post);
                         setBlog(response.data.blog);
+                    });
+
+                const connection_chat = new HubConnectionBuilder()
+                    .withUrl("http://localhost:5193/conference?conferenceId=" + conferenceId.id, {
+                        headers: { 'conferenceId': `${conferenceId.id}` },
+                        skipNegotiation: true,
+                        transport: HttpTransportType.WebSockets,
                     })
+                    .configureLogging(LogLevel.Debug)
+                    .withAutomaticReconnect()
+                    .build();
+
+                connection_chat.on("onconferenceconnect", function (message) {
+                    console.log(message);
+                    console.log("message");
+                    setMessages([message]);
+                });
+                setConnection(connection_chat);
             })
-        const connection_chat = new HubConnectionBuilder()
-            .withUrl("http://localhost:5193/conference?id=" + conferenceId.id, {
-                skipNegotiation: true,
-                transport: HttpTransportType.WebSockets
-            })
+        // connection_chat.onclose(() => {
+        //     console.log("close")
+        //     // connection_chat.invoke("CloseConnectionAsync", conferenceId.id)
+        // })
 
-            .configureLogging(LogLevel.Debug)
-            .withAutomaticReconnect()
-            .build();
 
-        connection_chat.on("onconferenceconnect", function (message) {
-            console.log(message);
-            console.log("message");
-            setMessages([message]);
-        });
-
-        connection_chat.onclose(() => {
-            console.log("close")
-            connection_chat.invoke("CloseConnectionAsync", conferenceId.id)
-        })
-
-        connection_chat.onreconnecting(() => {
-            console.log("close")
-            connection_chat.invoke("CloseConnectionAsync", conferenceId.id)
-        })
-
-        connection_chat.start().then(() => {
-            setConnection(connection_chat);
-            console.log("SignalR Connected.")
-        });
+        //     connection_chat.start().then(() => {
+        //         console.log("SignalR Connected.")
+        //     });
     }, []);
+
+    useEffect(() => {
+        const startConnection = async () => {
+            await connection.start();
+            console.log("SignalR Connected.");
+        }
+        if (connection)
+            startConnection()
+                .then(() => console.log("SignalR connected."))
+                .catch(() => console.assert(connection.state === HubConnectionState.Connected));
+
+    }, [connection]);
 
     if (post == null || blog == null)
         return <></>;
@@ -119,6 +128,7 @@ export const ConferencePage = function () {
                 onTimeupdate={() => { }} />
         </div>;
     }
+    
     function videoMetadata(post) {
         return <div className="video-metadata">
             <h1 className="video-title">{post.title}</h1>

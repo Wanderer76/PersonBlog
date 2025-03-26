@@ -22,6 +22,10 @@ namespace Infrastructure.Services
     {
         private readonly IDistributedCache _cache;
         private readonly IConnectionMultiplexer _redis;
+        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        {
+            PreferredObjectCreationHandling = System.Text.Json.Serialization.JsonObjectCreationHandling.Populate
+        };
         public DefaultCacheService(IDistributedCache cache, IConnectionMultiplexer redis)
         {
             _cache = cache;
@@ -35,7 +39,7 @@ namespace Infrastructure.Services
             {
                 return default;
             }
-            return JsonSerializer.Deserialize<T>(result);
+            return JsonSerializer.Deserialize<T>(result, _serializerOptions);
         }
 
         public async Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<string> keys)
@@ -47,7 +51,7 @@ namespace Infrastructure.Services
                 ? []
                 : result
                 .Where(x => x.HasValue)
-                .Select(obj => JsonSerializer.Deserialize<T>(obj!)!);
+                .Select(obj => JsonSerializer.Deserialize<T>(obj!, _serializerOptions)!);
         }
 
         public Task<T?> GetCachedDataAsync<T>(ICacheKey key)

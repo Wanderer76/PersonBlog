@@ -6,12 +6,36 @@ import 'hls.js';
 import './Player.css';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
+export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onSeek }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   let viewRecorded = false;
   let sessionHash = null;
 
+
+  useEffect(() => {
+    if (onSeek) {
+      onSeek(seekVideo); // Call the callback with the seekVideo function
+    }
+
+    return () => {
+      if (onSeek) {
+        onSeek(null); // Remove the callback function
+      }
+    };
+  }, [onSeek]);
+
+  const seekVideo = (time) => {
+    if (playerRef.current) {
+      try {
+        playerRef.current.currentTime(time);
+      } catch (error) {
+        console.error("Error seeking video:", error);
+      }
+    } else {
+      console.warn("Player not ready to seek.");
+    }
+  };
   const options = {
     autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,
@@ -67,6 +91,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate }) => {
         //   player.currentTime(10);
         // });
 
+        player.seek = seekVideo;
         qualities.on('addqualitylevel', () => {
 
         });
