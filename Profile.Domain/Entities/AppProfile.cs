@@ -3,8 +3,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Blog.Domain.Entities;
 
-public class AppProfile : BaseEntity<Guid>, IProfileEntity
+public class AppProfile : BaseEntity, IProfileEntity
 {
+    [Key]
+    public Guid  Id { get; set; }
+    
     [Required]
     public string FirstName { get; set; } = string.Empty;
 

@@ -4,8 +4,9 @@ using Shared.Services;
 
 namespace Conference.Domain.Entities
 {
-    public class ConferenceRoom : BaseEntity<Guid>, IConferenceEntity
+    public class ConferenceRoom : BaseEntity, IConferenceEntity
     {
+        public Guid Id { get; set; }
         public Guid PostId { get; set; }
         public string Url { get; set; }
         public bool IsActive { get; set; }
@@ -48,22 +49,14 @@ namespace Conference.Domain.Entities
         OnlyAuth
     }
 
-    public readonly struct ConferenceRoomKey : ICacheKey
+    public readonly struct ConferenceRoomKey(Guid id) : ICacheKey
     {
         public const string Key = nameof(ConferenceRoom);
 
-        private readonly Guid _id;
+        private readonly Guid _id = id;
 
-        public ConferenceRoomKey(Guid id)
-        {
-            _id = id;
-        }
+        public string GetKey() => $"{Key}:{_id}";
 
-        public string GetKey()
-        {
-            return $"{Key}:{_id}";
-        }
-
-        public static implicit operator string(ConferenceRoomKey key) => key.GetKey();
+        //public static implicit operator string(ConferenceRoomKey key) => key.GetKey();
     }
 }

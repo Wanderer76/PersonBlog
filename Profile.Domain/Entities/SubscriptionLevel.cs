@@ -5,8 +5,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
-    public class SubscriptionLevel : BaseEntity<Guid>, IProfileEntity
+    public class SubscriptionLevel : BaseEntity, IProfileEntity
     {
+        [Key]
+        public Guid Id { get; set; }
         public Guid BlogId { get; set; }
         [Required]
         public string Title { get; set; }
