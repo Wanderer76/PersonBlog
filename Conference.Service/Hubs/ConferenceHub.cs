@@ -34,6 +34,11 @@ namespace Conference.Service.Hubs
             if (sessionId == null)
                 return;
 
+            if (!await _conferenceRoomService.IsConferenceActiveAsync(conferenceId))
+            {
+                return;
+            }
+
             var key = new ConferenceChatModelCacheKey(conferenceId);
             var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
             if (model != null)

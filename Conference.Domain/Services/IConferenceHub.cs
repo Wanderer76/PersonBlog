@@ -1,4 +1,6 @@
-﻿namespace Conference.Domain.Services
+﻿using Conference.Domain.Models;
+
+namespace Conference.Domain.Services
 {
     public interface IConferenceHub
     {
@@ -6,5 +8,6 @@
         Task OnTimeSeek(double time);
         Task OnPause(double time);
         Task OnPlay();
+        void OnMessageSend(MessageModel result);
     }
 }

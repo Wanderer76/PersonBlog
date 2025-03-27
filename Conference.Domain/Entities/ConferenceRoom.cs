@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Shared;
+﻿using Shared;
 using Shared.Services;
 
 namespace Conference.Domain.Entities
@@ -38,6 +37,12 @@ namespace Conference.Domain.Entities
         {
 
             Participants.Remove(participant);
+        }
+
+        public void Close()
+        {
+            IsActive = false;
+            IsDeleted = true;
         }
 
         public ConferenceRoomKey GetCacheKey() => new(Id);

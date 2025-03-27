@@ -1,4 +1,5 @@
 ﻿using Conference.Domain.Services;
+using Conference.Service.Implementation;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

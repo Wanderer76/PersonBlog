@@ -49,7 +49,9 @@ namespace Infrastructure.Interface
                 {
                     if (token != null)
                     {
-                        data!.UserId = JwtUtils.GetTokenRepresentaion(token).UserId;
+                        var tokenData = JwtUtils.GetTokenRepresentaion(token);
+                        data!.UserId = tokenData.UserId;
+                        data.UserName = tokenData.Login;
                     }
                     await _cacheService.SetCachedDataAsync(new SessionKey(session), data!, TimeSpan.FromHours(1));
                 }

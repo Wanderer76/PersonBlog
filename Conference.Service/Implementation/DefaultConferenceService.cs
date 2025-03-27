@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Conference.Service
+namespace Conference.Service.Implementation
 {
     public class DefaultConferenceService : IConferenceRoomService
     {
@@ -66,10 +66,22 @@ namespace Conference.Service
             {
                 conference ??= await _readWriteRepository.Get<ConferenceRoom>()
                         .Include(x => x.Participants)
+                        .Where(x => x.IsActive)
                         .FirstAsync(x => x.Id == id);
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
+
+            if (!conference.IsActive)
+                throw new ArgumentException("Conference is close");
             return new ConferenceViewModel(conference.Id, conference.Url, conference.PostId);
+        }
+
+        public async ValueTask<bool> IsConferenceActiveAsync(Guid id)
+        {
+            return await _readWriteRepository.Get<ConferenceRoom>()
+                .Where(x => x.Id == id)
+                .Select(x => x.IsActive)
+                .FirstAsync();
         }
 
         public async Task RemoveParticipantToConferenceAsync(Guid roomId, Guid sessionId)
@@ -91,15 +103,11 @@ namespace Conference.Service
                 _readWriteRepository.Remove(userToRemove);
                 if (conference.Participants.Count == 0)
                 {
-                    _readWriteRepository.Remove(conference);
-                    await _cacheService.RemoveCachedDataAsync(cacheKey);
-                    await _readWriteRepository.SaveChangesAsync();
+                    _readWriteRepository.Attach(conference);
+                    conference.Close();
                 }
-                else
-                {
-                    await _readWriteRepository.SaveChangesAsync();
-                    await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-                }
+                await _readWriteRepository.SaveChangesAsync();
+                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
         }
     }
