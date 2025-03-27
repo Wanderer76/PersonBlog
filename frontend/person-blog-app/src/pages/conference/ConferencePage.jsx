@@ -26,52 +26,38 @@ export const ConferencePage = function () {
                         setBlog(response.data.blog);
                     });
 
-                const connection_chat = new HubConnectionBuilder()
-                    .withUrl("http://localhost:5193/conference?conferenceId=" + conferenceId.id, {
-                        headers: { 'conferenceId': `${conferenceId.id}` },
-                        skipNegotiation: true,
-                        transport: HttpTransportType.WebSockets,
-                    })
-                    .configureLogging(LogLevel.Debug)
-                    .withAutomaticReconnect()
-                    .build();
-
-                connection_chat.on("onconferenceconnect", function (message) {
-                    console.log(message);
-                    console.log("message");
-                    setMessages([message]);
-                });
-
-
-                connection_chat.on("OnTimeSeek", function (time) {
-                    if (!isSeeking.current)
-                        handleSignalRSeek(time);
-                });
-
-                setConnection(connection_chat);
             })
-        // connection_chat.onclose(() => {
-        //     console.log("close")
-        //     // connection_chat.invoke("CloseConnectionAsync", conferenceId.id)
-        // })
-
-
-        //     connection_chat.start().then(() => {
-        //         console.log("SignalR Connected.")
-        //     });
     }, []);
 
-    function handleSignalRSeek(time) {
-        if (playerRef.current) {
-            isSeeking.current = true;
-            playerRef.current.currentTime(time)
-            setTimeout(() => isSeeking.current = false, 500)
-            // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
-        } else {
-            console.warn("Seek function not available.");
-        }
-    }
+    useEffect(() => {
+        const connection_chat = new HubConnectionBuilder()
+            .withUrl("http://localhost:5193/conference?conferenceId=" + conferenceId.id, {
+                headers: { 'conferenceId': `${conferenceId.id}` },
+                skipNegotiation: true,
+                transport: HttpTransportType.WebSockets,
+            })
+            .withAutomaticReconnect()
+            .build();
 
+        connection_chat.on("onconferenceconnect", function (message) {
+            setMessages([message]);
+        });
+
+        connection_chat.on("OnPause", function (time) {
+            handleSignalRPause(time);
+        });
+
+        connection_chat.on("OnPlay", function () {
+            handleSignalRPlay();
+        });
+
+        connection_chat.on("OnTimeSeek", function (time) {
+            if (!isSeeking.current)
+                handleSignalRSeek(time);
+        });
+
+        setConnection(connection_chat);
+    }, []);
 
     useEffect(() => {
         const startConnection = async () => {
@@ -130,6 +116,41 @@ export const ConferencePage = function () {
         </div>
     );
 
+
+    function handleSignalRSeek(time) {
+        if (playerRef.current) {
+            isSeeking.current = true;
+            playerRef.current.currentTime(time)
+            setTimeout(() => isSeeking.current = false, 500)
+            // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
+        } else {
+            console.warn("Seek function not available.");
+        }
+    }
+
+    function handleSignalRPause(time) {
+        if (playerRef.current) {
+            var isPlaying = playerRef.current.currentTime > 0 && !playerRef.current.paused && !playerRef.current.ended
+                && playerRef.current.readyState > playerRef.current.HAVE_CURRENT_DATA;
+
+            if (isPlaying !== true) {
+                playerRef.current.currentTime(time);
+                playerRef.current.pause();
+            }
+            // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
+        }
+    }
+
+    function handleSignalRPlay() {
+        if (playerRef.current && playerRef.current.paused()) {
+            var isPlaying = playerRef.current.currentTime > 0 && !playerRef.current.paused && !playerRef.current.ended
+                && playerRef.current.readyState > playerRef.current.HAVE_CURRENT_DATA;
+
+            if (!isPlaying)
+                playerRef.current.play();
+        }
+    }
+
     function getUrl(postId, objectName) {
         if (postId !== null && objectName !== null)
             return `${BaseApUrl}/video/Video/video/v2/${postId}/chunks/${objectName}`;
@@ -144,16 +165,27 @@ export const ConferencePage = function () {
                     label: '',
                     postId: post.id,
                     autoplay: false,
+                    preload: 'none',
                     objectName: post.videoData.objectName
                 }}
+
+                onTimeupdate={(player) => {
+                    connection.invoke("SetCurrentTime", player.currentTime());
+                }}
+
                 setPlayerRef={(e) => {
-                    console.log('setPlayerRef')
                     playerRef.current = e
                 }}
                 onUserSeek={(time) => {
-                    console.log(time)
                     connection.invoke("Seek", time);
-                }} />
+                }}
+                onPause={(time) => {
+                    connection.invoke("PauseVideo", time);
+                }}
+                onPlay={() => {
+                    connection.invoke("ResumeVideo");
+                }}
+            />
         </div>;
     }
 

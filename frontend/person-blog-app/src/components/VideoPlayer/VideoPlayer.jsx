@@ -6,30 +6,17 @@ import 'hls.js';
 import './Player.css';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, onSeek, setPlayerRef }) => {
+export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, setPlayerRef, onPause, onPlay }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   let viewRecorded = false;
   let sessionHash = null;
 
-  const seekVideo = function (time) {
-    if (playerRef.current) {
-      try {
-        console.log('set SeekTime -' + time)
-        playerRef.current.currentTime(time);
-      } catch (error) {
-        console.error("Error seeking video:", error);
-      }
-    } else {
-      console.warn("Player not ready to seek.");
-    }
-  };
-
   const options = {
     autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,
     playbackRates: [0.5, 1, 1.5, 2],
-    preload: 'none',
+    preload: 'none',//path.preload == undefined ? 'none' : path.preload,
     responsive: true,
     fluid: true, // Добавить fluid mode
     aspectRatio: '16:9', // Установить соотношение сторон
@@ -66,15 +53,26 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, onSeek,
       videoElement.classList.add('vjs-big-play-centered');
       videoElement.classList.add('vjs-default-skin');
       videoRef.current.appendChild(videoElement);
-
       playerRef.current = videojs(videoElement, options, function () {
         var player = this;
         var qualities = player.qualityLevels();
 
         player.on('timeupdate', () => {
-          if (onTimeupdate != null)
+          if (onTimeupdate)
             onTimeupdate(player);
         })
+
+        player.on('pause', () => {
+          if (onPause) {
+            onPause(player.currentTime());
+          }
+        });
+
+        player.on('play', () => {
+          if (onPlay) {
+            onPlay();
+          }
+        });
 
         player.on('seeked', () => {
           if (onUserSeek != undefined && onUserSeek != null) {
@@ -84,17 +82,13 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, onSeek,
         if (setPlayerRef != undefined && setPlayerRef != null) {
           setPlayerRef(player)
         }
-        // player.on("loadedmetadata", function () {
-        //   player.currentTime(10);
-        // });
 
-        // player.seek = seekVideo;
         qualities.on('addqualitylevel', () => {
 
         });
 
       });
-     
+
     } else {
       const player = playerRef.current;
 
@@ -107,6 +101,8 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, onSeek,
 
   React.useEffect(() => {
     const player = playerRef.current;
+    console.log("init player")
+
     return () => {
       if (player && !player.isDisposed()) {
         player.dispose();

@@ -40,7 +40,7 @@ namespace Conference.Service
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
-            await hubContext.Clients.All.OnConferenceConnect($"Присоединилось пользователей: {conference.Participants.Count}");
+            //await hubContext.Clients.All.OnConferenceConnect($"Присоединилось пользователей: {conference.Participants.Count}");
         }
 
         public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid sessionId, Guid postId)

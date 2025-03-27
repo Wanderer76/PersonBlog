@@ -13,9 +13,7 @@ namespace Conference.Persistence.Extensions
             services.AddInMemoryDbContext<ConferenceDbContext>("Conference");
 
             services.AddScoped<IWriteRepository<IConferenceEntity>, DefaultWriteRepository<ConferenceDbContext, IConferenceEntity>>();
-
             services.AddScoped<IReadRepository<IConferenceEntity>, ReadConferenceContext<ConferenceDbContext, IConferenceEntity>>();
-
             services.AddScoped<IReadWriteRepository<IConferenceEntity>, DefaultRepository<ConferenceDbContext, IConferenceEntity>>();
         }
     }

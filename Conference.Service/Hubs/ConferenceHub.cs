@@ -59,14 +59,14 @@ namespace Conference.Service.Hubs
                 await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
                 await Groups.AddToGroupAsync(connectionId, conferenceId.ToString());
             }
-            await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
+            //await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             //var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext(); 
+            var httpContext = Context.GetHttpContext();
             httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
             var conferenceId = Guid.Parse(value.First()!);
             var sessionId = TryGetSession();
@@ -87,9 +87,39 @@ namespace Conference.Service.Hubs
                     await Groups.RemoveFromGroupAsync(connection, conferenceId.ToString());
                     await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
                 }
-                await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
+                //await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
             }
             await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task PauseVideo(double time)
+        {
+            var connectionId = Context.ConnectionId;
+            var httpContext = Context.GetHttpContext();
+            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
+            var conferenceId = value.First()!;
+            await Clients.GroupExcept(conferenceId, [connectionId]).OnPause(time);
+        }
+
+        public async Task SetCurrentTime(double time)
+        {
+            var connectionId = Context.ConnectionId;
+            var httpContext = Context.GetHttpContext();
+            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
+            var conferenceId = Guid.Parse(value.First()!);
+            var key = new ConferenceChatModelCacheKey(conferenceId);
+            var model = (await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key))!;
+            model.CurrentTime = Math.Max(model.CurrentTime, time);
+            await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
+        }
+
+        public async Task ResumeVideo()
+        {
+            var connectionId = Context.ConnectionId;
+            var httpContext = Context.GetHttpContext();
+            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
+            var conferenceId = value.First()!;
+            await Clients.GroupExcept(conferenceId, [connectionId]).OnPlay();
         }
 
         public async Task Seek(double time)
@@ -98,9 +128,10 @@ namespace Conference.Service.Hubs
             var httpContext = Context.GetHttpContext();
             httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
             var conferenceId = value.First()!;
-            //var sessionId = TryGetSession();
             var key = new ConferenceChatModelCacheKey(Guid.Parse(conferenceId));
-            var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
+            var model = (await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key))!;
+            model.CurrentTime = time;
+            await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
             await Clients.GroupExcept(conferenceId, [connectionId]).OnTimeSeek(time);
             //await Clients.Group(conferenceId).OnTimeSeek(time);
         }
@@ -115,6 +146,7 @@ namespace Conference.Service.Hubs
     public class ConferenceChatModel
     {
         public Guid ConferenceId { get; set; }
+        public double CurrentTime { get; set; }
         public Dictionary<Guid, string> ConferenceParticipants { get; set; }
     }
     public readonly struct ConferenceChatModelCacheKey
