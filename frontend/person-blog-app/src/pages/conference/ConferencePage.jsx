@@ -36,6 +36,7 @@ export const ConferencePage = function () {
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets,
             })
+            .configureLogging(LogLevel.Debug)
             .withAutomaticReconnect()
             .build();
 
@@ -49,7 +50,7 @@ export const ConferencePage = function () {
 
         connection_chat.on("OnPlay", function () {
             handleSignalRPlay();
-        });
+        })
 
         connection_chat.on("OnTimeSeek", function (time) {
             if (!isSeeking.current)
@@ -142,7 +143,7 @@ export const ConferencePage = function () {
     }
 
     function handleSignalRPlay() {
-        if (playerRef.current && playerRef.current.paused()) {
+        if (playerRef.current && playerRef.current.paused) {
             var isPlaying = playerRef.current.currentTime > 0 && !playerRef.current.paused && !playerRef.current.ended
                 && playerRef.current.readyState > playerRef.current.HAVE_CURRENT_DATA;
 

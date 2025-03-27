@@ -34,10 +34,10 @@ namespace Conference.Service.Hubs
             if (sessionId == null)
                 return;
 
-            if (!await _conferenceRoomService.IsConferenceActiveAsync(conferenceId))
-            {
-                return;
-            }
+            //if (!await _conferenceRoomService.IsConferenceActiveAsync(conferenceId))
+            //{
+            //    return;
+            //}
 
             var key = new ConferenceChatModelCacheKey(conferenceId);
             var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
@@ -120,11 +120,20 @@ namespace Conference.Service.Hubs
 
         public async Task ResumeVideo()
         {
-            var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext();
-            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            var conferenceId = value.First()!;
-            await Clients.GroupExcept(conferenceId, [connectionId]).OnPlay();
+            try
+            {
+                var connectionId = Context.ConnectionId;
+
+                var httpContext = Context.GetHttpContext();
+                httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
+                var conferenceId = value.First()!;
+                var key = new ConferenceChatModelCacheKey(Guid.Parse(conferenceId));
+                var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
+                await Clients.GroupExcept(conferenceId, [connectionId]).OnPlay();
+            }catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
 
         public async Task Seek(double time)

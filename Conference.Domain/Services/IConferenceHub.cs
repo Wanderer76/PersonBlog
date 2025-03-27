@@ -8,6 +8,6 @@ namespace Conference.Domain.Services
         Task OnTimeSeek(double time);
         Task OnPause(double time);
         Task OnPlay();
-        void OnMessageSend(MessageModel result);
+        Task OnMessageSend(MessageModel result);
     }
 }

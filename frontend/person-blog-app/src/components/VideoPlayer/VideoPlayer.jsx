@@ -101,7 +101,6 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, setPlay
 
   React.useEffect(() => {
     const player = playerRef.current;
-    console.log("init player")
 
     return () => {
       if (player && !player.isDisposed()) {

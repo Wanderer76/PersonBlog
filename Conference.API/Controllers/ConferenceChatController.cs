@@ -29,9 +29,9 @@ namespace Conference.API.Controllers
         }
 
         [HttpGet("messages/{conferenceId:guid}")]
-        public async Task<IActionResult> GetLastMessages(Guid conferenceId, int count)
+        public async Task<IActionResult> GetLastMessages(Guid conferenceId, int offset, int count)
         {
-            var result = await _conferenceChatService.GetLastMessagesAsync(conferenceId, count);
+            var result = await _conferenceChatService.GetLastMessagesAsync(conferenceId, offset, count);
             return Ok(result);
         }
 
