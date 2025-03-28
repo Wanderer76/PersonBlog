@@ -20,8 +20,8 @@ namespace Conference.API.Controllers
             _hubContext = hubContext;
         }
 
-        [HttpPost("sendMessage")]
         [Authorize]
+        [HttpPost("sendMessage")]
         public async Task SendMessage([FromBody] CreateMessageForm messageForm)
         {
             var sessionId = Guid.Parse(GetUserSession()!);

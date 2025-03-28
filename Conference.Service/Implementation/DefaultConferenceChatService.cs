@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
+using Shared.Utils;
 
 namespace Conference.Service.Implementation
 {
@@ -25,16 +26,21 @@ namespace Conference.Service.Implementation
         public async Task<MessageModel> CreateMessageAsync(Guid sessionId, CreateMessageForm messageForm)
         {
             var conference = await _cacheService.GetConferenceRoomCacheAsync(new ConferenceRoomKey(messageForm.ConferenceId));
-            conference ??= await _readWriteRepository.Get<ConferenceRoom>()
-                .Include(x => x.Participants)
-                .FirstOrDefaultAsync(x => x.Id == messageForm.ConferenceId);
-
+            if (conference == null)
+            {
+                conference = await _readWriteRepository.Get<ConferenceRoom>()
+                    .Include(x => x.Participants)
+                    .FirstOrDefaultAsync(x => x.Id == messageForm.ConferenceId);
+                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
+            }
             if (conference == null)
                 throw new ArgumentException("no such conference");
 
             var user = await _cacheService.GetUserSessionCachedAsync(sessionId);
 
-            var message = new Message(GuidService.GetNewGuid(), conference.Id, user.UserId.Value, messageForm.Message);
+            user.AssertFound();
+
+            var message = new Message(GuidService.GetNewGuid(), conference.Id, user.UserId!.Value, messageForm.Message);
             _readWriteRepository.Add(message);
             await _readWriteRepository.SaveChangesAsync();
 
