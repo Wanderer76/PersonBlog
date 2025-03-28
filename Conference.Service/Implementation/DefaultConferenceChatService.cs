@@ -16,6 +16,12 @@ namespace Conference.Service.Implementation
         private readonly IReadWriteRepository<IConferenceEntity> _readWriteRepository;
         private readonly ICacheService _cacheService;
 
+        public DefaultConferenceChatService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService)
+        {
+            _readWriteRepository = readWriteRepository;
+            _cacheService = cacheService;
+        }
+
         public async Task<MessageModel> CreateMessageAsync(Guid sessionId, CreateMessageForm messageForm)
         {
             var conference = await _cacheService.GetConferenceRoomCacheAsync(new ConferenceRoomKey(messageForm.ConferenceId));
@@ -53,15 +59,19 @@ namespace Conference.Service.Implementation
             if (conference == null)
                 throw new ArgumentException("no such conference");
 
-            var participantsUserNames = (await _cacheService.GetCachedDataAsync<UserSession>(conference.Participants.Select(x => x.SessionId.ToString())))
+            var participantsUserNames = (await _cacheService.GetCachedDataAsync<UserSession>(conference.Participants.Select(x => new SessionKey(x.SessionId).GetKey())))
                 .Where(x => x.UserId.HasValue)
                 .ToDictionary(x => x.UserId!.Value, x => x.UserName);
 
 
+            var total = offset * limit;
             var key = new MessageModelCacheKey(conferenceId);
             var messages = await _cacheService.GetCachedDataAsync<List<MessageModel>>(key);
             if (messages == null)
             {
+                var allMessages = await _readWriteRepository.Get<Message>().Where(x => x.ConferenceId == conferenceId).CountAsync();
+                if (allMessages < total)
+                    return [];
                 messages = await _readWriteRepository.Get<Message>()
                     .Where(x => x.ConferenceId == conferenceId)
                     .OrderByDescending(x => x.CreatedAt)
@@ -70,7 +80,7 @@ namespace Conference.Service.Implementation
                     .AsAsyncEnumerable()
                     .Select(x =>
                     {
-                        var userName = participantsUserNames.TryGetValue(x.CreatorId, out var name) ? name : "unknown";
+                        var userName = participantsUserNames.TryGetValue(x.CreatorId, out var name) ? name ?? "unknown" : "unknown";
                         return new MessageModel(userName, x.MessageText, x.CreatedAt.DateTime, null);
                     })
                     .ToListAsync();
@@ -79,6 +89,7 @@ namespace Conference.Service.Implementation
             }
             else
             {
+                if (messages.Count < total) return [];
                 return messages.OrderByDescending(x => x.CreatedAt).Skip(offset).Take(limit).OrderBy(x => x.CreatedAt).ToList();
             }
 

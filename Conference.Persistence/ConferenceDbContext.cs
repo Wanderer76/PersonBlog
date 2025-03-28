@@ -10,6 +10,7 @@ namespace Conference.Persistence
     {
         public DbSet<ConferenceRoom> ConferenceRooms { get; set; }
 
+        public DbSet<Message> Messages { get; set; }
         public DbSet<ConferenceParticipant> ConferenceParticipants { get; set; }
 
         public ConferenceDbContext(DbContextOptions<ConferenceDbContext> options) : base(options)

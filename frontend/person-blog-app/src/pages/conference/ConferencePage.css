@@ -1,0 +1,86 @@
+/* Общие стили чата */
+.sidebar {
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
+    margin-right: 100px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.messages-container {
+    height: 600px;
+    overflow-y: auto;
+    margin: 16px 0;
+    padding-right: 8px;
+}
+
+/* Элементы сообщений */
+.comment {
+    background: #f8f8f8;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.comment:hover {
+    background: #f0f0f0;
+}
+
+.comment-author {
+    color: #ff4b2b;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.comment-text {
+    color: #333;
+    font-size: 14px;
+    margin: 8px 0;
+}
+
+/* Поле ввода сообщения */
+.message-input-container {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.message-input {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 20px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.message-input:focus {
+    outline: none;
+    border-color: #ff4b2b;
+}
+
+.loading-text {
+    color: #606060;
+    font-size: 14px;
+    text-align: center;
+    padding: 12px;
+}
+
+/* Полоса прокрутки */
+.messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+}
+
+.messages-container::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}

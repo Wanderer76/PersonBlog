@@ -14,9 +14,10 @@ namespace Conference.API.Controllers
     {
         private readonly IConferenceChatService _conferenceChatService;
         private readonly IHubContext<ConferenceHub, IConferenceHub> _hubContext;
-        public ConferenceChatController(ILogger<BaseController> logger, IConferenceChatService conferenceChatService) : base(logger)
+        public ConferenceChatController(ILogger<ConferenceChatController> logger, IConferenceChatService conferenceChatService, IHubContext<ConferenceHub, IConferenceHub> hubContext) : base(logger)
         {
             _conferenceChatService = conferenceChatService;
+            _hubContext = hubContext;
         }
 
         [HttpPost("sendMessage")]
@@ -25,7 +26,7 @@ namespace Conference.API.Controllers
         {
             var sessionId = Guid.Parse(GetUserSession()!);
             var result = await _conferenceChatService.CreateMessageAsync(sessionId, messageForm);
-            _hubContext.Clients.Group(messageForm.ConferenceId.ToString()).OnMessageSend(result);
+            await _hubContext.Clients.Group(messageForm.ConferenceId.ToString()).OnMessageSend(result);
         }
 
         [HttpGet("messages/{conferenceId:guid}")]
@@ -34,8 +35,5 @@ namespace Conference.API.Controllers
             var result = await _conferenceChatService.GetLastMessagesAsync(conferenceId, offset, count);
             return Ok(result);
         }
-
-
-
     }
 }

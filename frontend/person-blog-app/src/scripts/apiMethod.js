@@ -7,6 +7,12 @@ const API = axios.create({
     withCredentials: true,
 });
 
+const refreshState = {
+    isRefreshing: false,
+    retryCount: 0,
+    maxRetries: 1
+};
+
 API.interceptors.request.use(config => {
     config.headers.Authorization = JwtTokenService.getFormatedTokenForHeader();
     return config;
@@ -15,34 +21,53 @@ API.interceptors.request.use(config => {
 API.interceptors.response.use(
     (response) => response,
     async (error) => {
-        let isRefreshing = false;
         const originalRequest = error.config;
-        if (error.response && error.response.status === 401) {
+        if (error.response && error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
-            if (!isRefreshing) {
-                isRefreshing = true;
-                // Обработка ошибки 401
-                console.error('Ошибка авторизации (401):', error);
-                var status = await JwtTokenService.refreshToken()
-                if (status !== 200) {
-                    JwtTokenService.cleanAuth();
-                    //const navigate = useNavigate();
-                    // Проверяем, чтобы не было бесконечной петли редиректов
-                    // if (window.location.pathname !== '/auth') {
-                    //     window.location.href = '/auth'
-                    // }
-                }
-                return API(originalRequest); 
+
+            if (refreshState.retryCount >= refreshState.maxRetries) {
+                JwtTokenService.cleanAuth();
+                redirectToAuth();
+                return Promise.reject(error);
             }
-            return Promise.reject(error); // Передать ошибку дальше
-        } else if (error.response && error.response.status === 400) { // Пример обработки другой ошибки
-            // Обработка ошибки 400
-            console.error('Ошибка 400:', error);
-            // Обработка ошибки, например, показать модальное окно пользователю
-            return Promise.reject(error);
+
+            if (!refreshState.isRefreshing) {
+                refreshState.isRefreshing = true;
+                refreshState.retryCount += 1;
+
+                try {
+                    const status = await JwtTokenService.refreshToken();
+
+                    if (status !== 200) {
+                        throw new Error('Refresh token failed');
+                    }
+
+                    // Сброс счетчика при успешном обновлении
+                    refreshState.retryCount = 0;
+                    return API(originalRequest);
+                } catch (refreshError) {
+                    // Обработка превышения попыток
+                    if (refreshState.retryCount >= refreshState.maxRetries) {
+                        JwtTokenService.cleanAuth();
+                        redirectToAuth();
+                    }
+                    return Promise.reject(refreshError);
+                } finally {
+                    refreshState.isRefreshing = false;
+                }
+            }
         }
-        return Promise.reject(error); // Передать остальные ошибки дальше
+
+        return Promise.reject(error);
     }
 );
+
+// Функция перенаправления с защитой от циклов
+function redirectToAuth() {
+    const authPaths = ['/auth']; // Добавьте все пути авторизации
+    if (!authPaths.includes(window.location.pathname)) {
+        window.location.href = '/auth';
+    }
+}
 
 export default API;

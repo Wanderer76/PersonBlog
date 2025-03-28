@@ -16,6 +16,7 @@ namespace Shared.Services
                 UserId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.UserId).Value),
                 Type = jwtToken.Claims.First(x => x.Type == AppClaimTypes.Type).Value,
                 ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(jwtToken.Claims.First(x => x.Type == "exp").Value)).ToUniversalTime(),
+                Login = jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.Login).Value
             };
         }
 

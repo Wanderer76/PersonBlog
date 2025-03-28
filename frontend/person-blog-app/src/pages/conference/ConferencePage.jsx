@@ -5,6 +5,8 @@ import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
 import logo from '../../defaultProfilePic.png';
 import API, { BaseApUrl } from "../../scripts/apiMethod";
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
+import './ConferencePage.css';
+import '../post/PostPage.css';
 
 export const ConferencePage = function () {
     const conferenceId = useParams();
@@ -12,6 +14,7 @@ export const ConferencePage = function () {
     const [blog, setBlog] = useState();
     const [messages, setMessages] = useState([]);
     const [connection, setConnection] = useState(null);
+
     const playerRef = useRef(null);
     const isSeeking = useRef(false); // Флаг блокировки обновлений
 
@@ -44,6 +47,11 @@ export const ConferencePage = function () {
             setMessages([message]);
         });
 
+        connection_chat.on("OnMessageSend", function (message) {
+            console.log('message comes')
+            setMessages((prev) => [...prev, message]);
+        });
+
         connection_chat.on("OnPause", function (time) {
             handleSignalRPause(time);
         });
@@ -74,6 +82,8 @@ export const ConferencePage = function () {
 
     if (post == null || blog == null)
         return <></>;
+
+
 
     return (
         <div className="video-container">
@@ -109,11 +119,19 @@ export const ConferencePage = function () {
 
                 </div>
             </div>
-
-            <aside className="sidebar">
-                <p>Чат</p>
-                {messages.map((x, i) => <div key={i}><p >{x}</p><br /></div>)}
-            </aside>
+            <div className="chat-container">
+                <Messages messages={messages} setMessages={setMessages} conferenceId={conferenceId.id} />
+                {/* <div className="message-input-container">
+                    <input
+                        type="text"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                        placeholder="Введите сообщение..."
+                    />
+                    <button onClick={handleSendMessage}>Отправить</button>
+                </div> */}
+            </div>
         </div>
     );
 
@@ -121,8 +139,8 @@ export const ConferencePage = function () {
     function handleSignalRSeek(time) {
         if (playerRef.current) {
             isSeeking.current = true;
-            playerRef.current.currentTime(time)
             setTimeout(() => isSeeking.current = false, 500)
+            playerRef.current.currentTime(time)
             // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
         } else {
             console.warn("Seek function not available.");
@@ -219,8 +237,123 @@ export const ConferencePage = function () {
             </div>
         </div>;
     }
-
 }
 
+const Messages = function ({ messages, setMessages, conferenceId }) {
+    const [page, setPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [messageInput, setMessageInput] = useState('');
+    const messagesEndRef = useRef(null);
+    const containerRef = useRef(null);
+
+    const handleSendMessage = async () => {
+        if (messageInput.trim()) {
+            try {
+
+                await API.post("http://localhost:5193/api/ConferenceChat/sendMessage", {
+                    conferenceId: conferenceId,
+                    message: messageInput
+                });
+
+                setMessageInput('');
+            } catch (error) {
+                console.error('Ошибка отправки сообщения:', error);
+            }
+        }
+    };
+    const loadMessages = async (pageNumber) => {
+        if (!hasMore || isLoading) return;
+
+        setIsLoading(true);
+        try {
+            const response = await API.get(`http://localhost:5193/api/ConferenceChat/messages/${conferenceId}`, {
+                params: {
+                    offset: pageNumber,
+                    count: 10
+                }
+            });
+
+            if (response.data.length === 0) {
+                setHasMore(false);
+            } else {
+                setMessages(prev => [...response.data, ...prev]);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки сообщений:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleScroll = () => {
+        if (containerRef.current.scrollTop === 0 && hasMore) {
+            setPage(prev => {
+                const newPage = prev + 1;
+                loadMessages(newPage);
+                return newPage;
+            });
+        }
+    };
+
+    useEffect(() => {
+        loadMessages(1);
+    }, []);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    return (
+        <aside className="sidebar">
+            <h3 className="comments-section">Чат конференции</h3>
+            <div
+                className="messages-container"
+                ref={containerRef}
+                onScroll={handleScroll}
+            >
+                {isLoading && <div className="loading-text">Загрузка сообщений...</div>}
+                {messages.map((x, i) => (
+                    <div className="comment" key={i}>
+                        <img
+                            src={x.creatorAvatar || "https://picsum.photos/40/40"}
+                            className="comment-avatar"
+                            alt="Аватар"
+                        />
+                        <div className="comment-content">
+                            <div className="comment-author">{x.creatorUserName}</div>
+                            <div className="comment-text">{x.message}</div>
+                            <div className="views-date">
+                                {new Date(x.createdAt).toLocaleDateString('ru-RU', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
+            </div>
+
+            <div className="message-input-container">
+                <input
+                    type="text"
+                    className="message-input"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Введите сообщение..."
+                />
+                <button
+                    className="subscribe-button"
+                    onClick={handleSendMessage}
+                    style={{ padding: '8px 16px' }}
+                >
+                    Отправить
+                </button>
+            </div>
+        </aside>
+    );
+};
 
 export default ConferencePage;

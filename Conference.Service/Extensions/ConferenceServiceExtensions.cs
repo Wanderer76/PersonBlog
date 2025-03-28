@@ -14,6 +14,7 @@ namespace Conference.Service.Extensions
         public static void AddConferenceService(this IServiceCollection services)
         {
             services.AddScoped<IConferenceRoomService, DefaultConferenceService>();
+            services.AddScoped<IConferenceChatService, DefaultConferenceChatService>();
         }
     }
 }
