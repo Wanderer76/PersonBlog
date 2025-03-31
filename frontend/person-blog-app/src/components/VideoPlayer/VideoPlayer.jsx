@@ -6,7 +6,7 @@ import 'hls.js';
 import './Player.css';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, setPlayerRef, onPause, onPlay }) => {
+export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
   let viewRecorded = false;
@@ -79,6 +79,11 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, onUserSeek, setPlay
             onUserSeek(player.currentTime());
           }
         })
+
+        if (currentTime) {
+          player.currentTime(currentTime)
+        }
+
         if (setPlayerRef != undefined && setPlayerRef != null) {
           setPlayerRef(player)
         }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getLocalDateTime } from "../../scripts/LocalDate";
 import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
 import logo from '../../defaultProfilePic.png';
@@ -14,7 +14,7 @@ export const ConferencePage = function () {
     const [blog, setBlog] = useState();
     const [messages, setMessages] = useState([]);
     const [connection, setConnection] = useState(null);
-
+    const navigate = useNavigate();
     const playerRef = useRef(null);
     const isSeeking = useRef(false); // Флаг блокировки обновлений
 
@@ -217,6 +217,9 @@ export const ConferencePage = function () {
                     <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                 </div>
                 <div className="video-actions">
+                    <button className="action-button" onClick={(e) => {navigate(`/video/${post.id}?time=${playerRef.current.currentTime()}`)}}>
+                        <span>📁</span> Отключится от конференции
+                    </button>
                     <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href) }}>
                         <span>📁</span> Ссылка для присоединения
                     </button>

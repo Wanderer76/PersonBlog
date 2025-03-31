@@ -10,6 +10,7 @@ import axios from 'axios';
 
 export const VideoPage = function (props) {
     const searchParams = useParams();
+    const queryParams = new URLSearchParams(window.location.search)
     const [isLoading, setIsLoading] = useState(true);
     let viewRecorded = false; let inProgress = false;
     const [recommendations, setRecommendations] = useState([]);
@@ -212,6 +213,7 @@ export const VideoPage = function (props) {
                     autoplay: false,
                     objectName: post.videoData.objectName
                 }}
+                currentTime={queryParams.get('time')}
                 onTimeupdate={setView} />
         </div>;
     }
