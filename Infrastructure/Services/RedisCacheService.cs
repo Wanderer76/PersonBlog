@@ -62,16 +62,8 @@ namespace Infrastructure.Services
 
         public async Task SetCachedDataAsync<T>(string key, T data, TimeSpan ttl) where T : notnull
         {
-            try
-            {
-                var result = JsonSerializer.Serialize(data, _serializerOptions);
-
-                await _redis.GetDatabase().StringSetAsync(key, Encoding.UTF8.GetBytes(result), ttl);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("");
-            }
+            var result = JsonSerializer.Serialize(data, _serializerOptions);
+            await _redis.GetDatabase().StringSetAsync(key, Encoding.UTF8.GetBytes(result), ttl);
         }
 
         public Task SetCachedDataAsync<T>(ICacheKey key, T data, TimeSpan ttl) where T : notnull
