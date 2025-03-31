@@ -1,47 +1,64 @@
 ﻿using Shared;
 using Shared.Services;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Conference.Domain.Entities
 {
     public class ConferenceRoom : BaseEntity, IConferenceEntity
     {
-        public Guid Id { get; set; }
-        public Guid PostId { get; set; }
-        public string Url { get; set; }
-        public bool IsActive { get; set; }
-        public List<ConferenceParticipant> Participants { get; set; }
+        [Key]
+        public Guid Id { get; }
+        public Guid PostId { get; }
+        public ConferenceState State { get; private set; }
+        public DateTimeOffset UpdatedAt { get; private set; }
+        public List<ConferenceParticipant> Participants { get; private set; }
+
+        [NotMapped]
+        public bool IsActive { get => State == ConferenceState.Active; }
 
         public ConferenceRoom()
         {
 
         }
 
-        public ConferenceRoom(Guid id, Guid postId, string url, bool isActive, ConferenceParticipant creator)
+        [JsonConstructor]
+        protected ConferenceRoom(Guid id, Guid postId, ConferenceState state, DateTimeOffset updatedAt, List<ConferenceParticipant> participants)
+        {
+            Id = id;
+            PostId = postId;
+            State = state;
+            UpdatedAt = updatedAt;
+            Participants = participants;
+        }
+
+        public ConferenceRoom(Guid id, Guid postId, ConferenceParticipant creator)
         {
             Id = id;
             PostId = postId;
             CreatedAt = DateTimeService.Now();
+            UpdatedAt = DateTimeService.Now();
             IsDeleted = false;
-            Url = url;
-            IsActive = isActive;
+            State = ConferenceState.Active;
             Participants = [creator];
         }
 
         public void AddParticipant(ConferenceParticipant participant)
         {
-
             Participants.Add(participant);
+            UpdatedAt = DateTimeService.Now();
         }
 
         public void RemoveParticipant(ConferenceParticipant participant)
         {
-
             Participants.Remove(participant);
+            UpdatedAt = DateTimeService.Now();
         }
 
         public void Close()
         {
-            IsActive = false;
+            State = ConferenceState.ReadyToRemove;
             IsDeleted = true;
         }
 
@@ -53,6 +70,12 @@ namespace Conference.Domain.Entities
         All,
         OnlyAuth
     }
+    public enum ConferenceState
+    {
+        Active,
+        Unused,
+        ReadyToRemove
+    }
 
     public readonly struct ConferenceRoomKey(Guid id) : ICacheKey
     {
@@ -61,7 +84,5 @@ namespace Conference.Domain.Entities
         private readonly Guid _id = id;
 
         public string GetKey() => $"{Key}:{_id}";
-
-        //public static implicit operator string(ConferenceRoomKey key) => key.GetKey();
     }
 }

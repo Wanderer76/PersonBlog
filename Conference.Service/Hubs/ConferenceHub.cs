@@ -47,7 +47,6 @@ namespace Conference.Service.Hubs
                 if (!model.ConferenceParticipants.Any(x => x.Key == sessionId!.Value))
                 {
                     model.ConferenceParticipants.Add(sessionId!.Value, connectionId);
-                    await Groups.AddToGroupAsync(connectionId, conferenceId.ToString());
                     await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromHours(24));
                 }
             }
@@ -62,25 +61,25 @@ namespace Conference.Service.Hubs
                     }
                 };
                 await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
-                await Groups.AddToGroupAsync(connectionId, conferenceId.ToString());
             }
+            await Groups.AddToGroupAsync(connectionId, conferenceId.ToString());
             //await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            //var connectionId = Context.ConnectionId;
-            //var httpContext = Context.GetHttpContext();
-            //httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            //var conferenceId = Guid.Parse(value.First()!);
+            var connectionId = Context.ConnectionId;
+            var httpContext = Context.GetHttpContext();
+            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
+            var conferenceId = value.First();
             //var sessionId = TryGetSession();
 
             //if (sessionId == null)
             //{
             //    return;
             //}
-
+            await Groups.RemoveFromGroupAsync(connectionId, conferenceId);
             //var key = new ConferenceChatModelCacheKey(conferenceId);
             //var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
             //if (model != null)
@@ -130,7 +129,8 @@ namespace Conference.Service.Hubs
                 var key = new ConferenceChatModelCacheKey(Guid.Parse(conferenceId));
                 var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
                 await Clients.GroupExcept(conferenceId, [connectionId]).OnPlay();
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }

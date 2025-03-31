@@ -2,10 +2,8 @@
 using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Conference.Service.Extensions;
-using Conference.Service.Hubs;
 using Infrastructure.Extensions;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -47,11 +45,11 @@ namespace Conference.Service.Implementation
             if (creatorUser.UserId.HasValue)
             {
                 var creator = new ConferenceParticipant(sessionId, creatorUser.UserId!.Value, roomId);
-                var conference = new ConferenceRoom(roomId, postId, "", true, creator);
+                var conference = new ConferenceRoom(roomId, postId, creator);
                 _readWriteRepository.Add(conference);
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-                return new ConferenceViewModel(conference.Id, conference.Url, conference.PostId);
+                return new ConferenceViewModel(conference.Id, conference.PostId);
             }
             else
             {
@@ -66,21 +64,26 @@ namespace Conference.Service.Implementation
             {
                 conference ??= await _readWriteRepository.Get<ConferenceRoom>()
                         .Include(x => x.Participants)
-                        .Where(x => x.IsActive)
+                        .Where(x => x.State == ConferenceState.Active)
                         .FirstAsync(x => x.Id == id);
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
 
+            if ((DateTimeService.Now() - conference.UpdatedAt).TotalMinutes > 10 && conference.Participants.Count == 0)
+            {
+                conference.Close();
+            }
+
             if (!conference.IsActive)
                 throw new ArgumentException("Conference is close");
-            return new ConferenceViewModel(conference.Id, conference.Url, conference.PostId);
+            return new ConferenceViewModel(conference.Id, conference.PostId);
         }
 
         public async ValueTask<bool> IsConferenceActiveAsync(Guid id)
         {
             return await _readWriteRepository.Get<ConferenceRoom>()
                 .Where(x => x.Id == id)
-                .Select(x => x.IsActive)
+                .Select(x => x.State == ConferenceState.Active)
                 .FirstAsync();
         }
 
@@ -101,11 +104,6 @@ namespace Conference.Service.Implementation
             {
                 conference.RemoveParticipant(userToRemove);
                 _readWriteRepository.Remove(userToRemove);
-                if (conference.Participants.Count == 0)
-                {
-                    _readWriteRepository.Attach(conference);
-                    conference.Close();
-                }
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }

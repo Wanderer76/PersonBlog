@@ -76,8 +76,10 @@ namespace Conference.Service.Implementation
             if (messages == null)
             {
                 var allMessages = await _readWriteRepository.Get<Message>().Where(x => x.ConferenceId == conferenceId).CountAsync();
-                if (allMessages < total)
+                var allPages = allMessages / limit;
+                if (allPages < offset)
                     return [];
+
                 messages = await _readWriteRepository.Get<Message>()
                     .Where(x => x.ConferenceId == conferenceId)
                     .OrderByDescending(x => x.CreatedAt)
@@ -95,7 +97,9 @@ namespace Conference.Service.Implementation
             }
             else
             {
-                if (messages.Count < total) return [];
+                var allPages = Math.Max(messages.Count / limit, 1);
+                if (allPages < offset)
+                    return [];
                 return messages.OrderByDescending(x => x.CreatedAt).Skip(offset).Take(limit).OrderBy(x => x.CreatedAt).ToList();
             }
 

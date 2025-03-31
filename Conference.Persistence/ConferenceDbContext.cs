@@ -24,6 +24,10 @@ namespace Conference.Persistence
                 var entity = modelBuilder.Entity<ConferenceParticipant>();
                 entity.HasKey(x => new { x.ConferenceRoomId, x.SessionId });
             }
+            {
+                var entity = modelBuilder.Entity<ConferenceRoom>();
+                entity.HasKey(x => new { x.Id });
+            }
         }
     }
 

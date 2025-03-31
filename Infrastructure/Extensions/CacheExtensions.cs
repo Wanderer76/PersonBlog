@@ -9,7 +9,7 @@ namespace Infrastructure.Extensions
     {
         public static void AddRedisCache(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<ICacheService, DefaultCacheService>();
+            services.AddSingleton<ICacheService, RedisCacheService>();
             services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = configuration["Redis:ConnectionString"];

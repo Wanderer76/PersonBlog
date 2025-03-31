@@ -65,13 +65,12 @@ export const ConferencePage = function () {
                 handleSignalRSeek(time);
         });
 
-        setConnection(connection_chat);
+        setConnection(connection_chat);     
     }, []);
 
     useEffect(() => {
         const startConnection = async () => {
             await connection.start();
-            console.log("SignalR Connected.");
         }
         if (connection)
             startConnection()
