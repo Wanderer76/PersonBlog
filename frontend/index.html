@@ -147,7 +147,7 @@
         
         <div class="form-group">
             <label for="title">Название</label>
-            <input type="text" id="title" placeholder="Добавьте название вашего видео">
+            <input type="text" id="title" name = "title" placeholder="Добавьте название вашего видео">
         </div>
 
         <div class="upload-area">
@@ -158,7 +158,7 @@
         </div>
 
         <div class="preview-container">
-            <div class="video-preview"></div>
+            <div class="video-preview" name="video"></div>
             <div class="progress-bar">
                 <div class="progress-fill"></div>
             </div>
@@ -166,7 +166,7 @@
 
         <div class="form-group">
             <label for="description">Описание</label>
-            <textarea id="description" rows="4"></textarea>
+            <textarea id="description" rows="4"  name="description"></textarea>
         </div>
 
         <div class="form-group">
@@ -182,7 +182,7 @@
         </div>
 
         <div class="action-buttons">
-            <button class="btn btn-primary">Опубликовать</button>
+            <button class="btn btn-primary" onClick={sendForm} >Создать</button>
             <button class="btn btn-secondary">Сохранить черновик</button>
         </div>
     </div>

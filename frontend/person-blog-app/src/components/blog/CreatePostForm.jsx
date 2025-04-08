@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import './CreatePostForm.css';
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import API from "../../scripts/apiMethod";
@@ -9,6 +9,7 @@ export function CreatePostForm(props) {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [maxProgress, setMaxProgress] = useState(0);
     const [showProgress, setShowProgress] = useState(false);
+    const videoRef = useRef(null);
 
     const CHUNK_SIZE = 10 * 1024 * 1024;
 
@@ -104,7 +105,7 @@ export function CreatePostForm(props) {
 
     return (
         <>
-            <div className="modal">
+            {/* <div className="modal">
                 <div className="createPostForm">
                     <p>Создать пост</p>
                     <p>Название</p>
@@ -119,7 +120,107 @@ export function CreatePostForm(props) {
                     <button onClick={props.onHandleClose}>Закрыть</button>
                     <button onClick={sendForm}>Создать</button>
                 </div>
+            </div> */}
+            <div className="modal">
+                <div className="createPostForm">
+                    <h1>Создать видео-пост</h1>
+
+                    <div className="formGroup">
+                        <label>Название</label>
+                        <input
+                            className="modalContent"
+                            type="text"
+                            placeholder="Добавьте название вашего видео"
+                            name="title"
+                            onChange={updateForm}
+                        />
+                    </div>
+
+                    <div className="uploadArea" onClick={() => document.querySelector('.fileInput').click()}>
+                        <div className="cameraIcon">🎥</div>
+                        <h3>Выберите файл для загрузки</h3>
+                        <p>или перетащите видео файл</p>
+                        <input
+                            type="file"
+                            className="fileInput"
+                            accept=".mp4,.mkv"
+                            hidden
+                            onChange={(e) => {
+                                updateForm(e);
+                                handleFileSelect(e);
+                            }}
+                        />
+                    </div>
+
+                    <div className="previewContainer">
+                        <video className="videoPreview"  ref={videoRef} controls />
+                        <div className="progressBar">
+                            <div
+                                className="progressFill"
+                                style={{ width: `${uploadProgress}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="formGroup">
+                        <label>Описание</label>
+                        <textarea
+                            className="modalContent description"
+                            rows="4"
+                            placeholder="Добавьте описание к вашему видео"
+                            name="description"
+                            onChange={updateForm}
+                        />
+                    </div>
+
+                    <div className="formGroup">
+                        <label>Настройки приватности</label>
+                        <div className="privacySettings">
+                            <select name="privacy" onChange={updateForm}>
+                                <option>Публичный</option>
+                                <option>Ссылочный</option>
+                                <option>Приватный</option>
+                            </select>
+                            <span>🔒</span>
+                        </div>
+                    </div>
+
+                    <div className="actionButtons">
+                        <button className="btn btnSecondary" onClick={props.onHandleClose}>
+                            Закрыть
+                        </button>
+                        <button className="btn btnPrimary" onClick={sendForm}>
+                        Создать
+                        </button>
+                    </div>
+                </div>
             </div>
         </>
     );
+
+    function handleFileSelect(input) {
+        const file = input.target.files[0];
+        if (file) {
+            // Показать прелоадер
+            // document.getElementById('preloader').style.display = 'block';
+            
+            // Предпросмотр видео
+            const videoPreview = document.getElementsByClassName('videoPreview');
+            const videoURL = URL.createObjectURL(file);
+            if (videoRef.current) {
+                videoRef.current.src = videoURL;
+                // videoRef.current.style.display = 'block';
+                videoRef.current.load();
+              }
+          
+
+            // Запустить загрузку на сервер
+            // document.getElementById('<%= btnUpload.ClientID %>').click();
+        }
+    }
+
+    // Обработчик завершения загрузки
+    function uploadComplete() {
+        document.getElementById('preloader').style.display = 'none';
+    }
 }

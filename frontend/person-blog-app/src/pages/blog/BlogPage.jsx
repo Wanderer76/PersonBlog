@@ -142,6 +142,7 @@ const BlogPosts = function (props) {
 
     return (
         <>
+        {!showCreateForm &&
             <div>
                 <h4>
                     Посты
@@ -177,6 +178,7 @@ const BlogPosts = function (props) {
                     </tbody>
                 </table>
             </div>
+}
             {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)}></CreatePostForm>}
 
         </>

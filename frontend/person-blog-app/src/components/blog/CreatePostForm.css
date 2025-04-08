@@ -1,45 +1,117 @@
-
-.modal{
+.modal  {
     position: fixed;
-    margin:auto;
+    background: white;
     top: 0;
     bottom: 0;
     right: 0;
     left: 0;
-    overflow: hidden;
     overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: center; /* см. ниже */
-    align-items: center;
-    z-index: 99;
-    /* Чтобы окно не прилипало к границе
-    браузера установим отступы */
-    padding:30px 0;
+    padding: 0% 25% 5% 25%;
 }
 
-.createPostForm {
-    margin: auto;
-    background-color: dimgrey;
-    width: 600px;
-    max-width: 100%;
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: center; /* см. ниже */
-    align-items: center;
-    /* Чтобы окно не прилипало к границе
-    браузера установим отступы */
-    padding:30px 0;
+.formGroup {
+    margin-bottom: 24px;
 }
 
-/* Modal Content/Box */
-.modalContent {
-    align-self: center;
-    position: relative;
+.uploadArea {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.uploadArea:hover {
+    border-color: #ff7b00;
+    background: #fff5eb;
+}
+
+.previewContainer {
+    margin: 20px 0;
+}
+
+.videoPreview {
+    width: 70%;
+    margin-left: 15%;
+    aspect-ratio: 16/9;
+    background: #222;
+    border-radius: 4px;
+}
+
+.progressBar {
+    height: 4px;
+    background: #eee;
     margin-top: 10px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 10px;
-    width: 90%;
+    border-radius: 2px;
+}
+
+.progressFill {
+    height: 100%;
+    background: #ff7b00;
+    border-radius: 2px;
+    transition: 0.3s;
+}
+
+.cameraIcon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btnPrimary {
+    background: #ff7b00;
+    color: white;
+}
+
+.btnPrimary:hover {
+    background: #ff6a00;
+}
+
+.btnSecondary {
+    background: #eee;
+    color: #333;
+}
+
+.btnSecondary:hover {
+    background: #ddd;
+}
+
+.modalContent {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.description {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.privacySettings {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
