@@ -1,17 +1,16 @@
-﻿using Authentication.Domain.Entities;
-using Blog.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Persistence.Repository.Quries;
 using Blog.Service.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
-using FileStorage.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
+using Shared.Utils;
 using System.Text.Json;
 
 namespace Blog.Service.Services.Implementation
@@ -29,7 +28,7 @@ namespace Blog.Service.Services.Implementation
             _cacheService = cacheService;
         }
 
-        public async Task<Guid> CreatePostAsync(PostCreateDto postCreateDto)
+        public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
         {
             var blog = await _context.Get<PersonBlog>()
             .FirstAsync(x => x.UserId == postCreateDto.UserId);
@@ -89,14 +88,15 @@ namespace Blog.Service.Services.Implementation
 
             if (!hasSubscription)
             {
-                throw new ArgumentException("Не существует текущего уровня подписки");
+
+                return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
             }
 
             var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title, postCreateDto.SubscriptionLevelId);
             _context.Add(post);
             await _context.SaveChangesAsync();
 
-            return postId;
+            return Result<Guid, ErrorList>.Success(postId);
         }
 
         public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId)
@@ -388,7 +388,7 @@ namespace Blog.Service.Services.Implementation
 
             _context.Attach(post);
 
-            
+
             if (existView == null)
             {
                 if (@event.IsLike == true)

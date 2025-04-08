@@ -2,13 +2,14 @@
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using Microsoft.EntityFrameworkCore;
+using Shared.Utils;
 
 namespace Blog.Service.Services
 {
     //TODO добавить кеширование
     public interface IPostService
     {
-        Task<Guid> CreatePostAsync(PostCreateDto postCreateDto);
+        Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto);
         /// <summary>
         /// </summary>
         /// <param name="postId"></param>

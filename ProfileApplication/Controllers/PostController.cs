@@ -1,5 +1,4 @@
-﻿using Authentication.Domain.Interfaces;
-using Blog.API.Models;
+﻿using Blog.API.Models;
 using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Service.Models;
@@ -118,8 +117,14 @@ namespace Blog.API.Controllers
                 Photos = form.Files,
                 IsPartial = form.IsPartial,
             });
-
-            return Ok(result);
+            if (result.IsSuccess)
+            {
+                return Ok(result);
+            }
+            else
+            {
+                return BadRequest(result.Error);
+            }
         }
 
         [HttpPost("edit")]
