@@ -1,6 +1,7 @@
 ﻿using Blog.Service.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
+using Microsoft.EntityFrameworkCore;
 
 namespace Blog.Service.Services
 {
@@ -27,5 +28,6 @@ namespace Blog.Service.Services
         Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
         Task SetVideoViewed(ViewedVideoModel value);
         Task SetReactionToPost(ReactionCreateModel value);
+        Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
     }
 }

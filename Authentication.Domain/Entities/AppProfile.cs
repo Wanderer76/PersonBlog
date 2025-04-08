@@ -1,9 +1,9 @@
 ﻿using Shared;
 using System.ComponentModel.DataAnnotations;
 
-namespace Blog.Domain.Entities;
+namespace Authentication.Domain.Entities;
 
-public class AppProfile : BaseEntity, IProfileEntity
+public class AppProfile : BaseEntity, IAuthEntity
 {
     [Key]
     public Guid  Id { get; set; }
@@ -26,7 +26,7 @@ public class AppProfile : BaseEntity, IProfileEntity
     public string? PhotoUrl { get; set; }
     public ProfileState ProfileState { get; set; }
 
-    public List<ProfileSubscription> PaymentSubscriptions { get; set; } = [];
+    //public List<ProfileSubscription> PaymentSubscriptions { get; set; } = [];
 
     public AppProfile() { }
 

@@ -79,7 +79,7 @@ namespace Blog.Service.Services.Implementation
             var currentUser = await _userSession.GetUserSessionAsync();
 
             var blogId = await _readWriteRepository.Get<PersonBlog>()
-                .Where(x => x.Profile.UserId == currentUser.UserId)
+                .Where(x => x.UserId == currentUser.UserId)
                 .Select(x => x.Id)
                 .FirstAsync();
 

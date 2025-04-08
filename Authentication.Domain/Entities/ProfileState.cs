@@ -1,4 +1,4 @@
-﻿namespace Blog.Domain.Entities;
+﻿namespace Authentication.Domain.Entities;
 
 public enum ProfileState
 {

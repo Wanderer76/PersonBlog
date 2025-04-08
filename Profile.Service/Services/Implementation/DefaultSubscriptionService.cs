@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Authentication.Domain.Entities;
+using Blog.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -16,11 +17,8 @@ namespace Blog.Service.Services.Implementation
 
         public async Task SubscribeToBlogAsync(Guid blogId, Guid userId)
         {
-            var profile = await _readWriteRepository.Get<AppProfile>()
-                .FirstAsync(x => x.UserId == userId);
-
             var isCurrentUserBlog = await _readWriteRepository.Get<PersonBlog>()
-                .Where(x => x.Id == blogId && x.ProfileId == profile.Id)
+                .Where(x => x.Id == blogId && x.UserId == userId)
                 .AnyAsync();
 
             if (isCurrentUserBlog)
@@ -29,7 +27,7 @@ namespace Blog.Service.Services.Implementation
             }
 
             var hasSubscription = await _readWriteRepository.Get<Subscriber>()
-                .Where(x => x.ProfileId == profile.Id && x.BlogId == blogId)
+                .Where(x => x.UserId == userId && x.BlogId == blogId)
                 .Where(x => x.SubscriptionEndDate == null)
                 .FirstOrDefaultAsync();
 
@@ -40,7 +38,7 @@ namespace Blog.Service.Services.Implementation
             {
                 Id = GuidService.GetNewGuid(),
                 BlogId = blogId,
-                ProfileId = profile.Id,
+                UserId = userId,
                 SubscriptionStartDate = DateTimeOffset.UtcNow,
             };
             using var transaction = await _readWriteRepository.BeginTransactionAsync();
@@ -61,11 +59,8 @@ namespace Blog.Service.Services.Implementation
 
         public async Task UnSubscribeToBlogAsync(Guid blogId, Guid userId)
         {
-            var profile = await _readWriteRepository.Get<AppProfile>()
-                          .FirstAsync(x => x.UserId == userId);
-
             var hasActiveSubscription = await _readWriteRepository.Get<Subscriber>()
-                .Where(x => x.ProfileId == profile.Id && x.BlogId == blogId)
+                .Where(x => x.UserId == userId && x.BlogId == blogId)
                 .Where(x => x.SubscriptionEndDate == null)
                 .FirstOrDefaultAsync();
 
@@ -95,12 +90,10 @@ namespace Blog.Service.Services.Implementation
                 .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                 .ToListAsync();
 
-            var profile = await _readWriteRepository.Get<AppProfile>()
+            var subscriptions = await _readWriteRepository.Get<ProfileSubscription>()
                 .Where(x => x.UserId == userId)
-                .Include(x => x.PaymentSubscriptions.Where(s => s.SubscriptionLevel.BlogId == blogId && s.IsActive))
-                .FirstAsync();
-
-            var subscriptions = profile.PaymentSubscriptions.ToList();
+                .Where(s => s.SubscriptionLevel.BlogId == blogId && s.IsActive)
+                .ToListAsync();
 
             if (subscriptions.Any(x => x.SubscriptionLevelId == levelId))
             {
@@ -119,7 +112,7 @@ namespace Blog.Service.Services.Implementation
                 old.IsActive = false;
             }
 
-            var result = new ProfileSubscription(profile.Id, levelId);
+            var result = new ProfileSubscription(userId, levelId);
             _readWriteRepository.Add(result);
             await _readWriteRepository.SaveChangesAsync();
         }

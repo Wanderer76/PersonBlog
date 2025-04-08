@@ -39,7 +39,7 @@ namespace VideoProcessing.Cli.Service
 
                 var profileId = await _context.Get<PersonBlog>()
                     .Where(x => x.Id == post.BlogId)
-                    .Select(x => x.ProfileId)
+                    .Select(x => x.UserId)
                     .FirstAsync();
 
                 var chunks = new List<(long Number, int Size, string ObjectName)>();

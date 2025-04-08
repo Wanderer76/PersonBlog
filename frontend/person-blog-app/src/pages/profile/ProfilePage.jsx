@@ -17,15 +17,21 @@ export const ProfilePage = function () {
         userId: "",
         photoUrl: null,
         profileState: 0,
-        blog: null
     });
 
-    useState(() => {
+    const [blog, setBlog] = useState(null);
 
-        API.get("profile/api/Profile/profile").then(response => {
+    useState(() => {
+        API.get("auth/api/Profile/profile").then(response => {
             if (response.status === 200) {
                 console.log(response.data);
                 setProfile(response.data);
+            }
+        })
+        API.get("profile/api/Blog/detail").then(response => {
+            if (response.status === 200) {
+                console.log(response.data);
+                setBlog(response.data);
             }
         })
     }, []);
@@ -63,7 +69,7 @@ export const ProfilePage = function () {
                     console.log(response.data)
                 }
             })
-          
+
             props.onHandleClose();
             window.location.reload()
         }
@@ -96,8 +102,8 @@ export const ProfilePage = function () {
             <p>Юзернейм: {profile.login}</p>
             <br />
             {showModal && <CrateBlogModal onHandleClose={(e) => setShowModal(false)} />}
-            {profile.blog !== null && <BlogPage />}
-            {profile.blog === null && <button onClick={e => setShowModal(true)}> Создать блог </button>}
+            {blog !== null && <BlogPage />}
+            {blog === null && <button onClick={e => setShowModal(true)}> Создать блог </button>}
         </>);
 
 }

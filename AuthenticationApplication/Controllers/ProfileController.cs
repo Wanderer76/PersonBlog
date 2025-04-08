@@ -1,10 +1,10 @@
-﻿using Blog.Service.Models;
-using Blog.Service.Services;
+﻿using Authentication.Domain.Interfaces;
+using Authentication.Domain.Interfaces.Models.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Services;
 
-namespace Blog.API.Controllers;
+namespace AuthenticationApplication.Controllers;
 
 
 [ApiController]
@@ -73,11 +73,4 @@ public class ProfileController : ControllerBase
     [HttpGet("create")]
     public async Task<IActionResult> GetProfileCreateModel() { return Ok("success"); }
 
-    [HttpGet("hasView")]
-    [Produces(typeof(bool))]
-    public async Task<IActionResult> CheckForViewAsync(Guid? userId, string? ipAddress)
-    {
-        var result = await _profileService.CheckForViewAsync(userId, ipAddress);
-        return Ok(result);
-    }
 }

@@ -7,6 +7,7 @@ namespace Authentication.Peristence;
 
 public class AuthenticationDbContext : BaseDbContext
 {
+    public DbSet<AppProfile> Profiles { get; set; }
     public DbSet<AppUser> AppUsers { get; set; }
     public DbSet<AppUserRole> AppUserRoles { get; set; }
     public DbSet<Token> Tokens { get; set; }
@@ -75,6 +76,22 @@ public class AuthenticationDbContext : BaseDbContext
                      AppUserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e")
                  }
             });
+        }
+        {
+            var entity = modelBuilder.Entity<AppProfile>();
+            entity.HasIndex(x => new { x.UserId, x.IsDeleted }).IsUnique();
+
+            entity.HasData(new[]
+            {
+                    AppProfile.Create(
+                    birthdate:null,
+                        userId: Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+                        email :"ateplinsky@mail.ru",
+                        firstName :"Артём",
+                        surName:"Теплинский",
+                        lastName:null)
+
+                });
         }
     }
 }

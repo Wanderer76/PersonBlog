@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Authentication.Domain.Entities;
+using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Persistence.Repository.Quries;
 using Blog.Service.Models;
@@ -30,13 +31,8 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<Guid> CreatePostAsync(PostCreateDto postCreateDto)
         {
-            var userProfileId = await _context.Get<AppProfile>()
-                .Where(x => x.UserId == postCreateDto.UserId)
-                .Select(x => x.Id)
-                .FirstAsync();
-
             var blog = await _context.Get<PersonBlog>()
-            .FirstAsync(x => x.ProfileId == userProfileId);
+            .FirstAsync(x => x.UserId == postCreateDto.UserId);
 
             var postId = GuidService.GetNewGuid();
             Guid? videoId = null;
@@ -154,7 +150,7 @@ namespace Blog.Service.Services.Implementation
 
             var profileId = await _context.Get<PersonBlog>()
                 .Where(x => x.Id == blogId)
-                .Select(x => x.ProfileId)
+                .Select(x => x.UserId)
                 .FirstAsync();
 
             var fileStorage = _fileStorageFactory.CreateFileStorage();
@@ -256,7 +252,7 @@ namespace Blog.Service.Services.Implementation
 
             var blogUserId = await _context.Get<PersonBlog>()
                 .Where(x => x.Id == post.BlogId)
-                .Select(x => x.Profile.UserId)
+                .Select(x => x.UserId)
                 .FirstAsync();
 
             if (blogUserId != postEditDto.UserId)
@@ -392,14 +388,7 @@ namespace Blog.Service.Services.Implementation
 
             _context.Attach(post);
 
-            Guid? profileId = null;
-            if (userId != null)
-            {
-                profileId = await _context.Get<AppProfile>()
-                    .Where(x => x.UserId == userId)
-                    .Select(x => x.Id)
-                    .FirstAsync();
-            }
+            
             if (existView == null)
             {
                 if (@event.IsLike == true)
@@ -418,7 +407,6 @@ namespace Blog.Service.Services.Implementation
                     IsLike = @event.IsLike,
                     UserId = userId,
                     UserIpAddress = ipAddress,
-                    ProfileId = profileId
                 };
                 _context.Add(existView);
             }
@@ -449,15 +437,23 @@ namespace Blog.Service.Services.Implementation
                     }
                 }
 
-                profileId ??= existView.ProfileId;
                 _context.Attach(existView);
                 existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
                 existView.UserId = userId;
                 existView.UserIpAddress = ipAddress;
-                existView.ProfileId = profileId;
             }
 
             await _context.SaveChangesAsync();
+        }
+        public async Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
+        {
+            if (userId == null && ipAddress == null)
+            {
+                return true;
+            }
+            return await _context.Get<PostViewer>()
+                .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
+                .AnyAsync();
         }
     }
 }

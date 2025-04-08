@@ -9,7 +9,6 @@ import { useEffect, useState } from 'react';
 import API from './scripts/apiMethod';
 import ConferencePage from './pages/conference/ConferencePage';
 
-
 const Session = function ({ children }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {

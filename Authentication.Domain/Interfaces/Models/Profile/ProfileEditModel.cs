@@ -1,5 +1,4 @@
-﻿
-namespace Blog.Service.Models
+﻿namespace Authentication.Domain.Interfaces.Models.Profile
 {
     public class ProfileEditModel
     {

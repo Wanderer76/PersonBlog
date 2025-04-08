@@ -25,10 +25,9 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)
         {
-            var profile = await _context.GetProfileByUserIdAsync(_cacheService, model.UserId) ?? throw new EntityNotFoundException("Профиль не найден");
 
             var isBlogAlreadyExists = await _context.Get<PersonBlog>()
-                .AnyAsync(x => x.ProfileId == profile.Id);
+                .AnyAsync(x => x.UserId == model.UserId);
 
             if (isBlogAlreadyExists)
             {
@@ -43,7 +42,7 @@ namespace Blog.Service.Services.Implementation
                 CreatedAt = DateTimeOffset.UtcNow,
                 Title = model.Title,
                 Description = model.Description,
-                ProfileId = profile.Id,
+                UserId = model.UserId,
                 PhotoUrl = null,//model.PhotoUrl,
                 Subscriptions = []
             };
@@ -87,9 +86,8 @@ namespace Blog.Service.Services.Implementation
             var blog = await _cacheService.GetCachedDataAsync<PersonBlog>(GetBlogByUserIdKey(userId));
             if (blog == null)
             {
-                var profile = await _context.GetProfileByUserIdAsync(_cacheService, userId) ?? throw new EntityNotFoundException("Профиль не найден");
                 blog = await _context.Get<PersonBlog>()
-                    .Where(x => x.ProfileId == profile.Id)
+                    .Where(x => x.UserId == userId)
                     .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
 
                 await _cacheService.SetCachedDataAsync(GetBlogByUserIdKey(userId), blog, TimeSpan.FromMinutes(10));

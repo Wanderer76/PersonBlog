@@ -29,7 +29,7 @@ namespace Blog.Service.Models.Blog
     {
         public static BlogModel ToBlogModel(this PersonBlog blog)
         {
-            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.ProfileId, blog.SubscriptionsCount);
+            return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl, blog.UserId, blog.SubscriptionsCount);
         }
     }
 }

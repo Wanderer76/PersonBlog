@@ -1,6 +1,6 @@
-﻿using Blog.Service.Models;
+﻿using Authentication.Domain.Interfaces.Models.Profile;
 
-namespace Blog.Service.Services
+namespace Authentication.Domain.Interfaces
 {
     public interface IAdminService
     {

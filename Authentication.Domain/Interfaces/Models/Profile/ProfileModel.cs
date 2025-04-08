@@ -1,7 +1,6 @@
-﻿using Blog.Domain.Entities;
-using Blog.Service.Models.Blog;
+﻿using Authentication.Domain.Entities;
 
-namespace Blog.Service.Models
+namespace Authentication.Domain.Interfaces.Models.Profile
 {
     public class ProfileModel
     {
@@ -14,10 +13,9 @@ namespace Blog.Service.Models
         public Guid UserId { get; set; }
         public string? PhotoUrl { get; set; }
         public ProfileState ProfileState { get; set; }
-        public BlogModel? Blog { get; set; }
     }
 
-    internal static class ProfileModelExtensions
+    public static class ProfileModelExtensions
     {
         public static ProfileModel ToProfileModel(this AppProfile profile)
         {
@@ -34,22 +32,5 @@ namespace Blog.Service.Models
                 SurName = profile.SurName,
             };
         }
-        public static ProfileModel ToProfileModel(this AppProfile profile, BlogModel? blog)
-        {
-            return new ProfileModel
-            {
-                Id = profile.Id,
-                UserId = profile.UserId,
-                Birthdate = profile.Birthdate,
-                Email = profile.Email,
-                FirstName = profile.FirstName,
-                LastName = profile.LastName,
-                PhotoUrl = profile.PhotoUrl,
-                ProfileState = profile.ProfileState,
-                SurName = profile.SurName,
-                Blog = blog
-            };
-        }
-
     }
 }

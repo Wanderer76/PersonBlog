@@ -1,16 +1,17 @@
-﻿using Blog.Domain.Entities;
-using Blog.Persistence.Repository.Quries;
-using Blog.Service.Models;
+﻿using Authentication.Domain.Entities;
+using Authentication.Domain.Interfaces;
+using Authentication.Domain.Interfaces.Models.Profile;
+using Authentication.Peristence.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
-namespace Blog.Service.Services.Implementation
+namespace Authentication.Service.Service.Implementation
 {
     internal class DefaultAdminService : IAdminService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _readWriteRepository;
+        private readonly IReadWriteRepository<IAuthEntity> _readWriteRepository;
 
-        public DefaultAdminService(IReadWriteRepository<IProfileEntity> readWriteRepository)
+        public DefaultAdminService(IReadWriteRepository<IAuthEntity> readWriteRepository)
         {
             _readWriteRepository = readWriteRepository;
         }
@@ -18,7 +19,7 @@ namespace Blog.Service.Services.Implementation
         public async Task<IEnumerable<ProfileModel>> GetAllProfilesAsync(int offset, int limit)
         {
             var profiles = await _readWriteRepository.GetAllProfilesPagedAsync(offset, limit);
-            return profiles.Select(x => x.ToProfileModel()).ToList();
+            return profiles.Select(x => x.ToProfileModel());
         }
 
         public async Task<ProfileModel> GetProfileByUserId(Guid userId)

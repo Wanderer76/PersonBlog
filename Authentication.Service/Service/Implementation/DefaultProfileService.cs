@@ -1,18 +1,18 @@
-﻿using Blog.Domain.Entities;
-using Blog.Service.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using System.Runtime.CompilerServices;
-using Blog.Service.Models.Blog;
+using Authentication.Domain.Entities;
+using Authentication.Domain.Interfaces;
+using Authentication.Domain.Interfaces.Models.Profile;
 [assembly: InternalsVisibleTo("Profile.Test")]
 
-namespace Blog.Service.Services.Implementation
+namespace Authentication.Service.Service.Implementation
 {
     internal class DefaultProfileService : IProfileService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IAuthEntity> _context;
 
-        public DefaultProfileService(IReadWriteRepository<IProfileEntity> profileRepository)
+        public DefaultProfileService(IReadWriteRepository<IAuthEntity> profileRepository)
         {
             _context = profileRepository;
         }
@@ -54,10 +54,7 @@ namespace Blog.Service.Services.Implementation
             var profile = await _context.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == userId);
 
-            var blog = await _context.Get<PersonBlog>()
-                .FirstOrDefaultAsync(x => x.ProfileId == profile.Id);
-
-            return profile.ToProfileModel(blog?.ToBlogModel());
+            return profile.ToProfileModel();
         }
 
         public async Task<Guid?> GetProfileIdByUserIdIfExistsAsync(Guid userId)
@@ -87,17 +84,6 @@ namespace Blog.Service.Services.Implementation
             await _context.SaveChangesAsync();
 
             return profile.ToProfileModel();
-        }
-
-        public async Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
-        {
-            if (userId == null && ipAddress == null)
-            {
-                return true;
-            }
-            return await _context.Get<PostViewer>()
-                .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
-                .AnyAsync();
         }
     }
 }

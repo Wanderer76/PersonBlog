@@ -1,13 +1,11 @@
-import React, { useEffect } from "react";
+import React from "react";
 import './Header.css';
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import { useNavigate } from "react-router-dom";
-import API from "../../scripts/apiMethod";
 
 
 const Header = function () {
     const navigate = useNavigate();
-
     return (
         <nav className="navbar">
             <a className="left" href="#" onClick={() => {

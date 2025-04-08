@@ -1,4 +1,5 @@
-﻿using Blog.API.Models;
+﻿using Authentication.Domain.Interfaces;
+using Blog.API.Models;
 using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Service.Models;
@@ -171,6 +172,14 @@ namespace Blog.API.Controllers
             }
             return Ok();
 
+        }
+
+        [HttpGet("hasView")]
+        [Produces(typeof(bool))]
+        public async Task<IActionResult> CheckForViewAsync(Guid? userId, string? ipAddress)
+        {
+            var result = await _postService.CheckForViewAsync(userId, ipAddress);
+            return Ok(result);
         }
     }
 }

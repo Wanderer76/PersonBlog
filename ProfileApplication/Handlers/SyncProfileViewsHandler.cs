@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Authentication.Domain.Entities;
+using Blog.Domain.Entities;
 using MessageBus.EventHandler;
 using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
@@ -31,14 +32,6 @@ namespace Blog.API.Handlers
 
             _context.Attach(post);
 
-            Guid? profileId = null;
-            if (userId != null)
-            {
-                profileId = await _context.Get<AppProfile>()
-                    .Where(x => x.UserId == userId)
-                    .Select(x => x.Id)
-                    .FirstAsync();
-            }
             if (existView == null)
             {
                 if (@event.IsLike == true)
@@ -60,7 +53,6 @@ namespace Blog.API.Handlers
                     IsLike = @event.IsLike,
                     UserId = userId,
                     UserIpAddress = ipAddress,
-                    ProfileId = profileId,
                     IsViewed = @event.IsViewed,
                 };
                 _context.Add(existView);
@@ -97,12 +89,10 @@ namespace Blog.API.Handlers
                     }
                 }
 
-                profileId ??= existView.ProfileId;
                 _context.Attach(existView);
                 existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
                 existView.UserId = userId;
                 existView.UserIpAddress = ipAddress;
-                existView.ProfileId = profileId;
                 existView.IsViewed = @event.IsViewed;
             }
 

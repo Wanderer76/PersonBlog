@@ -6,7 +6,6 @@ namespace Blog.Persistence;
 
 public class ProfileDbContext : BaseDbContext
 {
-    public DbSet<AppProfile> Profiles { get; set; }
     public DbSet<Subscriber> Subscribers { get; set; }
     public DbSet<PersonBlog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
@@ -26,38 +25,22 @@ public class ProfileDbContext : BaseDbContext
         modelBuilder.HasDefaultSchema("Profile");
         {
             {
-                var entity = modelBuilder.Entity<AppProfile>();
-                entity.HasIndex(x => new { x.UserId, x.IsDeleted }).IsUnique();
-
-                entity.HasData(new[]
-                {
-                    AppProfile.Create(
-                    birthdate:null,
-                        userId: Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                        email :"ateplinsky@mail.ru",
-                        firstName :"Артём",
-                        surName:"Теплинский",
-                        lastName:null)
-
-                });
-            }
-            {
                 var entity = modelBuilder.Entity<PersonBlog>();
-                entity.HasIndex(x => x.ProfileId).IsUnique();
+                entity.HasIndex(x => x.UserId).IsUnique();
                 entity.HasData(new[]
                {
                     new PersonBlog
                     {
                         Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
                         Title = "Тест",
-                        ProfileId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+                        UserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
                         CreatedAt = DateTimeOffset.UtcNow
                     }
                 });
             }
             {
                 var entity = modelBuilder.Entity<Subscriber>();
-                entity.HasIndex(x => new { x.ProfileId, x.BlogId }).IsUnique();
+                entity.HasIndex(x => new { x.UserId, x.BlogId }).IsUnique();
             }
             {
                 var entity = modelBuilder.Entity<Post>();
@@ -113,7 +96,7 @@ public class ProfileDbContext : BaseDbContext
             }
             {
                 var entity = modelBuilder.Entity<ProfileSubscription>();
-                entity.HasKey(x => new { x.ProfileId, x.SubscriptionLevelId });
+                entity.HasKey(x => new { x.UserId, x.SubscriptionLevelId });
             }
         }
     }

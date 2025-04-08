@@ -5,7 +5,7 @@ namespace Blog.Domain.Entities
 {
     public class ProfileSubscription : IProfileEntity
     {
-        public Guid ProfileId { get; set; }
+        public Guid UserId { get; set; }
         public Guid SubscriptionLevelId { get; set; }
         public bool IsActive { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
@@ -14,15 +14,12 @@ namespace Blog.Domain.Entities
         [ForeignKey(nameof(SubscriptionLevelId))]
         public SubscriptionLevel SubscriptionLevel { get; set; }
 
-        [ForeignKey(nameof(ProfileId))]
-        public AppProfile Profile { get; set; }
-
         private ProfileSubscription() { }
 
-        public ProfileSubscription(Guid profileId, Guid subscriptionLevelId)
+        public ProfileSubscription(Guid userId, Guid subscriptionLevelId)
         {
             var now = DateTimeService.Now();
-            ProfileId = profileId;
+            UserId = userId;
             SubscriptionLevelId = subscriptionLevelId;
             CreatedAt = now;
             UpdatedAt = now;

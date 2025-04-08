@@ -1,4 +1,5 @@
-﻿using Authentication.Service.Service;
+﻿using Authentication.Domain.Interfaces;
+using Authentication.Service.Service;
 using Authentication.Service.Service.Implementation;
 using AuthenticationApplication.Service;
 using AuthenticationApplication.Service.ApiClient;
@@ -13,6 +14,7 @@ namespace Authentication.Service
         {
             services.AddScoped<IAuthService, DefaultAuthService>();
             services.AddTransient<IProfileApiAsyncClient, DefaultProfileApiAsyncClient>();
+            services.AddScoped<IProfileService, DefaultProfileService>();
             services.AddScoped<ITokenService, DefaultTokenService>();
 
         }

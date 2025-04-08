@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Services;
+﻿using Authentication.Domain.Interfaces;
+using Blog.Domain.Services;
 using Blog.Service.Services;
 using Blog.Service.Services.Implementation;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,6 @@ namespace Blog.Service.Extensions
     {
         public static void AddProfileServices(this IServiceCollection services)
         {
-            services.AddScoped<IProfileService, DefaultProfileService>();
             services.AddScoped<IPostService, DefaultPostService>();
             services.AddScoped<IBlogService, DefaultBlogService>();
             services.AddScoped<IVideoService, DefaultVideoService>();

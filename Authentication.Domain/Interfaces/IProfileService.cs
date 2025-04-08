@@ -1,6 +1,6 @@
-﻿using Blog.Service.Models;
+﻿using Authentication.Domain.Interfaces.Models.Profile;
 
-namespace Blog.Service.Services
+namespace Authentication.Domain.Interfaces
 {
     public interface IProfileService
     {
@@ -9,6 +9,5 @@ namespace Blog.Service.Services
         Task<Guid?> GetProfileIdByUserIdIfExistsAsync(Guid userId);
         Task<ProfileModel> UpdateProfileAsync(ProfileUpdateModel profileEditModel);
         Task DeleteProfileByUserIdAsync(Guid userId);
-        Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
     }
 }
