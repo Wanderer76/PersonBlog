@@ -7,6 +7,7 @@ using Shared.Utils;
 
 namespace AuthenticationApplication.Service.ApiClient;
 
+[Obsolete("Не нужен")]
 public interface IProfileApiAsyncClient
 {
     Task<HttpResponseMessage> CreateProfileAsync(ProfileCreateRequest createRequest);

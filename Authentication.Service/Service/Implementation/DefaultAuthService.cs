@@ -1,9 +1,12 @@
 ﻿using Authentication.Domain.Entities;
+using Authentication.Domain.Interfaces;
+using Authentication.Domain.Interfaces.Models.Profile;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Models.Requests;
 using AuthenticationApplication.Service;
 using AuthenticationApplication.Service.ApiClient;
+using Infrastructure.Interface;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -16,14 +19,11 @@ namespace Authentication.Service.Service.Implementation;
 internal class DefaultAuthService : IAuthService
 {
     private readonly IReadWriteRepository<IAuthEntity> _context;
-    private readonly IProfileApiAsyncClient _profileApiClient;
     private readonly ITokenService _tokenService;
-    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context,
-        IProfileApiAsyncClient profileApiClient,
-        ITokenService tokenService)
+    private readonly IUserSession _userSession;
+    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService)
     {
         _context = context;
-        _profileApiClient = profileApiClient;
         _tokenService = tokenService;
     }
 
@@ -37,7 +37,7 @@ internal class DefaultAuthService : IAuthService
 
         if (!PasswordHasher.Validate(user.Password, loginModel.Password))
         {
-            throw new ArgumentException("Неверный логиг/пароль");
+            throw new ArgumentException("Неверный логин/пароль");
         }
 
         var response = _tokenService.GenerateToken(user);
@@ -60,7 +60,6 @@ internal class DefaultAuthService : IAuthService
 
         var userId = Guid.NewGuid();
 
-
         var user = new AppUser
         {
             Id = userId,
@@ -74,11 +73,11 @@ internal class DefaultAuthService : IAuthService
                     AppUserId = userId,
                     UserRoleId = Roles.User
                 }
-            }
+            },
         };
         _context.Add(user);
 
-        var profileCreateRequest = new ProfileCreateRequest
+        var profileCreateModel = new ProfileCreateModel
         {
             FirstName = registerModel.Name,
             SurName = registerModel.Surname,
@@ -87,29 +86,29 @@ internal class DefaultAuthService : IAuthService
             UserId = userId,
             Email = registerModel.Email
         };
-
-        var response = await _profileApiClient.CreateProfileAsync(profileCreateRequest);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new ArgumentException($"Не удалось зарегистрировать пользователя", new Exception(await response.Content.ReadAsStringAsync()));
-        }
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception e)
-        {
-            await _profileApiClient.RemoveProfileAsync(userId);
-            throw;
-        }
+        var profile = AppProfile.Create(
+                birthdate: profileCreateModel.Birthdate,
+                email: profileCreateModel.Email,
+                firstName: profileCreateModel.FirstName ?? string.Empty,
+                surName: profileCreateModel.SurName ?? string.Empty,
+                lastName: profileCreateModel.LastName ?? string.Empty,
+                userId: profileCreateModel.UserId
+            );
+        _context.Add(profile);
+        await _context.SaveChangesAsync();
 
         return await Authenticate(new LoginModel(user.Login, registerModel.Password));
     }
 
-    public ValueTask Logout()
+    public async ValueTask Logout()
     {
-        throw new NotImplementedException();
+        var user = await _userSession.GetUserSessionAsync();
+        if (user.UserId.HasValue)
+        {
+            await _context.Get<Token>()
+                .Where(x => x.AppUserId == user.UserId.Value)
+                .ExecuteDeleteAsync();
+        }
     }
 
     public async Task<AuthResponse> Refresh(string refreshToken)
