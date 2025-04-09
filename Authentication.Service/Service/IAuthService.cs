@@ -1,13 +1,14 @@
 ﻿using Authentication.Service.Models;
 using AuthenticationApplication.Models;
+using Shared.Utils;
 
 namespace AuthenticationApplication.Service;
 
 public interface IAuthService
 {
-    Task<AuthResponse> Authenticate(LoginModel loginModel);
-    Task<AuthResponse> Register(RegisterModel registerModel);
-    Task<AuthResponse> Refresh(string refreshToken);
+    Task<Result<AuthResponse,Error>> Authenticate(LoginModel loginModel);
+    Task<Result<AuthResponse,Error>> Register(RegisterModel registerModel);
+    Task<Result<AuthResponse,Error>> Refresh(string refreshToken);
     Task<bool> ValidateToken(string token);
     ValueTask Logout();
 }

@@ -1,11 +1,8 @@
 ﻿using Authentication.Domain.Entities;
-using Authentication.Domain.Interfaces;
 using Authentication.Domain.Interfaces.Models.Profile;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
-using AuthenticationApplication.Models.Requests;
 using AuthenticationApplication.Service;
-using AuthenticationApplication.Service.ApiClient;
 using Infrastructure.Interface;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -21,13 +18,15 @@ internal class DefaultAuthService : IAuthService
     private readonly IReadWriteRepository<IAuthEntity> _context;
     private readonly ITokenService _tokenService;
     private readonly IUserSession _userSession;
-    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService)
+
+    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService, IUserSession userSession)
     {
         _context = context;
         _tokenService = tokenService;
+        _userSession = userSession;
     }
 
-    public async Task<AuthResponse> Authenticate(LoginModel loginModel)
+    public async Task<Result<AuthResponse, Error>> Authenticate(LoginModel loginModel)
     {
         var user = await _context.Get<AppUser>()
             .Include(x => x.AppUserRoles)
@@ -37,17 +36,17 @@ internal class DefaultAuthService : IAuthService
 
         if (!PasswordHasher.Validate(user.Password, loginModel.Password))
         {
-            throw new ArgumentException("Неверный логин/пароль");
+            return Result<AuthResponse, Error>.Failure(new Error("400", "Неверный логин/пароль"));
         }
 
         var response = _tokenService.GenerateToken(user);
 
         await _context.SaveChangesAsync();
 
-        return response;
+        return Result<AuthResponse, Error>.Success(response);
     }
 
-    public async Task<AuthResponse> Register(RegisterModel registerModel)
+    public async Task<Result<AuthResponse, Error>> Register(RegisterModel registerModel)
     {
         var isUserExists = await _context.Get<AppUser>()
             .Where(x => x.Login.Equals(registerModel.Login))
@@ -55,7 +54,7 @@ internal class DefaultAuthService : IAuthService
 
         if (isUserExists)
         {
-            throw new ArgumentException("Пользователь с таким логином уже существует");
+            return Result<AuthResponse, Error>.Failure(new Error("400", "Пользователь с таким логином уже существует"));
         }
 
         var userId = Guid.NewGuid();
@@ -111,13 +110,13 @@ internal class DefaultAuthService : IAuthService
         }
     }
 
-    public async Task<AuthResponse> Refresh(string refreshToken)
+    public async Task<Result<AuthResponse, Error>> Refresh(string refreshToken)
     {
         var tokenModel = _tokenService.GetTokenRepresentaion(refreshToken);
 
         if (tokenModel.Type != TokenTypes.Refresh)
         {
-            throw new ArgumentException("Не верный тип токена");
+            return Result<AuthResponse, Error>.Failure(new("400", "Не верный тип токена"));
         }
 
         var userId = tokenModel.UserId;
@@ -132,7 +131,7 @@ internal class DefaultAuthService : IAuthService
 
         var response = _tokenService.GenerateToken(user);
         await _context.SaveChangesAsync();
-        return response;
+        return Result<AuthResponse, Error>.Success(response);
     }
 
 

@@ -38,7 +38,14 @@ public class AuthController : BaseController
     public async Task<IActionResult> CreateUser(RegisterModel registerModel)
     {
         var response = await _authService.Register(registerModel);
-        return Ok(response);
+        if (response.IsSuccess)
+        {
+            return Ok(response);
+        }
+        else
+        {
+            return BadRequest(response.Error);
+        }
     }
 
     [HttpPost("login")]
@@ -47,8 +54,15 @@ public class AuthController : BaseController
     {
         var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Authenticate(loginModel);
-        await _userSession.UpdateUserSession(session);
-        return Ok(response);
+        if (!response.IsSuccess)
+        {
+            await _userSession.UpdateUserSession(session);
+            return Ok(response);
+        }
+        else
+        {
+            return BadRequest(response.Error);
+        }
     }
 
 
@@ -57,8 +71,16 @@ public class AuthController : BaseController
     public async Task<IActionResult> Refresh(string refreshToken)
     {
         var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
+
         var response = await _authService.Refresh(refreshToken);
-        await _userSession.UpdateUserSession(session);
-        return Ok(response);
+        if (response.IsSuccess)
+        {
+            await _userSession.UpdateUserSession(session!);
+            return Ok(response);
+        }
+        else
+        {
+            return BadRequest(response.Error);
+        }
     }
 }

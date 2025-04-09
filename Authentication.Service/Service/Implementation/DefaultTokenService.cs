@@ -86,14 +86,9 @@ namespace Authentication.Service.Service.Implementation
 
             var userId = GetTokenRepresentaion(token).UserId;
 
-            var userTokens = await _context.Get<Token>()
+            await _context.Get<Token>()
                 .Where(x => x.AppUserId == userId)
-                .ToListAsync();
-
-            foreach (var i in userTokens)
-            {
-                _context.Remove(i);
-            }
+                .ExecuteDeleteAsync();
         }
 
         public TokenModel GetTokenRepresentaion(string token)
