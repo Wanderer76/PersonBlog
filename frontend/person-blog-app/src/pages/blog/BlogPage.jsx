@@ -101,10 +101,8 @@ const BlogPosts = function (props) {
         state: 0
     }])
 
-    useEffect(() => {
+    function loadPosts() {
         const url = `/profile/api/Post/list?blogId=${props.blogId}&page=${1}&limit=${100}`;
-        if (hasMounted.current) return;
-
         API.get(url, {
             headers: {
                 'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null,
@@ -112,7 +110,6 @@ const BlogPosts = function (props) {
             },
         }).then(response => {
             if (response.status === 200) {
-                hasMounted.current = true;
                 var result = response.data;
                 setPosts(result.posts);
             }
@@ -120,9 +117,13 @@ const BlogPosts = function (props) {
                 JwtTokenService.refreshToken();
                 window.location.reload();
             }
-        }, [posts])
+        });
+    }
 
-    })
+    useEffect(() => {
+        loadPosts();
+    }, [])
+
 
     async function handleRemove(id) {
         const url = `profile/api/Post/delete/${id}`;
@@ -142,44 +143,46 @@ const BlogPosts = function (props) {
 
     return (
         <>
-        {!showCreateForm &&
-            <div>
-                <h4>
-                    Посты
-                    <br />
-                    <button onClick={(e) => setShowCreateForm(true)}>Создать</button>
-                </h4>
-                {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
-                <table className="blog-table">
-                    <thead>
-                        <tr className="blog-tr">
-                            <th className="blog-th" scope="col">Название</th>
-                            <th className="blog-th" scope="col">Описание</th>
-                            <th className="blog-th" scope="col">Дата создания</th>
-                            <th className="blog-th" scope="col">Тип</th>
-                            <th className="blog-th" scope="col">Видео</th>
-                            <th className="blog-th" scope="col"></th>
-                            <th className="blog-th" scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody className="blog-tbody">
-                        {posts.map(x => {
-                            const date = new Date(x.createdAt);
-                            return <tr key={x.id}>
-                                <td className="blog-td">{x.title}</td>
-                                <td className="blog-td">{x.description}</td>
-                                <td className="blog-td">{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
-                                <td className="blog-td">{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
-                                <td className="blog-td blog-videoCell">{x.type === 1 && x.state === 1 ? getVideo(x) : <p> {x.state === 0 ? "В обработке" : x.errorMessage}</p>} </td>
-                                <td className="blog-td"><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
-                                <td className="blog-td"><button onClick={() => setEditForm({ ...x })}>Редактировать</button> </td>
+            {!showCreateForm &&
+                <div>
+                    <h4>
+                        Посты
+                        <br />
+                        <button onClick={(e) => setShowCreateForm(true)}>Создать</button>
+                    </h4>
+                    {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
+                    <table className="blog-table">
+                        <thead>
+                            <tr className="blog-tr">
+                                <th className="blog-th" scope="col">Название</th>
+                                <th className="blog-th" scope="col">Описание</th>
+                                <th className="blog-th" scope="col">Дата создания</th>
+                                <th className="blog-th" scope="col">Тип</th>
+                                <th className="blog-th" scope="col">Видео</th>
+                                <th className="blog-th" scope="col"></th>
+                                <th className="blog-th" scope="col"></th>
                             </tr>
-                        })}
-                    </tbody>
-                </table>
-            </div>
-}
-            {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)}></CreatePostForm>}
+                        </thead>
+                        <tbody className="blog-tbody">
+                            {posts.map(x => {
+                                const date = new Date(x.createdAt);
+                                return <tr key={x.id}>
+                                    <td className="blog-td">{x.title}</td>
+                                    <td className="blog-td">{x.description}</td>
+                                    <td className="blog-td">{`${date.toLocaleDateString('ru')} ${date.toLocaleTimeString()}`}</td>
+                                    <td className="blog-td">{x.type === 1 ? 'Видео' : 'Текстовый'}</td>
+                                    <td className="blog-td blog-videoCell">{x.type === 1 && x.state === 1 ? getVideo(x) : <p> {x.state === 0 ? "В обработке" : x.errorMessage}</p>} </td>
+                                    <td className="blog-td"><button onClick={() => handleRemove(x.id)}>Удалить</button> </td>
+                                    <td className="blog-td"><button onClick={() => setEditForm({ ...x })}>Редактировать</button> </td>
+                                </tr>
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            }
+            {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)} onCreate={() =>{
+                loadPosts()
+            }}></CreatePostForm>}
 
         </>
     );

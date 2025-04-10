@@ -1,14 +1,11 @@
 import React, { useRef, useState } from "react";
 import './CreatePostForm.css';
-import { JwtTokenService } from "../../scripts/TokenStrorage";
 import API from "../../scripts/apiMethod";
 
 export function CreatePostForm(props) {
 
     const [postForm, setPostForm] = useState({ type: 1, title: "", description: "", video: null });
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [maxProgress, setMaxProgress] = useState(0);
-    const [showProgress, setShowProgress] = useState(false);
     const videoRef = useRef(null);
 
     const CHUNK_SIZE = 10 * 1024 * 1024;
@@ -28,12 +25,7 @@ export function CreatePostForm(props) {
         var postId = null;
         Object.keys(postForm).forEach((key) => {
 
-            if (key === "video") {
-                // if (postForm.video !== null && postForm.video.size < CHUNK_SIZE) {
-                //     formData.append(key, postForm[key])
-                // }
-            }
-            else
+            if (key !== "video")
                 formData.append(key, postForm[key])
         });
 
@@ -50,11 +42,10 @@ export function CreatePostForm(props) {
         })
 
         if (postForm.video !== null) {
-            setShowProgress(true);
             await uploadFile(postId);
         }
         props.onHandleClose();
-        // window.location.reload()
+        props.onCreate()
     }
 
     async function uploadFile(postId) {
@@ -64,7 +55,6 @@ export function CreatePostForm(props) {
         let currentChunk = 0;
 
         setUploadProgress(0);
-        setMaxProgress(totalChunks);
 
         while (currentChunk < totalChunks) {
             const start = currentChunk * CHUNK_SIZE;
@@ -73,7 +63,7 @@ export function CreatePostForm(props) {
 
             await uploadChunk(chunk, currentChunk + 1, totalChunks, file.name, postId, '.mp4', file.size);
             currentChunk++;
-            setUploadProgress(currentChunk);
+            setUploadProgress(Math.round(currentChunk / totalChunks * 100));
         }
         alert('Загрузка завершена');
     }
@@ -105,22 +95,6 @@ export function CreatePostForm(props) {
 
     return (
         <>
-            {/* <div className="modal">
-                <div className="createPostForm">
-                    <p>Создать пост</p>
-                    <p>Название</p>
-                    <input className="modalContent" placeholder="Название" name="title" onChange={updateForm} />
-                    <p>Описание</p>
-                    <input className="modalContent" placeholder="Название" name="description" onChange={updateForm} />
-                    <p>Видео</p>
-                    <input className="modalContent" type="file" accept=".mp4,.mkv" name="video" onChange={updateForm} />
-                    <br />
-                    {showProgress && <progress value={uploadProgress} max={maxProgress}></progress>}
-                    {showProgress && <br />}
-                    <button onClick={props.onHandleClose}>Закрыть</button>
-                    <button onClick={sendForm}>Создать</button>
-                </div>
-            </div> */}
             <div className="modal">
                 <div className="createPostForm">
                     <h1>Создать видео-пост</h1>

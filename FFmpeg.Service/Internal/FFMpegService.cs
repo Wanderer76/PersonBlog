@@ -1,9 +1,11 @@
 ﻿using FFmpeg.Service.Models;
+using Minio.Helper;
 using Newtonsoft.Json;
 using Shared.Utils;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FFmpeg.Service.Internal
 {
@@ -28,7 +30,7 @@ namespace FFmpeg.Service.Internal
             return inputVideo;
         }
 
-        public async Task CreateHls(string input, string output, HlsOptions options, Action<double>? action)
+        public async Task CreateHls(string input, string output, HlsOptions options, AsyncProgress<double>? callback)
         {
             options.AssertFound("Опции равны null");
             string inputUrl = input;
@@ -81,7 +83,7 @@ namespace FFmpeg.Service.Internal
 
             Console.WriteLine($"ffmpeg {ffmpegCommand}");
 
-            await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand, action);
+            await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand, callback);
 
         }
 
@@ -96,7 +98,7 @@ namespace FFmpeg.Service.Internal
             return desirialized ?? [];
         }
 
-        private static async Task<string> ExecuteCommand(string utilPath, string command,Action<double>? onProgressChange = null)
+        private static async Task<string> ExecuteCommand(string utilPath, string command, AsyncProgress<double>? onProgressChange = null)
         {
             ProcessStartInfo processStartInfo = new ProcessStartInfo
             {
@@ -130,18 +132,23 @@ namespace FFmpeg.Service.Internal
             //    }
             //};
 
-            process.ErrorDataReceived += (sender, e) =>
+            process.ErrorDataReceived += async (sender, e) =>
             {
-                if (!string.IsNullOrEmpty(e.Data))
+                if (!string.IsNullOrEmpty(e.Data) && onProgressChange != null)
                 {
                     Console.Error.WriteLine($"Error: {e.Data}");
-                    var data = e.Data.Split(" ");
-                    var timeStr = data.FirstOrDefault(x => x.StartsWith("time="));
-                    if (timeStr != null)
+                    if (e.Data.StartsWith("frame="))
                     {
-                        var time = TimeSpan.Parse(timeStr.Split('=')[1]).TotalSeconds;
-                        onProgressChange?.Invoke(time);
+                        var currentTime = GetCurrentTime(e.Data);
+                        await onProgressChange.ReportAsync(currentTime.TotalSeconds);
+
                     }
+                    //var data = e.Data.Split(" ");
+                    //var timeStr = data.FirstOrDefault(x => x.StartsWith("time="));
+                    //if (timeStr != null && timeStr != "time=N/A")
+                    //{
+                    //    var time = TimeSpan.Parse(timeStr.Split('=')[1]).TotalSeconds;
+                    //}
                 }
             };
             process.Start();
@@ -149,6 +156,18 @@ namespace FFmpeg.Service.Internal
             await process.WaitForExitAsync();
 
             return await process.StandardOutput.ReadToEndAsync();
+        }
+        private static TimeSpan GetCurrentTime(string data)
+        {
+
+            var timeMatch = Regex.Match(data, @"time=(\d{2}):(\d{2}):(\d{2})\.\d+");
+            if (!timeMatch.Success)
+                return TimeSpan.Zero;
+
+            return new TimeSpan(
+                int.Parse(timeMatch.Groups[1].Value),
+                int.Parse(timeMatch.Groups[2].Value),
+                int.Parse(timeMatch.Groups[3].Value));
         }
     }
 }

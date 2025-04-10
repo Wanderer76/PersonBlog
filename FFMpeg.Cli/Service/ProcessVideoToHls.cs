@@ -8,7 +8,7 @@ using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
-using Xabe.FFmpeg;
+using Shared.Utils;
 
 namespace VideoProcessing.Cli.Service
 {
@@ -127,11 +127,14 @@ namespace VideoProcessing.Cli.Service
                     MasterName = fileMetadata.Id.ToString()
                 };
 
-                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions, (currentTime) =>
+                var progressCallBack = new AsyncProgress<double>((currentTime) =>
                 {
-                    var percent = (currentTime / fileMetadata.Duration) * 100;
+                    var percent = Math.Min(100, currentTime / fileMetadata.Duration * 100);
                     Console.WriteLine($"Percent : {percent}");
+                    return Task.CompletedTask;
                 });
+
+                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions, progressCallBack);
 
                 foreach (var file in Directory.GetFiles(dir))
                 {
@@ -168,7 +171,7 @@ namespace VideoProcessing.Cli.Service
             }
         }
 
-        public static string GetRelativePath(string filePath)
+        private static string GetRelativePath(string filePath)
         {
             var directoryName = Path.GetDirectoryName(filePath);
 

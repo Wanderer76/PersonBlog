@@ -1,4 +1,5 @@
 ﻿using FFmpeg.Service.Models;
+using Shared.Utils;
 
 namespace FFmpeg.Service
 {
@@ -6,6 +7,6 @@ namespace FFmpeg.Service
     {
         Task GeneratePreview(string input, string outputFilePath);
         Task<FFProbeStream?> GetVideoMediaInfo(string input);
-        Task CreateHls(string input, string output, HlsOptions options,Action<double>?action);
+        Task CreateHls(string input, string output, HlsOptions options, AsyncProgress<double>? action = null);
     }
 }
