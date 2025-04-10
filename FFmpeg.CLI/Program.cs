@@ -61,7 +61,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<CombineFileChunksEvent, VideoChunksCombinerService>()
-    .AddSubscription<VideoConvertEvent, ConvertVideoFile>()
+    .AddSubscription<VideoConvertEvent, ProcessVideoToHls>()
     .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
 
 

@@ -9,6 +9,6 @@
         public required string FileExtension { get; set; }
         public required string FileName { get; set; }
         public required long TotalSize { get; set; }
+        public required double Duration { get; set; }
     }
-
 }

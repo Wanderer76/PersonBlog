@@ -10,6 +10,7 @@ namespace Infrastructure.Interface
         Task<UserSession> GetUserSessionAsync();
         Task UpdateUserSession(string sessionId, string? token = null);
     }
+
     internal class DefaultUserSession : IUserSession
     {
         private readonly ICacheService _cacheService;
@@ -26,7 +27,7 @@ namespace Infrastructure.Interface
             var hasSession = _contextAccessor.HttpContext.Request.Cookies.TryGetValue(SessionKey.Key, out var session);
             return hasSession
                 ? (await _cacheService.GetCachedDataAsync<UserSession>(new SessionKey(Guid.Parse(session!))))!
-                : throw new Exception();
+                : UserSession.AnonymousUser();
         }
 
         public async Task UpdateUserSession(string session, string? token = null)

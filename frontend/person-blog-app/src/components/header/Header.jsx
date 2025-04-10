@@ -22,3 +22,13 @@ const Header = function () {
 }
 
 export default Header;
+
+// для того чтобы тема менялась и в приложении на фронте при сене темы нужно вызвать следующий метод
+// window.themeBinder.changeTheme('dark')
+// сейчас используются следующие константы - 'dark' и 'light'
+// я использовал следующий код
+// if (window.themeBinder) {
+//     window.themeBinder.changeTheme('light')
+// }
+
+

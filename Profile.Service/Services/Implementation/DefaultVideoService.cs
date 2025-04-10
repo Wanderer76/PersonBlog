@@ -52,6 +52,7 @@ namespace Blog.Service.Services.Implementation
                         IsProcessed = true,
                         Name = uploadVideoChunk.FileName,
                         Resolution = VideoResolution.Original,
+                        Duration = uploadVideoChunk.Duration,
                         ObjectName = string.Empty
                     };
                     await _cacheService.SetCachedDataAsync(cacheKey, metadata, TimeSpan.FromMinutes(10));

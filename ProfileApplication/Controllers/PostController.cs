@@ -119,7 +119,7 @@ namespace Blog.API.Controllers
             });
             if (result.IsSuccess)
             {
-                return Ok(result);
+                return Ok(result.Value);
             }
             else
             {

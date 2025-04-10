@@ -34,9 +34,8 @@ namespace Blog.Service.Services.Implementation
             .FirstAsync(x => x.UserId == postCreateDto.UserId);
 
             var postId = GuidService.GetNewGuid();
-            Guid? videoId = null;
-            var now = DateTimeOffset.UtcNow;
-            var storage = _fileStorageFactory.CreateFileStorage();
+            var now = DateTimeService.Now();
+            //var storage = _fileStorageFactory.CreateFileStorage();
 
             //if (postCreateDto.Video != null)
             //{

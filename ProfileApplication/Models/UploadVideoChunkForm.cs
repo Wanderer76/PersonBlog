@@ -11,6 +11,7 @@ namespace Blog.API.Models
         public required string FileExtension { get; set; }
         public required string FileName { get; set; }
         public required long TotalSize { get; set; }
+        public required string Duration { get; set; }
     }
     public static class UploadVideoChunkFormExtensions
     {
@@ -25,6 +26,7 @@ namespace Blog.API.Models
                 FileExtension = form.FileExtension,
                 FileName = form.FileName,
                 TotalSize = form.TotalSize,
+                Duration = double.Parse(form.Duration.Replace('.', ','))
             };
         }
     }

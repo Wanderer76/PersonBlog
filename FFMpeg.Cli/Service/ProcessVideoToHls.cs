@@ -12,20 +12,20 @@ using Xabe.FFmpeg;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class ConvertVideoFile : IEventHandler<VideoConvertEvent>
+    public class ProcessVideoToHls : IEventHandler<VideoConvertEvent>
     {
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFFMpegService _ffmpegService;
-        private readonly IFileStorage storage;
+        private readonly IFileStorage _storage;
         private readonly ICacheService _cacheService;
         private readonly string _tempPath;
         private readonly HlsVideoPresets _videoPresets;
 
-        public ConvertVideoFile(IReadWriteRepository<IProfileEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, ICacheService cacheService)
+        public ProcessVideoToHls(IReadWriteRepository<IProfileEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, ICacheService cacheService)
         {
-            this._context = context;
-            this._ffmpegService = ffmpegService;
-            this.storage = storage.CreateFileStorage();
+            _context = context;
+            _ffmpegService = ffmpegService;
+            _storage = storage.CreateFileStorage();
             _tempPath = Path.GetFullPath(configuration["TempDir"]!);
             _videoPresets = videoPresets;
             _cacheService = cacheService;
@@ -40,12 +40,14 @@ namespace VideoProcessing.Cli.Service
 
             try
             {
-                var url = await storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
-                var videoSizes = new List<VideoSize>() { VideoSize.Hd1080, VideoSize.Hd720, VideoSize.Vga, VideoSize.Nhd };
+                var url = await _storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
                 var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
                 var fileId = GuidService.GetNewGuid();
+
                 var inputUrl = new Uri(url).AbsoluteUri;
+
                 var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
+
                 await ProcessHls(fileMetadata, dir, fileId, inputUrl, videoStream);
 
                 var post = await _context.Get<Post>()
@@ -64,7 +66,7 @@ namespace VideoProcessing.Cli.Service
                         using var copyStream = new MemoryStream();
                         await fileStream.CopyToAsync(copyStream);
                         copyStream.Position = 0;
-                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
+                        var objectName = await _storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
 
                         post.PreviewId = objectName;
                     }
@@ -125,7 +127,11 @@ namespace VideoProcessing.Cli.Service
                     MasterName = fileMetadata.Id.ToString()
                 };
 
-                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions);
+                await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions, (currentTime) =>
+                {
+                    var percent = (currentTime / fileMetadata.Duration) * 100;
+                    Console.WriteLine($"Percent : {percent}");
+                });
 
                 foreach (var file in Directory.GetFiles(dir))
                 {
@@ -133,7 +139,7 @@ namespace VideoProcessing.Cli.Service
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
                     copyStream.Position = 0;
-                    var objectName = await storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
+                    var objectName = await _storage.PutFileAsync(fileMetadata.PostId, Path.GetFileName(file), copyStream);
                 }
 
                 foreach (string folder in Directory.EnumerateDirectories(dir))
@@ -144,7 +150,7 @@ namespace VideoProcessing.Cli.Service
                         using var copyStream = new MemoryStream();
                         await fileStream.CopyToAsync(copyStream);
                         copyStream.Position = 0;
-                        var objectName = await storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
+                        var objectName = await _storage.PutFileAsync(fileMetadata.PostId, GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/'), copyStream);
                     }
                 }
 

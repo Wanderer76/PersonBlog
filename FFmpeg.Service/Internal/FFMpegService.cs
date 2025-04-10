@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Shared.Utils;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace FFmpeg.Service.Internal
@@ -27,13 +28,13 @@ namespace FFmpeg.Service.Internal
             return inputVideo;
         }
 
-        public async Task CreateHls(string input, string output, HlsOptions options)
+        public async Task CreateHls(string input, string output, HlsOptions options, Action<double>? action)
         {
             options.AssertFound("Опции равны null");
             string inputUrl = input;
             var filterComplexBuilder = new StringBuilder();
-            filterComplexBuilder.Append("[0:v]split=").Append(options.Resolutions.Length);
-            for (int i = 1; i <= options.Resolutions.Length; i++)
+            filterComplexBuilder.Append("[0:v]split=").Append(options.Resolutions.Count);
+            for (int i = 1; i <= options.Resolutions.Count; i++)
             {
                 filterComplexBuilder.Append($"[v{i}]");
             }
@@ -45,7 +46,7 @@ namespace FFmpeg.Service.Internal
 
             var inputMedia = await GetStreams(input);
             var inputAudio = inputMedia.FirstOrDefault(x => x.CodecType == "audio");
-            for (int i = 0; i < options.Resolutions.Length; i++)
+            for (int i = 0; i < options.Resolutions.Count; i++)
             {
                 string resolution = options.Resolutions[i];
                 string[] parts = resolution.Split('x');
@@ -57,7 +58,9 @@ namespace FFmpeg.Service.Internal
                 filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
 
                 string bufsize = rate.Replace("M", "0M").Replace("k", "k");
-                mapVideoParamsBuilder.Append(@$"-map ""[v{i}out]"" -c:v:{i} {fFMpegOptions.DefaultEncoder} -b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset slow -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
+                mapVideoParamsBuilder.Append($"-map \"[v{i}out]\" -c:v:{i} {fFMpegOptions.DefaultEncoder} " +
+                    $"-b:v:{i} {rate} -maxrate:v:{i} {rate} -allow_skip_frames 1 -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset medium" +
+                    $" -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
                 if (inputAudio != null)
                 {
                     mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");
@@ -74,11 +77,11 @@ namespace FFmpeg.Service.Internal
             var mapAudioParams = mapAudioParamsBuilder.ToString();
             var mapVariants = mapVariantsBuilder.ToString().Trim();
 
-            var ffmpegCommand = @$"-i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 2 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{options.SegmentFileName}_%v/data%05d.ts -master_pl_name {options.MasterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{options.SegmentFileName}_%v/playlist.m3u8";
+            var ffmpegCommand = @$"-hide_banner -y -i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 10 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{options.SegmentFileName}_%v/data%05d.ts -master_pl_name {options.MasterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{options.SegmentFileName}_%v/playlist.m3u8";
 
             Console.WriteLine($"ffmpeg {ffmpegCommand}");
 
-            await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand);
+            await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand, action);
 
         }
 
@@ -93,7 +96,7 @@ namespace FFmpeg.Service.Internal
             return desirialized ?? [];
         }
 
-        private static async Task<string> ExecuteCommand(string utilPath, string command)
+        private static async Task<string> ExecuteCommand(string utilPath, string command,Action<double>? onProgressChange = null)
         {
             ProcessStartInfo processStartInfo = new ProcessStartInfo
             {
@@ -106,11 +109,39 @@ namespace FFmpeg.Service.Internal
             };
 
             Process process = new Process { StartInfo = processStartInfo };
+
+            //process.OutputDataReceived += (sender, args) =>
+            //{
+            //    if (args.Data != null)
+            //    {
+            //        try
+            //        {
+            //            Console.WriteLine(args.Data);
+            //            var data = args.Data.Split(" ");
+            //            var timeStr = data.FirstOrDefault(x => x.StartsWith("time="));
+            //            if (timeStr != null)
+            //            {
+            //                var time = TimeSpan.Parse(timeStr.Split('=')[1]).TotalSeconds;
+            //            }
+            //        }catch(Exception e)
+            //        {
+            //            Console.WriteLine(e);
+            //        }
+            //    }
+            //};
+
             process.ErrorDataReceived += (sender, e) =>
             {
                 if (!string.IsNullOrEmpty(e.Data))
                 {
                     Console.Error.WriteLine($"Error: {e.Data}");
+                    var data = e.Data.Split(" ");
+                    var timeStr = data.FirstOrDefault(x => x.StartsWith("time="));
+                    if (timeStr != null)
+                    {
+                        var time = TimeSpan.Parse(timeStr.Split('=')[1]).TotalSeconds;
+                        onProgressChange?.Invoke(time);
+                    }
                 }
             };
             process.Start();

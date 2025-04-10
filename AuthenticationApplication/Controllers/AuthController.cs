@@ -40,7 +40,7 @@ public class AuthController : BaseController
         var response = await _authService.Register(registerModel);
         if (response.IsSuccess)
         {
-            return Ok(response);
+            return Ok(response.Value);
         }
         else
         {
@@ -54,10 +54,10 @@ public class AuthController : BaseController
     {
         var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Authenticate(loginModel);
-        if (!response.IsSuccess)
+        if (response.IsSuccess)
         {
             await _userSession.UpdateUserSession(session);
-            return Ok(response);
+            return Ok(response.Value);
         }
         else
         {
@@ -76,7 +76,7 @@ public class AuthController : BaseController
         if (response.IsSuccess)
         {
             await _userSession.UpdateUserSession(session!);
-            return Ok(response);
+            return Ok(response.Value);
         }
         else
         {

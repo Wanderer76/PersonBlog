@@ -16,7 +16,7 @@ namespace VideoProcessing.Cli.Service
     {
         private readonly IFileStorage storage;
         private readonly IReadWriteRepository<IProfileEntity> _context;
-
+        
         public VideoChunksCombinerService(IFileStorageFactory storage, IReadWriteRepository<IProfileEntity> context)
         {
             this.storage = storage.CreateFileStorage();
@@ -31,6 +31,7 @@ namespace VideoProcessing.Cli.Service
                 .Where(x => x.Id == fileId)
                 .Include(x => x.Post)
                 .FirstAsync();
+
             _context.Attach(videoMetadata);
 
             try
@@ -44,7 +45,8 @@ namespace VideoProcessing.Cli.Service
 
                 var chunks = new List<(long Number, int Size, string ObjectName)>();
 
-                await foreach (var chunk in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId }).Where(x => x.Headers != null && x.Headers.Count > 0))
+                await foreach (var chunk in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId })
+                    .Where(x => x.Headers != null && x.Headers.Count > 0))
                 {
                     chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.Objectname));
                 }

@@ -54,7 +54,7 @@ export function CreatePostForm(props) {
             await uploadFile(postId);
         }
         props.onHandleClose();
-        window.location.reload()
+        // window.location.reload()
     }
 
     async function uploadFile(postId) {
@@ -87,7 +87,7 @@ export function CreatePostForm(props) {
         formData.append('postId', postId);
         formData.append('totalSize', totalSize);
         formData.append('chunkData', chunk);
-
+        formData.append('duration', videoRef.current.duration)
         try {
             const response = await API.post('/profile/api/Post/uploadChunk', formData,
                 {
@@ -141,6 +141,7 @@ export function CreatePostForm(props) {
                         <h3>Выберите файл для загрузки</h3>
                         <p>или перетащите видео файл</p>
                         <input
+                            name='video'
                             type="file"
                             className="fileInput"
                             accept=".mp4,.mkv"
@@ -153,7 +154,7 @@ export function CreatePostForm(props) {
                     </div>
 
                     <div className="previewContainer">
-                        <video className="videoPreview"  ref={videoRef} controls />
+                        <video className="videoPreview" ref={videoRef} controls />
                         <div className="progressBar">
                             <div
                                 className="progressFill"
@@ -190,7 +191,7 @@ export function CreatePostForm(props) {
                             Закрыть
                         </button>
                         <button className="btn btnPrimary" onClick={sendForm}>
-                        Создать
+                            Создать
                         </button>
                     </div>
                 </div>
@@ -203,7 +204,7 @@ export function CreatePostForm(props) {
         if (file) {
             // Показать прелоадер
             // document.getElementById('preloader').style.display = 'block';
-            
+
             // Предпросмотр видео
             const videoPreview = document.getElementsByClassName('videoPreview');
             const videoURL = URL.createObjectURL(file);
@@ -211,8 +212,8 @@ export function CreatePostForm(props) {
                 videoRef.current.src = videoURL;
                 // videoRef.current.style.display = 'block';
                 videoRef.current.load();
-              }
-          
+            }
+
 
             // Запустить загрузку на сервер
             // document.getElementById('<%= btnUpload.ClientID %>').click();

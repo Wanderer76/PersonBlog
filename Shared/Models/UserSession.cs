@@ -8,5 +8,16 @@
         public string UserName { get; set; }
         public string? IpAddress { get; set; }
         public bool IsAnonymous => UserId != null;
+        
+        public static UserSession AnonymousUser()
+        {
+            return new UserSession
+            {
+                SessionId = Guid.Empty,
+                UserId = null,
+                UserName = null,
+                IpAddress = null,
+            };
+        }
     }
 }
