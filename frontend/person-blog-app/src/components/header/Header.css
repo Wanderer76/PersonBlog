@@ -21,14 +21,13 @@
 
 .navbar {
     overflow: hidden;
-    background-color: rgba(0,0,0, 0);
     width: 100%;
     display: flex;
     justify-content: center;
 }
 
 .navbar a {
-    color: white;
+    color: black;
     padding: 14px 20px;
     text-decoration: none;
     text-align: center;

@@ -13,13 +13,9 @@ const Session = function ({ children }) {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     API.get("auth/api/Auth/session", { withCredentials: true }).then(response => {
-      setLoading(false);
     })
   }, []);
 
-  if (loading) {
-    return <></>;
-  }
 
   return <>{children}</>;
 }
