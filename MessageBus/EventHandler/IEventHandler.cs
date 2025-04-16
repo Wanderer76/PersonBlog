@@ -1,4 +1,5 @@
-﻿namespace MessageBus.EventHandler
+﻿
+namespace MessageBus.EventHandler
 {
     public interface IEventHandler
     {

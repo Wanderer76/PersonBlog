@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MessageBus.Models;
 using Microsoft.Extensions.Options;
 using Infrastructure.Models;
+using Shared.Utils;
 
 namespace MessageBus
 {
@@ -51,39 +52,24 @@ namespace MessageBus
             return _factory.CreateConnectionAsync();
         }
 
-        public async Task SubscribeAsync(IChannel channel, string queueName, SubscribeOptions? options = default)
+        public async Task SubscribeAsync(IChannel channel, string queueName)
         {
-            options ??= new SubscribeOptions();
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
-                if (options.RoutingKeys == null || options.RoutingKeys.Any() && options.RoutingKeys.Contains(ea.RoutingKey))
+                using var scope = _serviceScope.CreateScope();
+
+                foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
                 {
-                    using var scope = _serviceScope.CreateScope();
-                    foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
+                    if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
                     {
-                        if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
-                        {
-                            try
-                            {
-                                var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
-                                await handler.Handle(handlerBody);
-                                await channel.BasicAckAsync(ea.DeliveryTag, false);
-                            }
-                            catch (Exception e)
-                            {
-                                await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
-                            }
-                        }
+                        var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
+                        await handler.Handle(handlerBody);
                     }
                 }
-                else
-                {
-                    await channel.BasicRejectAsync(ea.DeliveryTag, true);
-                }
             };
-            await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+            await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
         }
     }
 

@@ -32,7 +32,7 @@ namespace ReactionProcessing.Cli.HostedServices
 
             try
             {
-                await _messageBus.SubscribeAsync(channel, _config.QueueName, new SubscribeOptions { RoutingKeys = [_config.ViewRoutingKey] });
+                await _messageBus.SubscribeAsync(channel, _config.QueueName);
             }
             catch (Exception ex)
             {

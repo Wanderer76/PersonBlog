@@ -2,9 +2,10 @@
 {
     public class CombineFileChunksEvent
     {
-        public Guid EventId { get; set; }
-        public Guid VideoMetadataId { get; set; }
-        public bool IsCompleted { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
+        public required Guid EventId { get; set; }
+        public required Guid VideoMetadataId { get; set; }
+        public required Guid PostId {  get; set; }
+        public required bool IsCompleted { get; set; }
+        public required DateTimeOffset CreatedAt { get; set; }
     }
 }

@@ -69,11 +69,17 @@ namespace VideoProcessing.Cli.Service
                         var objectName = await _storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
 
                         post.PreviewId = objectName;
+                        fileMetadata.IsProcessed = false;
+                        fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
+                        fileMetadata.Duration = videoStream.Duration;
+                        fileMetadata.ProcessState = ProcessState.Complete;
+                        post.VideoFileId = fileMetadata.Id;
+                        await _context.SaveChangesAsync();
+                        await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
-                        throw;
                     }
                     finally
                     {
@@ -83,14 +89,6 @@ namespace VideoProcessing.Cli.Service
                         }
                     }
                 }
-
-                fileMetadata.IsProcessed = false;
-                fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
-                fileMetadata.Duration = videoStream.Duration;
-                fileMetadata.ProcessState = ProcessState.Complete;
-                post.VideoFileId = fileMetadata.Id;
-                await _context.SaveChangesAsync();
-                await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
             }
             catch (Exception e)
             {

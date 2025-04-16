@@ -228,6 +228,7 @@ namespace Blog.Service.Services.Implementation
                     EventId = GuidService.GetNewGuid(),
                     VideoMetadataId = metadata.Id,
                     IsCompleted = false,
+                    PostId = uploadVideoChunkDto.PostId,
                     CreatedAt = DateTimeOffset.UtcNow
                 };
 

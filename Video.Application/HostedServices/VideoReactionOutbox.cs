@@ -41,7 +41,7 @@ namespace VideoView.Application.HostedServices
                 var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IVideoViewEntity>>();
 
                 var messages = await dbContext.Get<VideoEvent>()
-                    .Where(static m => m.State == EventState.Pending && m.RetryCount < 3)
+                    .Where(m => m.State == EventState.Pending && m.RetryCount < 3)
                     .OrderBy(m => m.CreatedAt)
                     .Take(100)
                     .ToListAsync(stoppingToken);

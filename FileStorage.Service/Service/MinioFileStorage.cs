@@ -55,14 +55,14 @@ namespace FileStorage.Service.Service
             return buffer.Length;
         }
 
-        public async Task<string> PutFileWithResolutionAsync(Guid bucketId, Guid fileId, Stream input, VideoResolution resolution = VideoResolution.Original)
+        public async Task<string> PutFileInBucketAsync(Guid bucketId, Guid fileId, Stream input)
         {
             await CreateBucketIfNotExistAsync(bucketId);
 
             var result = await _client.PutObjectAsync(
                           new Minio.DataModel.Args.PutObjectArgs()
                           .WithBucket(bucketId.ToString())
-                          .WithObject(GeFileNameFromId(fileId, resolution))
+                          .WithObject(GeFileNameFromId(fileId, VideoResolution.Original))
                           .WithObjectSize(input.Length)
                           .WithStreamData(input)
                           );
@@ -94,12 +94,12 @@ namespace FileStorage.Service.Service
             return result;
         }
 
-        public async Task<string> GetUrlToUploadFileAsync(Guid bucketId, Guid fileId, VideoResolution resolution)
+        public async Task<string> GetUrlToUploadFileAsync(Guid bucketId, Guid fileId)
         {
             var result = await _client.PresignedPutObjectAsync(
                                     new Minio.DataModel.Args.PresignedPutObjectArgs()
                                     .WithBucket(bucketId.ToString())
-                                    .WithObject(GeFileNameFromId(fileId, resolution))
+                                    .WithObject(GeFileNameFromId(fileId, VideoResolution.Original))
                                     .WithExpiry(604800));
             return result;
         }

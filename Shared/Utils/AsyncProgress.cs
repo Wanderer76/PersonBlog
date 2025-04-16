@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Shared.Utils
+﻿namespace Shared.Utils
 {
     public class AsyncProgress<T>
     {
@@ -14,7 +8,7 @@ namespace Shared.Utils
             _callback = progressCallback;
         }
 
-        public Task ReportAsync(T value)
+        public Task InvokeAsync(T value)
         {
             return _callback(value);
         }

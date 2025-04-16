@@ -4,7 +4,7 @@
     {
         public Guid Id { get; set; }
         public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
-        public EventState State { get => _state; }
+        public EventState State { get => _state; set => _state = value; }
         public required string EventType { get; set; }
         public required string EventData { get; set; } // Сериализованный JSON события
         public int RetryCount { get; set; }

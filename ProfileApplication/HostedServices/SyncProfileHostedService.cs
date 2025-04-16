@@ -22,10 +22,7 @@ namespace Blog.API.HostedServices
             await _channel.ExchangeDeclareAsync(_reactingSettings.ExchangeName, ExchangeType.Direct, durable: true);
             await _channel.QueueDeclareAsync(_reactingSettings.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
             await _channel.QueueBindAsync(_reactingSettings.SyncQueueName, _reactingSettings.ExchangeName, _reactingSettings.SyncRoutingKey);
-            await _messageBus.SubscribeAsync(_channel, _reactingSettings.SyncQueueName, new SubscribeOptions
-            {
-                RoutingKeys = [_reactingSettings.SyncRoutingKey]
-            });
+            await _messageBus.SubscribeAsync(_channel, _reactingSettings.SyncQueueName);
         }
     }
 }

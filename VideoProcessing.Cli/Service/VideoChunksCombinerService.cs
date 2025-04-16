@@ -2,9 +2,7 @@
 using Blog.Domain.Events;
 using FileStorage.Service.Models;
 using FileStorage.Service.Service;
-using Infrastructure.Models;
 using MessageBus.EventHandler;
-using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -16,7 +14,7 @@ namespace VideoProcessing.Cli.Service
     {
         private readonly IFileStorage storage;
         private readonly IReadWriteRepository<IProfileEntity> _context;
-        
+
         public VideoChunksCombinerService(IFileStorageFactory storage, IReadWriteRepository<IProfileEntity> context)
         {
             this.storage = storage.CreateFileStorage();
@@ -36,16 +34,9 @@ namespace VideoProcessing.Cli.Service
 
             try
             {
-                var post = videoMetadata.Post;
-
-                var profileId = await _context.Get<PersonBlog>()
-                    .Where(x => x.Id == post.BlogId)
-                    .Select(x => x.UserId)
-                    .FirstAsync();
-
                 var chunks = new List<(long Number, int Size, string ObjectName)>();
 
-                await foreach (var chunk in storage.GetAllBucketObjects(post.Id, new VideoChunkUploadingInfo { FileId = fileId })
+                await foreach (var chunk in storage.GetAllBucketObjects(@event.PostId, new VideoChunkUploadingInfo { FileId = fileId })
                     .Where(x => x.Headers != null && x.Headers.Count > 0))
                 {
                     chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.Objectname));
@@ -54,25 +45,23 @@ namespace VideoProcessing.Cli.Service
                 {
                     throw new ArgumentException("Не удалось собрать файл");
                 }
-
+                
                 var memoryStream = new MemoryStream(chunks.Sum(x => x.Size));
 
                 foreach (var chunk in chunks.OrderBy(x => x.Number))
                 {
-                    await storage.ReadFileAsync(post.Id, chunk.ObjectName, memoryStream);
+                    await storage.ReadFileAsync(@event.PostId, chunk.ObjectName, memoryStream);
                 }
                 memoryStream.Position = 0;
-                var objectName = await storage.PutFileWithResolutionAsync(post.Id, fileId, memoryStream);
+                var objectName = await storage.PutFileInBucketAsync(@event.PostId, fileId, memoryStream);
 
                 videoMetadata.Length = memoryStream.Length;
                 videoMetadata.ObjectName = objectName;
                 videoMetadata.Resolution = VideoResolution.Original;
-                var fileUrl = await storage.GetFileUrlAsync(post.Id, objectName);
+
                 var videoCreateEvent = new VideoConvertEvent
                 {
                     EventId = GuidService.GetNewGuid(),
-                    FileUrl = fileUrl,
-                    UserProfileId = profileId,
                     ObjectName = objectName,
                     FileId = videoMetadata.Id
                 };
@@ -87,7 +76,7 @@ namespace VideoProcessing.Cli.Service
 
                 foreach (var chunk in chunks)
                 {
-                    await storage.RemoveFileAsync(post.Id, chunk.ObjectName);
+                    await storage.RemoveFileAsync(@event.PostId, chunk.ObjectName);
                 }
                 await _context.SaveChangesAsync();
             }
@@ -96,7 +85,6 @@ namespace VideoProcessing.Cli.Service
                 videoMetadata.ProcessState = ProcessState.Error;
                 videoMetadata.ErrorMessage = "Не обработать файл";
                 await _context.SaveChangesAsync();
-                throw;
             }
         }
     }

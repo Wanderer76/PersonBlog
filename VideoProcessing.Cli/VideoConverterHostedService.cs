@@ -34,10 +34,7 @@ namespace VideoProcessing.Cli
 
             try
             {
-                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue, new SubscribeOptions
-                {
-                    RoutingKeys = [_config.VideoConverterRoutingKey, _config.FileChunksCombinerRoutingKey]
-                });
+                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue);
             }
             catch (Exception ex)
             {

@@ -14,10 +14,7 @@ namespace Blog.API.HostedServices
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMqUploadVideoConfig _settings;
-        private readonly RabbitMqVideoReactionConfig _reactingSettings = new();
-
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly ConcurrentDictionary<ulong, VideoProcessEvent> sendMessages = new();
 
         public OutboxPublisherService(
             IServiceProvider serviceProvider,

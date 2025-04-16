@@ -140,7 +140,7 @@ namespace FFmpeg.Service.Internal
                     if (e.Data.StartsWith("frame="))
                     {
                         var currentTime = GetCurrentTime(e.Data);
-                        await onProgressChange.ReportAsync(currentTime.TotalSeconds);
+                        await onProgressChange.InvokeAsync(currentTime.TotalSeconds);
 
                     }
                     //var data = e.Data.Split(" ");
