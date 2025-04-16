@@ -5,9 +5,10 @@ using Blog.Service.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using FileStorage.Service.Service;
-using Infrastructure.Models;
+using Infrastructure.Interface;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
@@ -20,12 +21,13 @@ namespace Blog.Service.Services.Implementation
         private readonly IReadWriteRepository<IProfileEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly ICacheService _cacheService;
-
-        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService)
+        private readonly IUserSession _userSession;
+        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, IUserSession userSession)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
             _cacheService = cacheService;
+            _userSession = userSession;
         }
 
         public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
@@ -35,48 +37,6 @@ namespace Blog.Service.Services.Implementation
 
             var postId = GuidService.GetNewGuid();
             var now = DateTimeService.Now();
-            //var storage = _fileStorageFactory.CreateFileStorage();
-
-            //if (postCreateDto.Video != null)
-            //{
-            //    var video = postCreateDto.Video!;
-            //    videoId = GuidService.GetNewGuid();
-
-            //    var objectName = await storage.PutFileWithResolutionAsync(postId, videoId!.Value, video.OpenReadStream());
-
-            //    var videoMetadata = new VideoMetadata
-            //    {
-            //        Id = videoId.Value,
-            //        ContentType = video.ContentType,
-            //        CreatedAt = now,
-            //        Length = video.Length,
-            //        Name = video.Name,
-            //        PostId = postId,
-            //        ObjectName = objectName,
-            //        FileExtension = Path.GetExtension(video.FileName),
-            //        Resolution = VideoResolution.Original
-            //    };
-            //    var fileUrl = await storage.GetFileUrlAsync(postId, objectName);
-            //    var videoCreateEvent = new VideoConvertEvent
-            //    {
-            //        EventId = GuidService.GetNewGuid(),
-            //        FileUrl = fileUrl,
-            //        UserProfileId = userProfileId,
-            //        ObjectName = objectName,
-            //        FileId = videoMetadata.Id
-            //    };
-
-            //    var videoEvent = new ProfileEventMessages
-            //    {
-            //        Id = videoCreateEvent.EventId,
-            //        EventData = JsonSerializer.Serialize(videoCreateEvent),
-            //        EventType = nameof(VideoConvertEvent),
-            //        State = EventState.Pending,
-            //    };
-
-            //    _context.Add(videoEvent);
-            //    _context.Add(videoMetadata);
-            //}
 
             var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<SubscriptionLevel>()
                 .Where(x => x.BlogId == blog.Id)
@@ -87,19 +47,31 @@ namespace Blog.Service.Services.Implementation
 
             if (!hasSubscription)
             {
-
                 return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
             }
 
-            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title, postCreateDto.SubscriptionLevelId);
+            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility);
             _context.Add(post);
             await _context.SaveChangesAsync();
 
             return Result<Guid, ErrorList>.Success(postId);
         }
 
-        public async Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid postId)
+        public async Task<Result<FileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
         {
+            var postVisibility = await _context.Get<Post>()
+                .Where(x => x.Id == postId)
+                .Select(x => new { x.Visibility, x.Blog.UserId })
+                .FirstAsync();
+            if (postVisibility.Visibility == PostVisibility.Private)
+            {
+                var session = await _userSession.GetUserSessionAsync();
+                if (session.UserId != postVisibility.UserId)
+                {
+                    return Result<FileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
+                }
+            }
+
             var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"VideoMetadata:{postId}");
             if (fileMetadata == null)
             {
@@ -110,13 +82,13 @@ namespace Blog.Service.Services.Implementation
                 await _cacheService.SetCachedDataAsync($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
             }
 
-            return new FileMetadataModel(
+            return Result<FileMetadataModel, ErrorList>.Success(new FileMetadataModel(
                 fileMetadata.ContentType,
                 fileMetadata.Length,
                 fileMetadata.Name,
                 fileMetadata.CreatedAt,
                 fileMetadata.Id,
-                fileMetadata.ObjectName);
+                fileMetadata.ObjectName));
         }
 
         public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
@@ -304,8 +276,17 @@ namespace Blog.Service.Services.Implementation
         {
             var post = await _context.Get<Post>()
                 .Include(x => x.VideoFile)
+                .Include(x => x.Blog)
                 .FirstAsync(x => x.Id == postId);
 
+            if (post.Visibility == PostVisibility.Private)
+            {
+                var session = await _userSession.GetUserSessionAsync();
+                if (session.UserId != post.Blog.UserId)
+                {
+                    throw new ArgumentException();
+                }
+            }
             var fileStorage = _fileStorageFactory.CreateFileStorage();
 
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
@@ -453,6 +434,11 @@ namespace Blog.Service.Services.Implementation
             return await _context.Get<PostViewer>()
                 .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
                 .AnyAsync();
+        }
+
+        public Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync()
+        {
+            return Task.FromResult(Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName())));
         }
     }
 }

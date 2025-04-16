@@ -9,17 +9,15 @@ import './Player.css';
 export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
-  let viewRecorded = false;
-  let sessionHash = null;
 
   const options = {
     autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,
     playbackRates: [0.5, 1, 1.5, 2],
-    preload: 'none',//path.preload == undefined ? 'none' : path.preload,
+    preload: 'none',
     responsive: true,
-    fluid: true, // Добавить fluid mode
-    aspectRatio: '16:9', // Установить соотношение сторон
+    fluid: true, 
+    aspectRatio: '16:9', 
     poster: thumbnail,
     plugins: {
       qualitySelectorHls: {
@@ -41,7 +39,6 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
     },
     sources: {
       src: path.url,
-      type: 'application/x-mpegURL',
     }
   };
 
@@ -102,7 +99,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
       player.poster(options.poster);
 
     }
-  }, [options, videoRef, path.postId]);
+  }, [options, videoRef]);
 
   React.useEffect(() => {
     const player = playerRef.current;
@@ -126,14 +123,5 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
     </div>
   );
 }
-const generateDeviceHash = () => {
-  const data = [
-    navigator.userAgent,
-    window.screen.width,
-    window.screen.height,
-    new Date().getTimezoneOffset()
-  ].join('|');
-  return btoa(data).slice(0, 32);
-};
 
 export default VideoPlayer;

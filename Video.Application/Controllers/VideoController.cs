@@ -68,18 +68,25 @@ namespace VideoView.Application.Controllers
         [HttpGet("video/v2/{postId}/chunks/{file}")]
         public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string? file)
         {
-            var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}"))!.ObjectName;
-
-            var data = await _cache.GetCachedDataAsync<byte[]?>(fileName);
-            if (data == null)
+            try
             {
-                var result = new MemoryStream();
-                await storage.ReadFileAsync(postId, fileName, result);
-                result.Position = 0;
-                data = result.ToArray();
-                await _cache.SetCachedDataAsync(fileName, data, TimeSpan.FromMinutes(5));
+                var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}"))?.ObjectName;
+
+                var data = await _cache.GetCachedDataAsync<byte[]?>(fileName);
+                if (data == null)
+                {
+                    var result = new MemoryStream();
+                    await storage.ReadFileAsync(postId, fileName, result);
+                    result.Position = 0;
+                    data = result.ToArray();
+                    await _cache.SetCachedDataAsync(fileName, data, TimeSpan.FromMinutes(5));
+                }
+                return File(data, HLSType);
             }
-            return File(data, HLSType);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]

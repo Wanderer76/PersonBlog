@@ -1,4 +1,7 @@
-﻿namespace Shared.Utils
+﻿
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace Shared.Utils
 {
     public sealed class Result<TValue, TError> where TError : class
     {
@@ -35,5 +38,29 @@
 
         public static Result<TValue, TError> Success(TValue value) => new(value);
         public static Result<TValue, TError> Failure(TError error) => new(error);
+    }
+
+
+    public class Result<TValue>
+    {
+        private readonly Result<TValue, ErrorList> _result;
+
+        private Result(TValue value)
+        {
+            _result = Result<TValue, ErrorList>.Success(value);
+        }
+        private Result(ErrorList error)
+        {
+            _result = Result<TValue, ErrorList>.Failure(error);
+        }
+
+        public TValue Value
+        {
+            get => _result.Value;
+        }
+        public bool IsFailure => _result.IsFailure;
+
+        public static Result<TValue> Success(TValue value) => new(value);
+        public static Result<TValue> Failure(ErrorList error) => new(error);
     }
 }

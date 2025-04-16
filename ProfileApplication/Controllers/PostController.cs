@@ -34,7 +34,9 @@ namespace Blog.API.Controllers
         public async Task<IActionResult> GetVideoFileMetadataByPostIdAsync(Guid postId)
         {
             var result = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
-            return Ok(result);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            else return BadRequest(result.Error);
         }
 
         [HttpGet("detail/{postId:guid}")]
@@ -95,10 +97,12 @@ namespace Blog.API.Controllers
         [HttpGet("create")]
         public async Task<IActionResult> GetCreatePostModel()
         {
-            var result = await _subscriptionLevelService.GetAllSubscriptionsAsync();
+            var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
+            var visibilityList = await _postService.GetPostVisibilityListAsync();
             return Ok(new
             {
-                SubscriptionLevels = result
+                SubscriptionLevels = subscriptionLevels,
+                Visibility = visibilityList
             });
         }
 
@@ -116,6 +120,7 @@ namespace Blog.API.Controllers
                 Video = form.Video,
                 Photos = form.Files,
                 IsPartial = form.IsPartial,
+                Visibility = form.Visibility
             });
             if (result.IsSuccess)
             {

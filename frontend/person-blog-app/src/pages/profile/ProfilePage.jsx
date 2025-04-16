@@ -3,6 +3,8 @@ import { JwtTokenService } from "../../scripts/TokenStrorage";
 import API from "../../scripts/apiMethod";
 import './ProfilePage.css';
 import { CreatePostForm } from "../../components/blog/CreatePostForm";
+import { EditPostForm } from "../../components/blog/EditPostForm";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
 
@@ -16,6 +18,7 @@ const ProfilePage = () => {
 
     const blogId = useRef(null);
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [editForm, setEditForm] = useState(null);
 
     const [posts, setPosts] = useState([
         {
@@ -31,6 +34,7 @@ const ProfilePage = () => {
 
         // ... другие посты
     ]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const url = "/profile/api/Blog/detail";
@@ -57,7 +61,7 @@ const ProfilePage = () => {
 
     function loadPosts() {
         if (blogId.current) {
-            const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${1}&limit=${100}`;
+            const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${1}&limit=${10}`;
             API.get(url, {
                 headers: {
                     'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null,
@@ -120,7 +124,7 @@ const ProfilePage = () => {
             <div className="postsSection">
                 <div className="postSectionHeader">
                     <h2 >Мои публикации</h2>
-                    <button className="btn btnPrimary createPostBtn" onClick={(e) => setShowCreateForm(true)}>Создать</button>
+                    <button className="btn btnPrimary createPostBtn" onClick={(e) => navigate('post/create')}>Создать</button>
                 </div>
                 <div className="postsGrid">
                     {posts.map(post => (
@@ -143,8 +147,8 @@ const ProfilePage = () => {
                                         <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
                                     </div>
                                     <div className="postActions">
-                                        <button className="btn btnSecondary">Редактировать</button>
-                                        <button className="btn btnPrimary">Статистика</button>
+                                        <button className="btn btnSecondary" onClick={() => setEditForm({ ...post })}>Редактировать</button>
+                                        <button className="btn btnPrimary" onClick={() => handleRemove(post.id)}>Удалить</button>
                                     </div>
                                 </div>
                             </div>
@@ -156,6 +160,7 @@ const ProfilePage = () => {
         {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)} onCreate={() => {
             loadPosts()
         }}></CreatePostForm>}
+        {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
     </>
     );
 };

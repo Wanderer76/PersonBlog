@@ -1,15 +1,16 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import './CreatePostForm.css';
 import API from "../../scripts/apiMethod";
+import { useNavigate } from "react-router-dom";
 
 export function CreatePostForm(props) {
 
     const [postForm, setPostForm] = useState({ type: 1, title: "", description: "", video: null });
     const [uploadProgress, setUploadProgress] = useState(0);
     const videoRef = useRef(null);
-
+    const navigate = useNavigate();
     const CHUNK_SIZE = 10 * 1024 * 1024;
-
+    const isCreateDisabled = useRef(false);
     function updateForm(event) {
         const key = event.target.name;
         const value = key === 'video' ? event.target.files[0] : event.target.value;
@@ -18,6 +19,19 @@ export function CreatePostForm(props) {
             [key]: value
         }))
     }
+
+
+    const [createModel, setCreateModel] = useState(null);
+
+
+    useEffect(() => {
+        const url = "/profile/api/Post/create";
+        API.get(url).then(response => {
+            setCreateModel(response.data);
+        })
+
+    }, []);
+
 
     async function sendForm() {
         const url = "/profile/api/Post/create";
@@ -44,7 +58,7 @@ export function CreatePostForm(props) {
         if (postForm.video !== null) {
             await uploadFile(postId);
         }
-        props.onHandleClose();
+        navigate('/profile')
         props.onCreate()
     }
 
@@ -151,20 +165,24 @@ export function CreatePostForm(props) {
                     <div className="formGroup">
                         <label>Настройки приватности</label>
                         <div className="privacySettings">
-                            <select name="privacy" onChange={updateForm}>
-                                <option>Публичный</option>
-                                <option>Ссылочный</option>
-                                <option>Приватный</option>
+                            <select name="visibility" defaultValue={createModel?.visibility[0].value} onChange={updateForm}>
+                                {createModel?.visibility?.map((v) => {
+                                    return <option key={v.value}  value={v.value}>{v.text}</option>
+                                })}
                             </select>
                             <span>🔒</span>
                         </div>
                     </div>
 
                     <div className="actionButtons">
-                        <button className="btn btnSecondary" onClick={props.onHandleClose}>
+                        <button className="btn btnSecondary" onClick={() => navigate('/profile')}>
                             Закрыть
                         </button>
-                        <button className="btn btnPrimary" onClick={sendForm}>
+                        <button className="btn btnPrimary" disabled={isCreateDisabled.current} onClick={() => {
+                            isCreateDisabled.current = true;
+                            sendForm();
+                            isCreateDisabled.current = false;
+                        }}>
                             Создать
                         </button>
                     </div>

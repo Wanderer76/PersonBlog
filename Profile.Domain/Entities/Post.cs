@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Blog.Domain.Entities;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
@@ -26,6 +27,7 @@ namespace Blog.Domain.Entities
         public int ViewCount { get; set; }
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
+        public PostVisibility Visibility { get; set; }
 
         [ForeignKey(nameof(VideoFileId))]
         public VideoMetadata? VideoFile { get; set; }
@@ -35,7 +37,7 @@ namespace Blog.Domain.Entities
 
         private Post() { }
 
-        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title, Guid? subscriptionId)
+        public Post(Guid id, Guid blogId, PostType type, DateTimeOffset createdAt, string? description, bool isDeleted, string title, Guid? subscriptionId, PostVisibility visibility)
         {
             Id = id;
             BlogId = blogId;
@@ -45,6 +47,7 @@ namespace Blog.Domain.Entities
             IsDeleted = isDeleted;
             Title = title;
             SubscriptionId = subscriptionId;
+            Visibility = visibility;
         }
     }
 
@@ -52,5 +55,30 @@ namespace Blog.Domain.Entities
     {
         Text,
         Video
+    }
+
+    public enum PostVisibility
+    {
+        Public,
+        ByUrl,
+        Private
+    }
+}
+
+public static class PostVisibilityExtensions
+{
+    public static string FormatName(this PostVisibility visibility)
+    {
+        switch (visibility)
+        {
+            case PostVisibility.Public:
+                return "Публичный";
+            case PostVisibility.ByUrl:
+                return "Ссылочный";
+            case PostVisibility.Private:
+                return "Приватный";
+            default:
+                throw new NotImplementedException();
+        }
     }
 }

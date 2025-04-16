@@ -22,6 +22,7 @@ namespace Recommendation.Service.Service.Implementaion
             var newestPosts = await _context.Get<Post>()
                 .Include(x => x.VideoFile)
                 .Where(x => x.Type == PostType.Video)
+                .Where(x => x.Visibility == PostVisibility.Public)
                 .Where(x => x.VideoFile.IsProcessed == false)
                 .Where(x => x.IsDeleted == false)
                 .Where(x => x.PreviewId != null)

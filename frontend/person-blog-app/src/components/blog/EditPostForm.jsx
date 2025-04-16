@@ -105,27 +105,69 @@ export function EditPostForm(props) {
         <>
             <div className="modal">
                 <div className="createPostForm">
-                    <p>Редактировать пост</p>
-                    <p>Название</p>
-                    <input className="modalContent" placeholder="Название" name="title" value={postForm.title} onChange={updateForm} />
-                    <p>Описание</p>
-                    <input className="modalContent" placeholder="Описание" name="description" value={postForm.description} onChange={updateForm} />
-                    <p>Превью</p>
-                    <img className="modalContent" src={preview} />
-                    <input className="modalContent" placeholder="Загрузите новое превью видео" type="file" accept=".jpg,.png,.jpeg" name="previewId" onChange={(e) => {
-                        updateForm(e);
-                        if (e.target.files && e.target.files[0]) {
-                            setPreview(URL.createObjectURL(e.target.files[0]));
-                        }
-                    }
-                    } />
-                    <p>Видео</p>
-                    <input className="modalContent" type="file" accept=".mp4,.mkv" name="video" onChange={updateForm} />
-                    <br />
-                    {showProgress && <progress value={uploadProgress} max={maxProgress}></progress>}
-                    {showProgress && <br />}
-                    <button onClick={props.onHandleClose}>Закрыть</button>
-                    <button onClick={sendForm}>Сохранить</button>
+                    <h1>Редактировать видео-пост</h1> {/* Изменен заголовок */}
+                    <div className="formGroup">
+                        <label>Название</label>
+                        <input
+                            className="modalContent"
+                            type="text"
+                            placeholder="Добавьте название вашего видео"
+                            name="title"
+                            onChange={updateForm}
+                            value={postForm.title}
+                        />
+                    </div>
+                    {postForm.existingVideoUrl && !postForm.video && (
+                        <div className="existing-video">
+                            <video controls src={postForm.existingVideoUrl} />
+                            <button
+                                className="btn btnSecondary"
+                                onClick={() => document.querySelector('.fileInput').click()}>
+                                Заменить видео
+                            </button>
+                        </div>
+                    )}
+                    <div className="previewContainer">
+                        <video className="videoPreview"  controls />
+                        <div className="progressBar">
+                            <div
+                                className="progressFill"
+                                style={{ width: `${uploadProgress}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="formGroup">
+                        <label>Описание</label>
+                        <textarea
+                            className="modalContent description"
+                            rows="4"
+                            placeholder="Добавьте описание к вашему видео"
+                            name="description"
+                            onChange={updateForm}
+                            value={postForm.description}
+                        />
+                    </div>
+
+                    <div className="formGroup">
+                        <label>Настройки приватности</label>
+                        <div className="privacySettings">
+                            <select name="privacy" onChange={updateForm}>
+                                <option>Публичный</option>
+                                <option>Ссылочный</option>
+                                <option>Приватный</option>
+                            </select>
+                            <span>🔒</span>
+                        </div>
+                    </div>
+                    <div className="actionButtons">
+                        <button className="btn btnPrimary" onClick={sendForm}>
+                            Сохранить изменения {/* Изменен текст кнопки */}
+                        </button>
+                        <button className="btn btnSecondary" onClick={props.onHandleClose}>
+                            Отмена {/* Изменен текст кнопки */}
+                        </button>
+                    </div>
                 </div>
             </div>
         </>

@@ -1,7 +1,8 @@
-﻿using Blog.Service.Models;
+﻿using Blog.Domain.Entities;
+using Blog.Service.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
-using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Shared.Utils;
 
 namespace Blog.Service.Services
@@ -20,7 +21,7 @@ namespace Blog.Service.Services
         /// <param name="output"></param>
         [Obsolete("Пригоден для .mp4 сейчас не поддерживается")]
         Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
-        Task<FileMetadataModel> GetVideoFileMetadataByPostIdAsync(Guid fileId);
+        Task<Result<FileMetadataModel,ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid fileId);
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);
@@ -30,5 +31,6 @@ namespace Blog.Service.Services
         Task SetVideoViewed(ViewedVideoModel value);
         Task SetReactionToPost(ReactionCreateModel value);
         Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
+        Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync();
     }
 }

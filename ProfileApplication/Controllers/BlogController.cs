@@ -77,12 +77,19 @@ namespace Blog.API.Controllers
             return Ok(result);
         }
 
-
         [HttpGet("blogByPost/{postId:guid}")]
         [Produces(typeof(BlogModel))]
-        public async Task<IActionResult> GetDetailPostByIdAsync(Guid postId)
+        public async Task<IActionResult> GetBlogInfoByPostId(Guid postId)
         {
             var result = await _blogService.GetBlogByPostIdAsync(postId);
+            return Ok(result);
+        }
+
+        [HttpGet("blog/{blogId:guid}")]
+        [Produces(typeof(BlogModel))]
+        public async Task<IActionResult> GetBlogById(Guid blogId)
+        {
+            var result = await _blogService.GetBlogByIdAsync(blogId);
             return Ok(result);
         }
     }

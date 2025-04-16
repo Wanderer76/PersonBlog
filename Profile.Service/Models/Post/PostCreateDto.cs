@@ -13,5 +13,6 @@ namespace Blog.Service.Models.Post
         public IFormFile? Video { get; set; }
         public IFormFileCollection Photos { get; set; }
         public bool IsPartial { get; set; }
+        public PostVisibility Visibility { get; set; }
     }
 }

@@ -12,6 +12,7 @@ namespace Blog.API.Models
         public IFormFile? Video { get; set; }
         public IFormFile? PreviewId { get; set; }
         public IFormFileCollection? Files { get; set; }
+        public PostVisibility Visibility { get; set; }
         public bool IsPartial { get; set; }
     }
 }

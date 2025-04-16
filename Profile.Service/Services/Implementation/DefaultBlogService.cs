@@ -59,7 +59,7 @@ namespace Blog.Service.Services.Implementation
             await _context.SaveChangesAsync();
         }
 
-        public async Task<BlogModel> GetBlogAsync(Guid id)
+        public async Task<BlogModel> GetBlogByIdAsync(Guid id)
         {
             var result = await _cacheService.GetCachedDataAsync<PersonBlog>(GetBlogByIdKey(id));
             if (result == null)
