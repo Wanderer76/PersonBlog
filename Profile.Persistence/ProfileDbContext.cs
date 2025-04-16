@@ -10,7 +10,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<PersonBlog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
-    public DbSet<ProfileEventMessages> ProfileEventMessages { get; set; }
+    public DbSet<VideoProcessEvent> ProfileEventMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
     public DbSet<ProfileSubscription> ProfileSubscriptions { get; set; }
     public DbSet<SubscriptionLevel> SubscriptionLevels { get; set; }

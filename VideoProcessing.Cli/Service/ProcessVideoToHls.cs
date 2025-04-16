@@ -97,7 +97,7 @@ namespace VideoProcessing.Cli.Service
                 fileMetadata.ProcessState = ProcessState.Error;
                 fileMetadata.ErrorMessage = "Не удалось собрать файл";
 
-                var processedEvent = await _context.Get<ProfileEventMessages>()
+                var processedEvent = await _context.Get<VideoProcessEvent>()
                     .FirstAsync(x => x.Id == @event.EventId);
 
                 _context.Attach(processedEvent);

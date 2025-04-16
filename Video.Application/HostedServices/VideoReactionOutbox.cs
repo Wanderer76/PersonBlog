@@ -52,7 +52,7 @@ namespace VideoView.Application.HostedServices
                     try
                     {
                         dbContext.Attach(message);
-                        message.State = EventState.Processed;
+                        message.Processed();
                         await dbContext.SaveChangesAsync();
 
                         var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
@@ -69,7 +69,7 @@ namespace VideoView.Application.HostedServices
                         else
                         {
                             message.RetryCount++;
-                            message.State = EventState.Pending;
+                            message.ResetEvent();
                         }
                         await dbContext.SaveChangesAsync();
                     }

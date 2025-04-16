@@ -231,12 +231,11 @@ namespace Blog.Service.Services.Implementation
                     CreatedAt = DateTimeOffset.UtcNow
                 };
 
-                var videoEvent = new ProfileEventMessages
+                var videoEvent = new VideoProcessEvent
                 {
                     Id = videoCreateEvent.EventId,
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
                     EventType = nameof(CombineFileChunksEvent),
-                    State = EventState.Pending,
                 };
                 _context.Add(videoEvent);
                 await _context.SaveChangesAsync();

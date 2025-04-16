@@ -26,7 +26,7 @@ namespace Blog.Persistence.Repository.Quries
             return (pagesCount == 0 ? 1 : pagesCount, posts);
         }
 
-        public static async Task<IEnumerable<ProfileEventMessages>> GetForUpdate(this ProfileDbContext context)
+        public static async Task<IEnumerable<VideoProcessEvent>> GetForUpdate(this ProfileDbContext context)
         {
             return await context.ProfileEventMessages
                 .FromSqlRaw(

@@ -66,7 +66,6 @@ namespace ReactionProcessing.Cli.Handlers
                 Id = @event.EventId,
                 EventData = JsonSerializer.Serialize(@event),
                 EventType = nameof(UserViewedSyncEvent),
-                State = EventState.Pending,
             };
 
             videoViewRepository.Add(syncEvent);

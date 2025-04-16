@@ -17,7 +17,7 @@ namespace Blog.API.HostedServices
         private readonly RabbitMqVideoReactionConfig _reactingSettings = new();
 
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly ConcurrentDictionary<ulong, ProfileEventMessages> sendMessages = new();
+        private readonly ConcurrentDictionary<ulong, VideoProcessEvent> sendMessages = new();
 
         public OutboxPublisherService(
             IServiceProvider serviceProvider,
@@ -33,9 +33,8 @@ namespace Blog.API.HostedServices
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var connection = await _messageBus.GetConnectionAsync();
-            var channel = await connection.CreateChannelAsync();
-
-            await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
+            var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
+            await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true, cancellationToken: stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -43,8 +42,8 @@ namespace Blog.API.HostedServices
 
                 var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
 
-                var messages = await dbContext.Get<ProfileEventMessages>()
-                    .Where(static m => m.State == EventState.Pending && m.RetryCount < 3)
+                var messages = await dbContext.Get<VideoProcessEvent>()
+                    .Where(m => m.State == EventState.Pending && m.RetryCount < 3)
                     .OrderBy(m => m.CreatedAt)
                     .Take(100)
                     .ToListAsync(stoppingToken);
@@ -54,7 +53,7 @@ namespace Blog.API.HostedServices
                     try
                     {
                         dbContext.Attach(message);
-                        message.State = EventState.Processed;
+                        message.Processed();
                         await dbContext.SaveChangesAsync();
                         await _messageBus.SendMessageAsync(channel, _settings.ExchangeName, GetRoutingKey(message), message);
                     }
@@ -68,7 +67,7 @@ namespace Blog.API.HostedServices
                         else
                         {
                             message.RetryCount++;
-                            message.State = EventState.Pending;
+                            message.ResetEvent();
                         }
                         await dbContext.SaveChangesAsync();
                     }
@@ -78,7 +77,7 @@ namespace Blog.API.HostedServices
             }
         }
 
-        private async Task ProcessError(ProfileEventMessages message)
+        private async Task ProcessError(VideoProcessEvent message)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
@@ -87,25 +86,24 @@ namespace Blog.API.HostedServices
             if (message.RetryCount > 3)
             {
                 message.SetErrorMessage("Не удалось обработать событие");
-                message.State = EventState.Error;
             }
             else
             {
-                message.State = EventState.Pending;
+                message.ResetEvent();
             }
             await dbContext.SaveChangesAsync();
         }
 
-        private async Task ProcessSuccess(ProfileEventMessages message)
+        private async Task ProcessSuccess(VideoProcessEvent message)
         {
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
             dbContext.Attach(message);
-            message.State = EventState.Complete;
+            message.Complete();
             await dbContext.SaveChangesAsync();
         }
 
-        private string GetRoutingKey(ProfileEventMessages message)
+        private string GetRoutingKey(VideoProcessEvent message)
         {
             switch (message.EventType)
             {

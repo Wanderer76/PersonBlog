@@ -40,7 +40,6 @@ namespace Video.Service.Interface.Default
             {
                 Id = eventData.EventId,
                 EventType = nameof(UserViewedPostEvent),
-                State = Infrastructure.Models.EventState.Pending,
                 EventData = JsonSerializer.Serialize(eventData),
             };
             _context.Add(videoEvent);
@@ -60,7 +59,6 @@ namespace Video.Service.Interface.Default
             {
                 Id = eventData.EventId,
                 EventType = nameof(UserViewedPostEvent),
-                State = Infrastructure.Models.EventState.Pending,
                 EventData = JsonSerializer.Serialize(eventData),
             };
             _context.Add(videoEvent);

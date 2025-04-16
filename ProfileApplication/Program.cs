@@ -1,4 +1,3 @@
-using Authentication.Service;
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.Persistence;
@@ -35,40 +34,6 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 builder.Services.AddHostedService<OutboxPublisherService>()
     .AddHostedService<SyncProfileHostedService>();
-
-//builder.Services.AddMassTransit(x =>
-//{
-//    //x.AddConsumers(typeof(Program).Assembly);
-//    x.UsingRabbitMq((ctx, cfg) =>
-//    {
-//        var connection = builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!;
-//        var queue = builder.Configuration.GetSection("RabbitMQ:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!;
-
-//        cfg.Host(connection.HostName, (ushort)connection.Port, "/", h =>
-//        {
-//            h.Username(connection.UserName);
-//            h.Password(connection.Password);
-//        });
-//        cfg.ReceiveEndpoint(queue.VideoProcessQueue, e =>
-//        {
-//            e.Bind(queue.ExchangeName, x =>
-//            {
-//                x.Durable = true;
-//                x.ExchangeType = "direct";
-//                x.RoutingKey = queue.VideoConverterRoutingKey;
-//                x.AutoDelete = false;
-//            });
-//            e.Bind(queue.ExchangeName, x =>
-//            {
-//                x.Durable = true;
-//                x.ExchangeType = "direct";
-//                x.RoutingKey = queue.FileChunksCombinerRoutingKey;
-//                x.AutoDelete = false;
-//            });
-
-//        });
-//    });
-//});
 
 var app = builder.Build();
 
