@@ -53,7 +53,8 @@ namespace Blog.Service.Services.Implementation
                         Name = uploadVideoChunk.FileName,
                         Resolution = VideoResolution.Original,
                         Duration = uploadVideoChunk.Duration,
-                        ObjectName = string.Empty
+                        ObjectName = string.Empty,
+                        Length = uploadVideoChunk.TotalSize
                     };
                     await _cacheService.SetCachedDataAsync(cacheKey, metadata, TimeSpan.FromMinutes(10));
                     _context.Add(metadata);

@@ -55,9 +55,7 @@ namespace VideoProcessing.Cli.Service
                 memoryStream.Position = 0;
                 var objectName = await storage.PutFileInBucketAsync(@event.PostId, fileId, memoryStream);
 
-                videoMetadata.Length = memoryStream.Length;
                 videoMetadata.ObjectName = objectName;
-                videoMetadata.Resolution = VideoResolution.Original;
 
                 var videoCreateEvent = new VideoConvertEvent
                 {

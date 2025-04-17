@@ -43,24 +43,28 @@ namespace Shared.Utils
 
     public class Result<TValue>
     {
-        private readonly Result<TValue, ErrorList> _result;
+        private readonly Result<TValue, Error> _result;
 
         private Result(TValue value)
         {
-            _result = Result<TValue, ErrorList>.Success(value);
+            _result = Result<TValue, Error>.Success(value);
         }
-        private Result(ErrorList error)
+        private Result(Error error)
         {
-            _result = Result<TValue, ErrorList>.Failure(error);
+            _result = Result<TValue, Error>.Failure(error);
         }
 
         public TValue Value
         {
             get => _result.Value;
         }
+        public Error? Error
+        {
+            get => _result.Error;
+        }
         public bool IsFailure => _result.IsFailure;
 
         public static Result<TValue> Success(TValue value) => new(value);
-        public static Result<TValue> Failure(ErrorList error) => new(error);
+        public static Result<TValue> Failure(Error error) => new(error);
     }
 }

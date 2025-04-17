@@ -53,7 +53,7 @@ namespace Video.Service.Interface.Default
             await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
             await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
             await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTimeService.Now();
             var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), userId, postId, now, remoteIp);
             var videoEvent = new VideoEvent
             {

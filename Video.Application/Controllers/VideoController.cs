@@ -1,14 +1,13 @@
 using Blog.Service.Models;
 using Blog.Service.Models.Blog;
-using Blog.Service.Models.File;
 using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
 using Shared.Services;
-using System.Web;
 using Video.Service.Interface;
+using VideoView.Application.Api;
 
 namespace VideoView.Application.Controllers
 {
@@ -20,12 +19,6 @@ namespace VideoView.Application.Controllers
         private readonly IFileStorage storage;
         private readonly IReactionService _videoService;
         private readonly IHttpClientFactory _httpClientFactory;
-
-        private const string PostManifest = "api/Post/manifest";
-        private const string DetailPost = "api/Post/detail";
-        private const string UserPostInfo = "api/Post/userInfo";
-        private const string CommonBlog = "api/Blog/blogByPost";
-
         private readonly ICacheService _cache;
 
         public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory, ICacheService cache)
@@ -70,16 +63,25 @@ namespace VideoView.Application.Controllers
         {
             try
             {
-                var fileName = file ?? (await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}"))?.ObjectName;
+                var fileName = file;
 
-                var data = await _cache.GetCachedDataAsync<byte[]?>(fileName);
+                if (file == null)
+                {
+                    var result = (await _httpClientFactory.GetFileMetadataAsync(postId));
+                    if (result.IsFailure)
+                        return BadRequest(result.Error!.Message);
+
+                    fileName = result.Value.ObjectName;
+                }
+
+                var data = await _cache.GetCachedDataAsync<byte[]?>(fileName!);
                 if (data == null)
                 {
                     var result = new MemoryStream();
-                    await storage.ReadFileAsync(postId, fileName, result);
+                    await storage.ReadFileAsync(postId, fileName!, result);
                     result.Position = 0;
                     data = result.ToArray();
-                    await _cache.SetCachedDataAsync(fileName, data, TimeSpan.FromMinutes(5));
+                    await _cache.SetCachedDataAsync(fileName!, data, TimeSpan.FromMinutes(5));
                 }
                 return File(data, HLSType);
             }
@@ -105,26 +107,24 @@ namespace VideoView.Application.Controllers
             {
                 var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
                 HttpContext.TryGetUserFromContext(out var userId);
-                using var client = _httpClientFactory.CreateClient("Profile");
                 var session = GetUserSession();
                 var userInfoCache = session == null ? null : await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
 
-                var post = client.GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
+                var post = _httpClientFactory.GetPostDetailViewAsync(postId);
+                var blog = _httpClientFactory.GetBlogModelAsync(postId);
+                var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!);
 
-                var blog = client.GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}");
+                await Task.WhenAll(post, blog, userInfo).ConfigureAwait(false);
 
-                var query = HttpUtility.ParseQueryString(string.Empty);
-                if (userId.HasValue)
-                {
-                    query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
-                }
-                query["address"] = HttpUtility.UrlEncode(remoteIp);
+                var postResult = post.Result;
+                var blogResult = blog.Result;
+                var userResult = userInfo.Result;
 
-
-                var userInfo = client.GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query}");
-
-                await Task.WhenAll([post, blog, userInfo]).ConfigureAwait(false);
-                var result = new VideoDataViewModel(await post, await blog, await userInfo, new List<string>());
+                var result = new VideoDataViewModel(
+                    postResult.Value,
+                    blogResult.Value,
+                    userResult.Value,
+                    []);
                 return Ok(result);
             }
             catch (Exception ex)
@@ -141,7 +141,7 @@ namespace VideoView.Application.Controllers
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _videoService.SetViewToPost(postId, userId, remoteIp);
 
-           
+
 
             return Ok();
         }
