@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import './CreatePostForm.css';
-import { JwtTokenService } from "../../scripts/TokenStrorage";
-import API from "../../scripts/apiMethod";
+import { JwtTokenService } from "../../../scripts/TokenStrorage";
+import API from "../../../scripts/apiMethod";
 
 export function EditPostForm(props) {
 

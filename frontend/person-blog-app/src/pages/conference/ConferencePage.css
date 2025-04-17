@@ -1,5 +1,5 @@
 /* Общие стили чата */
-.sidebar {
+.conference-sidebar {
     background: #fff;
     padding: 16px;
     border-radius: 12px;
@@ -11,9 +11,10 @@
     height: 600px;
     overflow-y: auto;
     margin: 16px 0;
-    padding-right: 8px;
+    padding-right: 8px;  
+    contain: strict;
+    will-change: transform;
 }
-
 /* Элементы сообщений */
 .comment {
     background: #f8f8f8;
@@ -43,6 +44,10 @@
     display: flex;
     gap: 12px;
     margin-top: 16px;
+    position: sticky;
+    bottom: 0;
+    padding: 8px 0;
+    z-index: 1;
 }
 
 .message-input {

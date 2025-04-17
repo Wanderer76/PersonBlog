@@ -2,7 +2,6 @@
 using Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using MessageBus;
-using System.Collections.Concurrent;
 using Infrastructure.Models;
 using MessageBus.Shared.Configs;
 using Blog.Domain.Entities;

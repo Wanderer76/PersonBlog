@@ -1,39 +1,40 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import API from "../../scripts/apiMethod";
 import './ProfilePage.css';
-import { CreatePostForm } from "../../components/blog/CreatePostForm";
-import { EditPostForm } from "../../components/blog/EditPostForm";
 import { useNavigate } from "react-router-dom";
+import DefaultProfileIcon from '../../defaultProfilePic.png'
+import { getLocalDateTime } from "../../scripts/LocalDate";
 
 const ProfilePage = () => {
 
     const [profile, setProfile] = useState({
-        avatar: "https://example.com/avatar.jpg",
+        avatar: DefaultProfileIcon,
         name: "Мой видеоблог",
         email: "user@example.com",
-        postsCount: 12,
+        totalPostsCount: 12,
         createdAt: "15 марта 2024"
     });
-
     const blogId = useRef(null);
-    const [showCreateForm, setShowCreateForm] = useState(false);
-    const [editForm, setEditForm] = useState(null);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
+    const observer = useRef();
+    const pageSize = 10; // Фиксированный размер страницы
 
-    const [posts, setPosts] = useState([
-        {
-            id: 1,
-            title: "Первый пост в блоге",
-            description: "Это мой первый видео-пост, посвященный...",
-            createdAt: "2024-05-15",
-            views: 245,
-            state: "Опубликован",
-            previewId: "/post-thumb-1.jpg",
-            duration: "08:32"
-        },
+    const lastPostRef = useCallback(node => {
+        if (observer.current) observer.current.disconnect();
 
-        // ... другие посты
-    ]);
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prev => prev + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [hasMore]);
+
+    const [posts, setPosts] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -53,24 +54,32 @@ const ProfilePage = () => {
                     setProfile(result);
                     if (!blogId.current)
                         blogId.current = result.id
-                    loadPosts();
+
                 }, [])
         }
         sendRequest();
     }, [])
 
+    useEffect(() => {
+        if (blogId.current) {
+            loadPosts();
+        }
+    }, [blogId.current, page])
+
     function loadPosts() {
         if (blogId.current) {
-            const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${1}&limit=${10}`;
-            API.get(url, {
-                headers: {
-                    'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null,
-                    'Content-Type': 'appplication/json'
-                },
-            }).then(response => {
+            const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${page}&limit=${pageSize}`;
+            API.get(url).then(response => {
                 if (response.status === 200) {
                     var result = response.data;
-                    setPosts(result.posts);
+                    setPosts(prev => [...prev, ...result.posts]);
+                    setProfile((prev) => (
+                        {
+                            ...prev,
+                            ['totalPostsCount']: result.totalPostsCount
+                        }
+                    ))
+                    setHasMore(result.posts.length >= pageSize);
                 }
                 if (response.status === 401) {
                     JwtTokenService.refreshToken();
@@ -98,7 +107,7 @@ const ProfilePage = () => {
                 <div className="avatarSection">
                     <div className="avatarWrapper">
                         <img
-                            src={profile.avatar}
+                            src={profile.photoUrl ?? DefaultProfileIcon}
                             alt="Аватар"
                             className="profileAvatar"
                         />
@@ -110,8 +119,8 @@ const ProfilePage = () => {
                         <h1 className="blogTitle">{profile.name}</h1>
                         <div className="profileMeta">
                             <span className="email">📧 {profile.email}</span>
-                            <span className="registrationDate">📅 Зарегистрирован: {profile.createdAt}</span>
-                            <span className="postsCount">📝 Постов: {profile.postsCount}</span>
+                            <span className="registrationDate">📅 Зарегистрирован: {getLocalDateTime(profile.createdAt)}</span>
+                            <span className="postsCount">📝 Постов: {profile.totalPostsCount}</span>
                         </div>
                     </div>
                 </div>
@@ -127,40 +136,66 @@ const ProfilePage = () => {
                     <button className="btn btnPrimary createPostBtn" onClick={(e) => navigate('post/create')}>Создать</button>
                 </div>
                 <div className="postsGrid">
-                    {posts.map(post => (
-                        <div key={post.id} className="postCard">
-                            <div className="postThumbnail">
-                                <img src={post.previewId} alt={post.title} />
-                                <div className="videoDuration">{post.duration}</div>
-                                {post.type === 1 &&
-                                    <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>
-                                }
-                            </div>
+                    {posts.map((post, index) => {
 
-                            <div className="postContent">
-                                <h3 className="postTitle">{post.title}</h3>
-                                <p className="postDescription">{post.description}</p>
-
-                                <div className="postMeta">
-                                    <div className="postStats">
-                                        <span>👁 {post.views}</span>
-                                        <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+                        if (posts.length == index + 1) {
+                            return (
+                                <div key={post.id} className="postCard" ref={lastPostRef} >
+                                    <div className="postThumbnail">
+                                        <img src={post.previewId} alt={post.title} />
+                                        <div className="videoDuration">{post.duration}</div>
+                                        {post.type === 1 &&
+                                            <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
                                     </div>
-                                    <div className="postActions">
-                                        <button className="btn btnSecondary" onClick={() => setEditForm({ ...post })}>Редактировать</button>
-                                        <button className="btn btnPrimary" onClick={() => handleRemove(post.id)}>Удалить</button>
+                                    <div className="postContent">
+                                        <h3 className="postTitle">{post.title}</h3>
+                                        <p className="postDescription">{post.description}</p>
+
+                                        <div className="postMeta">
+                                            <div className="postStats">
+                                                <span>👁 {post.views}</span>
+                                                <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="postActions">
+                                                <button className="btn btnSecondary">Редактировать</button>
+                                                <button className="btn btnPrimary" onClick={() => handleRemove(post.id)}>Удалить</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+
+                        return (
+                            <div key={post.id} className="postCard">
+                                <div className="postThumbnail">
+                                    <img src={post.previewId} alt={post.title} />
+                                    <div className="videoDuration">{post.duration}</div>
+                                    {post.type === 1 &&
+                                        <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
+                                </div>
+                                <div className="postContent">
+                                    <h3 className="postTitle">{post.title}</h3>
+                                    <p className="postDescription">{post.description}</p>
+
+                                    <div className="postMeta">
+                                        <div className="postStats">
+                                            <span>👁 {post.views}</span>
+                                            <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="postActions">
+                                            <button className="btn btnSecondary">Редактировать</button>
+                                            <button className="btn btnPrimary" onClick={() => handleRemove(post.id)}>Удалить</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
         </div>
-        {showCreateForm && <CreatePostForm onHandleClose={() => setShowCreateForm(false)} onCreate={() => {
-            loadPosts()
-        }}></CreatePostForm>}
-        {editForm && <EditPostForm post={editForm} onHandleClose={() => setEditForm(null)}></EditPostForm>}
     </>
     );
 };

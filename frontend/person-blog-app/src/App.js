@@ -8,7 +8,7 @@ import { VideoPage } from './pages/post/PostPage';
 import { useEffect, useState } from 'react';
 import API from './scripts/apiMethod';
 import ConferencePage from './pages/conference/ConferencePage';
-import { CreatePostForm } from './components/blog/CreatePostForm';
+import { CreatePostForm } from './components/profile/post/CreatePostForm';
 
 const Session = function ({ children }) {
   const [loading, setLoading] = useState(true);

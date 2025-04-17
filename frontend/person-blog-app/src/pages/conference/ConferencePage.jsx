@@ -120,16 +120,7 @@ export const ConferencePage = function () {
             </div>
             <div className="chat-container">
                 <Messages messages={messages} setMessages={setMessages} conferenceId={conferenceId.id} />
-                {/* <div className="message-input-container">
-                    <input
-                        type="text"
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                        placeholder="Введите сообщение..."
-                    />
-                    <button onClick={handleSendMessage}>Отправить</button>
-                </div> */}
+               
             </div>
         </div>
     );
@@ -155,7 +146,6 @@ export const ConferencePage = function () {
                 playerRef.current.currentTime(time);
                 playerRef.current.pause();
             }
-            // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
         }
     }
 
@@ -248,6 +238,8 @@ const Messages = function ({ messages, setMessages, conferenceId }) {
     const [messageInput, setMessageInput] = useState('');
     const messagesEndRef = useRef(null);
     const containerRef = useRef(null);
+    const [isAutoScroll, setIsAutoScroll] = useState(true);
+    const prevMessagesLength = useRef(messages.length);
 
     const handleSendMessage = async () => {
         if (messageInput.trim()) {
@@ -289,7 +281,13 @@ const Messages = function ({ messages, setMessages, conferenceId }) {
     };
 
     const handleScroll = () => {
+        const container = containerRef.current;
+        // Определяем находится ли пользователь внизу контейнера
+        const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
+        setIsAutoScroll(isAtBottom);
         if (containerRef.current.scrollTop === 0 && hasMore) {
+           
+
             setPage(prev => {
                 const newPage = prev + 1;
                 loadMessages(newPage);
@@ -303,11 +301,14 @@ const Messages = function ({ messages, setMessages, conferenceId }) {
     }, []);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (isAutoScroll && messages.length > prevMessagesLength.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+        prevMessagesLength.current = messages.length;
     }, [messages]);
 
     return (
-        <aside className="sidebar">
+        <aside className="conference-sidebar">
             <h3 className="comments-section">Чат конференции</h3>
             <div
                 className="messages-container"

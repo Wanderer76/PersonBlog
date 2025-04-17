@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import './CreatePostForm.css';
-import API from "../../scripts/apiMethod";
+import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 
 export function CreatePostForm(props) {
@@ -29,7 +29,6 @@ export function CreatePostForm(props) {
         API.get(url).then(response => {
             setCreateModel(response.data);
         })
-
     }, []);
 
 

@@ -160,6 +160,7 @@ namespace Blog.Service.Services.Implementation
             return new PostPagedListViewModel
             {
                 TotalPageCount = pagedPosts.TotalPagesCount,
+                TotalPostsCount = pagedPosts.TotalPagesCount * limit,
                 Posts = cachedPosts.OrderByDescending(x => x.CreatedAt),
             };
         }
