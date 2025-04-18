@@ -64,12 +64,20 @@ namespace MessageBus
                 {
                     if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
                     {
-                        var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
-                        await handler.Handle(handlerBody);
+                        try
+                        {
+                            var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
+                            await handler.Handle(handlerBody);
+                            await channel.BasicAckAsync(ea.DeliveryTag, false);
+                        }
+                        catch (Exception e)
+                        {
+                            await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                        }
                     }
                 }
             };
-            await channel.BasicConsumeAsync(queueName, autoAck: true, consumer: consumer);
+            await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
         }
     }
 

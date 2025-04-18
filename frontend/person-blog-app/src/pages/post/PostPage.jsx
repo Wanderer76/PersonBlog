@@ -12,7 +12,7 @@ export const VideoPage = function (props) {
     const searchParams = useParams();
     const queryParams = new URLSearchParams(window.location.search)
     const [isLoading, setIsLoading] = useState(true);
-    let viewRecorded = false; let inProgress = false;
+    let viewRecorded = false;
     const [recommendations, setRecommendations] = useState([]);
     const limit = 40;
     const navigate = useNavigate();
@@ -119,18 +119,31 @@ export const VideoPage = function (props) {
 
 
     async function setView(player) {
-        const watchedTime = player.currentTime();
+        if (!JwtTokenService.isAuth())
+            return;
+
         const duration = player.duration();
-        
-        if (!viewRecorded && userView.isViewed === false && !inProgress &&
-            (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
-            inProgress = true;
-            await API.post(`video/Video/setView/${post.id}`).catch(e => { })
-                .finally(() => {
-                    viewRecorded = true;
-                    inProgress = false;
-                })
-        }
+        const interval = Math.round(duration / 10);
+
+        const sendViewData = async () => {
+            const watchedTime = player.currentTime();
+
+            try {
+                await API.post('/video/Video/setView', {
+                    postId: post.id,
+                    time: watchedTime,
+                    isComplete: watchedTime >= duration * 0.85,
+                });
+            } catch (e) {
+                console.error("Ошибка при отправке данных просмотра:", e);
+            }
+
+            if (watchedTime * 0.85 > duration) { // Пока не достигли конца видео
+                setTimeout(sendViewData, interval * 1000 - player.currentTime() * 1000); // Рассчитываем задержку
+            }
+        };
+        // Запускаем первую отправку
+        setTimeout(sendViewData, interval * 1000 - player.currentTime() * 1000);
     }
 
     async function handleSubscribe() {
@@ -192,7 +205,7 @@ export const VideoPage = function (props) {
                 </div>
             </div>
 
-            <aside className="sidebar">
+            <aside className="recommendation-sidebar">
                 {recommendations.map(video => {
                     return <VideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
                 })}

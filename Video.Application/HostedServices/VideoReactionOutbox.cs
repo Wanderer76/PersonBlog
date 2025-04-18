@@ -7,6 +7,7 @@ using RabbitMQ.Client;
 using Shared.Persistence;
 using Video.Domain.Entities;
 using Video.Domain.Events;
+using ViewReacting.Domain.Events;
 
 namespace VideoView.Application.HostedServices
 {
@@ -27,12 +28,12 @@ namespace VideoView.Application.HostedServices
             await using var connection = await _messageBus.GetConnectionAsync();
             await using var channel = await connection.CreateChannelAsync();
 
-            await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
-            await channel.QueueDeclareAsync(_settings.QueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(_settings.QueueName, _settings.ExchangeName, _settings.ViewRoutingKey);
+            //await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
+            //await channel.QueueDeclareAsync(_settings.QueueName, durable: true, exclusive: false, autoDelete: false);
+            //await channel.QueueBindAsync(_settings.QueueName, _settings.ExchangeName, _settings.ViewRoutingKey);
 
-            await channel.QueueDeclareAsync(_settings.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(_settings.SyncQueueName, _settings.ExchangeName, _settings.SyncRoutingKey);
+            //await channel.QueueDeclareAsync(_settings.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
+            //await channel.QueueBindAsync(_settings.SyncQueueName, _settings.ExchangeName, _settings.SyncRoutingKey);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -57,7 +58,7 @@ namespace VideoView.Application.HostedServices
 
                         var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
 
-                        await _messageBus.SendMessageAsync(channel, _settings.ExchangeName, routingKey, message);
+                        await _messageBus.SendMessageAsync(channel, QueueConstants.Exchange, routingKey, message);
                     }
                     catch (Exception ex)
                     {
@@ -87,6 +88,8 @@ namespace VideoView.Application.HostedServices
                     return (_settings.QueueName, _settings.ViewRoutingKey);
                 case nameof(UserViewedSyncEvent):
                     return (_settings.SyncQueueName, _settings.SyncRoutingKey);
+                case nameof(VideoViewEvent):
+                    return (QueueConstants.QueueName, QueueConstants.RoutingKey);
                 default:
                     throw new ArgumentException();
             }

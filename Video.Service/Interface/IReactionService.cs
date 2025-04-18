@@ -1,11 +1,13 @@
-﻿namespace Video.Service.Interface
+﻿using ViewReacting.Domain.Events;
+
+namespace Video.Service.Interface
 {
     //TODO данный сервис должен отправлять сообщения о событиях, логики быть не должно
     public interface IReactionService
     {
         Task SetReactionToPost(ReactionCreateModel reaction);
         Task RemoveReactionToPost(Guid postId);
-        Task SetViewToPost(Guid postId, Guid? userId, string? remoteIp);
+        Task SetViewToPost(VideoViewEvent videoView);
     }
 
     public class ReactionCreateModel

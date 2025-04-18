@@ -158,8 +158,8 @@
     line-height: 1.4;
 }
 
-.sidebar {
-    flex: 1 1 30%;
+.recommendation-sidebar {
+    flex: 0 30%;
     min-width: 300px;
 }
 

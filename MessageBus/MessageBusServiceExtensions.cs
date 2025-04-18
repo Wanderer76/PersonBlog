@@ -2,6 +2,7 @@
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using MessageBus.Shared.Configs;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
@@ -25,8 +26,6 @@ namespace MessageBus
             builder.Services.AddSingleton<TConfig>(section);
             return builder;
         }
-
-
 
         public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder)
             where TEvent : class

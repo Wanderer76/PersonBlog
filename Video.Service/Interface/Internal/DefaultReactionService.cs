@@ -7,6 +7,7 @@ using Shared.Services;
 using System.Text.Json;
 using Video.Domain.Entities;
 using Video.Domain.Events;
+using ViewReacting.Domain.Events;
 
 namespace Video.Service.Interface.Default
 {
@@ -29,11 +30,11 @@ namespace Video.Service.Interface.Default
 
         public async Task SetReactionToPost(ReactionCreateModel reaction)
         {
-            await using var connection = await _messageBus.GetConnectionAsync();
-            await using var channel = await connection.CreateChannelAsync();
-            await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
-            await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
+            //await using var connection = await _messageBus.GetConnectionAsync();
+            //await using var channel = await connection.CreateChannelAsync();
+            //await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            //await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
+            //await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
             var now = DateTimeOffset.UtcNow;
             var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), reaction.UserId, reaction.PostId, now, reaction.RemoteIp, reaction.IsLike, true);
             var videoEvent = new VideoEvent
@@ -46,23 +47,22 @@ namespace Video.Service.Interface.Default
             await _context.SaveChangesAsync();
         }
 
-        public async Task SetViewToPost(Guid postId, Guid? userId, string? remoteIp)
+        public async Task SetViewToPost(VideoViewEvent videoView)
         {
-            await using var connection = await _messageBus.GetConnectionAsync();
-            await using var channel = await connection.CreateChannelAsync();
-            await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
-            await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
-            var now = DateTimeService.Now();
-            var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), userId, postId, now, remoteIp);
-            var videoEvent = new VideoEvent
-            {
-                Id = eventData.EventId,
-                EventType = nameof(UserViewedPostEvent),
-                EventData = JsonSerializer.Serialize(eventData),
-            };
-            _context.Add(videoEvent);
-            await _context.SaveChangesAsync();
+            //await using var connection = await _messageBus.GetConnectionAsync();
+            //await using var channel = await connection.CreateChannelAsync();
+            //await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            //await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
+            //await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
+                var videoEvent = new VideoEvent
+                {
+                    Id = GuidService.GetNewGuid(),
+                    EventType = nameof(VideoViewEvent),
+                    EventData = JsonSerializer.Serialize(videoView),
+                };
+                _context.Add(videoEvent);
+                await _context.SaveChangesAsync();
+            }
         }
     }
-}
+
