@@ -45,8 +45,6 @@ export const MainPage = function () {
         fetchVideos();
     }, [page]);
 
-   
-
     return (
         <>
             <div className="mainpage-container">

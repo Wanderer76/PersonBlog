@@ -82,6 +82,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{A3FC3B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli", "VideoProcessing.Cli\VideoProcessing.Cli.csproj", "{0294A8BB-C40D-227D-FFE9-F2F3E6A0A89B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SubscriptionService", "SubscriptionService", "{2B0BF4F3-7B7A-40F4-B15A-DCE7591DA6AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

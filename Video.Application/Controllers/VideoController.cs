@@ -140,9 +140,6 @@ namespace VideoView.Application.Controllers
             HttpContext.TryGetUserFromContext(out var userId);
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             await _videoService.SetViewToPost(postId, userId, remoteIp);
-
-
-
             return Ok();
         }
 
