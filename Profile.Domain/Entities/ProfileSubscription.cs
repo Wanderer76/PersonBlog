@@ -12,7 +12,7 @@ namespace Blog.Domain.Entities
         public DateTimeOffset UpdatedAt { get; set; }
 
         [ForeignKey(nameof(SubscriptionLevelId))]
-        public SubscriptionLevel SubscriptionLevel { get; set; }
+        public PaymentSubscription SubscriptionLevel { get; set; }
 
         private ProfileSubscription() { }
 

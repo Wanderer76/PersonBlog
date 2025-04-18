@@ -38,7 +38,7 @@ namespace Blog.Service.Services.Implementation
             var postId = GuidService.GetNewGuid();
             var now = DateTimeService.Now();
 
-            var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<SubscriptionLevel>()
+            var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<PaymentSubscription>()
                 .Where(x => x.BlogId == blog.Id)
                 .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
                 .Where(x => x.IsDeleted == false)

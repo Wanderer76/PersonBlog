@@ -15,7 +15,7 @@ namespace Blog.Domain.Services.Models
 
     public static class SubscriptionLevelModelExtensions
     {
-        public static SubscriptionLevelModel ToLevelModel(this SubscriptionLevel subscriptionLevel)
+        public static SubscriptionLevelModel ToLevelModel(this PaymentSubscription subscriptionLevel)
         {
             return new SubscriptionLevelModel
             {

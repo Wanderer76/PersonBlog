@@ -1,5 +1,4 @@
-﻿using Authentication.Domain.Entities;
-using Blog.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -84,9 +83,9 @@ namespace Blog.Service.Services.Implementation
             }
         }
 
-        public async Task SubscribeToLevel(Guid userId, Guid blogId, Guid levelId)
+        public async Task SubscribeToPayment(Guid userId, Guid blogId, Guid levelId)
         {
-            var subscriptionLevels = await _readWriteRepository.Get<SubscriptionLevel>()
+            var subscriptionLevels = await _readWriteRepository.Get<PaymentSubscription>()
                 .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                 .ToListAsync();
 

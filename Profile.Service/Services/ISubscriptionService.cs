@@ -4,6 +4,6 @@
     {
         Task SubscribeToBlogAsync(Guid blogId, Guid userId);
         Task UnSubscribeToBlogAsync(Guid blogId, Guid userId);
-        Task SubscribeToLevel(Guid userId, Guid blogId, Guid levelId);
+        Task SubscribeToPayment(Guid userId, Guid blogId, Guid levelId);
     }
 }

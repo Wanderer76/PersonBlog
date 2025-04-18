@@ -121,7 +121,7 @@ export const VideoPage = function (props) {
     async function setView(player) {
         const watchedTime = player.currentTime();
         const duration = player.duration();
-
+        
         if (!viewRecorded && userView.isViewed === false && !inProgress &&
             (watchedTime >= 30 || watchedTime >= duration * 0.5 || watchedTime === duration * 0.85)) {
             inProgress = true;

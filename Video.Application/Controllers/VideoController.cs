@@ -64,7 +64,6 @@ namespace VideoView.Application.Controllers
             try
             {
                 var fileName = file;
-
                 if (file == null)
                 {
                     var result = (await _httpClientFactory.GetFileMetadataAsync(postId));

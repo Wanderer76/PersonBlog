@@ -8,7 +8,7 @@ namespace Video.Persistence
     public class VideoDbContext : BaseDbContext
     {
         public DbSet<VideoEvent> VideoEvents { get; set; }
-        public DbSet<PostViewer> PostViewers{ get; set; }
+        public DbSet<PostViewer> PostViewers { get; set; }
 
 
         public VideoDbContext(DbContextOptions<VideoDbContext> options) : base(options)

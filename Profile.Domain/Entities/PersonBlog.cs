@@ -15,6 +15,6 @@ namespace Blog.Domain.Entities
         public Guid UserId { get; set; }
         public int SubscriptionsCount { get; set; }
 
-        public List<Subscriber> Subscriptions { get; set; }
+        public List<Subscriber> Subscriptions { get; set; } = [];
     }
 }

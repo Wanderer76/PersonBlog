@@ -33,7 +33,7 @@ namespace Blog.Domain.Entities
         public VideoMetadata? VideoFile { get; set; }
 
         [ForeignKey(nameof(SubscriptionId))]
-        public SubscriptionLevel? Subscription { get; set; }
+        public PaymentSubscription? Subscription { get; set; }
 
         private Post() { }
 

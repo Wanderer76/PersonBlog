@@ -38,7 +38,7 @@ namespace Blog.Service.Services.Implementation
                 throw new ArgumentException("Уровень уже имеет следующий этап");
             }
 
-            var newLevel = new SubscriptionLevel(
+            var newLevel = new PaymentSubscription(
                 GuidService.GetNewGuid(),
                 subscriptionLevel.BlogId,
                 subscriptionLevel.Title,
@@ -55,20 +55,20 @@ namespace Blog.Service.Services.Implementation
 
             _readWriteRepository.Add(newLevel);
             await _readWriteRepository.SaveChangesAsync();
-            await _cacheService.RemoveCachedDataAsync($"{nameof(SubscriptionLevel)}:${subscriptionLevel.BlogId}");
+            await _cacheService.RemoveCachedDataAsync($"{nameof(PaymentSubscription)}:${subscriptionLevel.BlogId}");
             return newLevel.ToLevelModel();
         }
 
-        private async Task<IEnumerable<SubscriptionLevel>> GetSubscriptionsCachedByBlogId(Guid blogId)
+        private async Task<IEnumerable<PaymentSubscription>> GetSubscriptionsCachedByBlogId(Guid blogId)
         {
-            var cachedData = await _cacheService.GetCachedDataAsync<IEnumerable<SubscriptionLevel>>($"{nameof(SubscriptionLevel)}:${blogId}");
+            var cachedData = await _cacheService.GetCachedDataAsync<IEnumerable<PaymentSubscription>>($"{nameof(PaymentSubscription)}:${blogId}");
             if (cachedData == null)
             {
-                var data = await _readWriteRepository.Get<SubscriptionLevel>()
+                var data = await _readWriteRepository.Get<PaymentSubscription>()
                     .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                     .ToListAsync();
 
-                await _cacheService.SetCachedDataAsync($"{nameof(SubscriptionLevel)}:${blogId}", data, TimeSpan.FromHours(1));
+                await _cacheService.SetCachedDataAsync($"{nameof(PaymentSubscription)}:${blogId}", data, TimeSpan.FromHours(1));
                 cachedData = data;
             }
             return cachedData;

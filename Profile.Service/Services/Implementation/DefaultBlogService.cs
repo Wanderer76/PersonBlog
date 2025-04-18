@@ -44,7 +44,6 @@ namespace Blog.Service.Services.Implementation
                 Description = model.Description,
                 UserId = model.UserId,
                 PhotoUrl = null,//model.PhotoUrl,
-                Subscriptions = []
             };
             _context.Add(blog);
             await _context.SaveChangesAsync();

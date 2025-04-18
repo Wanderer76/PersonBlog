@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
-    public class SubscriptionLevel : BaseEntity, IProfileEntity
+    public class PaymentSubscription : BaseEntity, IProfileEntity
     {
         [Key]
         public Guid Id { get; set; }
@@ -19,11 +19,11 @@ namespace Blog.Domain.Entities
         public DateTimeOffset UpdatedAt { get; set; }
 
         [ForeignKey(nameof(NextLevelId))]
-        public SubscriptionLevel? NextSubscriptionLevel { get; set; }
+        public PaymentSubscription? NextSubscriptionLevel { get; set; }
 
-        private SubscriptionLevel() { }
+        private PaymentSubscription() { }
 
-        public SubscriptionLevel(Guid id, Guid blogId, string title, string? description, double price, string? imageId, Guid? nextLevelId)
+        public PaymentSubscription(Guid id, Guid blogId, string title, string? description, double price, string? imageId, Guid? nextLevelId)
         {
             var now = DateTimeService.Now();
             Id = id;

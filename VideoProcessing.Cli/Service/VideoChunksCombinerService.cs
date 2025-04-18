@@ -27,7 +27,6 @@ namespace VideoProcessing.Cli.Service
 
             var videoMetadata = await _context.Get<VideoMetadata>()
                 .Where(x => x.Id == fileId)
-                .Include(x => x.Post)
                 .FirstAsync();
 
             _context.Attach(videoMetadata);

@@ -13,9 +13,7 @@ namespace Video.Persistence
             var connectionString = configuration["ConnectionStrings:VideoDbContext"]!;
             services.AddNpgSqlDbContext<VideoDbContext>(connectionString);
             services.AddScoped<IDbInitializer, VideoDbContextInitializer>();
-            //services.AddDbContextPool<ProfileDbContext>(option =>
-            //option.UseInMemoryDatabase("Profile"));
-            //services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();
+
             services.AddDefaultRepository<VideoDbContext, IVideoViewEntity>();
         }
     }
