@@ -13,7 +13,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<VideoProcessEvent> ProfileEventMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
     public DbSet<ProfileSubscription> ProfileSubscriptions { get; set; }
-    public DbSet<PaymentSubscription> SubscriptionLevels { get; set; }
+    public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {

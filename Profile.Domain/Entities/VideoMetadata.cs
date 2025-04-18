@@ -1,6 +1,5 @@
 ﻿using FileStorage.Service.Models;
 using Shared.Models;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
@@ -12,9 +11,6 @@ namespace Blog.Domain.Entities
         public string? ErrorMessage { get; set; }
         public ProcessState ProcessState { get; set; }
         public Guid PostId { get; set; }
-
-        [ForeignKey(nameof(PostId))]
-        public Post Post { get; set; } = null!;
     }
 
     public enum ProcessState

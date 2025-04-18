@@ -50,7 +50,7 @@ namespace Blog.Service.Services.Implementation
                 return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
             }
 
-            var post = new Post(postId, blog.Id, postCreateDto.Type, now, postCreateDto.Text, false, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility);
+            var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility);
             _context.Add(post);
             await _context.SaveChangesAsync();
 
