@@ -55,9 +55,9 @@ const VideoPage = function (props) {
                     if (response.data.userPostInfo) {
                         setTime(response.data.userPostInfo.watchedTime)
                     }
-                    setPostData(response.data.post);
-                    setBlog(response.data.blog);
-                    setUserView(response.data.userPostInfo)
+                    setPostData(response.data.post ?? null);
+                    setBlog(response.data.blog ?? null);
+                    setUserView(response.data.userPostInfo ?? null)
                     setIsLoading(false)
                 }
             });
@@ -198,7 +198,7 @@ const VideoPage = function (props) {
 
                 <div className="video-description">
                     <span>Описание: </span>
-                    {post.description}
+                    {post?.description}
                 </div>
 
                 <div className="comments-section">
@@ -224,7 +224,7 @@ const VideoPage = function (props) {
             </div>
 
             <aside className="recommendation-sidebar">
-                {recommendations.map(video => {
+                {recommendations?.map(video => {
                     return <VideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
                 })}
 

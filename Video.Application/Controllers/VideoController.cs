@@ -126,7 +126,6 @@ public class VideoController : BaseController
     public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
     {
         HttpContext.TryGetUserFromContext(out var userId);
-        if (userId == null) { return Forbid(); }
 
         await _videoService.SetViewToPost(new ViewReacting.Domain.Events.VideoViewEvent
         {
