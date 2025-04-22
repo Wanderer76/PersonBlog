@@ -27,22 +27,36 @@ namespace VideoView.Application.Api
 
         public static async Task<Result<PostDetailViewModel>> GetPostDetailViewAsync(this IHttpClientFactory httpContextFactory, Guid postId)
         {
-            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
-            if (result == null)
+            try
             {
-                return Result<PostDetailViewModel>.Failure(new("404", "Не удалось найти данные"));
+                var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
+                if (result == null)
+                {
+                    return Result<PostDetailViewModel>.Failure(new("404", "Не удалось найти данные"));
+                }
+                return Result<PostDetailViewModel>.Success(result!);
             }
-            return Result<PostDetailViewModel>.Success(result!);
+            catch (Exception ex)
+            {
+                return Result<PostDetailViewModel>.Failure(new(ex.Message));
+            }
         }
 
         public static async Task<Result<BlogUserInfoViewModel>> GetBlogModelAsync(this IHttpClientFactory httpContextFactory, Guid postId)
         {
-            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<BlogUserInfoViewModel>($"{CommonBlog}/{postId}");
-            if (result == null)
+            try
             {
-                return Result<BlogUserInfoViewModel>.Failure(new("404", "Не удалось найти данные"));
+                var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<BlogUserInfoViewModel>($"{CommonBlog}/{postId}");
+                if (result == null)
+                {
+                    return Result<BlogUserInfoViewModel>.Failure(new("404", "Не удалось найти данные"));
+                }
+                return Result<BlogUserInfoViewModel>.Success(result!);
             }
-            return Result<BlogUserInfoViewModel>.Success(result!);
+            catch (Exception ex)
+            {
+                return Result<BlogUserInfoViewModel>.Failure(new(ex.Message));
+            }
         }
 
         public static async Task<Result<HistoryViewItem>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp)
@@ -56,10 +70,17 @@ namespace VideoView.Application.Api
 
             if (userId.HasValue)
             {
-                var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<HistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
-                if (result.PostId == Guid.Empty)
-                    return Result<HistoryViewItem>.Success(null);
-                return Result<HistoryViewItem>.Success(result!);
+                try
+                {
+                    var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<HistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
+                    if (result.PostId == Guid.Empty)
+                        return Result<HistoryViewItem>.Success(null);
+                    return Result<HistoryViewItem>.Success(result!);
+                }
+                catch (Exception ex)
+                {
+                    return Result<HistoryViewItem>.Failure(new(ex.Message));
+                }
             }
             return Result<HistoryViewItem>.Success(null);
         }

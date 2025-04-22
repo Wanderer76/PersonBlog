@@ -70,7 +70,7 @@ namespace VideoProcessing.Cli.Service
 
                         post.PreviewId = objectName;
                         fileMetadata.IsProcessed = false;
-                        fileMetadata.ObjectName = $"master.m3u8";
+                        fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
                         fileMetadata.Duration = videoStream.Duration;
                         fileMetadata.ProcessState = ProcessState.Complete;
                         post.VideoFileId = fileMetadata.Id;
@@ -122,7 +122,7 @@ namespace VideoProcessing.Cli.Service
                     Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
                     AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
                     SegmentFileName = fileId.ToString(),
-                    //MasterName = fileMetadata.Id.ToString()
+                    MasterName = fileMetadata.Id.ToString()
                 };
 
                 var progressCallBack = new AsyncProgress<double>((currentTime) =>

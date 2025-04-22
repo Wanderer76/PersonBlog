@@ -7,8 +7,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
 using Shared.Services;
+using System.Security.AccessControl;
 using Video.Service.Interface;
 using VideoView.Application.Api;
+using VideoView.Application.Services;
 using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers;
@@ -60,45 +62,28 @@ public class VideoController : BaseController
     //    return Ok();
     //}
 
-    [HttpGet("video/v2/{postId}/chunks/{file}")]
-    public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string? file)
+    [HttpGet("video/v2/{postId}/chunks/{*file}")]
+    public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string file)
     {
-        try
+        if (file.EndsWith("playlist.m3u8"))
         {
-            var fileName = file;
-            if (file == null)
+            var playlistParsed = await _cache.GetCachedDataAsync<string>(file);
+            if (playlistParsed == null)
             {
-                var result = (await _httpClientFactory.GetFileMetadataAsync(postId));
-                if (result.IsFailure)
-                    return BadRequest(result.Error!.Message);
-
-                fileName = result.Value.ObjectName;
+                playlistParsed = await storage.ProcessManifestAsync(postId, file);
+                await _cache.SetCachedDataAsync(file, playlistParsed, TimeSpan.FromMinutes(15));
             }
 
-            var data = await _cache.GetCachedDataAsync<byte[]?>(fileName!);
-            if (data == null)
-            {
-                var result = new MemoryStream();
-                await storage.ReadFileAsync(postId, fileName!, result);
-                result.Position = 0;
-                data = result.ToArray();
-                await _cache.SetCachedDataAsync(fileName!, data, TimeSpan.FromMinutes(5));
-            }
-            return File(data, HLSType);
+            return Content(playlistParsed, HLSType);
         }
-        catch (Exception ex)
+        else
         {
-            return BadRequest(ex.Message);
-        }
-    }
 
-    [HttpGet("video/v2/{postId}/chunks/{file}/{segment}")]
-    public async Task<IActionResult> GetVideoSegment(Guid postId, string file, string segment)
-    {
-        var result = new MemoryStream();
-        await storage.ReadFileAsync(postId, $"{file}/{segment}", result);
-        result.Position = 0;
-        return File(result, HLSType);
+            var result = new Stream();
+            await storage.ReadFileAsync(postId, file!, result);
+            result.Position = 0;
+            return File(result, HLSType);
+        }
     }
 
     [HttpGet("video/{postId:guid}")]
@@ -123,9 +108,9 @@ public class VideoController : BaseController
             var userResult = userInfo.Result;
 
             var result = new VideoDataViewModel(
-                postResult.Value,
-                blogResult.Value,
-                userResult.Value,
+                postResult.IsFailure ? null : postResult.Value,
+                blogResult.IsFailure ? null : blogResult.Value,
+                userResult.IsFailure ? null : userResult.Value,
                 []);
             return Ok(result);
         }

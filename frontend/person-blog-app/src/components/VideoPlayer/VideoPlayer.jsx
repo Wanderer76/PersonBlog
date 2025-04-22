@@ -39,12 +39,6 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
     },
     sources: {
       src: path.url,
-    }, html5: {
-      hls: {
-        withCredentials: false,// Важно для CORSб
-        overrideNative: true,
-        handleManifestRedirects: true
-      }
     }
   };
 
