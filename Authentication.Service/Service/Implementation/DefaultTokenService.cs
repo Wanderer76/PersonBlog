@@ -71,15 +71,12 @@ namespace Authentication.Service.Service.Implementation
                 TokenType = TokenTypes.Refresh,
                 Login = user.Login,
                 CreatedAt = DateTimeOffset.UtcNow,
-                ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(4),
+                ExpiredAt = DateTimeOffset.UtcNow.AddHours(4),
                 RoleId = user.AppUserRoles.First().UserRoleId
             };
             _context.Add(accessToken);
             _context.Add(refreshToken);
         }
-
-
-
 
         public async Task ClearUserToken(string token)
         {
