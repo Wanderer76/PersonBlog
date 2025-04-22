@@ -8,7 +8,7 @@ import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel }
 import './ConferencePage.css';
 import '../post/VideoPage.css';
 
-export const ConferencePage = function () {
+const ConferencePage = function () {
     const conferenceId = useParams();
     const [post, setPost] = useState();
     const [blog, setBlog] = useState();

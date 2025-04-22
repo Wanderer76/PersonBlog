@@ -3,7 +3,7 @@ import './CreatePostForm.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 
-export function CreatePostForm(props) {
+const CreatePostForm = function (props) {
 
     const [postForm, setPostForm] = useState({ type: 1, title: "", description: "", video: null });
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -166,7 +166,7 @@ export function CreatePostForm(props) {
                         <div className="privacySettings">
                             <select name="visibility" defaultValue={createModel?.visibility[0].value} onChange={updateForm}>
                                 {createModel?.visibility?.map((v) => {
-                                    return <option key={v.value}  value={v.value}>{v.text}</option>
+                                    return <option key={v.value} value={v.value}>{v.text}</option>
                                 })}
                             </select>
                             <span>🔒</span>
@@ -216,3 +216,6 @@ export function CreatePostForm(props) {
         document.getElementById('preloader').style.display = 'none';
     }
 }
+
+
+export default CreatePostForm;
