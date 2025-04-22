@@ -7,7 +7,7 @@ import { getLocalDateTime } from '../../scripts/LocalDate';
 import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
 
-export const VideoPage = function (props) {
+const VideoPage = function (props) {
     const searchParams = useParams();
     const queryParams = new URLSearchParams(window.location.search)
     const [isLoading, setIsLoading] = useState(true);
@@ -319,3 +319,4 @@ function channelInfo(blog, handleSubscribe, userView) {
     </div>;
 }
 
+export default VideoPage;
