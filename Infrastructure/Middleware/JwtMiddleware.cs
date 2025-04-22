@@ -5,6 +5,7 @@ using Shared.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,7 +30,16 @@ namespace Infrastructure.Middleware
             if (requestToken != null)
             {
                 var token = JwtUtils.GetTokenRepresentaion(requestToken);
-                context.Items.Add("userId", token.UserId);
+                if (token.ExpiredAt <= DateTimeService.Now())
+                {
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    await context.Response.StartAsync();
+                }
+                else
+                {
+                    context.Items.Add("userId", token.UserId);
+                }
             }
             await _next(context);
         }

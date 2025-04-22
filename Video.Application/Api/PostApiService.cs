@@ -3,6 +3,8 @@ using Blog.Service.Models.Blog;
 using Blog.Service.Models.File;
 using Shared.Utils;
 using System.Web;
+using ViewReacting.Domain.Models;
+using static MassTransit.ValidationResultExtensions;
 
 namespace VideoView.Application.Api
 {
@@ -10,8 +12,8 @@ namespace VideoView.Application.Api
     {
         private const string PostManifest = "api/Post/manifest";
         private const string DetailPost = "api/Post/detail";
-        private const string UserPostInfo = "api/Post/userInfo";
-        private const string CommonBlog = "api/Blog/blogByPost";
+        private const string UserPostInfo = "ViewHistory/item";
+        private const string CommonBlog = "api/Blog/blogViewerInfoByPost";
 
         public static async Task<Result<FileMetadataModel>> GetFileMetadataAsync(this IHttpClientFactory httpContextFactory, Guid postId)
         {
@@ -33,17 +35,17 @@ namespace VideoView.Application.Api
             return Result<PostDetailViewModel>.Success(result!);
         }
 
-        public static async Task<Result<BlogModel>> GetBlogModelAsync(this IHttpClientFactory httpContextFactory, Guid postId)
+        public static async Task<Result<BlogUserInfoViewModel>> GetBlogModelAsync(this IHttpClientFactory httpContextFactory, Guid postId)
         {
-           var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<BlogModel>($"{CommonBlog}/{postId}");
+            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<BlogUserInfoViewModel>($"{CommonBlog}/{postId}");
             if (result == null)
             {
-                return Result<BlogModel>.Failure(new("404", "Не удалось найти данные"));
+                return Result<BlogUserInfoViewModel>.Failure(new("404", "Не удалось найти данные"));
             }
-            return Result<BlogModel>.Success(result!);
+            return Result<BlogUserInfoViewModel>.Success(result!);
         }
 
-        public static async Task<Result<UserViewInfo>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp)
+        public static async Task<Result<HistoryViewItem>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);
             if (userId.HasValue)
@@ -52,13 +54,14 @@ namespace VideoView.Application.Api
             }
             query["address"] = HttpUtility.UrlEncode(remoteIp);
 
-
-            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<UserViewInfo>($"{UserPostInfo}/{postId}?{query}");
-            if (result == null)
+            if (userId.HasValue)
             {
-                return Result<UserViewInfo>.Failure(new("404", "Не удалось найти данные"));
+                var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<HistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
+                if (result.PostId == Guid.Empty)
+                    return Result<HistoryViewItem>.Success(null);
+                return Result<HistoryViewItem>.Success(result!);
             }
-            return Result<UserViewInfo>.Success(result!);
+            return Result<HistoryViewItem>.Success(null);
         }
     }
 }

@@ -6,7 +6,7 @@ import 'hls.js';
 import './Player.css';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay }) => {
+export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay, onEnded }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
 
@@ -16,8 +16,8 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
     playbackRates: [0.5, 1, 1.5, 2],
     preload: 'none',
     responsive: true,
-    fluid: true, 
-    aspectRatio: '16:9', 
+    fluid: true,
+    aspectRatio: '16:9',
     poster: thumbnail,
     plugins: {
       qualitySelectorHls: {
@@ -62,6 +62,12 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
         player.on('pause', () => {
           if (onPause) {
             onPause(player.currentTime());
+          }
+        });
+
+        player.on('ended', () => {
+          if (onEnded) {
+            onEnded(player)
           }
         });
 

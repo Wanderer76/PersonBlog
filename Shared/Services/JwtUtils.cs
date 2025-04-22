@@ -41,14 +41,14 @@ namespace Shared.Services
                     claims: accessClaims,
                     issuer: AuthOptions.ISSUER,
                     audience: AuthOptions.AUDIENCE,
-                    expires: access.ExpiredAt.LocalDateTime,
+                    expires: access.ExpiredAt.UtcDateTime,
                     signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
 
             var refreshJwt = new JwtSecurityToken(
                     claims: refreshClaims,
                     issuer: AuthOptions.ISSUER,
                     audience: AuthOptions.AUDIENCE,
-                    expires: refresh.ExpiredAt.LocalDateTime,
+                    expires: refresh.ExpiredAt.UtcDateTime,
                     signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(), SecurityAlgorithms.HmacSha256));
 
             var encodedJwt = new JwtSecurityTokenHandler().WriteToken(jwt);

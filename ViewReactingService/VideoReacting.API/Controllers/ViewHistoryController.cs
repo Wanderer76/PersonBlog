@@ -26,5 +26,17 @@ namespace VideoReacting.API.Controllers
 
             return Ok(result.Value);
         }
+
+        [HttpGet("item/{postId:guid}/{userId:guid}")]
+        public async Task<IActionResult> GetUserHistoryList(Guid postId, Guid userId)
+        {
+            var result = await _viewHistoryService.GetUserViewHistoryItemAsync(postId, userId);
+            if (result.IsFailure)
+            {
+                return BadRequest(result.Error);
+            }
+
+            return Ok(result.Value);
+        }
     }
 }

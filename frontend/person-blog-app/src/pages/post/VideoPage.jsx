@@ -1,21 +1,21 @@
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
-import './PostPage.css';
-import React, { useEffect, useState } from 'react';
+import './VideoPage.css';
+import React, { useEffect, useRef, useState } from 'react';
 import API, { BaseApUrl } from '../../scripts/apiMethod';
 import { getLocalDateTime } from '../../scripts/LocalDate';
 import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
-import axios from 'axios';
 
 export const VideoPage = function (props) {
     const searchParams = useParams();
     const queryParams = new URLSearchParams(window.location.search)
     const [isLoading, setIsLoading] = useState(true);
-    let viewRecorded = false;
+    const watchedTime = useRef(0);
     const [recommendations, setRecommendations] = useState([]);
     const limit = 40;
     const navigate = useNavigate();
+    const [time, setTime] = useState(queryParams.get('time'))
     const [post, setPostData] = useState({
         id: null,
         previewUrl: null,
@@ -36,7 +36,6 @@ export const VideoPage = function (props) {
     const [userView, setUserView] = useState({
         isViewed: true,
         isLike: false,
-        isSubscribe: false
     })
 
     const [blog, setBlog] = useState({
@@ -48,18 +47,18 @@ export const VideoPage = function (props) {
     }
 
     useEffect(() => {
-        API.get(`/video/Video/video/${searchParams.postId}`, {
-            headers: {
-                'Authorization': JwtTokenService.isAuth() ? JwtTokenService.getFormatedTokenForHeader() : null
-            }
-        })
+        watchedTime.current = 0;
+
+        API.get(`/video/Video/video/${searchParams.postId}`)
             .then(response => {
                 if (response.status === 200) {
+                    if (response.data.userPostInfo) {
+                        setTime(response.data.userPostInfo.watchedTime)
+                    }
                     setPostData(response.data.post);
                     setBlog(response.data.blog);
                     setUserView(response.data.userPostInfo)
                     setIsLoading(false)
-                    viewRecorded = response.data.userPostInfo.isViewed;
                 }
             });
 
@@ -117,39 +116,58 @@ export const VideoPage = function (props) {
         }))
     }
 
-
     async function setView(player) {
         if (!JwtTokenService.isAuth())
             return;
 
         const duration = player.duration();
-        const interval = Math.round(duration / 10);
+        var interval = Math.round(duration / 10);
+
+        if (duration <= 60) {
+            interval = duration * 0.5;
+        }
+        const currentWathcedTime = player.currentTime();
 
         const sendViewData = async () => {
-            const watchedTime = player.currentTime();
 
             try {
                 await API.post('/video/Video/setView', {
                     postId: post.id,
-                    time: watchedTime,
-                    isComplete: watchedTime >= duration * 0.85,
+                    time: watchedTime.current,
+                    isComplete: watchedTime.current >= duration * 0.85,
                 });
             } catch (e) {
                 console.error("Ошибка при отправке данных просмотра:", e);
             }
 
-            if (watchedTime * 0.85 > duration) { // Пока не достигли конца видео
-                setTimeout(sendViewData, interval * 1000 - player.currentTime() * 1000); // Рассчитываем задержку
-            }
+            // if (watchedTime < duration * 0.8) { // Пока не достигли конца видео
+            //     setTimeout(sendViewData, interval*1000); // Рассчитываем задержку
+            // }
         };
+        if (currentWathcedTime - watchedTime.current > interval) {
+            watchedTime.current = currentWathcedTime;
+            await sendViewData();
+        }
         // Запускаем первую отправку
-        setTimeout(sendViewData, interval * 1000 - player.currentTime() * 1000);
+        // setTimeout(sendViewData, interval*1000);
+    }
+
+    async function setViewEnd(player) {
+        if (!JwtTokenService.isAuth())
+            return;
+
+        const watchedTime = player.currentTime();
+        await API.post('/video/Video/setView', {
+            postId: post.id,
+            time: watchedTime,
+            isComplete: true
+        });
     }
 
     async function handleSubscribe() {
-        const current = userView.isSubscribe;
+        const current = userView?.isSubscribe;
         var isError = false;
-        await API.post(`profile/api/Subscription/${userView.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`).catch(e => {
+        await API.post(`profile/api/Subscription/${userView?.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`).catch(e => {
             isError = true
             alert(e.response.data)
         }).finally(() => {
@@ -217,7 +235,7 @@ export const VideoPage = function (props) {
 
     function videoWindow() {
         return <div className="video-player">
-            <VideoPlayer className="myVideo"
+            <VideoPlayer key={post.id} className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
                     url: getUrl(post.id, post.videoData.objectName),
@@ -226,8 +244,9 @@ export const VideoPage = function (props) {
                     autoplay: false,
                     objectName: post.videoData.objectName
                 }}
-                currentTime={queryParams.get('time')}
-                onTimeupdate={setView} />
+                currentTime={time}
+                onTimeupdate={setView}
+                onEnded={setViewEnd} />
         </div>;
     }
 }
@@ -268,10 +287,10 @@ function videoMetadata(post, userView, setReaction, navigate) {
                 <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
             </div>
             <div className="video-actions">
-                <button className={`action-button ${userView.isLike === true ? 'action-button-active' : ''}`} onClick={() => { setReaction(true); }}>
+                <button className={`action-button ${userView?.isLike === true ? 'action-button-active' : ''}`} onClick={() => { setReaction(true); }}>
                     <span>👍</span> {post.likeCount}
                 </button>
-                <button className={`action-button ${userView.isLike === false ? 'action-button-active' : ''}`} onClick={() => { setReaction(false); }}>
+                <button className={`action-button ${userView?.isLike === false ? 'action-button-active' : ''}`} onClick={() => { setReaction(false); }}>
                     <span>👎</span> {post.dislikeCount}
                 </button>
                 <button className="action-button">
@@ -296,7 +315,7 @@ function channelInfo(blog, handleSubscribe, userView) {
                 <div className="subscribers-count">{blog.subscribersCount} подписчиков</div>
             </div>
         </div>
-        <button className="subscribe-button" onClick={() => handleSubscribe()}>{userView.isSubscribe ? 'Вы подписаны' : 'Подписаться'}</button>
+        <button className="subscribe-button" onClick={() => handleSubscribe()}>{blog.hasSubscription ? 'Вы подписаны' : 'Подписаться'}</button>
     </div>;
 }
 

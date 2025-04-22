@@ -9,6 +9,7 @@ using Shared.Models;
 using Shared.Services;
 using Video.Service.Interface;
 using VideoView.Application.Api;
+using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers;
 
@@ -106,7 +107,8 @@ public class VideoController : BaseController
         try
         {
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            HttpContext.TryGetUserFromContext(out var userId);
+            var hasUser = HttpContext.TryGetUserFromContext(out var userId);
+
             var session = GetUserSession();
             var userInfoCache = session == null ? null : await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
 
@@ -191,4 +193,4 @@ public class SetViewRequest
     public bool IsComplete { get; set; }
 }
 
-internal record VideoDataViewModel(PostDetailViewModel? Post, BlogModel? Blog, UserViewInfo? UserPostInfo, List<string> Comment);
+internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, HistoryViewItem? UserPostInfo, List<string> Comment);

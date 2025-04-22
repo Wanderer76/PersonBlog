@@ -52,7 +52,7 @@ namespace Blog.API.Handlers
                     PostId = @event.PostId,
                     IsLike = @event.IsLike,
                     UserId = userId,
-                    UserIpAddress = ipAddress,
+                    UserIpAddress = ipAddress ?? string.Empty,
                     IsViewed = @event.IsViewed,
                 };
                 _context.Add(existView);
@@ -95,8 +95,7 @@ namespace Blog.API.Handlers
                 existView.UserIpAddress = ipAddress;
                 existView.IsViewed = @event.IsViewed;
             }
-
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
         }
     }
 }

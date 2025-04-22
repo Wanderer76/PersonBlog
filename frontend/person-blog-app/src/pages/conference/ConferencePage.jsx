@@ -6,7 +6,7 @@ import logo from '../../defaultProfilePic.png';
 import API, { BaseApUrl } from "../../scripts/apiMethod";
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import './ConferencePage.css';
-import '../post/PostPage.css';
+import '../post/VideoPage.css';
 
 export const ConferencePage = function () {
     const conferenceId = useParams();
@@ -81,8 +81,6 @@ export const ConferencePage = function () {
 
     if (post == null || blog == null)
         return <></>;
-
-
 
     return (
         <div className="video-container">

@@ -85,6 +85,16 @@ namespace Blog.API.Controllers
             return Ok(result);
         }
 
+
+        [HttpGet("blogViewerInfoByPost/{postId:guid}")]
+        [Produces(typeof(BlogModel))]
+        public async Task<IActionResult> GetBlogViewerInfoByPostId(Guid postId)
+        {
+            HttpContext.TryGetUserFromContext(out var userId);
+            var result = await _blogService.GetBlogByPostIdAsync(postId, userId);
+            return Ok(result);
+        }
+
         [HttpGet("blog/{blogId:guid}")]
         [Produces(typeof(BlogModel))]
         public async Task<IActionResult> GetBlogById(Guid blogId)

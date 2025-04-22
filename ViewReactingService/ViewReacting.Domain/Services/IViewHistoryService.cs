@@ -7,5 +7,12 @@ namespace ViewReacting.Domain.Services;
 public interface IViewHistoryService
 {
     Task<Result<IReadOnlyList<HistoryViewItem>>> GetUserViewHistoryListAsync(Guid userId);
-    Task<Result<bool>> CreateOrUpdateViewHistory(UserPostView postViewer);
+    Task<Result<HistoryViewItem>> GetUserViewHistoryItemAsync(Guid postId, Guid userId);
+    Task<Result<UpdateViewState>> CreateOrUpdateViewHistory(UserPostView postViewer);
+}
+
+public enum UpdateViewState
+{
+    Created,
+    Updated,
 }

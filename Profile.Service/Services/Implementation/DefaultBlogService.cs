@@ -98,5 +98,19 @@ namespace Blog.Service.Services.Implementation
         {
             throw new NotImplementedException();
         }
+
+        public async Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id, Guid? userId)
+        {
+            var blog = await _context.Get<Post>()
+                          .Where(x => x.Id == id)
+                          .Select(x => x.Blog)
+                          .FirstAsync();
+
+            var hasSubscription = userId.HasValue && await _context.Get<Subscriber>()
+                .Where(x => x.BlogId == blog.Id && x.UserId == userId.Value)
+                .AnyAsync();
+
+            return blog.ToBlogUserInfoViewModel(hasSubscription);
+        }
     }
 }
