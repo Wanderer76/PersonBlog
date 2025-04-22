@@ -12,7 +12,7 @@ namespace VideoView.Application.Services
             manifestStream.Position = 0;
             var manifestContent = await new StreamReader(manifestStream).ReadToEndAsync();
             var prefixPath = Path.GetDirectoryName(file).Replace("\\", "/");
-            var modifiedContent = new List<string>();
+            var modifiedContent = new List<string>(manifestContent.Length);
             foreach (var line in manifestContent.Split('\n'))
             {
                 if (line.EndsWith(".m3u8") || line.EndsWith(".ts"))
