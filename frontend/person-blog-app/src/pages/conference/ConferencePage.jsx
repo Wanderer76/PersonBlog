@@ -7,6 +7,7 @@ import API, { BaseApUrl } from "../../scripts/apiMethod";
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import './ConferencePage.css';
 import '../post/VideoPage.css';
+import SideBar from "../../components/sidebar/SideBar";
 
 const ConferencePage = function () {
     const conferenceId = useParams();
@@ -65,7 +66,7 @@ const ConferencePage = function () {
                 handleSignalRSeek(time);
         });
 
-        setConnection(connection_chat);     
+        setConnection(connection_chat);
     }, []);
 
     useEffect(() => {
@@ -83,42 +84,46 @@ const ConferencePage = function () {
         return <></>;
 
     return (
-        <div className="video-container">
-            <div className="main-content">
+        <div className='page-layout'>
+            <SideBar />
+            <div className="video-content-container">
+                <div className="video-container">
+                    <div className="main-content">
 
-                {videoWindow(connection)}
-                {videoMetadata(post)}
-                {channelInfo(blog)}
+                        {videoWindow(connection)}
+                        {videoMetadata(post)}
+                        {channelInfo(blog)}
 
-                <div className="video-description">
-                    <span>Описание: </span>
-                    {post.description}
-                </div>
+                        <div className="video-description">
+                            <span>Описание: </span>
+                            {post.description}
+                        </div>
 
-                <div className="comments-section">
-                    <h3>432 комментария</h3>
+                        <div className="comments-section">
+                            <h3>432 комментария</h3>
 
-                    <div className="comment">
-                        <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                        <div className="comment-content">
-                            <div className="comment-author">Иван Петров</div>
-                            <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                            <div className="comment">
+                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
+                                <div className="comment-content">
+                                    <div className="comment-author">Иван Петров</div>
+                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                                </div>
+                            </div>
+
+                            <div className="comment">
+                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
+                                <div className="comment-content">
+                                    <div className="comment-author">Иван Петров</div>
+                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
-
-                    <div className="comment">
-                        <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                        <div className="comment-content">
-                            <div className="comment-author">Иван Петров</div>
-                            <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                        </div>
+                    <div className="chat-container">
+                        <Messages messages={messages} setMessages={setMessages} conferenceId={conferenceId.id} />
                     </div>
-
                 </div>
-            </div>
-            <div className="chat-container">
-                <Messages messages={messages} setMessages={setMessages} conferenceId={conferenceId.id} />
-               
             </div>
         </div>
     );
@@ -205,7 +210,7 @@ const ConferencePage = function () {
                     <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                 </div>
                 <div className="video-actions">
-                    <button className="action-button" onClick={(e) => {navigate(`/video/${post.id}?time=${playerRef.current.currentTime()}`)}}>
+                    <button className="action-button" onClick={(e) => { navigate(`/video/${post.id}?time=${playerRef.current.currentTime()}`) }}>
                         <span>📁</span> Отключится от конференции
                     </button>
                     <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href) }}>
@@ -284,7 +289,7 @@ const Messages = function ({ messages, setMessages, conferenceId }) {
         const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
         setIsAutoScroll(isAtBottom);
         if (containerRef.current.scrollTop === 0 && hasMore) {
-           
+
 
             setPage(prev => {
                 const newPage = prev + 1;
