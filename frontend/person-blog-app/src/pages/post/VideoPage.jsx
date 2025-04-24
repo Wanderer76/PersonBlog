@@ -202,7 +202,9 @@ const VideoPage = function (props) {
     }
 
     return (
-        <div >
+        <div className='page-layout'>
+            <SideBar/>
+            <div className="video-content-container">
             <div className="video-container">
                 <div className="main-content">
 
@@ -243,6 +245,7 @@ const VideoPage = function (props) {
                     })}
 
                 </aside>
+            </div>
             </div>
         </div>
     );
