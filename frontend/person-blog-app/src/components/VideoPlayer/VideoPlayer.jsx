@@ -61,7 +61,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
 
         player.on('pause', () => {
           if (onPause) {
-            onPause(player.currentTime());
+            onPause(player);
           }
         });
 
@@ -73,7 +73,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
 
         player.on('play', () => {
           if (onPlay) {
-            onPlay();
+            onPlay(player);
           }
         });
 

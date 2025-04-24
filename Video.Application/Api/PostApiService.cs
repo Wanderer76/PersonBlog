@@ -4,10 +4,10 @@ using Blog.Service.Models.File;
 using Shared.Utils;
 using System.Web;
 using ViewReacting.Domain.Models;
-using static MassTransit.ValidationResultExtensions;
 
 namespace VideoView.Application.Api
 {
+    //TODO сделать обычный сервис, пробрасывать заголовки оригинального запроса
     public static class PostApiService
     {
         private const string PostManifest = "api/Post/manifest";
@@ -15,14 +15,14 @@ namespace VideoView.Application.Api
         private const string UserPostInfo = "ViewHistory/item";
         private const string CommonBlog = "api/Blog/blogViewerInfoByPost";
 
-        public static async Task<Result<FileMetadataModel>> GetFileMetadataAsync(this IHttpClientFactory httpContextFactory, Guid postId)
+        public static async Task<Result<PostFileMetadataModel>> GetFileMetadataAsync(this IHttpClientFactory httpContextFactory, Guid postId)
         {
-            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<FileMetadataModel>($"{PostManifest}/{postId}");
+            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<PostFileMetadataModel>($"{PostManifest}/{postId}");
             if (result == null)
             {
-                return Result<FileMetadataModel>.Failure(new("404", "Не удалось найти данные"));
+                return Result<PostFileMetadataModel>.Failure(new("404", "Не удалось найти данные"));
             }
-            return Result<FileMetadataModel>.Success(result!);
+            return Result<PostFileMetadataModel>.Success(result!);
         }
 
         public static async Task<Result<PostDetailViewModel>> GetPostDetailViewAsync(this IHttpClientFactory httpContextFactory, Guid postId)

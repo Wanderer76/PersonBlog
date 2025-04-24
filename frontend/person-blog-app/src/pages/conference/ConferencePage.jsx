@@ -185,8 +185,8 @@ const ConferencePage = function () {
                 onUserSeek={(time) => {
                     connection.invoke("Seek", time);
                 }}
-                onPause={(time) => {
-                    connection.invoke("PauseVideo", time);
+                onPause={(player) => {
+                    connection.invoke("PauseVideo", player.currentTime());
                 }}
                 onPlay={() => {
                     connection.invoke("ResumeVideo");

@@ -1,4 +1,5 @@
-﻿using MessageBus;
+﻿using Infrastructure.Services;
+using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
@@ -31,11 +32,12 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
     private readonly IViewHistoryService _viewHistoryService;
     private readonly RabbitMqMessageBus _messageBus;
     private readonly RabbitMqVideoReactionConfig _reactingSettings = new();
-
-    public VideoViewEventHandler(IViewHistoryService viewHistoryService, RabbitMqMessageBus messageBus)
+    private readonly ICacheService _cacheService;
+    public VideoViewEventHandler(IViewHistoryService viewHistoryService, RabbitMqMessageBus messageBus, ICacheService cacheService)
     {
         _viewHistoryService = viewHistoryService;
         _messageBus = messageBus;
+        _cacheService = cacheService;
     }
 
     public async Task Handle(VideoViewEvent @event)
@@ -46,6 +48,7 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
              @event.WatchedTime,
              @event.IsCompleteWatch
              ));
+        await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.UserId));
         if (result.Value == UpdateViewState.Created)
         {
             using var connection = await _messageBus.GetConnectionAsync();

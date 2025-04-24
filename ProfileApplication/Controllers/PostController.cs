@@ -30,7 +30,7 @@ namespace Blog.API.Controllers
         }
 
         [HttpGet("manifest/{postId:guid}")]
-        [Produces(typeof(FileMetadataModel))]
+        [Produces(typeof(PostFileMetadataModel))]
         public async Task<IActionResult> GetVideoFileMetadataByPostIdAsync(Guid postId)
         {
             var result = await _postService.GetVideoFileMetadataByPostIdAsync(postId);

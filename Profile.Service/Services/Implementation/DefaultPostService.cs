@@ -57,18 +57,19 @@ namespace Blog.Service.Services.Implementation
             return Result<Guid, ErrorList>.Success(postId);
         }
 
-        public async Task<Result<FileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
+        public async Task<Result<PostFileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
         {
-            var postVisibility = await _context.Get<Post>()
+            var post = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
-                .Select(x => new { x.Visibility, x.Blog.UserId })
+                .Select(x => new { x.Visibility, x.Blog.UserId, x.PreviewId })
                 .FirstAsync();
-            if (postVisibility.Visibility == PostVisibility.Private)
+
+            if (post.Visibility == PostVisibility.Private)
             {
                 var session = await _userSession.GetUserSessionAsync();
-                if (session.UserId != postVisibility.UserId)
+                if (session.UserId != post.UserId)
                 {
-                    return Result<FileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
+                    return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
                 }
             }
 
@@ -82,13 +83,15 @@ namespace Blog.Service.Services.Implementation
                 await _cacheService.SetCachedDataAsync($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
             }
 
-            return Result<FileMetadataModel, ErrorList>.Success(new FileMetadataModel(
+            return Result<PostFileMetadataModel, ErrorList>.Success(new PostFileMetadataModel(
                 fileMetadata.ContentType,
                 fileMetadata.Length,
                 fileMetadata.Name,
                 fileMetadata.CreatedAt,
                 fileMetadata.Id,
-                fileMetadata.ObjectName));
+                fileMetadata.ObjectName,
+                await _fileStorageFactory.CreateFileStorage().GetFileUrlAsync(postId, post.PreviewId.ToString()),
+                postId));
         }
 
         public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
@@ -142,7 +145,7 @@ namespace Blog.Service.Services.Implementation
                                     post.CreatedAt,
                                     previewUrl,
                                     post.VideoFile != null && isProcessed == ProcessState.Complete ?
-                                    new VideoMetadataModel(
+                                    new Models.Post.VideoMetadataModel(
                                         videoFile.Id,
                                         videoFile.Length,
                                         videoFile.ContentType,
@@ -258,7 +261,7 @@ namespace Blog.Service.Services.Implementation
                             post.CreatedAt,
                             previewUrl,
                             post.VideoFile != null && isProcessed == ProcessState.Complete ?
-                            new VideoMetadataModel(
+                            new Models.Post.VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
                                 videoMetadata.ContentType,

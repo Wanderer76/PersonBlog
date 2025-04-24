@@ -6,6 +6,8 @@ import API, { BaseApUrl } from '../../scripts/apiMethod';
 import { getLocalDateTime } from '../../scripts/LocalDate';
 import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
+import SmallVideoCard from '../../components/VideoCards/SmallVideoCard';
+import SideBar from '../../components/sidebar/SideBar';
 
 const VideoPage = function (props) {
     const searchParams = useParams();
@@ -144,10 +146,8 @@ const VideoPage = function (props) {
             //     setTimeout(sendViewData, interval*1000); // Рассчитываем задержку
             // }
         };
-        if (currentWathcedTime - watchedTime.current > interval) {
-            watchedTime.current = currentWathcedTime;
-            await sendViewData();
-        }
+        watchedTime.current = currentWathcedTime;
+        await sendViewData();
         // Запускаем первую отправку
         // setTimeout(sendViewData, interval*1000);
     }
@@ -184,51 +184,66 @@ const VideoPage = function (props) {
         })
     }
 
+    async function onPaused(player) {
+        if (!JwtTokenService.isAuth())
+            return;
+        const currentWathcedTime = player.currentTime();
+        const duration = player.duration();
+        watchedTime.current = currentWathcedTime;
+        await API.post('/video/Video/setView', {
+            postId: post.id,
+            time: currentWathcedTime,
+            isComplete: currentWathcedTime >= duration * 0.85
+        });
+    }
+
     if (isLoading) {
         return <></>;
     }
 
     return (
-        <div className="video-container">
-            <div className="main-content">
+        <div >
+            <div className="video-container">
+                <div className="main-content">
 
-                {videoWindow()}
-                {videoMetadata(post, userView, setReaction, navigate)}
-                {channelInfo(blog, handleSubscribe, userView)}
+                    {videoWindow()}
+                    {videoMetadata(post, userView, setReaction, navigate)}
+                    {channelInfo(blog, handleSubscribe, userView)}
 
-                <div className="video-description">
-                    <span>Описание: </span>
-                    {post?.description}
-                </div>
-
-                <div className="comments-section">
-                    <h3>432 комментария</h3>
-
-                    <div className="comment">
-                        <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                        <div className="comment-content">
-                            <div className="comment-author">Иван Петров</div>
-                            <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                        </div>
+                    <div className="video-description">
+                        <span>Описание: </span>
+                        {post?.description}
                     </div>
 
-                    <div className="comment">
-                        <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                        <div className="comment-content">
-                            <div className="comment-author">Иван Петров</div>
-                            <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                        </div>
-                    </div>
+                    <div className="comments-section">
+                        <h3>432 комментария</h3>
 
+                        <div className="comment">
+                            <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
+                            <div className="comment-content">
+                                <div className="comment-author">Иван Петров</div>
+                                <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                            </div>
+                        </div>
+
+                        <div className="comment">
+                            <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
+                            <div className="comment-content">
+                                <div className="comment-author">Иван Петров</div>
+                                <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
+
+                <aside className="recommendation-sidebar">
+                    {recommendations?.map(video => {
+                        return <SmallVideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
+                    })}
+
+                </aside>
             </div>
-
-            <aside className="recommendation-sidebar">
-                {recommendations?.map(video => {
-                    return <VideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
-                })}
-
-            </aside>
         </div>
     );
 
@@ -246,24 +261,10 @@ const VideoPage = function (props) {
                 }}
                 currentTime={time}
                 onTimeupdate={setView}
-                onEnded={setViewEnd} />
+                onEnded={setViewEnd}
+                onPause={onPaused} />
         </div>;
     }
-}
-
-const VideoCard = function ({ videoCardModel, navigate }) {
-
-    return <div className="recommended-video" onClick={(e) => {
-        e.preventDefault();
-        navigate(`/video/${videoCardModel.postId}`);
-    }}>
-        <img src={videoCardModel.previewUrl} className="recommended-thumbnail" alt="Превью" />
-        <div className="recommended-info">
-            <div className="recommended-title">{videoCardModel.title}</div>
-            <div className="recommended-channel">{videoCardModel.blogName}</div>
-            <div className="recommended-stats"> {videoCardModel.viewCount} просмотров • 2 дня назад</div>
-        </div>
-    </div>
 }
 
 async function createConference(postId, navigate) {

@@ -57,6 +57,7 @@ namespace VideoReacting.Service.Implementation
                 .OrderByDescending(x => x.WatchedAt)
                   .Select(x => new HistoryViewItem
                   {
+                      Id = x.Id,
                       LastWatched = x.WatchedAt.DateTime,
                       WatchedTime = x.WatchedTime,
                       PostId = x.PostId
@@ -81,6 +82,7 @@ namespace VideoReacting.Service.Implementation
                 .AsAsyncEnumerable()
                 .Select(x => new HistoryViewItem
                 {
+                    Id = x.Id,
                     LastWatched = x.WatchedAt.DateTime,
                     WatchedTime = x.WatchedTime,
                     PostId = x.PostId

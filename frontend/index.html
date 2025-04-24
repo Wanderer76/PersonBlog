@@ -3,212 +3,266 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Создание видео - OrangeTube</title>
+    <title>История просмотров</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
         }
 
         body {
-            background: #f1f1f1;
-            margin: 0;
+            background-color: #f9f9f9;
             padding: 20px;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
+        h1 {
+            margin-bottom: 20px;
             color: #333;
         }
 
-        input[type="text"], 
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+        .day-group {
+            margin-bottom: 30px;
         }
 
-        .upload-area {
-            border: 2px dashed #ddd;
+        .day-header {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            background: white;
             border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            margin: 20px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            transition: transform 0.2s;
             cursor: pointer;
-            transition: 0.3s;
+            text-decoration: none;
+            color: inherit;
         }
 
-        .upload-area:hover {
-            border-color: #ff7b00;
-            background: #fff5eb;
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
-        .preview-container {
+        .thumbnail {
+            width: 180px;
+            height: 100px;
+            object-fit: cover;
             position: relative;
-            width: 100%;
-            max-width: 600px;
-            margin: 20px 0;
+            flex-shrink: 0;
         }
 
-        .video-preview {
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: #222;
-            border-radius: 4px;
+        .thumbnail::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .privacy-settings {
+        .history-item:hover .thumbnail::after {
+            opacity: 1;
+        }
+
+        .details {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .meta {
+            font-size: 13px;
+            color: #606060;
+            margin-top: auto;
+        }
+
+        .author {
+            margin-bottom: 4px;
+        }
+
+        .stats {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 6px;
         }
 
-        select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        .watch-time {
+            font-size: 12px;
+            color: #909090;
+            margin-top: 4px;
         }
 
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 12px 24px;
+        .menu-btn {
+            margin-left: auto;
+            align-self: flex-start;
+            background: none;
             border: none;
-            border-radius: 24px;
+            color: #606060;
             cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
+            font-size: 18px;
+            padding: 4px;
         }
 
-        .btn-primary {
-            background: #ff7b00;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #ff6a00;
-        }
-
-        .btn-secondary {
-            background: #eee;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #ddd;
-        }
-
-        .progress-bar {
-            height: 4px;
-            background: #eee;
-            margin-top: 10px;
-            border-radius: 2px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #ff7b00;
-            width: 65%;
-            border-radius: 2px;
-            transition: 0.3s;
-        }
-
-        .camera-icon {
-            font-size: 40px;
-            color: #ff7b00;
-            margin-bottom: 15px;
+        @media (max-width: 600px) {
+            .thumbnail {
+                width: 120px;
+                height: 70px;
+            }
+            
+            .title {
+                font-size: 14px;
+            }
+            
+            .meta {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Загрузить видео</h1>
-        
-        <div class="form-group">
-            <label for="title">Название</label>
-            <input type="text" id="title" name = "title" placeholder="Добавьте название вашего видео">
-        </div>
-
-        <div class="upload-area">
-            <div class="camera-icon">🎥</div>
-            <h3>Выберите файл для загрузки</h3>
-            <p>или перетащите видео файл</p>
-            
-        </div>
-
-        <div class="preview-container">
-            <div class="video-preview" name="video"></div>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="description">Описание</label>
-            <textarea id="description" rows="4"  name="description"></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Настройки приватности</label>
-            <div class="privacy-settings">
-                <select>
-                    <option>Публичный</option>
-                    <option>Ссылочный</option>
-                    <option>Приватный</option>
-                </select>
-                <span>🔒</span>
-            </div>
-        </div>
-
-        <div class="action-buttons">
-            <button class="btn btn-primary" onClick={sendForm} >Создать</button>
-            <button class="btn btn-secondary">Сохранить черновик</button>
+        <h1>История просмотров</h1>
+        <div id="historyContainer">
+            <!-- Здесь будут группы по дням -->
         </div>
     </div>
-</body>
-<script>
-    function handleFileSelect(input) {
-        const file = input.files[0];
-        if (file) {
-            // Показать прелоадер
-            document.getElementById('preloader').style.display = 'block';
+
+    <script>
+        // Пример данных для истории просмотров с группировкой по дням
+        const historyData = {
+            "Сегодня": [
+                {
+                    title: "Как создать адаптивный дизайн за 10 минут",
+                    author: "Web Design Pro",
+                    views: "12 тыс. просмотров",
+                    uploaded: "2 часа назад",
+                    watchTime: "Смотрели 15:30",
+                    thumbnail: "https://picsum.photos/180/100?1"
+                },
+                {
+                    title: "Новые возможности JavaScript 2024",
+                    author: "Code Master",
+                    views: "8 тыс. просмотров",
+                    uploaded: "5 часов назад",
+                    watchTime: "Смотрели 11:45",
+                    thumbnail: "https://picsum.photos/180/100?2"
+                }
+            ],
+            "Вчера": [
+                {
+                    title: "Изучение Python с нуля - полный курс",
+                    author: "Python Guru",
+                    views: "150 тыс. просмотров",
+                    uploaded: "1 неделю назад",
+                    watchTime: "Смотрели вчера 18:20",
+                    thumbnail: "https://picsum.photos/180/100?3"
+                },
+                {
+                    title: "React vs Vue - что выбрать в 2024?",
+                    author: "Frontend Expert",
+                    views: "45 тыс. просмотров",
+                    uploaded: "3 недели назад",
+                    watchTime: "Смотрели вчера 14:15",
+                    thumbnail: "https://picsum.photos/180/100?4"
+                },
+                {
+                    title: "Алгоритмы и структуры данных для начинающих",
+                    author: "Algo Master",
+                    views: "32 тыс. просмотров",
+                    uploaded: "1 месяц назад",
+                    watchTime: "Смотрели вчера 10:30",
+                    thumbnail: "https://picsum.photos/180/100?5"
+                }
+            ],
+            "24 апреля 2024": [
+                {
+                    title: "Полное руководство по CSS Grid",
+                    author: "CSS Wizard",
+                    views: "28 тыс. просмотров",
+                    uploaded: "2 месяца назад",
+                    watchTime: "Смотрели 24 апреля в 16:45",
+                    thumbnail: "https://picsum.photos/180/100?6"
+                }
+            ]
+        };
+
+        // Генерация списка истории
+        const historyContainer = document.getElementById('historyContainer');
+        
+        for (const [day, items] of Object.entries(historyData)) {
+            const dayGroup = document.createElement('div');
+            dayGroup.className = 'day-group';
             
-            // Предпросмотр видео
-            const videoPreview = document.getElementById('videoPreview');
-            const videoURL = URL.createObjectURL(file);
-            videoPreview.src = videoURL;
-            videoPreview.style.display = 'block';
-            videoPreview.load();
-
-            // Запустить загрузку на сервер
-            document.getElementById('<%= btnUpload.ClientID %>').click();
+            const dayHeader = document.createElement('h2');
+            dayHeader.className = 'day-header';
+            dayHeader.textContent = day;
+            
+            const historyList = document.createElement('div');
+            historyList.className = 'history-list';
+            
+            items.forEach(item => {
+                const card = document.createElement('a');
+                card.className = 'history-item';
+                card.href = '#';
+                
+                card.innerHTML = `
+                    <img src="${item.thumbnail}" alt="Превью" class="thumbnail">
+                    <div class="details">
+                        <h3 class="title">${item.title}</h3>
+                        <div class="meta">
+                            <div class="author">${item.author}</div>
+                            <div class="stats">
+                                <span>${item.views}</span>
+                                <span>•</span>
+                                <span>${item.uploaded}</span>
+                            </div>
+                            <div class="watch-time">${item.watchTime}</div>
+                        </div>
+                    </div>
+                    <button class="menu-btn">⋮</button>
+                `;
+                
+                historyList.appendChild(card);
+            });
+            
+            dayGroup.appendChild(dayHeader);
+            dayGroup.appendChild(historyList);
+            historyContainer.appendChild(dayGroup);
         }
-    }
-
-    // Обработчик завершения загрузки
-    function uploadComplete() {
-        document.getElementById('preloader').style.display = 'none';
-    }
-</script>
+    </script>
+</body>
 </html>

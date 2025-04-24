@@ -78,7 +78,6 @@ public class VideoController : BaseController
         }
         else
         {
-
             var result = new MemoryStream();
             await storage.ReadFileAsync(postId, file!, result);
             result.Position = 0;
