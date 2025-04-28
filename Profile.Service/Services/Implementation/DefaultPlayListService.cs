@@ -43,7 +43,7 @@ namespace Blog.Service.Services.Implementation
 
             if (playlist == null)
             {
-                return Result<PlayListViewModel>.Failure(new("403", "Not found"));
+                return new Error("403", "Not found");
             }
 
             var position = 0;
@@ -51,7 +51,7 @@ namespace Blog.Service.Services.Implementation
             {
                 if (playlist.PlayListItems.Any(x => x.Position == playListItem.Position.Value))
                 {
-                    return Result<PlayListViewModel>.Failure(new("400", $"Нельзя добавить на позицию {playListItem.Position}"));
+                    return new Error("400", $"Нельзя добавить на позицию {playListItem.Position}");
                 }
                 position = playListItem.Position.Value;
             }
@@ -65,18 +65,18 @@ namespace Blog.Service.Services.Implementation
 
             if (isAdded.IsFailure)
             {
-                return Result<PlayListViewModel>.Failure(isAdded.Error!);
+                return isAdded.Error!;
             }
 
             await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
-            return Result<PlayListViewModel>.Success(new PlayListViewModel
+            return new PlayListViewModel
             {
                 Id = playlist.Id,
                 ThumbnailUrl = await fileStorage.GetFileUrlAsync(user.UserId.Value, playlist.ThumbnailId),
                 Title = playlist.Title,
                 Posts = playlist.PlayListItems.Select(x => x.PostId).ToList(),
-            });
+            };
         }
 
         public async Task<Result<PlayListDetailViewModel>> CreatePlayListAsync(PlayListCreateRequest playList)
@@ -102,7 +102,7 @@ namespace Blog.Service.Services.Implementation
             };
 
             await _cacheService.SetCachedDataAsync(new PlayListDetailCacheKey(result.Id), result, TimeSpan.FromMinutes(10));
-            return Result<PlayListDetailViewModel>.Success(result);
+            return result;
         }
 
         public async Task<Result<IReadOnlyList<PlayListViewModel>>> GetBlogPlayListsAsync(Guid blogId)

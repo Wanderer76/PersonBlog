@@ -5,7 +5,6 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Services;
-using Shared.Utils;
 
 namespace Blog.API.Controllers
 {

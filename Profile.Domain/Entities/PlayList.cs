@@ -35,18 +35,18 @@ namespace Blog.Domain.Entities
         {
             if (PlayListItems.Any(x => x.Position == item.Position))
             {
-                return Result<bool>.Failure(new("duplicate element"));
+                return new Error("duplicate element");
             }
             if (PlayListItems.Count == 0 && item.Position != 1)
             {
-                return Result<bool>.Failure(new("wrong position"));
+                return new Error("wrong position");
             }
             if (PlayListItems.Any(x => x.PostId == item.PostId))
             {
-                return Result<bool>.Failure(new("duplicate element"));
+                return new Error("duplicate element");
             }
             PlayListItems.Add(item);
-            return Result<bool>.Success(true);
+            return true;
         }
     }
 

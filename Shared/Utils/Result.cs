@@ -1,6 +1,4 @@
-﻿
-
-namespace Shared.Utils
+﻿namespace Shared.Utils
 {
     public sealed class Result<TValue, TError> where TError : class
     {
@@ -37,8 +35,19 @@ namespace Shared.Utils
 
         public static Result<TValue, TError> Success(TValue value) => new(value);
         public static Result<TValue, TError> Failure(TError error) => new(error);
-    }
+        public static implicit operator Result<TValue, TError>(TValue value) => Success(value);
 
+        public static implicit operator Result<TValue, TError>(TError error) => Failure(error);
+        public static Result<TValue, TError> From<TException>(
+            Func<TValue> func,
+            Func<TException, TError> errorFactory)
+            where TException : Exception
+        {
+            try { return Success(func()); }
+            catch (TException ex) { return Failure(errorFactory(ex)); }
+        }
+
+    }
 
     public class Result<TValue>
     {
@@ -65,5 +74,11 @@ namespace Shared.Utils
 
         public static Result<TValue> Success(TValue value) => new(value);
         public static Result<TValue> Failure(Error error) => new(error);
+
+        public static implicit operator Result<TValue>(TValue value)
+        => Success(value);
+        public static implicit operator Result<TValue>(Error error)
+            => Failure(error);
+
     }
 }

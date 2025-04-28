@@ -3,6 +3,7 @@ using Blog.Service.Models.Blog;
 using Blog.Service.Models.File;
 using Shared.Utils;
 using System.Web;
+using VideoView.Application.Controllers;
 using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Api
