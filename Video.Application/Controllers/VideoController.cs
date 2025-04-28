@@ -1,4 +1,4 @@
-using Blog.Service.Models;
+using Blog.Domain.Services.Models;
 using Blog.Service.Models.Blog;
 using FileStorage.Service.Service;
 using Infrastructure.Models;

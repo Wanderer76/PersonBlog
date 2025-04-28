@@ -19,7 +19,7 @@ builder.Services.AddUserSessionServices();
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
-builder.Services.AddFileStorage();
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 

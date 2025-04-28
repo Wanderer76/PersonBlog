@@ -12,11 +12,11 @@ namespace Blog.Service.Services.Implementation
 {
     internal class DefaultSubscriptionLevelService : ISubscriptionLevelService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _readWriteRepository;
+        private readonly IReadWriteRepository<IBlogEntity> _readWriteRepository;
         private readonly ICacheService _cacheService;
         private readonly IUserSession _userSession;
 
-        public DefaultSubscriptionLevelService(IReadWriteRepository<IProfileEntity> readWriteRepository, ICacheService cacheService, IUserSession userSession)
+        public DefaultSubscriptionLevelService(IReadWriteRepository<IBlogEntity> readWriteRepository, ICacheService cacheService, IUserSession userSession)
         {
             _readWriteRepository = readWriteRepository;
             _cacheService = cacheService;

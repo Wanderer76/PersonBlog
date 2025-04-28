@@ -11,13 +11,13 @@ namespace Blog.Service.Services.Implementation
 {
     internal sealed class DefaultBlogService : IBlogService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly ICacheService _cacheService;
 
         private string GetBlogByIdKey(Guid id) => $"Blog:{id}";
         private string GetBlogByUserIdKey(Guid id) => $"Blog:UserId{id}";
 
-        public DefaultBlogService(IReadWriteRepository<IProfileEntity> context, ICacheService cacheService)
+        public DefaultBlogService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService)
         {
             _context = context;
             _cacheService = cacheService;

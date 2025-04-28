@@ -25,9 +25,17 @@ namespace Infrastructure.Interface
         public async Task<UserSession> GetUserSessionAsync()
         {
             var hasSession = _contextAccessor.HttpContext.Request.Cookies.TryGetValue(SessionKey.Key, out var session);
-            return hasSession
+            
+            var sessionData = hasSession
                 ? (await _cacheService.GetCachedDataAsync<UserSession>(new SessionKey(Guid.Parse(session!))))!
                 : UserSession.AnonymousUser();
+
+            if(sessionData.UserId == null&& _contextAccessor.HttpContext.Request.Headers.Authorization.FirstOrDefault() != null)
+            {
+                await UpdateUserSession(session);
+                sessionData = (await _cacheService.GetCachedDataAsync<UserSession>(new SessionKey(Guid.Parse(session!))));
+            }
+            return sessionData;
         }
 
         public async Task UpdateUserSession(string session, string? token = null)

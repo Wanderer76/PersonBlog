@@ -43,6 +43,9 @@ internal class DefaultAuthService : IAuthService
 
         await _context.SaveChangesAsync();
 
+        var session = await _userSession.GetUserSessionAsync();
+        await _userSession.UpdateUserSession(session.SessionId.ToString(), response.AccessToken);
+
         return Result<AuthResponse, Error>.Success(response);
     }
 

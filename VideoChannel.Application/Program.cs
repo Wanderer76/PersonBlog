@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddBlogServices();
-builder.Services.AddFileStorage();
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddProfilePersistence(builder.Configuration);
 var app = builder.Build();
 

@@ -11,7 +11,7 @@ using VideoProcessing.Cli.Service;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProfilePersistence(builder.Configuration);
-builder.Services.AddFileStorage();
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddHostedService<VideoConverterHostedService>();
 builder.Services.AddFFMpeg(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);

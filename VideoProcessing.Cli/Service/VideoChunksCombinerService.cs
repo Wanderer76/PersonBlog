@@ -13,9 +13,9 @@ namespace VideoProcessing.Cli.Service
     public class VideoChunksCombinerService : IEventHandler<CombineFileChunksEvent>
     {
         private readonly IFileStorage storage;
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IBlogEntity> _context;
 
-        public VideoChunksCombinerService(IFileStorageFactory storage, IReadWriteRepository<IProfileEntity> context)
+        public VideoChunksCombinerService(IFileStorageFactory storage, IReadWriteRepository<IBlogEntity> context)
         {
             this.storage = storage.CreateFileStorage();
             this._context = context;

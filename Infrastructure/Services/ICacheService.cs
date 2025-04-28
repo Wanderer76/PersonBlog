@@ -13,4 +13,19 @@ namespace Infrastructure.Services
         Task RemoveCachedDataAsync(string key);
         Task RemoveCachedDataAsync(ICacheKey key);
     }
+
+    public static class CacheServiceExtensions
+    {
+        public static async Task<T> GetCachedDataAsync<T>(this ICacheService cache, ICacheKey key, Func<Task<T>> store, long ttlInMinutes = 10)
+        {
+            var data = await cache.GetCachedDataAsync<T>(key);
+            if (data == null)
+            {
+                var result = await store.Invoke();
+                await cache.SetCachedDataAsync(key, result, TimeSpan.FromMinutes(ttlInMinutes));
+                data = result;
+            }
+            return data;
+        }
+    }
 }

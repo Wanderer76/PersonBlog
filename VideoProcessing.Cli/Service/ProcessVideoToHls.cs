@@ -14,14 +14,14 @@ namespace VideoProcessing.Cli.Service
 {
     public class ProcessVideoToHls : IEventHandler<VideoConvertEvent>
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly IFFMpegService _ffmpegService;
         private readonly IFileStorage _storage;
         private readonly ICacheService _cacheService;
         private readonly string _tempPath;
         private readonly HlsVideoPresets _videoPresets;
 
-        public ProcessVideoToHls(IReadWriteRepository<IProfileEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, ICacheService cacheService)
+        public ProcessVideoToHls(IReadWriteRepository<IBlogEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, ICacheService cacheService)
         {
             _context = context;
             _ffmpegService = ffmpegService;

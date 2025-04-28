@@ -1,7 +1,7 @@
 ﻿using Blog.Domain.Entities;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using ReadContext = Shared.Persistence.IReadRepository<Blog.Domain.Entities.IProfileEntity>;
+using ReadContext = Shared.Persistence.IReadRepository<Blog.Domain.Entities.IBlogEntity>;
 
 namespace Blog.Persistence.Repository.Quries
 {

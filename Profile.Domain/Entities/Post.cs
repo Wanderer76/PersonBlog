@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
-    public class Post : IProfileEntity
+    public class Post : IBlogEntity
     {
         [Key]
         public Guid Id { get; private set; }

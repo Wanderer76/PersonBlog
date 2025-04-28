@@ -1,7 +1,7 @@
 ﻿using Blog.Domain.Entities;
-using Blog.Service.Models.Post;
+using Shared.Services;
 
-namespace Blog.Service.Models
+namespace Blog.Domain.Services.Models
 {
     public class PostDetailViewModel
     {
@@ -60,5 +60,18 @@ namespace Blog.Service.Models
             hash.Add(IsProcessed);
             return hash.ToHashCode();
         }
+    }
+
+    public readonly struct PostDetailViewModelCacheKey : ICacheKey
+    {
+        private readonly Guid Id;
+        private const string Key = nameof(PostDetailViewModelCacheKey);
+
+        public PostDetailViewModelCacheKey(Guid id)
+        {
+            Id = id;
+        }
+
+        public string GetKey() => $"{Key}:{Id}";
     }
 }

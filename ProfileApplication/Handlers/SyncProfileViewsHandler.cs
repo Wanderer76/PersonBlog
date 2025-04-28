@@ -10,9 +10,9 @@ namespace Blog.API.Handlers
 {
     public class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IBlogEntity> _context;
 
-        public SyncProfileViewsHandler(IReadWriteRepository<IProfileEntity> context)
+        public SyncProfileViewsHandler(IReadWriteRepository<IBlogEntity> context)
         {
             _context = context;
         }

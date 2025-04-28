@@ -16,7 +16,7 @@ namespace Blog.Persistence
             //services.AddDbContextPool<ProfileDbContext>(option =>
             //option.UseInMemoryDatabase("Profile"));
             //services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();
-            services.AddDefaultRepository<ProfileDbContext, IProfileEntity>();
+            services.AddDefaultRepository<ProfileDbContext, IBlogEntity>();
         }
     }
 }

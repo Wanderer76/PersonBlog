@@ -7,9 +7,9 @@ namespace Blog.Service.Services.Implementation
 {
     internal class DefaultUserPostService : IUserPostService
     {
-        private readonly IReadRepository<IProfileEntity> _readRepository;
+        private readonly IReadRepository<IBlogEntity> _readRepository;
 
-        public DefaultUserPostService(IReadRepository<IProfileEntity> readRepository)
+        public DefaultUserPostService(IReadRepository<IBlogEntity> readRepository)
         {
             _readRepository = readRepository;
         }

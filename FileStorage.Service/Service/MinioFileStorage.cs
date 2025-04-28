@@ -1,7 +1,6 @@
 ﻿using FileStorage.Service.Models;
+using Microsoft.Extensions.Options;
 using Minio;
-using Minio.ApiEndpoints;
-using Minio.DataModel;
 
 namespace FileStorage.Service.Service
 {
@@ -9,11 +8,11 @@ namespace FileStorage.Service.Service
     {
         private readonly IMinioClient _client;
 
-        public MinioFileStorage(FileStorageOptions options)
+        public MinioFileStorage(IOptions<FileStorageOptions> options)
         {
             _client = new MinioClient()
-                .WithEndpoint(options.Endpoint)
-                .WithCredentials(options.AccessKey, options.SecretKey)
+                .WithEndpoint(options.Value.Endpoint)
+                .WithCredentials(options.Value.AccessKey, options.Value.SecretKey)
                 .WithSSL(false)
                 .Build();
         }

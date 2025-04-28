@@ -18,7 +18,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddVideoPersistence(builder.Configuration);
-builder.Services.AddFileStorage();
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddVideoService();
 
 builder.Services.AddHttpClient("Profile", x =>

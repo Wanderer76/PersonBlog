@@ -1,4 +1,4 @@
-﻿namespace Blog.Service.Models.Post
+﻿namespace Blog.Domain.Services.Models
 {
     public class VideoMetadataModel
     {

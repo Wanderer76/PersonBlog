@@ -14,6 +14,8 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<PostViewer> PostViewers { get; set; }
     public DbSet<ProfileSubscription> ProfileSubscriptions { get; set; }
     public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
+    public DbSet<PlayList> PlayLists { get; set; }
+    public DbSet<PlayListItem> PlayListItems { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {
@@ -97,6 +99,20 @@ public class ProfileDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<ProfileSubscription>();
                 entity.HasKey(x => new { x.UserId, x.SubscriptionLevelId });
+            }
+            {
+                var entity = modelBuilder.Entity<PlayListItem>();
+                entity.HasKey(x => new { x.PlayListId, x.PostId });
+                entity.HasIndex(x => new { x.PlayListId, x.PostId, x.Position }).IsUnique();
+            }
+            {
+                var entity = modelBuilder.Entity<PlayList>();
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.BlogId);
+                entity.Property(x => x.Title).HasMaxLength(255);
+                entity.Property(x => x.ThumbnailId);
+                entity.Property(x => x.CreatedAt);
+                entity.Property(x => x.IsDeleted);
             }
         }
     }

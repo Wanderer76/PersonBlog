@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
-    public class ProfileSubscription : IProfileEntity
+    public class ProfileSubscription : IBlogEntity
     {
         public Guid UserId { get; set; }
         public Guid SubscriptionLevelId { get; set; }

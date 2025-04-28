@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FileStorage.Service.Service
 {
@@ -9,18 +10,16 @@ namespace FileStorage.Service.Service
 
     internal class DefaultFileStorageFactory : IFileStorageFactory
     {
-        private readonly IConfiguration configuration;
-        private readonly FileStorageOptions options = new FileStorageOptions();
+        private readonly IServiceScopeFactory _serviceProvider;
 
-        public DefaultFileStorageFactory(IConfiguration configuration)
+        public DefaultFileStorageFactory(IServiceScopeFactory serviceProvider)
         {
-            this.configuration = configuration;
-            configuration.GetRequiredSection(nameof(FileStorageOptions)).Bind(options);
+            _serviceProvider = serviceProvider;
         }
 
         public IFileStorage CreateFileStorage()
         {
-            return new MinioFileStorage(options);
+            return _serviceProvider.CreateScope().ServiceProvider.GetRequiredService<IFileStorage>();
         }
     }
 }

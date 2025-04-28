@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
-    public class Subscriber : IProfileEntity
+    public class Subscriber : IBlogEntity
     {
         [Key]
         public required Guid Id { get; set; }

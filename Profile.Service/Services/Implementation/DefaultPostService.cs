@@ -1,7 +1,7 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Domain.Events;
+using Blog.Domain.Services.Models;
 using Blog.Persistence.Repository.Quries;
-using Blog.Service.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using FileStorage.Service.Service;
@@ -18,11 +18,11 @@ namespace Blog.Service.Services.Implementation
 {
     internal class DefaultPostService : IPostService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly ICacheService _cacheService;
         private readonly IUserSession _userSession;
-        public DefaultPostService(IReadWriteRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, IUserSession userSession)
+        public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, IUserSession userSession)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
@@ -145,7 +145,7 @@ namespace Blog.Service.Services.Implementation
                                     post.CreatedAt,
                                     previewUrl,
                                     post.VideoFile != null && isProcessed == ProcessState.Complete ?
-                                    new Models.Post.VideoMetadataModel(
+                                    new VideoMetadataModel(
                                         videoFile.Id,
                                         videoFile.Length,
                                         videoFile.ContentType,
@@ -261,7 +261,7 @@ namespace Blog.Service.Services.Implementation
                             post.CreatedAt,
                             previewUrl,
                             post.VideoFile != null && isProcessed == ProcessState.Complete ?
-                            new Models.Post.VideoMetadataModel(
+                            new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
                                 videoMetadata.ContentType,
@@ -278,47 +278,51 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
         {
-            var post = await _context.Get<Post>()
+            var cacheData = await _cacheService.GetCachedDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
+            {
+                var post = await _context.Get<Post>()
                 .Include(x => x.VideoFile)
                 .Include(x => x.Blog)
                 .FirstAsync(x => x.Id == postId);
 
-            if (post.Visibility == PostVisibility.Private)
-            {
-                var session = await _userSession.GetUserSessionAsync();
-                if (session.UserId != post.Blog.UserId)
+                if (post.Visibility == PostVisibility.Private)
                 {
-                    throw new ArgumentException();
+                    var session = await _userSession.GetUserSessionAsync();
+                    if (session.UserId != post.Blog.UserId)
+                    {
+                        throw new ArgumentException();
+                    }
                 }
-            }
-            var fileStorage = _fileStorageFactory.CreateFileStorage();
+                var fileStorage = _fileStorageFactory.CreateFileStorage();
 
-            var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
-                ? null
-                : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+                var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
+                    ? null
+                    : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
 
-            var videoMetadata = post.VideoFile;
-            var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+                var videoMetadata = post.VideoFile;
+                var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
 
-            return new PostDetailViewModel(
-                post.Id,
-                previewUrl,
-                post.CreatedAt,
-                post.ViewCount,
-                post.Description,
-                post.Title,
-                post.Type,
-                post.LikeCount,
-                post.DislikeCount,
-                post.VideoFile != null && !isProcessed ?
-                            new VideoMetadataModel(
-                                videoMetadata.Id,
-                                videoMetadata.Length,
-                                videoMetadata.ContentType,
-                                videoMetadata.ObjectName
-                            ) : null,
-                isProcessed
-            );
+                return new PostDetailViewModel(
+                    post.Id,
+                    previewUrl,
+                    post.CreatedAt,
+                    post.ViewCount,
+                    post.Description,
+                    post.Title,
+                    post.Type,
+                    post.LikeCount,
+                    post.DislikeCount,
+                    post.VideoFile != null && !isProcessed ?
+                                new VideoMetadataModel(
+                                    videoMetadata.Id,
+                                    videoMetadata.Length,
+                                    videoMetadata.ContentType,
+                                    videoMetadata.ObjectName
+                                ) : null,
+                    isProcessed
+                );
+            });
+            return cacheData;
         }
 
         public Task SetVideoViewed(ViewedVideoModel value)

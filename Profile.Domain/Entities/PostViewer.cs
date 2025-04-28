@@ -2,7 +2,7 @@
 
 namespace Blog.Domain.Entities
 {
-    public class PostViewer : IProfileEntity
+    public class PostViewer : IBlogEntity
     {
         [Key]
         public Guid Id { get; set; }

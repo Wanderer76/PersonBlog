@@ -36,7 +36,7 @@ namespace Blog.API.HostedServices
             {
                 using var scope = _serviceProvider.CreateScope();
 
-                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
 
                 var messages = await dbContext.Get<VideoProcessEvent>()
                     .Where(m => m.State == EventState.Pending && m.RetryCount < 3)
@@ -76,7 +76,7 @@ namespace Blog.API.HostedServices
         private async Task ProcessError(VideoProcessEvent message)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
             dbContext.Attach(message);
             message.RetryCount++;
             if (message.RetryCount > 3)
@@ -93,7 +93,7 @@ namespace Blog.API.HostedServices
         private async Task ProcessSuccess(VideoProcessEvent message)
         {
             using var scope = _serviceProvider.CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IProfileEntity>>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
             dbContext.Attach(message);
             message.Complete();
             await dbContext.SaveChangesAsync();

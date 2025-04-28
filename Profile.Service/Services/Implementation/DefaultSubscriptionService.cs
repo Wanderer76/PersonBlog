@@ -7,9 +7,9 @@ namespace Blog.Service.Services.Implementation
 {
     internal class DefaultSubscriptionService : ISubscriptionService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _readWriteRepository;
+        private readonly IReadWriteRepository<IBlogEntity> _readWriteRepository;
 
-        public DefaultSubscriptionService(IReadWriteRepository<IProfileEntity> readWriteRepository)
+        public DefaultSubscriptionService(IReadWriteRepository<IBlogEntity> readWriteRepository)
         {
             _readWriteRepository = readWriteRepository;
         }

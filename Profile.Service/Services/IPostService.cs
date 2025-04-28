@@ -1,5 +1,5 @@
 ﻿using Blog.Domain.Entities;
-using Blog.Service.Models;
+using Blog.Domain.Services.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using Shared.Models;

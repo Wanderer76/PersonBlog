@@ -9,9 +9,9 @@ namespace Recommendation.Service.Service.Implementaion
 {
     internal class DefaultRecommendationService : IRecommendationService
     {
-        private readonly IReadRepository<IProfileEntity> _context;
+        private readonly IReadRepository<IBlogEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
-        public DefaultRecommendationService(IReadRepository<IProfileEntity> context, IFileStorageFactory fileStorageFactory)
+        public DefaultRecommendationService(IReadRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;

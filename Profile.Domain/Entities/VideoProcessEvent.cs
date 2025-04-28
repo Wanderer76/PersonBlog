@@ -2,7 +2,7 @@
 
 namespace Blog.Domain.Entities
 {
-    public class VideoProcessEvent : BaseEvent, IProfileEntity
+    public class VideoProcessEvent : BaseEvent, IBlogEntity
     {
     }
 }

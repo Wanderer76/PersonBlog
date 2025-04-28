@@ -1,4 +1,5 @@
 ﻿using Blog.Domain.Entities;
+using Blog.Domain.Services.Models;
 
 namespace Blog.Service.Models.Post
 {

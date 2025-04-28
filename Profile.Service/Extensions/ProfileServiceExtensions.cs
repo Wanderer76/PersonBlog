@@ -16,6 +16,7 @@ namespace Blog.Service.Extensions
             services.AddScoped<IUserPostService, DefaultUserPostService>();
             services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
             services.AddScoped<ISubscriptionLevelService, DefaultSubscriptionLevelService>();
+            services.AddScoped<IPlayListService, DefaultPlayListService>();
         }
     }
 }

@@ -10,9 +10,9 @@ namespace Blog.Service.Services.Implementation
 {
     internal class DefaultVideoService : IVideoService
     {
-        private readonly IReadWriteRepository<IProfileEntity> _context;
+        private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly ICacheService _cacheService;
-        public DefaultVideoService(IReadWriteRepository<IProfileEntity> context, ICacheService cacheService)
+        public DefaultVideoService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService)
         {
             _context = context;
             _cacheService = cacheService;
