@@ -11,7 +11,9 @@ namespace Infrastructure.Services
         private readonly IConnectionMultiplexer _redis;
         private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
-            ReferenceHandler = ReferenceHandler.IgnoreCycles
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
+            IgnoreReadOnlyProperties = false,
+            WriteIndented = true,
         };
         public RedisCacheService(IConnectionMultiplexer redis)
         {

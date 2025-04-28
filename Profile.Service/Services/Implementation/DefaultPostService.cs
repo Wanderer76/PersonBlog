@@ -278,7 +278,7 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
         {
-            var cacheData = await _cacheService.GetCachedDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
+            var cacheData = await _cacheService.GetOrAddDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
             {
                 var post = await _context.Get<Post>()
                 .Include(x => x.VideoFile)

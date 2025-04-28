@@ -16,7 +16,7 @@ namespace Infrastructure.Services
 
     public static class CacheServiceExtensions
     {
-        public static async Task<T> GetCachedDataAsync<T>(this ICacheService cache, ICacheKey key, Func<Task<T>> store, long ttlInMinutes = 10)
+        public static async Task<T> GetOrAddDataAsync<T>(this ICacheService cache, ICacheKey key, Func<Task<T>> store, long ttlInMinutes = 10)
         {
             var data = await cache.GetCachedDataAsync<T>(key);
             if (data == null)

@@ -1,14 +1,18 @@
 ﻿using Shared.Services;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Blog.Domain.Entities
 {
     public class PlayListItem : IBlogEntity
     {
+        [JsonInclude]
         public Guid PostId { get; }
+        [JsonInclude]
         public Guid PlayListId { get; }
+        [JsonInclude]
         public int Position { get; set; }
-
+        [JsonInclude]
         public DateTimeOffset CreatedAt { get; }
 
         [ForeignKey(nameof(PostId))]

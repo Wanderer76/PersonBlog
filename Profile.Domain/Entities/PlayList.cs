@@ -1,18 +1,26 @@
 ﻿using Shared.Services;
 using Shared.Utils;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Blog.Domain.Entities
 {
     public class PlayList : IBlogEntity
     {
         [Key]
-        public Guid Id { get; }
-        public Guid BlogId { get; }
+        [JsonInclude]
+        public Guid Id { get; private set; }
+        [JsonInclude]
+        public Guid BlogId { get; private set; }
+        [JsonInclude]
         public string Title { get; set; }
+        [JsonInclude]
         public string? ThumbnailId { get; set; }
-        public DateTimeOffset CreatedAt { get; }
+        [JsonInclude]
+        public DateTimeOffset CreatedAt { get; private set; }
+        [JsonInclude]
         public bool IsDeleted { get; private set; }
+        [JsonInclude]
         public List<PlayListItem> PlayListItems { get; private set; }
 
         public PlayList()

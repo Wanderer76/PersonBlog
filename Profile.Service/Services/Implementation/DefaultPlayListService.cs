@@ -32,7 +32,7 @@ namespace Blog.Service.Services.Implementation
             var user = await _userSession.GetUserSessionAsync();
             user.AssertFound();
             var key = new PlayListCacheKey(playListItem.PlayListId);
-            var playlist = await _cacheService.GetCachedDataAsync(key, async () =>
+            var playlist = await _cacheService.GetOrAddDataAsync(key, async () =>
             {
                 var data = await _repository.Get<PlayList>()
                 .Where(x => x.Id == playListItem.PlayListId && x.IsDeleted == false)
@@ -108,7 +108,7 @@ namespace Blog.Service.Services.Implementation
         public async Task<Result<IReadOnlyList<PlayListViewModel>>> GetBlogPlayListsAsync(Guid blogId)
         {
             var key = new PlayListCacheKey(blogId);
-            var playlists = await _cacheService.GetCachedDataAsync(key, async () =>
+            var playlists = await _cacheService.GetOrAddDataAsync(key, async () =>
             {
                 var data = await _repository.Get<PlayList>()
                 .Where(x => x.BlogId == blogId && x.IsDeleted == false)
@@ -137,7 +137,7 @@ namespace Blog.Service.Services.Implementation
         public async Task<Result<PlayListDetailViewModel>> GetPlayListDetailAsync(Guid id)
         {
             var playListKey = new PlayListCacheKey(id);
-            var playlist = await _cacheService.GetCachedDataAsync(playListKey, async () =>
+            var playlist = await _cacheService.GetOrAddDataAsync(playListKey, async () =>
             {
                 var data = await _repository.Get<PlayList>()
                 .Where(x => x.Id == id)
@@ -153,7 +153,7 @@ namespace Blog.Service.Services.Implementation
                 .FirstAsync();
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
             var key = new PlayListDetailCacheKey(id);
-            var playlistViewModel = await _cacheService.GetCachedDataAsync(key, async () =>
+            var playlistViewModel = await _cacheService.GetOrAddDataAsync(key, async () =>
             {
                 var result = new PlayListDetailViewModel
                 {
