@@ -59,6 +59,7 @@ namespace Blog.Service.Services.Implementation
             {
                 position = playlist.PlayListItems.Count != 0 ? playlist.PlayListItems.Max(x => x.Position) + 1 : 1;
             }
+
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
             _repository.Attach(playlist);
             var isAdded = playlist.AddVideo(new PlayListItem(playListItem.PostId, playlist.Id, position));
@@ -131,7 +132,7 @@ namespace Blog.Service.Services.Implementation
                 Posts = x.PlayListItems.Select(x => x.PostId).ToList()
             }).ToListAsync();
 
-            return Result<IReadOnlyList<PlayListViewModel>>.Success(result);
+            return result;
         }
 
         public async Task<Result<PlayListDetailViewModel>> GetPlayListDetailAsync(Guid id)
@@ -147,6 +148,7 @@ namespace Blog.Service.Services.Implementation
             });
 
             playlist.AssertFound();
+
             var userId = await _repository.Get<PersonBlog>()
                 .Where(x => x.Id == playlist.BlogId)
                 .Select(x => x.UserId)
@@ -164,7 +166,38 @@ namespace Blog.Service.Services.Implementation
                 };
                 return result;
             });
-            return Result<PlayListDetailViewModel>.Success(playlistViewModel);
+
+            return playlistViewModel;
+        }
+
+        public async Task<Result<PlayListViewModel>> RemoveVideoFromPlayListAsync(PlayListItemRemoveRequest playListRequest)
+        {
+            var key = new PlayListCacheKey(playListRequest.PlayListId);
+            var playlist = await _cacheService.GetOrAddDataAsync(key, async () =>
+            {
+                var data = await _repository.Get<PlayList>()
+                .Where(x => x.Id == playListRequest.PlayListId && x.IsDeleted == false)
+                .Include(x => x.PlayListItems)
+                .FirstOrDefaultAsync();
+                return data;
+            });
+
+            if (playlist == null) { return Result<PlayListViewModel>.Failure(new("404", "Плейлист не найден")); }
+
+            _repository.Attach(playlist);
+            playlist.RemoveVideo(playListRequest.PostId);
+            await _repository.SaveChangesAsync();
+            await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
+            using var fileStorage = _fileStorageFactory.CreateFileStorage();
+            var userId = (await _userSession.GetUserSessionAsync()).UserId!.Value;
+
+            return new PlayListViewModel
+            {
+                Id = playlist.Id,
+                ThumbnailUrl = playlist.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(userId!, playlist.ThumbnailId!),
+                Title = playlist.Title,
+                Posts = playlist.PlayListItems.Select(x => x.PostId).ToList()
+            };
         }
     }
 }

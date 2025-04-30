@@ -5,6 +5,7 @@ import './ProfilePage.css';
 import { useNavigate } from "react-router-dom";
 import DefaultProfileIcon from '../../defaultProfilePic.png'
 import { getLocalDateTime } from "../../scripts/LocalDate";
+import PlaylistEditorModal from "../../components/playList/PlaylistEditorModal";
 
 const ProfilePage = () => {
 
@@ -78,7 +79,6 @@ const ProfilePage = () => {
         }
     }, [blogId.current])
 
-
     async function loadPosts() {
         if (blogId.current) {
             const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${page}&limit=${pageSize}`;
@@ -116,33 +116,33 @@ const ProfilePage = () => {
 
     function drawPosts() {
         return posts.map((post, index) => {
-            // if (posts.length == index + 1) {
-            //     return (
-            //         <div key={post.id} className="postCard" >
-            //             <div className="postThumbnail">
-            //                 <img src={post.previewId} alt={post.title} />
-            //                 <div className="videoDuration">{post.duration}</div>
-            //                 {post.type === 1 &&
-            //                     <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
-            //             </div>
-            //             <div className="postContent">
-            //                 <h3 className="postTitle">{post.title}</h3>
-            //                 <p className="postDescription">{post.description}</p>
+            if (posts.length == index + 1) {
+                return (
+                    <div key={post.id} className="postCard" ref={lastPostRef} >
+                        <div className="postThumbnail">
+                            <img src={post.previewId} alt={post.title} />
+                            <div className="videoDuration">{post.duration}</div>
+                            {post.type === 1 &&
+                                <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
+                        </div>
+                        <div className="postContent">
+                            <h3 className="postTitle">{post.title}</h3>
+                            <p className="postDescription">{post.description}</p>
 
-            //                 <div className="postMeta">
-            //                     <div className="postStats">
-            //                         <span>👁 {post.views}</span>
-            //                         <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
-            //                     </div>
-            //                     <div className="postActions">
-            //                         <button className="btn btnPrimary">Редактировать</button>
-            //                         <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
-            //                     </div>
-            //                 </div>
-            //             </div>
-            //         </div>
-            //     );
-            // }
+                            <div className="postMeta">
+                                <div className="postStats">
+                                    <span>👁 {post.views}</span>
+                                    <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <div className="postActions">
+                                    <button className="btn btnPrimary">Редактировать</button>
+                                    <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div key={post.id} className="postCard">
@@ -162,11 +162,12 @@ const ProfilePage = () => {
                                 <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
                             </div>
                             <div className="postActions">
-                                <button className="btn btnPrimary">Редактировать</button>
+                                <button className="btn btnPrimary" >Редактировать</button>
                                 <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
                             </div>
                         </div>
                     </div>
+                  
                 </div>
             );
         })
@@ -174,32 +175,32 @@ const ProfilePage = () => {
 
     function drawPlayLists() {
         return playLists.map((post, index) => {
-            if (playLists.length == index + 1) {
-                return (
-                    <div key={post.id} className="postCard" ref={lastPostRef} >
-                        <article class="playlist-card">
-                            <div class="playlist-cover">
-                                <img src={post.thumbnailUrl} alt="Обложка плейлиста" />
-                                <span class="playlist-badge video-count">{post.posts.length} видео</span>
-                                {/* <span class="playlist-badge privacy-status">Приватный</span> */}
-                            </div>
-                            <div class="playlist-info">
-                                <h3 class="playlist-title">{post.title}</h3>
-                                <p class="playlist-description">{post?.description}</p>
-                                {/* <div class="playlist-stats">
-                                    <span>1.2K просмотров</span>
-                                    <span>•</span>
-                                    <span>3 дня назад</span>
-                                </div> */}
-                                <div class="playlist-actions">
-                                    <button class="btn btnPrimary">Редактировать</button>
-                                    <button class="btn btnSecondary">Удалить</button>
-                                </div>
-                            </div>
-                        </article>
-                    </div>
-                );
-            }
+            // if (playLists.length == index + 1) {
+            //     return (
+            //         <div key={post.id} className="postCard" ref={lastPostRef} >
+            //             <article class="playlist-card">
+            //                 <div class="playlist-cover">
+            //                     <img src={post.thumbnailUrl} alt="Обложка плейлиста" />
+            //                     <span class="playlist-badge video-count">{post.posts.length} видео</span>
+            //                     {/* <span class="playlist-badge privacy-status">Приватный</span> */}
+            //                 </div>
+            //                 <div class="playlist-info">
+            //                     <h3 class="playlist-title">{post.title}</h3>
+            //                     <p class="playlist-description">{post?.description}</p>
+            //                     {/* <div class="playlist-stats">
+            //                         <span>1.2K просмотров</span>
+            //                         <span>•</span>
+            //                         <span>3 дня назад</span>
+            //                     </div> */}
+            //                     <div class="playlist-actions">
+            //                         <button class="btn btnPrimary">Редактировать</button>
+            //                         <button class="btn btnSecondary">Удалить</button>
+            //                     </div>
+            //                 </div>
+            //             </article>
+            //         </div>
+            //     );
+            // }
 
             return (
                 <div key={post.id} className="postCard">

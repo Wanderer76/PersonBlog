@@ -7,13 +7,13 @@ namespace Blog.Domain.Entities
     public class PlayListItem : IBlogEntity
     {
         [JsonInclude]
-        public Guid PostId { get; }
+        public Guid PostId { get; init; }
         [JsonInclude]
-        public Guid PlayListId { get; }
+        public Guid PlayListId { get; init; }
         [JsonInclude]
         public int Position { get; set; }
         [JsonInclude]
-        public DateTimeOffset CreatedAt { get; }
+        public DateTimeOffset CreatedAt { get; init; }
 
         [ForeignKey(nameof(PostId))]
         public Post Post { get; } = null!;

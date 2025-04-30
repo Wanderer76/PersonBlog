@@ -33,7 +33,7 @@ namespace Infrastructure.Services
         public async Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<string> keys)
         {
             var db = _redis.GetDatabase();
-            var redisKeys = keys.Select(x => new RedisKey($"{x}")).ToArray();
+            var redisKeys = keys.Select(x => new RedisKey(x)).ToArray();
             var result = await db.StringGetAsync(redisKeys);
             return result == null
                 ? []

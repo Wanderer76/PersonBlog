@@ -8,3 +8,9 @@ public class PlayListItemAddRequest
     public int? Position { get; set; }
 }
 
+public class PlayListItemRemoveRequest
+{
+    public required Guid PlayListId { get; set; }
+    public required Guid PostId { get; set; }
+}
+

@@ -25,7 +25,7 @@ namespace Blog.Domain.Entities
 
         public PlayList()
         {
-            
+
         }
 
         public PlayList(string title, Guid blogId, string? thumbnailId, List<Guid> playListItems)
@@ -54,6 +54,21 @@ namespace Blog.Domain.Entities
                 return new Error("duplicate element");
             }
             PlayListItems.Add(item);
+            return true;
+        }
+
+        public Result<bool> RemoveVideo(Guid postId)
+        {
+            var item = PlayListItems.FirstOrDefault(x => x.PostId == postId);
+            if (item == null) { return new Error("404", "Видео не найдено"); }
+            PlayListItems.Remove(item);
+            var position = item.Position;
+            var startPosition = 1;
+            foreach (var i in PlayListItems.OrderBy(x => x.Position))
+            {
+                i.Position = startPosition;
+                startPosition++;
+            }
             return true;
         }
     }

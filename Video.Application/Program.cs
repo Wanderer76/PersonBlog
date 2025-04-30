@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Recommendation.Service;
 using Video.Persistence;
 using Video.Service;
-using VideoView.Application.Api;
-using VideoView.Application.Controllers;
 using VideoView.Application.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);

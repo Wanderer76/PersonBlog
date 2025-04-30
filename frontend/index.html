@@ -3,266 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>История просмотров</title>
+    <title>Мои плейлисты</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', Arial, sans-serif;
-        }
-
+        /* Базовые стили */
         body {
-            background-color: #f9f9f9;
-            padding: 20px;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f8f9fa;
         }
 
-        .container {
+        /* Контейнер */
+        .playlists-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 30px auto;
+            padding: 0 20px;
         }
 
-        h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .day-group {
+        /* Шапка секции */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 30px;
         }
-
-        .day-header {
-            font-size: 18px;
-            font-weight: 500;
+        .section-title {
             color: #333;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #e0e0e0;
+            margin: 0;
         }
 
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        /* Кнопки */
+        .button {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+        .button-primary {
+            background: #ff7b00;
+            color: white;
+        }
+        .button-primary:hover {
+            background: #ff6a00;
+        }
+        .button-secondary {
+            background: #eee;
+            color: #333;
+        }
+        .button-secondary:hover {
+            background: #ddd;
         }
 
-        .history-item {
+        /* Сетка плейлистов */
+        .playlists-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* Карточка плейлиста */
+        .playlist-card {
             background: white;
             border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             overflow: hidden;
-            display: flex;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
+        }
+        .playlist-card:hover {
+            transform: translateY(-3px);
         }
 
-        .history-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        .thumbnail {
-            width: 180px;
-            height: 100px;
-            object-fit: cover;
+        /* Обложка */
+        .playlist-cover {
             position: relative;
-            flex-shrink: 0;
+            aspect-ratio: 16/9;
+            background: #222;
+        }
+        .playlist-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .thumbnail::after {
-            content: '';
+        /* Бейджи */
+        .playlist-badge {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.3);
-            opacity: 0;
-            transition: opacity 0.2s;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .video-count {
+            bottom: 10px;
+            left: 10px;
+        }
+        .privacy-status {
+            top: 10px;
+            right: 10px;
         }
 
-        .history-item:hover .thumbnail::after {
-            opacity: 1;
+        /* Контент карточки */
+        .playlist-info {
+            padding: 15px;
         }
-
-        .details {
-            padding: 12px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .title {
+        .playlist-title {
+            color: #333;
+            margin: 0 0 8px 0;
             font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
+        }
+        .playlist-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            margin: 0 0 12px 0;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
-        .meta {
-            font-size: 13px;
-            color: #606060;
-            margin-top: auto;
-        }
-
-        .author {
-            margin-bottom: 4px;
-        }
-
-        .stats {
+        .playlist-stats {
             display: flex;
             align-items: center;
-            gap: 6px;
-        }
-
-        .watch-time {
+            gap: 10px;
+            color: #888;
             font-size: 12px;
-            color: #909090;
-            margin-top: 4px;
         }
-
-        .menu-btn {
-            margin-left: auto;
-            align-self: flex-start;
-            background: none;
-            border: none;
-            color: #606060;
-            cursor: pointer;
-            font-size: 18px;
-            padding: 4px;
-        }
-
-        @media (max-width: 600px) {
-            .thumbnail {
-                width: 120px;
-                height: 70px;
-            }
-            
-            .title {
-                font-size: 14px;
-            }
-            
-            .meta {
-                font-size: 12px;
-            }
+        .playlist-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>История просмотров</h1>
-        <div id="historyContainer">
-            <!-- Здесь будут группы по дням -->
+    <div class="playlists-container">
+        <header class="section-header">
+            <h2 class="section-title">Мои плейлисты</h2>
+            <button class="button button-primary">Создать плейлист</button>
+        </header>
+
+        <div class="playlists-grid">
+            <!-- Плейлист 1 -->
+            <article class="playlist-card">
+                <div class="playlist-cover">
+                    <img src="cover1.jpg" alt="Обложка плейлиста">
+                    <span class="playlist-badge video-count">15 видео</span>
+                    <span class="playlist-badge privacy-status">Приватный</span>
+                </div>
+                <div class="playlist-info">
+                    <h3 class="playlist-title">Лучшие хиты 2024</h3>
+                    <p class="playlist-description">Топовые треки этого года, собранные для вас</p>
+                    <div class="playlist-stats">
+                        <span>1.2K просмотров</span>
+                        <span>•</span>
+                        <span>3 дня назад</span>
+                    </div>
+                    <div class="playlist-actions">
+                        <button class="button button-secondary">Редактировать</button>
+                        <button class="button button-secondary">Удалить</button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Плейлист 2 -->
+            <article class="playlist-card">
+                <div class="playlist-cover">
+                    <img src="cover2.jpg" alt="Обложка плейлиста">
+                    <span class="playlist-badge video-count">8 видео</span>
+                </div>
+                <div class="playlist-info">
+                    <h3 class="playlist-title">Ретро волна</h3>
+                    <p class="playlist-description">Золотая классика 80-90х годов</p>
+                    <div class="playlist-stats">
+                        <span>2.5K просмотров</span>
+                        <span>•</span>
+                        <span>1 неделю назад</span>
+                    </div>
+                    <div class="playlist-actions">
+                        <button class="button button-secondary">Редактировать</button>
+                        <button class="button button-secondary">Удалить</button>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Добавьте больше плейлистов -->
         </div>
     </div>
-
-    <script>
-        // Пример данных для истории просмотров с группировкой по дням
-        const historyData = {
-            "Сегодня": [
-                {
-                    title: "Как создать адаптивный дизайн за 10 минут",
-                    author: "Web Design Pro",
-                    views: "12 тыс. просмотров",
-                    uploaded: "2 часа назад",
-                    watchTime: "Смотрели 15:30",
-                    thumbnail: "https://picsum.photos/180/100?1"
-                },
-                {
-                    title: "Новые возможности JavaScript 2024",
-                    author: "Code Master",
-                    views: "8 тыс. просмотров",
-                    uploaded: "5 часов назад",
-                    watchTime: "Смотрели 11:45",
-                    thumbnail: "https://picsum.photos/180/100?2"
-                }
-            ],
-            "Вчера": [
-                {
-                    title: "Изучение Python с нуля - полный курс",
-                    author: "Python Guru",
-                    views: "150 тыс. просмотров",
-                    uploaded: "1 неделю назад",
-                    watchTime: "Смотрели вчера 18:20",
-                    thumbnail: "https://picsum.photos/180/100?3"
-                },
-                {
-                    title: "React vs Vue - что выбрать в 2024?",
-                    author: "Frontend Expert",
-                    views: "45 тыс. просмотров",
-                    uploaded: "3 недели назад",
-                    watchTime: "Смотрели вчера 14:15",
-                    thumbnail: "https://picsum.photos/180/100?4"
-                },
-                {
-                    title: "Алгоритмы и структуры данных для начинающих",
-                    author: "Algo Master",
-                    views: "32 тыс. просмотров",
-                    uploaded: "1 месяц назад",
-                    watchTime: "Смотрели вчера 10:30",
-                    thumbnail: "https://picsum.photos/180/100?5"
-                }
-            ],
-            "24 апреля 2024": [
-                {
-                    title: "Полное руководство по CSS Grid",
-                    author: "CSS Wizard",
-                    views: "28 тыс. просмотров",
-                    uploaded: "2 месяца назад",
-                    watchTime: "Смотрели 24 апреля в 16:45",
-                    thumbnail: "https://picsum.photos/180/100?6"
-                }
-            ]
-        };
-
-        // Генерация списка истории
-        const historyContainer = document.getElementById('historyContainer');
-        
-        for (const [day, items] of Object.entries(historyData)) {
-            const dayGroup = document.createElement('div');
-            dayGroup.className = 'day-group';
-            
-            const dayHeader = document.createElement('h2');
-            dayHeader.className = 'day-header';
-            dayHeader.textContent = day;
-            
-            const historyList = document.createElement('div');
-            historyList.className = 'history-list';
-            
-            items.forEach(item => {
-                const card = document.createElement('a');
-                card.className = 'history-item';
-                card.href = '#';
-                
-                card.innerHTML = `
-                    <img src="${item.thumbnail}" alt="Превью" class="thumbnail">
-                    <div class="details">
-                        <h3 class="title">${item.title}</h3>
-                        <div class="meta">
-                            <div class="author">${item.author}</div>
-                            <div class="stats">
-                                <span>${item.views}</span>
-                                <span>•</span>
-                                <span>${item.uploaded}</span>
-                            </div>
-                            <div class="watch-time">${item.watchTime}</div>
-                        </div>
-                    </div>
-                    <button class="menu-btn">⋮</button>
-                `;
-                
-                historyList.appendChild(card);
-            });
-            
-            dayGroup.appendChild(dayHeader);
-            dayGroup.appendChild(historyList);
-            historyContainer.appendChild(dayGroup);
-        }
-    </script>
 </body>
 </html>
