@@ -7,8 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Common\FileStorage.Service\FileStorage.Service.csproj" />
-      <ProjectReference Include="..\Common\Shared\Shared.csproj" />
+      <ProjectReference Include="..\..\Common\FileStorage.Service\FileStorage.Service.csproj" />
+      <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+      <ProjectReference Include="..\..\Common\Shared\Shared.csproj" />
     </ItemGroup>
+
+  
 
 </Project>

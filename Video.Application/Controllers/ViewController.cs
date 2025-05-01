@@ -1,13 +1,8 @@
-﻿using Blog.Domain.Entities;
-using Blog.Service.Models.File;
-using FileStorage.Service.Service;
+﻿using FileStorage.Service.Service;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Services;
-using System;
 using VideoView.Application.Api;
 using ViewReacting.Domain.Models;
 

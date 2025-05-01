@@ -1,5 +1,4 @@
-﻿using Authentication.Domain.Entities;
-using Blog.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using MessageBus.EventHandler;
 using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;

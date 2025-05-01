@@ -1,5 +1,4 @@
 ﻿using Blog.Domain.Entities;
-using Blog.Persistence.Repository.Quries;
 using Blog.Service.Exceptions;
 using Blog.Service.Models.Blog;
 using Infrastructure.Services;
