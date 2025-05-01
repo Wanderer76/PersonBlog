@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />
     <ProjectReference Include="..\Video.Domain\Video.Domain.csproj" />
-    <ProjectReference Include="..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />
   </ItemGroup>
 
 </Project>
