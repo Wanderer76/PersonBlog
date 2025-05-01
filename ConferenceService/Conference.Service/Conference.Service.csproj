@@ -7,7 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Common\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Conference.Domain\Conference.Domain.csproj" />
   </ItemGroup>
+
+ 
 
 </Project>

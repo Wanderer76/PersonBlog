@@ -1,7 +1,5 @@
 ﻿using Conference.Domain.Entities;
-using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Persistence;
 
 namespace Conference.Persistence
