@@ -14,7 +14,7 @@ namespace FFmpeg.Service.Internal
         private readonly FFMpegOptions fFMpegOptions;
         public FFMpegService(FFMpegOptions configuration)
         {
-            Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../ffmpeg");
+            Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../../ffmpeg");
             fFMpegOptions = configuration;
         }
 
