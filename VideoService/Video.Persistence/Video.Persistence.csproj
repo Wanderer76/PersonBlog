@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ViewReacting.Domain\ViewReacting.Domain.csproj" />
+    <ProjectReference Include="..\Video.Domain\Video.Domain.csproj" />
   </ItemGroup>
 
 </Project>

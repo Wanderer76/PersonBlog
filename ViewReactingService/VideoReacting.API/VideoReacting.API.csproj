@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\MessageBus\MessageBus.csproj" />
     <ProjectReference Include="..\VideoReacting.Persistence\VideoReacting.Persistence.csproj" />
     <ProjectReference Include="..\VideoReacting.Service\VideoReacting.Service.csproj" />
     <ProjectReference Include="..\ViewReacting.Domain\ViewReacting.Domain.csproj" />
