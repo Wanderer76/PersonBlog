@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\..\Profile.Domain\Blog.Domain.csproj" />
     <ProjectReference Include="..\..\Profile.Persistence\Blog.Persistence.csproj" />
     <ProjectReference Include="..\Recommendation.Service\Recommendation.Service.csproj" />

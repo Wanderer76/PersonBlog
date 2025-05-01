@@ -13,7 +13,6 @@
     <ItemGroup>
       <ProjectReference Include="..\Authentication.Domain\Authentication.Domain.csproj" />
       <ProjectReference Include="..\Authentication.Peristence\Authentication.Peristence.csproj" />
-      <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
 </Project>

@@ -11,8 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MessageBus.Shared\MessageBus.Shared.csproj" />
-    <ProjectReference Include="..\MessageBus\MessageBus.csproj" />
+    <ProjectReference Include="..\Common\MessageBus\MessageBus.csproj" />
     <ProjectReference Include="..\Video.Domain\Video.Domain.csproj" />
     <ProjectReference Include="..\Video.Persistence\Video.Persistence.csproj" />
   </ItemGroup>
