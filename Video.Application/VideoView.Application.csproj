@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Blog.Service\Recommendation.Service.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\Profile.Service\Blog.Service.csproj" />
     <ProjectReference Include="..\Video.Persistence\Video.Persistence.csproj" />
