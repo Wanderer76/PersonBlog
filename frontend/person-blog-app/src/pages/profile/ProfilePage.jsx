@@ -118,15 +118,15 @@ const ProfilePage = () => {
         return posts.map((post, index) => {
             if (posts.length == index + 1) {
                 return (
-                    <div key={post.id} className="postCard" ref={lastPostRef} >
-                        <div className="postThumbnail">
+                    <div key={post.id} className="postCard" ref={lastPostRef}>
+                        <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
                             <img src={post.previewId} alt={post.title} />
                             <div className="videoDuration">{post.duration}</div>
                             {post.type === 1 &&
                                 <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
                         </div>
                         <div className="postContent">
-                            <h3 className="postTitle">{post.title}</h3>
+                            <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
                             <p className="postDescription">{post.description}</p>
 
                             <div className="postMeta">
@@ -146,14 +146,14 @@ const ProfilePage = () => {
 
             return (
                 <div key={post.id} className="postCard">
-                    <div className="postThumbnail">
+                    <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
                         <img src={post.previewId} alt={post.title} />
                         <div className="videoDuration">{post.duration}</div>
                         {post.type === 1 &&
                             <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
                     </div>
                     <div className="postContent">
-                        <h3 className="postTitle">{post.title}</h3>
+                        <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
                         <p className="postDescription">{post.description}</p>
 
                         <div className="postMeta">
@@ -167,7 +167,7 @@ const ProfilePage = () => {
                             </div>
                         </div>
                     </div>
-                  
+
                 </div>
             );
         })
