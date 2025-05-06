@@ -1,4 +1,5 @@
 ﻿using Blog.Domain.Entities;
+using Blog.Domain.Services.Models;
 using MassTransit;
 
 namespace Blog.Domain.Events
@@ -34,6 +35,8 @@ namespace Blog.Domain.Events
         public Guid PostId { get; set; }
         public Guid VideoMetadataId { get; set; }
         public string ObjectName { get; set; }
+        public bool HasPreviewId {  get; set; }
+        public required VideoMetadata VideoMetadata { get; set; }
 
     }
 

@@ -1,5 +1,4 @@
-﻿using Blog.API.Models;
-using Blog.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +26,7 @@ public class VideoProcessingSaga : MassTransitStateMachine<VideoProcessingSagaSt
         Event(() => CombineChunks, x => x.CorrelateById(m => m.Message.VideoMetadataId));
         Event(() => ChunksCombined, x => x.CorrelateById(m => m.Message.VideoMetadataId));
         Event(() => VideoConverted, x => x.CorrelateById(m => m.Message.VideoMetadataId));
-       
+
         Initially(
     When(CombineChunks)
         .Then(ctx =>
@@ -46,15 +45,25 @@ public class VideoProcessingSaga : MassTransitStateMachine<VideoProcessingSagaSt
                     using var scope = _serviceProvider.CreateScope();
                     var repository = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
 
-                    await repository.Get<VideoMetadata>()
+                    var video = await repository.Get<VideoMetadata>()
                     .Where(x => x.Id == ctx.Message.VideoMetadataId)
-                    .ExecuteUpdateAsync(video => video.SetProperty(x => x.ObjectName, ctx.Message.ObjectName));
+                    .FirstAsync();
+                    video.ObjectName = ctx.Message.ObjectName;
+
+                    var hasPreviewId = await repository.Get<Post>()
+                    .Where(x => x.Id == ctx.Message.PostId)
+                    .Select(x => x.PreviewId)
+                    .FirstAsync();
+
+                    await repository.SaveChangesAsync();
 
                     await ctx.Publish(new ConvertVideoCommand
                     {
                         VideoMetadataId = ctx.Saga.VideoMetadataId,
                         ObjectName = ctx.Saga.ObjectName!,
                         PostId = ctx.Saga.PostId,
+                        VideoMetadata = video,
+                        HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId)
                     });
                 })
                 .TransitionTo(WaitingForPublishConfirm)
@@ -74,14 +83,20 @@ public class VideoProcessingSaga : MassTransitStateMachine<VideoProcessingSagaSt
                         PreviewId = ctx.Message.PreviewId,
                         ProcessState = ctx.Message.ProcessState,
                         CreatedAt = DateTimeService.Now()
-                    }, publish =>
+                    }, ctx =>
                     {
-                        publish.SetRoutingKey("video.publish");
+                        ctx.SetRoutingKey("video.publish");
                     });
                 })
                 .TransitionTo(Completed)
-                .Finalize()
         );
+
+        During(Completed, When(VideoConverted).ThenAsync(x =>
+        {
+            Console.WriteLine("");
+            return Task.CompletedTask;
+        }).Finalize());
+
 
         SetCompletedWhenFinalized();
     }

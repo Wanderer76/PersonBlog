@@ -3,78 +3,57 @@ using Blog.Domain.Events;
 using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
-using Infrastructure.Services;
 using MassTransit;
 using MessageBus.EventHandler;
-using Microsoft.EntityFrameworkCore;
-using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
 
 namespace VideoProcessing.Cli.Service;
 
-public class ProcessVideoToHls : IEventHandler<VideoConvertEvent>, IConsumer<ConvertVideoCommand>
+public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<ConvertVideoCommand>
 {
-    private readonly IReadWriteRepository<IBlogEntity> _context;
     private readonly IFFMpegService _ffmpegService;
     private readonly IFileStorage _storage;
-    private readonly ICacheService _cacheService;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
 
-    public ProcessVideoToHls(IReadWriteRepository<IBlogEntity> context, IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, ICacheService cacheService)
+    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
     {
-        _context = context;
         _ffmpegService = ffmpegService;
         _storage = storage.CreateFileStorage();
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
-        _cacheService = cacheService;
     }
     public async Task Consume(ConsumeContext<ConvertVideoCommand> context)
     {
         var msg = context.Message;
-        var fileMetadata = await _context.Get<VideoMetadata>()
-             .FirstAsync(x => x.Id == msg.VideoMetadataId);
-
-        _context.Attach(fileMetadata);
-        var result = await HandleConversion(msg, fileMetadata);
+        var result = await HandleConversion(msg);
         await context.Publish(result);
     }
 
-    public async Task Handle(VideoConvertEvent @event)
+    public async Task Handle(ConvertVideoCommand @event)
     {
-        var fileMetadata = await _context.Get<VideoMetadata>()
-            .FirstAsync(x => x.Id == @event.VideoMetadataId);
-
-        _context.Attach(fileMetadata);
-        await HandleConversion(new ConvertVideoCommand
-        {
-            PostId = fileMetadata.PostId,
-            VideoMetadataId = fileMetadata.Id,
-            ObjectName = @event.ObjectName,
-        }, fileMetadata);
+        await HandleConversion(@event);
     }
 
-    private async Task<VideoConvertedResponse> HandleConversion(ConvertVideoCommand @event, VideoMetadata fileMetadata)
+    private async Task<VideoConvertedResponse> HandleConversion(ConvertVideoCommand @event)
     {
+        var result = new VideoConvertedResponse();
+        result.PostId = @event.PostId;
+        result.VideoMetadataId = @event.VideoMetadataId;
         try
         {
-            var url = await _storage.GetFileUrlAsync(fileMetadata.PostId, @event.ObjectName);
-            var dir = Path.Combine(_tempPath, fileMetadata.Id.ToString());
+            var url = await _storage.GetFileUrlAsync(@event.PostId, @event.ObjectName);
+            var dir = Path.Combine(_tempPath, @event.VideoMetadataId.ToString());
             var fileId = GuidService.GetNewGuid();
 
             var inputUrl = new Uri(url).AbsoluteUri;
 
             var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
 
-            await ProcessHls(fileMetadata, dir, fileId, inputUrl, videoStream);
+            await ProcessHls(@event.VideoMetadata, dir, fileId, inputUrl, videoStream);
 
-            var post = await _context.Get<Post>()
-                       .FirstAsync(x => x.Id == fileMetadata.PostId);
-            _context.Attach(post);
-
-            if (post.Type == PostType.Video && string.IsNullOrWhiteSpace(post.PreviewId))
+            if (!@event.HasPreviewId)
             {
                 var snapshotFileId = GuidService.GetNewGuid();
                 var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
@@ -86,17 +65,12 @@ public class ProcessVideoToHls : IEventHandler<VideoConvertEvent>, IConsumer<Con
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
                     copyStream.Position = 0;
-                    var objectName = await _storage.PutFileAsync(fileMetadata.PostId, snapshotFileId, copyStream);
-
-                    post.PreviewId = objectName;
-                    fileMetadata.IsProcessed = false;
-                    fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
-                    fileMetadata.Duration = videoStream.Duration;
-                    fileMetadata.ProcessState = ProcessState.Complete;
-                    post.VideoFileId = fileMetadata.Id;
-                    await _context.SaveChangesAsync();
-                    await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
-
+                    
+                    result.PreviewId = await _storage.PutFileAsync(@event.PostId, snapshotFileId, copyStream);
+                    result.IsProcessed = false;
+                    result.ObjectName = $"{@event.VideoMetadataId}.m3u8";
+                    result.Duration = videoStream.Duration;
+                    result.ProcessState = ProcessState.Complete;
                 }
                 catch (Exception e)
                 {
@@ -111,21 +85,13 @@ public class ProcessVideoToHls : IEventHandler<VideoConvertEvent>, IConsumer<Con
                 }
 
             }
-            return new VideoConvertedResponse
-            {
-                Duration = fileMetadata.Duration,
-                IsProcessed = fileMetadata.IsProcessed,
-                ObjectName = fileMetadata.ObjectName,
-                PostId = fileMetadata.PostId,
-                ProcessState = ProcessState.Complete,
-                VideoMetadataId = fileMetadata.Id,
-                PreviewId = post.PreviewId
-            };
+            result.ProcessState = ProcessState.Complete;
+            return result;
         }
         catch (Exception e)
         {
-            fileMetadata.ProcessState = ProcessState.Error;
-            fileMetadata.ErrorMessage = "Не удалось собрать файл";
+            //fileMetadata.ProcessState = ProcessState.Error;
+            //fileMetadata.ErrorMessage = "Не удалось собрать файл";
 
             //var processedEvent = await _context.Get<VideoProcessEvent>()
             //    .FirstAsync(x => x.Id == @event.EventId);
