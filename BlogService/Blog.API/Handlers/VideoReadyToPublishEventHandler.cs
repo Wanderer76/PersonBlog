@@ -1,11 +1,9 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Domain.Events;
-using FFMpegCore;
 using Infrastructure.Services;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
-using System.Security.AccessControl;
 
 namespace Blog.API.Handlers
 {
@@ -26,18 +24,26 @@ namespace Blog.API.Handlers
                 .FirstAsync(x => x.Id == @event.VideoMetadataId);
 
             var post = await _repository.Get<Post>()
-                .FirstAsync(x=>x.Id== @event.PostId);
+                .FirstAsync(x => x.Id == @event.PostId);
 
             _repository.Attach(fileMetadata);
             _repository.Attach(post);
 
-            post.PreviewId = @event.PreviewId;
-            fileMetadata.IsProcessed = false;
-            fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
-            fileMetadata.Duration = @event.Duration;
-            fileMetadata.ProcessState = ProcessState.Complete;
-            post.VideoFileId = fileMetadata.Id;
-
+            if (@event.Error != null)
+            {
+                fileMetadata.ErrorMessage = @event.Error;
+                fileMetadata.ProcessState = ProcessState.Error;
+                fileMetadata.IsProcessed = false;
+            }
+            else
+            {
+                post.PreviewId = @event.PreviewId;
+                fileMetadata.IsProcessed = false;
+                fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
+                fileMetadata.Duration = @event.Duration;
+                fileMetadata.ProcessState = ProcessState.Complete;
+                post.VideoFileId = fileMetadata.Id;
+            }
             await _repository.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
         }

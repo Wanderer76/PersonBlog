@@ -50,5 +50,7 @@ namespace Blog.Domain.Events
         public string ObjectName { get; set; }
         public double Duration { get; set; }
         public ProcessState ProcessState { get; set; }
+        public string? Error {  get; set; }
+
     }
 }

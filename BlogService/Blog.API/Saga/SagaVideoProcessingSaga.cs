@@ -83,9 +83,6 @@ public class VideoProcessingSaga : MassTransitStateMachine<VideoProcessingSagaSt
                         PreviewId = ctx.Message.PreviewId,
                         ProcessState = ctx.Message.ProcessState,
                         CreatedAt = DateTimeService.Now()
-                    }, ctx =>
-                    {
-                        ctx.SetRoutingKey("video.publish");
                     });
                 })
                 .TransitionTo(Completed)

@@ -18,7 +18,6 @@ namespace VideoProcessing.Cli.Service
         public async Task Consume(ConsumeContext<CombineFileChunksCommand> context)
         {
             var cmd = context.Message;
-            // 🔧 Выполняется конвертация
             var response = await CombineChunks(cmd);
             await context.Publish(response);
         }
@@ -61,19 +60,10 @@ namespace VideoProcessing.Cli.Service
                     PostId = @event.PostId,
                 };
 
-                //var videoEvent = new VideoProcessEvent
-                //{
-                //    Id = videoCreateEvent.EventId,
-                //    EventData = JsonSerializer.Serialize(videoCreateEvent),
-                //    EventType = nameof(VideoConvertEvent),
-                //};
-                //_context.Add(videoEvent);
-
                 foreach (var chunk in chunks)
                 {
                     await storage.RemoveFileAsync(@event.PostId, chunk.ObjectName);
                 }
-                //await _context.SaveChangesAsync();
                 return response;
             }
             catch (Exception e)
@@ -84,7 +74,6 @@ namespace VideoProcessing.Cli.Service
                     ErrorMessage = "Не обработать файл",
                     PostId = @event.PostId
                 };
-                //await _context.SaveChangesAsync();
             }
         }
     }

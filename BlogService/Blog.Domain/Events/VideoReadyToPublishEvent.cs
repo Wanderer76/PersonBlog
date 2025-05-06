@@ -1,10 +1,8 @@
 ﻿using Blog.Domain.Entities;
-using MassTransit;
 
 namespace Blog.Domain.Events
 {
 
-    //[EntityName("video-events")]
     public class VideoReadyToPublishEvent
     {
         public required Guid PostId { get; set; }
@@ -14,5 +12,6 @@ namespace Blog.Domain.Events
         public string ObjectName { get; set; }
         public double Duration { get; set; }
         public ProcessState ProcessState { get; set; }
+        public string? Error {  get; set; }
     }
 }

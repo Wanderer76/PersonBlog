@@ -90,16 +90,15 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
         }
         catch (Exception e)
         {
-            //fileMetadata.ProcessState = ProcessState.Error;
-            //fileMetadata.ErrorMessage = "Не удалось собрать файл";
-
+            result.Error = "Не удалось сконвертировать файл";
+            result.ProcessState = ProcessState.Error;
+            return result;
             //var processedEvent = await _context.Get<VideoProcessEvent>()
             //    .FirstAsync(x => x.Id == @event.EventId);
 
             //_context.Attach(processedEvent);
             //processedEvent.SetErrorMessage(e.Message);
             //await _context.SaveChangesAsync();
-            throw;
         }
     }
 
