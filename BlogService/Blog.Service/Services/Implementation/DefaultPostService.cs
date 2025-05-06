@@ -199,20 +199,17 @@ namespace Blog.Service.Services.Implementation
 
             if (uploadVideoChunkDto.TotalChunkCount == uploadVideoChunkDto.ChunkNumber)
             {
-                var videoCreateEvent = new CombineFileChunksEvent
+                var videoCreateEvent = new CombineFileChunksCommand
                 {
-                    EventId = GuidService.GetNewGuid(),
                     VideoMetadataId = metadata.Id,
-                    IsCompleted = false,
                     PostId = uploadVideoChunkDto.PostId,
-                    CreatedAt = DateTimeOffset.UtcNow
                 };
 
                 var videoEvent = new VideoProcessEvent
                 {
-                    Id = videoCreateEvent.EventId,
+                    Id = GuidService.GetNewGuid(),
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(CombineFileChunksEvent),
+                    EventType = nameof(CombineFileChunksCommand),
                 };
                 _context.Add(videoEvent);
                 await _context.SaveChangesAsync();

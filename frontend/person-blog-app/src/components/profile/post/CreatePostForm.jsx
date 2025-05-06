@@ -58,7 +58,6 @@ const CreatePostForm = function (props) {
             await uploadFile(postId);
         }
         navigate('/profile')
-        props?.onCreate()
     }
 
     async function uploadFile(postId) {

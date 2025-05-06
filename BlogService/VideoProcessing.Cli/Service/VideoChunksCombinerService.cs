@@ -1,41 +1,40 @@
-﻿using Blog.Domain.Entities;
-using Blog.Domain.Events;
-using FileStorage.Service.Models;
+﻿using Blog.Domain.Events;
 using FileStorage.Service.Service;
+using MassTransit;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
-using Shared.Persistence;
-using Shared.Services;
-using System.Text.Json;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class VideoChunksCombinerService : IEventHandler<CombineFileChunksEvent>
+    public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>, IConsumer<CombineFileChunksCommand>
     {
         private readonly IFileStorage storage;
-        private readonly IReadWriteRepository<IBlogEntity> _context;
 
-        public VideoChunksCombinerService(IFileStorageFactory storage, IReadWriteRepository<IBlogEntity> context)
+        public VideoChunksCombinerService(IFileStorageFactory storage)
         {
             this.storage = storage.CreateFileStorage();
-            this._context = context;
         }
-      
-        public async Task Handle(CombineFileChunksEvent @event)
+
+        public async Task Consume(ConsumeContext<CombineFileChunksCommand> context)
         {
-            var fileId = @event.VideoMetadataId;
+            var cmd = context.Message;
+            // 🔧 Выполняется конвертация
+            var response = await CombineChunks(cmd);
+            await context.Publish(response);
+        }
 
-            var videoMetadata = await _context.Get<VideoMetadata>()
-                .Where(x => x.Id == fileId)
-                .FirstAsync();
+        public async Task Handle(CombineFileChunksCommand @event)
+        {
+            await CombineChunks(@event);
+        }
 
-            _context.Attach(videoMetadata);
-
+        private async Task<ChunksCombinedResponse> CombineChunks(CombineFileChunksCommand @event)
+        {
             try
             {
                 var chunks = new List<(long Number, int Size, string ObjectName)>();
 
-                await foreach (var chunk in storage.GetAllBucketObjects(@event.PostId, new VideoChunkUploadingInfo { FileId = fileId })
+                await foreach (var chunk in storage.GetAllBucketObjects(@event.PostId, new VideoChunkUploadingInfo { FileId = @event.VideoMetadataId })
                     .Where(x => x.Headers != null && x.Headers.Count > 0))
                 {
                     chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.Objectname));
@@ -44,7 +43,7 @@ namespace VideoProcessing.Cli.Service
                 {
                     throw new ArgumentException("Не удалось собрать файл");
                 }
-                
+
                 var memoryStream = new MemoryStream(chunks.Sum(x => x.Size));
 
                 foreach (var chunk in chunks.OrderBy(x => x.Number))
@@ -52,36 +51,40 @@ namespace VideoProcessing.Cli.Service
                     await storage.ReadFileAsync(@event.PostId, chunk.ObjectName, memoryStream);
                 }
                 memoryStream.Position = 0;
-                var objectName = await storage.PutFileInBucketAsync(@event.PostId, fileId, memoryStream);
+                var objectName = await storage.PutFileInBucketAsync(@event.PostId, @event.VideoMetadataId, memoryStream);
 
-                videoMetadata.ObjectName = objectName;
 
-                var videoCreateEvent = new VideoConvertEvent
+                var response = new ChunksCombinedResponse
                 {
-                    EventId = GuidService.GetNewGuid(),
                     ObjectName = objectName,
-                    FileId = videoMetadata.Id
+                    VideoMetadataId = @event.VideoMetadataId,
+                    PostId = @event.PostId,
                 };
 
-                var videoEvent = new VideoProcessEvent
-                {
-                    Id = videoCreateEvent.EventId,
-                    EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(VideoConvertEvent),
-                };
-                _context.Add(videoEvent);
+                //var videoEvent = new VideoProcessEvent
+                //{
+                //    Id = videoCreateEvent.EventId,
+                //    EventData = JsonSerializer.Serialize(videoCreateEvent),
+                //    EventType = nameof(VideoConvertEvent),
+                //};
+                //_context.Add(videoEvent);
 
                 foreach (var chunk in chunks)
                 {
                     await storage.RemoveFileAsync(@event.PostId, chunk.ObjectName);
                 }
-                await _context.SaveChangesAsync();
+                //await _context.SaveChangesAsync();
+                return response;
             }
             catch (Exception e)
             {
-                videoMetadata.ProcessState = ProcessState.Error;
-                videoMetadata.ErrorMessage = "Не обработать файл";
-                await _context.SaveChangesAsync();
+                return new ChunksCombinedResponse
+                {
+                    VideoMetadataId = @event.VideoMetadataId,
+                    ErrorMessage = "Не обработать файл",
+                    PostId = @event.PostId
+                };
+                //await _context.SaveChangesAsync();
             }
         }
     }

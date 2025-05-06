@@ -1,11 +1,51 @@
-﻿namespace Blog.Domain.Events
+﻿using Blog.Domain.Entities;
+using MassTransit;
+
+namespace Blog.Domain.Events
 {
-    public class CombineFileChunksEvent
+    //public class CombineFileChunksEvent
+    //{
+    //    public required Guid EventId { get; set; }
+    //    public required Guid VideoMetadataId { get; set; }
+    //    public required Guid PostId {  get; set; }
+    //    public required bool IsCompleted { get; set; }
+    //    public required DateTimeOffset CreatedAt { get; set; }
+    //}
+
+    //[EntityName("video-events")]
+    public class CombineFileChunksCommand
     {
-        public required Guid EventId { get; set; }
-        public required Guid VideoMetadataId { get; set; }
-        public required Guid PostId {  get; set; }
-        public required bool IsCompleted { get; set; }
-        public required DateTimeOffset CreatedAt { get; set; }
+        public Guid VideoMetadataId { get; set; }
+        public Guid PostId { get; set; }
+    }
+
+    //[EntityName("video-events")]
+    public class ChunksCombinedResponse
+    {
+        public Guid VideoMetadataId { get; set; }
+        public Guid PostId { get; set; }
+        public string ObjectName { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+    //[EntityName("video-events")]
+    public class ConvertVideoCommand
+    {
+        public Guid PostId { get; set; }
+        public Guid VideoMetadataId { get; set; }
+        public string ObjectName { get; set; }
+
+    }
+
+    //[EntityName("video-events")]
+    public class VideoConvertedResponse
+    {
+        public Guid VideoMetadataId { get; set; }
+        public Guid PostId { get; set; }
+        public string? PreviewId { get; set; }
+        public bool IsProcessed { get; set; }
+        public string ObjectName { get; set; }
+        public double Duration { get; set; }
+        public ProcessState ProcessState { get; set; }
     }
 }

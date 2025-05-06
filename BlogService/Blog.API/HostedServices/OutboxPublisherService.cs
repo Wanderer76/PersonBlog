@@ -6,40 +6,41 @@ using Infrastructure.Models;
 using MessageBus.Shared.Configs;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
+using MassTransit;
+using System.Text.Json;
 
 namespace Blog.API.HostedServices
 {
     public class OutboxPublisherService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMqUploadVideoConfig _settings;
-        private readonly RabbitMqMessageBus _messageBus;
+        //private readonly RabbitMqMessageBus _messageBus;
+
 
         public OutboxPublisherService(
             IServiceProvider serviceProvider,
-            RabbitMqUploadVideoConfig config,
-            ILogger<OutboxPublisherService> logger,
-            RabbitMqMessageBus messageBus)
+            ILogger<OutboxPublisherService> logger)
         {
             _serviceProvider = serviceProvider;
-            _settings = config;
-            _messageBus = messageBus;
+            //_messageBus = messageBus;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var connection = await _messageBus.GetConnectionAsync();
-            var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
-            await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true, cancellationToken: stoppingToken);
+            //var connection = await _messageBus.GetConnectionAsync();
+            //var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
+            //await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true, cancellationToken: stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _serviceProvider.CreateScope();
 
+                var requestClient = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+
                 var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
 
                 var messages = await dbContext.Get<VideoProcessEvent>()
-                    .Where(m => m.State == EventState.Pending && m.RetryCount < 3)
+                    .Where(m => m.State == EventState.Pending && m.RetryCount < 3 && m.EventType == nameof(CombineFileChunksCommand))
                     .OrderBy(m => m.CreatedAt)
                     .Take(100)
                     .ToListAsync(stoppingToken);
@@ -50,8 +51,11 @@ namespace Blog.API.HostedServices
                     {
                         dbContext.Attach(message);
                         message.Processed();
+                        var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
+
+                        await requestClient.Publish(command);
+                        //await _messageBus.SendMessageAsync(channel, _settings.ExchangeName, GetRoutingKey(message), message);
                         await dbContext.SaveChangesAsync();
-                        await _messageBus.SendMessageAsync(channel, _settings.ExchangeName, GetRoutingKey(message), message);
                     }
                     catch (Exception ex)
                     {
@@ -99,19 +103,20 @@ namespace Blog.API.HostedServices
             await dbContext.SaveChangesAsync();
         }
 
-        private string GetRoutingKey(VideoProcessEvent message)
-        {
-            switch (message.EventType)
-            {
-                case nameof(VideoConvertEvent):
-                    return _settings.VideoConverterRoutingKey;
-                case nameof(CombineFileChunksEvent):
-                    return _settings.FileChunksCombinerRoutingKey;
-                //case nameof(VideoViewEvent):
-                //return _settings.FileChunksCombinerRoutingKey;
-                default:
-                    throw new ArgumentException("Неизвестное событие");
-            }
-        }
+
+        //private string GetRoutingKey(VideoProcessEvent message)
+        //{
+        //    switch (message.EventType)
+        //    {
+        //        case nameof(VideoConvertEvent):
+        //            return _settings.VideoConverterRoutingKey;
+        //        case nameof(CombineFileChunksEvent):
+        //            return _settings.FileChunksCombinerRoutingKey;
+        //        //case nameof(VideoViewEvent):
+        //        //return _settings.FileChunksCombinerRoutingKey;
+        //        default:
+        //            throw new ArgumentException("Неизвестное событие");
+        //    }
+        //}
     }
 }
