@@ -58,7 +58,7 @@ namespace VideoView.Application.HostedServices
 
                         var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
 
-                        await _messageBus.SendMessageAsync(channel, QueueConstants.Exchange, routingKey, message);
+                        await _messageBus.SendMessageAsync( QueueConstants.Exchange, routingKey, message);
                     }
                     catch (Exception ex)
                     {

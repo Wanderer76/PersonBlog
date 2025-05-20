@@ -19,8 +19,6 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
     private readonly RabbitMqMessageBus _messageBus;
-    private readonly IChannel _channel;
-    private readonly IConnection _connection;
 
     public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, RabbitMqMessageBus messageBus)
     {
@@ -28,8 +26,6 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
         _storage = storage.CreateFileStorage();
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
-        _connection = messageBus.GetConnectionAsync().GetAwaiter().GetResult();
-        _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
         _messageBus = messageBus;
     }
     public async Task Consume(ConsumeContext<ConvertVideoCommand> context)
@@ -42,7 +38,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
     public async Task Handle(MessageContext<ConvertVideoCommand> @event)
     {
         var result = await HandleConversion(@event.Message);
-        await _messageBus.PublishAsync(_channel, "video-event", "saga", result, new BasicProperties
+        await _messageBus.PublishAsync("video-event", "saga", result, new BasicProperties
         {
             CorrelationId = result.VideoMetadataId.ToString(),
         });

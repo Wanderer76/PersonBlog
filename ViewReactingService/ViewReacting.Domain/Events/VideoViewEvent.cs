@@ -51,10 +51,7 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
         await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.Message.UserId));
         if (result.Value == UpdateViewState.Created)
         {
-            using var connection = await _messageBus.GetConnectionAsync();
-            using var channel = await connection.CreateChannelAsync();
-
-            await _messageBus.SendMessageAsync(channel, _reactingSettings.ExchangeName, _reactingSettings.SyncRoutingKey,new ReactingEvent
+            await _messageBus.SendMessageAsync(_reactingSettings.ExchangeName, _reactingSettings.SyncRoutingKey,new ReactingEvent
             {
                 EventData = JsonSerializer.Serialize(new UserViewedSyncEvent
                 {

@@ -32,8 +32,8 @@ namespace VideoProcessing.Cli
 
             await videoConverterChannel.QueueBindAsync("combine-chunks", "video-event", "chunks.combine");
             await videoConverterChannel.QueueBindAsync("video-convert", "video-event", "video.convert");
-            await _messageBus.SubscribeAsync(videoConverterChannel, "video-convert");
-            await _messageBus.SubscribeAsync(videoConverterChannel, "combine-chunks");
+            await _messageBus.SubscribeAsync("video-convert");
+            await _messageBus.SubscribeAsync("combine-chunks");
         }
 
 

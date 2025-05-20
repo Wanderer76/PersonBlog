@@ -60,7 +60,9 @@ namespace Blog.API.Handlers
             }
             _repository.Attach(saga);
             await ProcessCombine(saga, @event.Message);
+            await _repository.SaveChangesAsync();
         }
+
         public async Task Handle(MessageContext<VideoConvertedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
@@ -93,7 +95,7 @@ namespace Blog.API.Handlers
             saga.VideoMetadataId = message.VideoMetadataId;
             saga.PostId = message.PostId;
 
-            await _messageBus.PublishAsync(_channel, "video-event", "chunks.combine", message, new BasicProperties { CorrelationId = saga.CorrelationId.ToString() });
+            await _messageBus.PublishAsync("video-event", "chunks.combine", message, new BasicProperties { CorrelationId = saga.CorrelationId.ToString() });
         }
 
         private void ProcessFinal(VideoProcessingSagaState saga, VideoPublishedResponse message)
@@ -133,9 +135,7 @@ namespace Blog.API.Handlers
             .Select(x => x.PreviewId)
             .FirstAsync();
 
-            await _repository.SaveChangesAsync();
-
-            await _messageBus.PublishAsync(_channel, "video-event", "video.convert", new ConvertVideoCommand
+            await _messageBus.PublishAsync("video-event", "video.convert", new ConvertVideoCommand
             {
                 VideoMetadataId = saga.VideoMetadataId,
                 ObjectName = saga.ObjectName!,

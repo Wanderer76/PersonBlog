@@ -12,13 +12,9 @@ namespace VideoProcessing.Cli.Service
     {
         private readonly IFileStorage storage;
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly IChannel _channel;
-        private readonly IConnection _connection;
         public VideoChunksCombinerService(IFileStorageFactory storage, RabbitMqMessageBus messageBus)
         {
             this.storage = storage.CreateFileStorage();
-            _connection = messageBus.GetConnectionAsync().GetAwaiter().GetResult();
-            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
             _messageBus = messageBus;
         }
 
@@ -32,7 +28,7 @@ namespace VideoProcessing.Cli.Service
         public async Task Handle(MessageContext<CombineFileChunksCommand> @event)
         {
             var response = await CombineChunks(@event.Message);
-            await _messageBus.PublishAsync(_channel, "video-event", "saga", response, new BasicProperties
+            await _messageBus.PublishAsync("video-event", "saga", response, new BasicProperties
             {
                 CorrelationId = response.VideoMetadataId.ToString(),
             });

@@ -33,7 +33,7 @@ namespace Blog.API.HostedServices
             await _channel.ExchangeDeclareAsync("video-event", "direct", true);
             await _channel.QueueDeclareAsync("saga-queue",true,false,false);
             await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
-            await _messageBus.SubscribeAsync(_channel, "saga-queue");
+            await _messageBus.SubscribeAsync("saga-queue");
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -59,7 +59,7 @@ namespace Blog.API.HostedServices
                         //await requestClient.Publish(command);
                         message.CorrelationId = command.VideoMetadataId;
                        
-                        await _messageBus.SendMessageAsync(_channel, "video-event", "saga", message);
+                        await _messageBus.SendMessageAsync("video-event", "saga", message);
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)
