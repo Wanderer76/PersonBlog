@@ -36,9 +36,11 @@ namespace MessageBus
             try
             {
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
                 await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
                 {
                     Persistent = true,
+                    CorrelationId = message.CorrelationId?.ToString(),
                 }, body: body);
             }
             catch (Exception e)
@@ -47,6 +49,21 @@ namespace MessageBus
             }
         }
 
+
+        public async Task PublishAsync<T>(IChannel channel, string exchangeName, string routingKey, T message, BasicProperties? cfg=null)
+        {
+            try
+            {
+                var baseEvent = new BaseEvent { EventData = JsonSerializer.Serialize(message), EventType = typeof(T).Name, };
+                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
+
+                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, cfg, body: body);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
         public Task<IConnection> GetConnectionAsync()
         {
             return _factory.CreateConnectionAsync();
@@ -67,7 +84,10 @@ namespace MessageBus
                         try
                         {
                             var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
-                            await handler.Handle(handlerBody);
+                            Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
+                            ? null
+                            : Guid.Parse(ea.BasicProperties.CorrelationId);
+                            await handler.Handle(new MessageContext<object>(correlationId, handlerBody));
                             await channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
                         catch (Exception e)

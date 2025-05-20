@@ -16,13 +16,13 @@ namespace Blog.API.Handlers
             _context = context;
         }
 
-        public async Task Handle(UserViewedSyncEvent @event)
+        public async Task Handle(MessageContext<UserViewedSyncEvent> @event)
         {
-            var userId = @event.UserId;
-            var ipAddress = @event.RemoteIp;
+            var userId = @event.Message.UserId;
+            var ipAddress = @event.Message.RemoteIp;
 
             var post = await _context.Get<Post>()
-                .FirstAsync(x => x.Id == @event.PostId);
+                .FirstAsync(x => x.Id == @event.Message.PostId);
 
             var existView = await _context.Get<PostViewer>()
                 .Where(x => x.PostId == post.Id)
@@ -33,39 +33,39 @@ namespace Blog.API.Handlers
 
             if (existView == null)
             {
-                if (@event.IsLike == true)
+                if (@event.Message.IsLike == true)
                 {
                     post.LikeCount++;
                 }
-                if (@event.IsLike == false)
+                if (@event.Message.IsLike == false)
                 {
                     post.DislikeCount++;
                 }
-                if (@event.IsViewed)
+                if (@event.Message.IsViewed)
                 {
                     post.ViewCount++;
                 }
                 existView = new PostViewer
                 {
                     Id = GuidService.GetNewGuid(),
-                    PostId = @event.PostId,
-                    IsLike = @event.IsLike,
+                    PostId = @event.Message.PostId,
+                    IsLike = @event.Message.IsLike,
                     UserId = userId,
                     UserIpAddress = ipAddress ?? string.Empty,
-                    IsViewed = @event.IsViewed,
+                    IsViewed = @event.Message.IsViewed,
                 };
                 _context.Add(existView);
             }
             else
             {
-                if (@event.IsViewed)
+                if (@event.Message.IsViewed)
                 {
                     post.ViewCount++;
                 }
 
-                if (@event.IsLike.HasValue)
+                if (@event.Message.IsLike.HasValue)
                 {
-                    if (@event.IsLike == true)
+                    if (@event.Message.IsLike == true)
                     {
                         post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 1), 0);
                         post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 0), 0);
@@ -89,10 +89,10 @@ namespace Blog.API.Handlers
                 }
 
                 _context.Attach(existView);
-                existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
+                existView.IsLike = @event.Message.IsLike == existView.IsLike ? null : @event.Message.IsLike;
                 existView.UserId = userId;
                 existView.UserIpAddress = ipAddress;
-                existView.IsViewed = @event.IsViewed;
+                existView.IsViewed = @event.Message.IsViewed;
             }
                 await _context.SaveChangesAsync();
         }

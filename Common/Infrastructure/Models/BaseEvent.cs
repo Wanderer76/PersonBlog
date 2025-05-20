@@ -3,6 +3,7 @@
     public class BaseEvent
     {
         public Guid Id { get; set; }
+        public Guid? CorrelationId {  get; set; }
         public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
         public EventState State { get => _state; set => _state = value; }
         public required string EventType { get; set; }

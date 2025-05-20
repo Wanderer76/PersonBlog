@@ -1,18 +1,25 @@
 ﻿using Blog.Domain.Events;
 using FileStorage.Service.Service;
 using MassTransit;
+using MessageBus;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
+using RabbitMQ.Client;
 
 namespace VideoProcessing.Cli.Service
 {
     public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>, IConsumer<CombineFileChunksCommand>
     {
         private readonly IFileStorage storage;
-
-        public VideoChunksCombinerService(IFileStorageFactory storage)
+        private readonly RabbitMqMessageBus _messageBus;
+        private readonly IChannel _channel;
+        private readonly IConnection _connection;
+        public VideoChunksCombinerService(IFileStorageFactory storage, RabbitMqMessageBus messageBus)
         {
             this.storage = storage.CreateFileStorage();
+            _connection = messageBus.GetConnectionAsync().GetAwaiter().GetResult();
+            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+            _messageBus = messageBus;
         }
 
         public async Task Consume(ConsumeContext<CombineFileChunksCommand> context)
@@ -22,9 +29,13 @@ namespace VideoProcessing.Cli.Service
             await context.Publish(response);
         }
 
-        public async Task Handle(CombineFileChunksCommand @event)
+        public async Task Handle(MessageContext<CombineFileChunksCommand> @event)
         {
-            await CombineChunks(@event);
+            var response = await CombineChunks(@event.Message);
+            await _messageBus.PublishAsync(_channel, "video-event", "saga", response, new BasicProperties
+            {
+                CorrelationId = response.VideoMetadataId.ToString(),
+            });
         }
 
         private async Task<ChunksCombinedResponse> CombineChunks(CombineFileChunksCommand @event)

@@ -40,6 +40,18 @@ namespace MessageBus
 
             return builder;
         }
+        public static IMessageBusBuilder AddSubscription<THandle>(this IMessageBusBuilder builder)
+           where THandle : class, IEventHandler
+        {
+            builder.Services.AddKeyedScoped<IEventHandler, THandle>(typeof(object).Name);
+
+            builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
+            {
+                sp.AddSubscription(typeof(object).Name, typeof(object));
+            });
+
+            return builder;
+        }
     }
 
     file class MessageBusBuilder : IMessageBusBuilder

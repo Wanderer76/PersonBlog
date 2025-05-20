@@ -13,22 +13,33 @@ namespace Blog.API.HostedServices
 {
     public class OutboxPublisherService : BackgroundService
     {
-        private readonly IServiceProvider _serviceProvider;
-
+        private readonly IServiceProvider _serviceProvider; 
+        private readonly RabbitMqMessageBus _messageBus;
+        private readonly IChannel _channel;
+        private readonly IConnection _connection;
         public OutboxPublisherService(
             IServiceProvider serviceProvider,
-            ILogger<OutboxPublisherService> logger)
+            ILogger<OutboxPublisherService> logger,
+            RabbitMqMessageBus messageBus)
         {
             _serviceProvider = serviceProvider;
+            _connection = messageBus.GetConnectionAsync().GetAwaiter().GetResult();
+            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+            _messageBus = messageBus;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            await _channel.ExchangeDeclareAsync("video-event", "direct", true);
+            await _channel.QueueDeclareAsync("saga-queue",true,false,false);
+            await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
+            await _messageBus.SubscribeAsync(_channel, "saga-queue");
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _serviceProvider.CreateScope();
 
-                var requestClient = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
+                //var requestClient = scope.ServiceProvider.GetRequiredService<IBus>();
 
                 var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
 
@@ -45,7 +56,10 @@ namespace Blog.API.HostedServices
                         dbContext.Attach(message);
                         message.Processed();
                         var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
-                        await requestClient.Publish(command);
+                        //await requestClient.Publish(command);
+                        message.CorrelationId = command.VideoMetadataId;
+                       
+                        await _messageBus.SendMessageAsync(_channel, "video-event", "saga", message);
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)

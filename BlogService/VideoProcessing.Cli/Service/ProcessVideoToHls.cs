@@ -4,7 +4,9 @@ using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
 using MassTransit;
+using MessageBus;
 using MessageBus.EventHandler;
+using RabbitMQ.Client;
 using Shared.Services;
 using Shared.Utils;
 
@@ -16,13 +18,19 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
     private readonly IFileStorage _storage;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
+    private readonly RabbitMqMessageBus _messageBus;
+    private readonly IChannel _channel;
+    private readonly IConnection _connection;
 
-    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, RabbitMqMessageBus messageBus)
     {
         _ffmpegService = ffmpegService;
         _storage = storage.CreateFileStorage();
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
+        _connection = messageBus.GetConnectionAsync().GetAwaiter().GetResult();
+        _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+        _messageBus = messageBus;
     }
     public async Task Consume(ConsumeContext<ConvertVideoCommand> context)
     {
@@ -31,9 +39,13 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
         await context.Publish(result);
     }
 
-    public async Task Handle(ConvertVideoCommand @event)
+    public async Task Handle(MessageContext<ConvertVideoCommand> @event)
     {
-        await HandleConversion(@event);
+        var result = await HandleConversion(@event.Message);
+        await _messageBus.PublishAsync(_channel, "video-event", "saga", result, new BasicProperties
+        {
+            CorrelationId = result.VideoMetadataId.ToString(),
+        });
     }
 
     private async Task<VideoConvertedResponse> HandleConversion(ConvertVideoCommand @event)

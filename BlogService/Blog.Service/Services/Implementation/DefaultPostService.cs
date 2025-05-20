@@ -210,6 +210,7 @@ namespace Blog.Service.Services.Implementation
                     Id = GuidService.GetNewGuid(),
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
                     EventType = nameof(CombineFileChunksCommand),
+                    CorrelationId = videoCreateEvent.VideoMetadataId
                 };
                 _context.Add(videoEvent);
                 await _context.SaveChangesAsync();

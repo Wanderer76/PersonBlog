@@ -2,12 +2,13 @@
 using Blog.Domain.Events;
 using Infrastructure.Services;
 using MassTransit;
+using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
 namespace Blog.API.Handlers
 {
-    public class VideoReadyToPublishEventHandler : IConsumer<VideoReadyToPublishEvent>
+    public class VideoReadyToPublishEventHandler : IConsumer<VideoReadyToPublishEvent>, IEventHandler<VideoReadyToPublishEvent>
     {
         private readonly IReadWriteRepository<IBlogEntity> _repository;
         private readonly ICacheService _cacheService;
@@ -20,8 +21,18 @@ namespace Blog.API.Handlers
         public async Task Consume(ConsumeContext<VideoReadyToPublishEvent> context)
         {
             var @event = context.Message;
+            await PrepareToPublish(@event);
+        }
+
+        public async Task Handle(MessageContext<VideoReadyToPublishEvent> @event)
+        {
+            await PrepareToPublish(@event.Message);
+        }
+
+        private async Task PrepareToPublish(VideoReadyToPublishEvent @event)
+        {
             var fileMetadata = await _repository.Get<VideoMetadata>()
-                .FirstAsync(x => x.Id == @event.VideoMetadataId);
+                            .FirstAsync(x => x.Id == @event.VideoMetadataId);
 
             var post = await _repository.Get<Post>()
                 .FirstAsync(x => x.Id == @event.PostId);

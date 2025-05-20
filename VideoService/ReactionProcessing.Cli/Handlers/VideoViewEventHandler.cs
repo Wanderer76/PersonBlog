@@ -26,25 +26,25 @@ namespace ReactionProcessing.Cli.Handlers
             this.videoViewRepository = videoViewRepository;
         }
 
-        public async Task Handle(UserViewedPostEvent @event)
+        public async Task Handle(MessageContext<UserViewedPostEvent> @event)
         {
-            var userId = @event.UserId;
-            var ipAddress = @event.RemoteIp;
+            var userId = @event.Message.UserId;
+            var ipAddress = @event.Message.RemoteIp;
 
             var videoEvent = await videoViewRepository.Get<VideoEvent>()
-                .FirstAsync(x => x.Id == @event.EventId);
+                .FirstAsync(x => x.Id == @event.Message.EventId);
 
             var hasView = await videoViewRepository.Get<PostViewer>()
                 .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
                 .FirstOrDefaultAsync();
 
-            if (hasView == null && @event.IsViewed)
+            if (hasView == null && @event.Message.IsViewed)
             {
                 hasView = new PostViewer
                 {
                     Id = GuidService.GetNewGuid(),
-                    PostId = @event.PostId,
-                    IsLike = @event.IsLike,
+                    PostId = @event.Message.PostId,
+                    IsLike = @event.Message.IsLike,
                     UserId = userId,
                     UserIpAddress = ipAddress,
                 };
@@ -55,15 +55,15 @@ namespace ReactionProcessing.Cli.Handlers
                 videoViewRepository.Attach(hasView);
                 hasView.UserIpAddress = ipAddress;
                 hasView.UserId = userId;
-                hasView.IsLike = @event.IsLike;
+                hasView.IsLike = @event.Message.IsLike;
             }
 
-            @event.EventId = GuidService.GetNewGuid();
-            @event.IsLike = hasView.IsLike;
+            @event.Message.EventId = GuidService.GetNewGuid();
+            @event.Message.IsLike = hasView.IsLike;
 
             var syncEvent = new VideoEvent
             {
-                Id = @event.EventId,
+                Id = @event.Message.EventId,
                 EventData = JsonSerializer.Serialize(@event),
                 EventType = nameof(UserViewedSyncEvent),
             };

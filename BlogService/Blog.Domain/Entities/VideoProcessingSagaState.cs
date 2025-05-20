@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Blog.Domain.Entities
 {
-    public class VideoProcessingSagaState : SagaStateMachineInstance
+    public class VideoProcessingSagaState : SagaStateMachineInstance, IBlogEntity
     {
         [Key]
         public Guid CorrelationId { get; set; }

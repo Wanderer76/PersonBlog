@@ -14,4 +14,9 @@ namespace Blog.Domain.Events
         public ProcessState ProcessState { get; set; }
         public string? Error {  get; set; }
     }
+    public class VideoPublishedResponse
+    {
+        public required Guid VideoMetadataId { get; set; }
+        public string? Error { get; set; }
+    }
 }

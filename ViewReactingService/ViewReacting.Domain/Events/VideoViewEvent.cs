@@ -40,15 +40,15 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
         _cacheService = cacheService;
     }
 
-    public async Task Handle(VideoViewEvent @event)
+    public async Task Handle(MessageContext<VideoViewEvent> @event)
     {
         var result = await _viewHistoryService.CreateOrUpdateViewHistory(new UserPostView(
-             @event.UserId,
-             @event.PostId,
-             @event.WatchedTime,
-             @event.IsCompleteWatch
+             @event.Message.UserId,
+             @event.Message.PostId,
+             @event.Message.WatchedTime,
+             @event.Message.IsCompleteWatch
              ));
-        await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.UserId));
+        await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.Message.UserId));
         if (result.Value == UpdateViewState.Created)
         {
             using var connection = await _messageBus.GetConnectionAsync();
@@ -58,10 +58,10 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
             {
                 EventData = JsonSerializer.Serialize(new UserViewedSyncEvent
                 {
-                    EventId = @event.UserId,
+                    EventId = @event.Message.UserId,
                     IsViewed = true,
-                    PostId = @event.PostId,
-                    UserId = @event.UserId,
+                    PostId = @event.Message.PostId,
+                    UserId = @event.Message.UserId,
                     ViewedAt = DateTimeService.Now()
                 }),
                 EventType = nameof(UserViewedSyncEvent),
