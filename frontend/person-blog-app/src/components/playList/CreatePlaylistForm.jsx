@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import API from "../../scripts/apiMethod";
-import { JwtTokenService } from '../../scripts/TokenStrorage';
 import styles from './CreatePlaylistForm.module.css';
 
 const CreatePlaylistForm = () => {
@@ -160,7 +159,7 @@ const CreatePlaylistForm = () => {
                         </div>
                     </div>
 
-                    <div className={styles.formGroup}>
+                    {/* <div className={styles.formGroup}>
                         <label className={styles.privacyToggle}>
                             <input
                                 type="checkbox"
@@ -171,7 +170,7 @@ const CreatePlaylistForm = () => {
                             <span className={styles.toggleSlider}></span>
                             <span>{playlistForm.isPublic ? "Публичный" : "Приватный"}</span>
                         </label>
-                    </div>
+                    </div> */}
 
                     <div className={styles.videoSelectionContainer}>
                         <div className={styles.availableVideos}>

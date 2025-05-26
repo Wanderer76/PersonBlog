@@ -6,13 +6,15 @@
         public long Length { get; }
         public string ContentType { get; }
         public string ObjectName { get; }
+        public double Duration { get; }
 
-        public VideoMetadataModel(Guid id, long length, string contentType, string objectName)
+        public VideoMetadataModel(Guid id, long length, double duration, string contentType, string objectName)
         {
             Id = id;
             Length = length;
             ContentType = contentType;
             ObjectName = objectName;
+            Duration = duration;
         }
 
         public override bool Equals(object? obj)

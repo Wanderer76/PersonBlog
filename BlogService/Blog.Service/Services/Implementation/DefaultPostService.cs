@@ -148,6 +148,7 @@ namespace Blog.Service.Services.Implementation
                                     new VideoMetadataModel(
                                         videoFile.Id,
                                         videoFile.Length,
+                                        videoFile.Duration,
                                         videoFile.ContentType,
                                         videoFile.ObjectName
                                     ) : null,
@@ -262,6 +263,7 @@ namespace Blog.Service.Services.Implementation
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
+                                videoMetadata.Duration,
                                 videoMetadata.ContentType,
                                 videoMetadata.ObjectName
                             ) : null,
@@ -314,6 +316,7 @@ namespace Blog.Service.Services.Implementation
                                 new VideoMetadataModel(
                                     videoMetadata.Id,
                                     videoMetadata.Length,
+                                    videoMetadata.Duration,
                                     videoMetadata.ContentType,
                                     videoMetadata.ObjectName
                                 ) : null,
