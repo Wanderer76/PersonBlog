@@ -108,7 +108,7 @@ namespace Blog.API.Handlers
             saga.ObjectName = message.ObjectName;
             var scope = _serviceProvider.CreateScope();
             var service = scope.ServiceProvider.GetKeyedService<IEventHandler>(typeof(VideoReadyToPublishEvent).Name);
-            await service.Handle(new MessageContext<object>(saga.CorrelationId, new VideoReadyToPublishEvent
+            await service.Handle(new MessageContext(saga.CorrelationId, new VideoReadyToPublishEvent
             {
                 PostId = message.PostId,
                 VideoMetadataId = message.VideoMetadataId,
@@ -144,21 +144,21 @@ namespace Blog.API.Handlers
                 HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId)
             }, new BasicProperties { CorrelationId = saga.CorrelationId.ToString() });
         }
-        async Task IEventHandler.Handle(MessageContext<object> @event)
+        async Task IEventHandler.Handle(MessageContext @event)
         {
             switch (@event.Message)
             {
                 case CombineFileChunksCommand command:
-                    await Handle(new MessageContext<CombineFileChunksCommand>(@event.CorrelationId, command));
+                    await Handle(MessageContext.Create(@event.CorrelationId, command));
                     break;
                 case ChunksCombinedResponse response:
-                    await Handle(new MessageContext<ChunksCombinedResponse>(@event.CorrelationId, response));
+                    await Handle(MessageContext.Create(@event.CorrelationId, response));
                     break;
                 case VideoConvertedResponse response:
-                    await Handle(new MessageContext<VideoConvertedResponse>(@event.CorrelationId, response));
+                    await Handle(MessageContext.Create(@event.CorrelationId, response));
                     break;
                 case VideoPublishedResponse response:
-                    await Handle(new MessageContext<VideoPublishedResponse>(@event.CorrelationId, response));
+                    await Handle(MessageContext.Create(@event.CorrelationId, response));
                     break;
                 default:
                     throw new ArgumentException($"Unsupported event type: {@event.Message.GetType()}");

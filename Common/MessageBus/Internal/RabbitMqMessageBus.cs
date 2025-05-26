@@ -90,7 +90,8 @@ namespace MessageBus
                             Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
                             ? null
                             : Guid.Parse(ea.BasicProperties.CorrelationId);
-                            await handler.Handle(new MessageContext<object>(correlationId, handlerBody));
+                            var context = new MessageContext(correlationId, handlerBody);
+                            await handler.Handle(context);
                             await _channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
                         catch (Exception e)
