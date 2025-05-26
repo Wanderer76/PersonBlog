@@ -3,6 +3,8 @@ import { lazy, Suspense, useEffect } from 'react';
 import './App.css';
 import { JwtTokenService } from './scripts/TokenStrorage';
 import API from './scripts/apiMethod';
+import PlaylistPage from './pages/playlist/PlayListPage';
+import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -64,8 +66,10 @@ function App() {
                   <Route index element={<ProfilePage />} />
                   <Route path="post/create" element={<CreatePostForm />} />
                   <Route path="history" element={<HistoryPage />} />
+                  <Route path="playList/create" element={<CreatePlaylistForm />} />
                 </Route>
               </Route>
+              <Route path='playlist/:playlistId' element={<PlaylistPage />} />
 
             </Routes>
           </Suspense>

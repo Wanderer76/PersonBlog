@@ -5,7 +5,7 @@ import './ProfilePage.css';
 import { useNavigate } from "react-router-dom";
 import DefaultProfileIcon from '../../defaultProfilePic.png'
 import { getLocalDateTime } from "../../scripts/LocalDate";
-import PlaylistEditorModal from "../../components/playList/PlaylistEditorModal";
+
 
 const ProfilePage = () => {
 
@@ -203,10 +203,10 @@ const ProfilePage = () => {
             // }
 
             return (
-                <div key={post.id} className="postCard">
+                <div key={post.id} className="postCard" >
                     <article class="playlist-card">
-                        <div class="playlist-cover">
-                            <img src="cover1.jpg" alt="Обложка плейлиста" />
+                        <div class="playlist-cover" onClick={(e) => { e.preventDefault(); navigate(`/playlist/${post.id}`); }}>
+                            <img src={post.thumbnailUrl} alt="Обложка плейлиста"  />
                             <span class="playlist-badge video-count">{post.posts.length} видео</span>
                             {/* <span class="playlist-badge privacy-status">Приватный</span> */}
                         </div>

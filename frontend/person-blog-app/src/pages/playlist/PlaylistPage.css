@@ -1,0 +1,283 @@
+/* Base styles for the page container */
+.page-container {
+    width: 95%;
+    max-width: 100%;
+    margin: 20px auto;
+    display: flex;
+    gap: 20px;
+}
+
+.content-container {
+    flex: 1;
+    padding: 20px;
+}
+
+/* Playlist header styles */
+.playlist-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.cover-container {
+    position: relative;
+    width: 400px;
+    flex-shrink: 0;
+}
+
+.playlist-cover {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.edit-cover-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #ff7b00;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.edit-cover-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.playlist-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.playlist-title {
+    font-size: 28px;
+    margin: 0 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.edit-title-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.title-edit input {
+    font-size: 24px;
+    padding: 5px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.title-edit button {
+    margin-right: 10px;
+}
+
+.add-video-btn {
+    background-color: #f02d3a;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+/* Playlist content styles */
+.playlist-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* Empty playlist state */
+.empty-playlist {
+    text-align: center;
+    padding: 40px;
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    background-color: #fafafa;
+}
+
+/* Playlist item styles */
+.playlist-item {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.playlist-item:hover {
+    transform: translateY(-2px);
+}
+
+.thumbnail {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+}
+
+.details {
+    padding: 15px;
+}
+
+.title {
+    font-size: 16px;
+    margin: 0 0 10px;
+    color: #333;
+    line-height: 1.3;
+}
+
+.meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #666;
+}
+
+.stats {
+    display: flex;
+    gap: 8px;
+}
+.postActions {
+    display: flex;
+    gap: 10px;
+}
+.postMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 10px;
+}
+
+.delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.add-video-modal {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.video-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.video-option label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.video-option img {
+    width: 60px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+    font-size: 14px;
+}
+
+.btnPrimary {
+    background: #ff7b00;
+    color: white;
+}
+
+.btnPrimary:hover {
+    background: #ff6a00;
+}
+
+.btnSecondary {
+    background: #eee;
+    color: #333;
+}
+
+.btnSecondary:hover {
+    background: #ddd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .playlist-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .cover-container {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16/9;
+    }
+    
+    .playlist-content,
+    .video-list {
+        grid-template-columns: 1fr;
+    }
+}

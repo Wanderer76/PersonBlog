@@ -1,27 +1,27 @@
 /* Общая структура страницы */
-.page-container {
+.pageContainer {
     width: 95%;
     max-width: 100%;
     margin: 20px auto;
     display: flex;
   }
   
-  .content-container {
+  .contentContainer {
     flex: 1;
     padding: 20px;
   }
   
-  .history-container {
+  .historyContainer {
     max-width: 80%;
   }
   
   
   /* Стили истории просмотров */
-  .day-group {
+  .dayGroup {
     margin-bottom: 30px;
   }
   
-  .day-header {
+  .dayHeader {
     font-size: 18px;
     font-weight: 500;
     color: #333;
@@ -30,13 +30,13 @@
     border-bottom: 1px solid #e0e0e0;
   }
   
-  .history-list {
+  .historyList {
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
   
-  .history-item {
+  .historyItem {
     background: white;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -49,7 +49,7 @@
     position: relative;
   }
   
-  .history-item:hover {
+  .historyItem:hover {
     transform: translateY(-2px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
@@ -94,17 +94,17 @@
     gap: 6px;
   }
   
-  .watch-time {
+  .watchTime {
     font-size: 12px;
     color: #909090;
     margin-top: 4px;
   }
   
-  .menu-container {
+  .menuContainer {
     position: relative;
   }
   
-  .menu-btn {
+  .menuBtn {
     margin-left: auto;
     align-self: flex-start;
     background: none;

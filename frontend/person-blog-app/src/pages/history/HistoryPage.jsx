@@ -4,7 +4,7 @@ import API from "../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
 import SideBar from "../../components/sidebar/SideBar";
-import './HistoryPage.css';
+import styles from './HistoryPage.module.css';
 import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../scripts/LocalDate";
 
 const HistoryPage = function (props) {
@@ -32,26 +32,26 @@ const HistoryItem = ({ item, navigate }) => {
     const [showMenu, setShowMenu] = useState(false);
   
     return (
-      <div className="history-item" onClick={()=>{
+      <div className={styles.historyItem} onClick={()=>{
         navigate(`/video/${item.postId}?time=${item.watchTime}`)
       }}>
-        <img src={item.previewUrl} alt="Превью" className="thumbnail" />
-        <div className="details">
-          <h3 className="title">{item.title}</h3>
-          <div className="meta">
-            <div className="author">{item.blogName}</div>
-            <div className="stats">
+        <img src={item.previewUrl} alt="Превью" className={styles.thumbnail} />
+        <div className={styles.details}>
+          <h3 className={styles.title}>{item.title}</h3>
+          <div className={styles.meta}>
+            <div className={styles.author}>{item.blogName}</div>
+            <div className={styles.stats}>
               <span>{item.views}</span>
               <span>•</span>
               <span>Просмотрено: {secondsToHumanReadable(item.watchTime)}</span>
               <span>{item.uploaded}</span>
             </div>
-            <div className="watch-time">{getLocalDate(item.lastWatched)}</div>
+            <div className={styles.watchTime}>{getLocalDate(item.lastWatched)}</div>
           </div>
         </div>
-        <div className="menu-container">
+        <div className={styles.menuContainer }>
           <button 
-            className="menu-btn" 
+            className={styles.menuBtn} 
             onClick={() => setShowMenu(!showMenu)}
           >
             ⋮
@@ -63,15 +63,15 @@ const HistoryItem = ({ item, navigate }) => {
   };
 
     return (<>
-        <div className="page-container">
+        <div className={styles.pageContainer}>
             <SideBar />
-            <div className="content-container">
-                <div className="history-container">
+            <div className={styles.contentContainer}>
+                <div className={styles.historyContainer }>
                     {Object.entries(historyList).map(([day, items]) => (
                         items.length > 0 && (
-                            <div key={day} className="day-group">
-                                <h2 className="day-header">{getLocalDate(day)}</h2>
-                                <div className="history-list">
+                            <div key={day} className={styles.dayGroup}>
+                                <h2 className={styles.dayHeader }>{getLocalDate(day)}</h2>
+                                <div className={styles.historyList}>
                                     {items.map(x => {
                                         var data = {
                                             postId: x.postDetail.id,
