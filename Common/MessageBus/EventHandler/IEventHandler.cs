@@ -13,8 +13,8 @@ public interface IEventHandler<TEvent> : IEventHandler
 
 public class MessageContext
 {
-    public Guid? CorrelationId { get; set; }
-    public object Message { get; set; }
+    public Guid? CorrelationId { get; }
+    public object Message { get; }
 
     public MessageContext(Guid? correlationId, object message)
     {
@@ -36,8 +36,8 @@ public class MessageContext
 
 public sealed class MessageContext<TMessage>
 {
-    public Guid? CorrelationId { get; set; }
-    public TMessage Message { get; set; }
+    public Guid? CorrelationId { get; }
+    public TMessage Message { get; }
 
     internal MessageContext(Guid? correlationId, TMessage message)
     {
