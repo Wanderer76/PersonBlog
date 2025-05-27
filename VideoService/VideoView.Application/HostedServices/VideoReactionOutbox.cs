@@ -14,7 +14,6 @@ namespace VideoView.Application.HostedServices
     public class VideoReactionOutbox : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMqVideoReactionConfig _settings = new();
         private readonly RabbitMqMessageBus _messageBus;
 
         public VideoReactionOutbox(IServiceProvider serviceProvider, RabbitMqMessageBus messageBus)
@@ -85,9 +84,9 @@ namespace VideoView.Application.HostedServices
             switch (message.EventType)
             {
                 case nameof(UserViewedPostEvent):
-                    return (_settings.QueueName, _settings.ViewRoutingKey);
+                    return (RabbitMqVideoReactionConfig.QueueName, RabbitMqVideoReactionConfig.ViewRoutingKey);
                 case nameof(UserViewedSyncEvent):
-                    return (_settings.SyncQueueName, _settings.SyncRoutingKey);
+                    return (RabbitMqVideoReactionConfig.SyncQueueName, RabbitMqVideoReactionConfig.SyncRoutingKey);
                 case nameof(VideoViewEvent):
                     return (QueueConstants.QueueName, QueueConstants.RoutingKey);
                 default:

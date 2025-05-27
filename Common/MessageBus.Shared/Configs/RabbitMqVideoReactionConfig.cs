@@ -2,10 +2,10 @@
 {
     public class RabbitMqVideoReactionConfig
     {
-        public string ExchangeName { get; set; } = "video-reaction";
-        public string QueueName { get; set; } = "video-reactions";
-        public string SyncQueueName { get; set; } = "video-sync";
-        public string ViewRoutingKey { get; set; } = "video.viewed";
-        public string SyncRoutingKey { get; set; } = "video.sync";
+        public const string ExchangeName = "video-reaction";
+        public const string QueueName = "video-reactions";
+        public const string SyncQueueName = "video-sync";
+        public const string ViewRoutingKey = "video.viewed";
+        public const string SyncRoutingKey = "video.sync";
     }
 }

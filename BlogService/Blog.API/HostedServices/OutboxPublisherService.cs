@@ -35,6 +35,11 @@ namespace Blog.API.HostedServices
             await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
             await _messageBus.SubscribeAsync("saga-queue");
 
+            await _channel.ExchangeDeclareAsync(RabbitMqVideoReactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            await _channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
+            await _channel.QueueBindAsync(RabbitMqVideoReactionConfig.SyncQueueName, RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.SyncRoutingKey);
+            await _messageBus.SubscribeAsync(RabbitMqVideoReactionConfig.SyncQueueName);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _serviceProvider.CreateScope();

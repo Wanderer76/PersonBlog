@@ -20,7 +20,7 @@ namespace VideoReacting.API.Consumer
             await channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
             await channel.QueueDeclareAsync(QueueConstants.QueueName, durable: true, exclusive: false, autoDelete: false);
             await channel.QueueBindAsync(QueueConstants.QueueName, QueueConstants.Exchange, QueueConstants.RoutingKey);
-            await _messageBus.SubscribeAsync( QueueConstants.QueueName);
+            await _messageBus.SubscribeAsync(QueueConstants.QueueName);
         }
     }
 }

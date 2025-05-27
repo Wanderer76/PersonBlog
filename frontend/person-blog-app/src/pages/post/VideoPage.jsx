@@ -18,6 +18,8 @@ const VideoPage = function (props) {
     const limit = 40;
     const navigate = useNavigate();
     const [time, setTime] = useState(queryParams.get('time'))
+    const nextThresholdRef = useRef(30);
+
     const [post, setPostData] = useState({
         id: null,
         previewUrl: null,
@@ -119,6 +121,7 @@ const VideoPage = function (props) {
     }
 
     async function setView(player) {
+
         if (!JwtTokenService.isAuth())
             return;
 
@@ -128,28 +131,35 @@ const VideoPage = function (props) {
         if (duration <= 60) {
             interval = duration * 0.5;
         }
+
         const currentWathcedTime = player.currentTime();
-
+        const currentPercent = (currentWathcedTime / duration) * 100;
         const sendViewData = async () => {
-
             try {
                 await API.post('/video/Video/setView', {
                     postId: post.id,
-                    time: watchedTime.current,
-                    isComplete: watchedTime.current >= duration * 0.85,
+                    time: currentWathcedTime,
+                    isComplete: currentWathcedTime >= duration * 0.85,
                 });
             } catch (e) {
                 console.error("Ошибка при отправке данных просмотра:", e);
             }
-
-            // if (watchedTime < duration * 0.8) { // Пока не достигли конца видео
-            //     setTimeout(sendViewData, interval*1000); // Рассчитываем задержку
-            // }
         };
-        watchedTime.current = currentWathcedTime;
-        await sendViewData();
-        // Запускаем первую отправку
-        // setTimeout(sendViewData, interval*1000);
+        console.log(currentPercent)
+        console.log(nextThresholdRef.current)
+        if (currentPercent >= nextThresholdRef.current) {
+            await sendViewData()
+
+            if (nextThresholdRef.current === 30) {
+                nextThresholdRef.current = 40;
+            } else {
+                nextThresholdRef.current += 10;
+            }
+            if (nextThresholdRef.current > 100) {
+                return
+            }
+        }
+        
     }
 
     async function setViewEnd(player) {
@@ -203,49 +213,49 @@ const VideoPage = function (props) {
 
     return (
         <div className='page-layout'>
-            <SideBar/>
+            <SideBar />
             <div className="video-content-container">
-            <div className="video-container">
-                <div className="main-content">
+                <div className="video-container">
+                    <div className="main-content">
 
-                    {videoWindow()}
-                    {videoMetadata(post, userView, setReaction, navigate)}
-                    {channelInfo(blog, handleSubscribe, userView)}
+                        {videoWindow()}
+                        {videoMetadata(post, userView, setReaction, navigate)}
+                        {channelInfo(blog, handleSubscribe, userView)}
 
-                    <div className="video-description">
-                        <span>Описание: </span>
-                        {post?.description}
-                    </div>
-
-                    <div className="comments-section">
-                        <h3>432 комментария</h3>
-
-                        <div className="comment">
-                            <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                            <div className="comment-content">
-                                <div className="comment-author">Иван Петров</div>
-                                <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                            </div>
+                        <div className="video-description">
+                            <span>Описание: </span>
+                            {post?.description}
                         </div>
 
-                        <div className="comment">
-                            <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                            <div className="comment-content">
-                                <div className="comment-author">Иван Петров</div>
-                                <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                            </div>
-                        </div>
+                        <div className="comments-section">
+                            <h3>432 комментария</h3>
 
+                            <div className="comment">
+                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
+                                <div className="comment-content">
+                                    <div className="comment-author">Иван Петров</div>
+                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                                </div>
+                            </div>
+
+                            <div className="comment">
+                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
+                                <div className="comment-content">
+                                    <div className="comment-author">Иван Петров</div>
+                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
+
+                    <aside className="recommendation-sidebar">
+                        {recommendations?.map(video => {
+                            return <SmallVideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
+                        })}
+
+                    </aside>
                 </div>
-
-                <aside className="recommendation-sidebar">
-                    {recommendations?.map(video => {
-                        return <SmallVideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
-                    })}
-
-                </aside>
-            </div>
             </div>
         </div>
     );
@@ -322,5 +332,8 @@ function channelInfo(blog, handleSubscribe, userView) {
         <button className="subscribe-button" onClick={() => handleSubscribe()}>{blog.hasSubscription ? 'Вы подписаны' : 'Подписаться'}</button>
     </div>;
 }
+
+
+
 
 export default VideoPage;

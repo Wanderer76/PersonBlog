@@ -7,7 +7,6 @@ namespace ReactionProcessing.Cli.HostedServices
     public class VideoReactionProcessingHostedService : BackgroundService
     {
         private readonly RabbitMqMessageBus _messageBus;
-        private readonly RabbitMqVideoReactionConfig _config = new();
         private IChannel channel;
 
         public VideoReactionProcessingHostedService(RabbitMqMessageBus messageBus)
@@ -25,13 +24,13 @@ namespace ReactionProcessing.Cli.HostedServices
         {
             using var connection = await _messageBus.GetConnectionAsync();
             channel ??= await connection.CreateChannelAsync();
-            await channel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
-            await channel.QueueDeclareAsync(_config.QueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(_config.QueueName, _config.ExchangeName, _config.ViewRoutingKey);
+            await channel.ExchangeDeclareAsync(RabbitMqVideoReactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            await channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
+            await channel.QueueBindAsync(RabbitMqVideoReactionConfig.QueueName, RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.ViewRoutingKey);
 
             try
             {
-                await _messageBus.SubscribeAsync(_config.QueueName);
+                await _messageBus.SubscribeAsync(RabbitMqVideoReactionConfig.QueueName);
             }
             catch (Exception ex)
             {

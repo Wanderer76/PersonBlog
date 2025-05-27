@@ -91,7 +91,7 @@ namespace Blog.API.Handlers
                 _context.Attach(existView);
                 existView.IsLike = @event.Message.IsLike == existView.IsLike ? null : @event.Message.IsLike;
                 existView.UserId = userId;
-                existView.UserIpAddress = ipAddress;
+                existView.UserIpAddress = ipAddress??string.Empty;
                 existView.IsViewed = @event.Message.IsViewed;
             }
                 await _context.SaveChangesAsync();

@@ -49,14 +49,14 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
              @event.Message.IsCompleteWatch
              ));
         await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.Message.UserId));
-        if (result.Value == UpdateViewState.Created)
+        //if (result.Value == UpdateViewState.Created)
         {
-            await _messageBus.SendMessageAsync(_reactingSettings.ExchangeName, _reactingSettings.SyncRoutingKey,new ReactingEvent
+            await _messageBus.SendMessageAsync(RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.SyncRoutingKey,new ReactingEvent
             {
                 EventData = JsonSerializer.Serialize(new UserViewedSyncEvent
                 {
                     EventId = @event.Message.UserId,
-                    IsViewed = true,
+                    IsViewed = result.Value == UpdateViewState.Created? @event.Message.IsCompleteWatch : true,
                     PostId = @event.Message.PostId,
                     UserId = @event.Message.UserId,
                     ViewedAt = DateTimeService.Now()
