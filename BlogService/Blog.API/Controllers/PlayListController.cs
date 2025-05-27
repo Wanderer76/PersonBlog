@@ -75,6 +75,15 @@ public class PlayListController : BaseController
         var result = await _playListService.AddVideoToPlayListAsync(form);
         return Ok(result.Value);
     }
+    
+    [HttpPost("updatePositions")]
+    [Authorize]
+    [Produces(typeof(PlayListViewModel))]
+    public async Task<IActionResult> UpdatePostPositions([FromBody] ChangePostPositionRequest form)
+    {
+        var result = await _playListService.ChangePostPositionAsync(form);
+        return Ok(result.Value);
+    }
 
     [HttpPost("removeVideo")]
     [Authorize]

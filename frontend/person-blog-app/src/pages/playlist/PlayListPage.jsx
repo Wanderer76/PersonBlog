@@ -8,116 +8,116 @@ import './PlaylistPage.css';
 import { secondsToHumanReadable } from "../../scripts/LocalDate";
 
 // Вынесенные компоненты
-const AddVideoModal = memo(({ 
-  show, 
-  onClose, 
-  availableVideos, 
-  selectedVideos, 
-  onToggleSelection, 
-  onAddVideos 
+const AddVideoModal = memo(({
+    show,
+    onClose,
+    availableVideos,
+    selectedVideos,
+    onToggleSelection,
+    onAddVideos
 }) => {
-  if (!show) return null;
+    if (!show) return null;
 
-  return (
-    <div className="modal-overlay">
-      <div className="add-video-modal">
-        <div className="modal-header">
-          <h2>Добавить видео в плейлист</h2>
-          <button className="close-modal" onClick={onClose}>×</button>
+    return (
+        <div className="modal-overlay">
+            <div className="add-video-modal">
+                <div className="modal-header">
+                    <h2>Добавить видео в плейлист</h2>
+                    <button className="close-modal" onClick={onClose}>×</button>
+                </div>
+                <div className="modal-content">
+                    <div className="available-videos">
+                        {availableVideos.map(video => (
+                            <VideoOption
+                                key={video.id}
+                                video={video}
+                                isSelected={selectedVideos.some(v => v.id === video.id)}
+                                onToggle={onToggleSelection}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <div className="selected-count">Выбрано: {selectedVideos.length}</div>
+                    <div className="modal-actions">
+                        <button className="btn btnSecondary" onClick={onClose}>Отмена</button>
+                        <button
+                            className="btn btnPrimary"
+                            onClick={onAddVideos}
+                            disabled={selectedVideos.length === 0}
+                        >
+                            Добавить выбранные
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div className="modal-content">
-          <div className="available-videos">
-            {availableVideos.map(video => (
-              <VideoOption
-                key={video.id}
-                video={video}
-                isSelected={selectedVideos.some(v => v.id === video.id)}
-                onToggle={onToggleSelection}
-              />
-            ))}
-          </div>
-        </div>
-        <div className="modal-footer">
-          <div className="selected-count">Выбрано: {selectedVideos.length}</div>
-          <div className="modal-actions">
-            <button className="btn btnSecondary" onClick={onClose}>Отмена</button>
-            <button
-              className="btn btnPrimary"
-              onClick={onAddVideos}
-              disabled={selectedVideos.length === 0}
-            >
-              Добавить выбранные
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 });
 
 const VideoOption = memo(({ video, isSelected, onToggle }) => (
-  <div
-    className={`video-option ${isSelected ? 'selected' : ''}`}
-    onClick={() => onToggle(video)}
-  >
-    <img src={video.previewUrl} alt="Превью" />
-    <div className="video-info">
-      <h4>{video.title}</h4>
-      <p>{video.viewCount} просмотров</p>
+    <div
+        className={`video-option ${isSelected ? 'selected' : ''}`}
+        onClick={() => onToggle(video)}
+    >
+        <img src={video.previewUrl} alt="Превью" />
+        <div className="video-info">
+            <h4>{video.title}</h4>
+            <p>{video.viewCount} просмотров</p>
+        </div>
+        <div className="selection-checkbox">
+            {isSelected ? '✓' : ''}
+        </div>
     </div>
-    <div className="selection-checkbox">
-      {isSelected ? '✓' : ''}
-    </div>
-  </div>
 ));
 
-const PlaylistItem = memo(({ video, onRemove, index ,isDragDisabled}) => {
-  const navigate = useNavigate();
-  
-  return (
-    <Draggable draggableId={video.id.toString()} index={index} isDragDisabled={isDragDisabled}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={`playlist-item ${snapshot.isDragging ? 'dragging' : ''}`}
-        >
-          <span className="position-badge">{video.position}</span>
-          <img
-            src={video.previewUrl}
-            alt="Превью"
-            className="thumbnail"
-            onClick={() => navigate(`/video/${video.id}`)}
-          />
-          <div
-            className="details"
-            onClick={() => navigate(`/video/${video.id}`)}
-          >
-            <h3 className="title">{video.title}</h3>
-            <div className="meta">
-              <div className="stats">
-                <span>{video.viewCount} просмотров</span>
-                <span>•</span>
-                <span>{secondsToHumanReadable(video?.videoData?.duration)}</span>
-              </div>
-            </div>
-          </div>
-          <div className="postActions">
-            <button
-              className="btn btnSecondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove(video.id);
-              }}
-            >
-              Удалить
-            </button>
-          </div>
-        </div>
-      )}
-    </Draggable>
-  );
+const PlaylistItem = memo(({ video, onRemove, index, isDragDisabled }) => {
+    const navigate = useNavigate();
+
+    return (
+        <Draggable draggableId={video.id.toString()} index={index} isDragDisabled={isDragDisabled}>
+            {(provided, snapshot) => (
+                <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    className={`playlist-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                >
+                    <span className="position-badge">{video.position}</span>
+                    <img
+                        src={video.previewUrl}
+                        alt="Превью"
+                        className="thumbnail"
+                        onClick={() => navigate(`/video/${video.id}`)}
+                    />
+                    <div
+                        className="details"
+                        onClick={() => navigate(`/video/${video.id}`)}
+                    >
+                        <h3 className="title">{video.title}</h3>
+                        <div className="meta">
+                            <div className="stats">
+                                <span>{video.viewCount} просмотров</span>
+                                <span>•</span>
+                                <span>{secondsToHumanReadable(video?.videoData?.duration)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="postActions">
+                        <button
+                            className="btn btnSecondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onRemove(video.id);
+                            }}
+                        >
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+            )}
+        </Draggable>
+    );
 });
 
 const PlaylistPage = () => {
@@ -227,6 +227,9 @@ const PlaylistPage = () => {
 
         const items = Array.from(playlist.posts);
         const [reorderedItem] = items.splice(result.source.index, 1);
+        console.log(result)
+        console.log(reorderedItem)
+        console.log(result.destination.index)
         items.splice(result.destination.index, 0, reorderedItem);
 
         const updatedVideos = items.map((item, index) => ({
@@ -240,10 +243,8 @@ const PlaylistPage = () => {
         try {
             await API.post("profile/api/Playlist/updatePositions", {
                 playlistId: playlistId,
-                items: updatedVideos.map(video => ({
-                    postId: video.id,
-                    position: video.position
-                }))
+                postId: reorderedItem.id,
+                destination: result.destination.index + 1
             });
         } catch (error) {
             console.error("Error updating video positions:", error);

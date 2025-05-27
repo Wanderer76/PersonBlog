@@ -13,4 +13,5 @@ public interface IPlayListService
     Task<Result<IReadOnlyList<PlayListViewModel>>> GetBlogPlayListsAsync(Guid blogId);
     Task<Result<PlayListDetailViewModel>> GetPlayListDetailAsync(Guid id);
     Task<Result<IEnumerable<PostCommonModel>>> GetAvailablePostsToPlayListByIdAsync(Guid? playlistId);
+    Task<Result<PostCommonModel>> ChangePostPositionAsync(ChangePostPositionRequest changePostPositionRequest);
 }

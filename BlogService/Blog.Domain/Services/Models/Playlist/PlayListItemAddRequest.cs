@@ -13,6 +13,12 @@ public class PlayListAddItem
     public int? Position { get; set; }
 }
 
+public class ChangePostPositionRequest
+{
+    public required Guid PlaylistId { get; set; }
+    public required Guid PostId { get; set; }
+    public required int Destination { get; set; }
+}
 
 public class PlayListItemRemoveRequest
 {
