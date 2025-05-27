@@ -104,7 +104,7 @@ const PlaylistItem = memo(({ video, onRemove, index, isDragDisabled }) => {
                         </div>
                     </div>
                     <div className="postActions">
-                        <button
+                        {!isDragDisabled && <button
                             className="btn btnSecondary"
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -113,6 +113,7 @@ const PlaylistItem = memo(({ video, onRemove, index, isDragDisabled }) => {
                         >
                             Удалить
                         </button>
+                        }
                     </div>
                 </div>
             )}
@@ -124,6 +125,7 @@ const PlaylistPage = () => {
     const [playlist, setPlaylist] = useState({
         title: '',
         thumbnailUrl: '',
+        canEdit: true,
         posts: []
     });
     const { playlistId } = useParams();
@@ -154,6 +156,7 @@ const PlaylistPage = () => {
 
     useEffect(() => {
         fetchPlaylistData();
+
     }, [playlistId, fetchPlaylistData]);
 
     const handleTitleChange = useCallback((e) => {
@@ -271,10 +274,6 @@ const PlaylistPage = () => {
         setShowAddVideoModal(true);
     }, [fetchAvailableVideos]);
 
-    if (!JwtTokenService.isAuth()) {
-        return <div className="auth-warning">Вы не авторизованы</div>;
-    }
-
     return (
         <div className="page-container">
             <SideBar />
@@ -286,15 +285,16 @@ const PlaylistPage = () => {
                             alt="Обложка плейлиста"
                             className="playlist-cover"
                         />
-                        <label className="edit-cover-btn">
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleCoverChange}
-                                hidden
-                            />
-                            ✏️
-                        </label>
+                        {playlist.canEdit &&
+                            <label className="edit-cover-btn" >
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleCoverChange}
+                                    hidden
+                                />
+                                ✏️
+                            </label>}
                     </div>
                     <div className="playlist-info">
                         {isEditingTitle ? (
@@ -323,20 +323,24 @@ const PlaylistPage = () => {
                         ) : (
                             <div className="title-display">
                                 <h1>{playlist.title}</h1>
-                                <button
-                                    className="btn btnPrimary"
-                                    onClick={() => setIsEditingTitle(true)}
-                                >
-                                    Редактировать
-                                </button>
+                                {playlist.canEdit &&
+                                    <button
+                                        className="btn btnPrimary"
+                                        onClick={() => setIsEditingTitle(true)}
+                                    >
+                                        Редактировать
+                                    </button>
+                                }
                             </div>
                         )}
-                        <button
-                            className="btn btnPrimary add-video-btn"
-                            onClick={handleOpenModal}
-                        >
-                            Добавить видео
-                        </button>
+                        {playlist.canEdit &&
+                            <button
+                                className="btn btnPrimary add-video-btn"
+                                onClick={handleOpenModal}
+                            >
+                                Добавить видео
+                            </button>
+                        }
                     </div>
                 </div>
 
@@ -357,7 +361,7 @@ const PlaylistPage = () => {
                                                 video={video}
                                                 index={index}
                                                 onRemove={removeVideo}
-                                                isDragDisabled={false}
+                                                isDragDisabled={!playlist.canEdit}
                                             />
                                         ))}
                                         {provided.placeholder}

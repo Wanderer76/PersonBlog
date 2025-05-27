@@ -7,6 +7,7 @@ public class PlayListDetailViewModel
     public Guid Id { get; set; }
     public string Title { get; set; }
     public string ThumbnailUrl { get; set; }
+    public bool CanEdit { get; set; }
     public IEnumerable<PostDetailViewModel> Posts { get; set; }
 }
 

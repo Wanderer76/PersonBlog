@@ -1,7 +1,6 @@
 ﻿using Shared.Services;
 using Shared.Utils;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Blog.Domain.Entities
@@ -64,6 +63,24 @@ namespace Blog.Domain.Entities
             }
             playListItems.Add(item);
             return true;
+        }
+
+        public Result<bool> AddVideo(Guid postId, int? position = null)
+        {
+            var desienation = 0;
+            if (position.HasValue)
+            {
+                if (playListItems.Any(x => x.Position == position.Value))
+                {
+                    return new Error("400", $"Нельзя добавить на позицию {position}");
+                }
+                desienation = position.Value;
+            }
+            else
+            {
+                desienation = playListItems.Count != 0 ? playListItems.Max(x => x.Position) + 1 : 1;
+            }
+            return AddVideo(new PlayListItem(postId, Id, desienation));
         }
 
         public Result<bool> RemoveVideo(Guid postId)

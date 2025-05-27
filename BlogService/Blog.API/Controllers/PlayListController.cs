@@ -33,6 +33,7 @@ public class PlayListController : BaseController
     }
 
     [HttpGet("availableVideos")]
+    [Authorize]
     [Produces(typeof(IReadOnlyList<PlayListViewModel>))]
     public async Task<IActionResult> GetAvailablePostsToPlayList(Guid? playlistId)
     {
@@ -47,7 +48,6 @@ public class PlayListController : BaseController
 
     [HttpGet("item/{id:guid}")]
     [Produces(typeof(PlayListDetailViewModel))]
-
     public async Task<IActionResult> GetPlayList(Guid id)
     {
         var result = await _playListService.GetPlayListDetailAsync(id);
@@ -63,6 +63,8 @@ public class PlayListController : BaseController
     public async Task<IActionResult> CreatePlayList([FromBody] PlayListCreateRequest form)
     {
         var result = await _playListService.CreatePlayListAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
@@ -72,6 +74,8 @@ public class PlayListController : BaseController
     public async Task<IActionResult> UpdatePlayList([FromBody] PlayListUpdateRequest form)
     {
         var result = await _playListService.UpdatePlayListCommonDataAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
@@ -82,6 +86,8 @@ public class PlayListController : BaseController
     public async Task<IActionResult> AddVideoToPlayList([FromBody] PlayListItemAddRequest form)
     {
         var result = await _playListService.AddVideoToPlayListAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
     
@@ -91,6 +97,8 @@ public class PlayListController : BaseController
     public async Task<IActionResult> UpdatePostPositions([FromBody] ChangePostPositionRequest form)
     {
         var result = await _playListService.ChangePostPositionAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
@@ -104,6 +112,8 @@ public class PlayListController : BaseController
             PlayListId = form.PlayListId,
             PostId = form.PostId,
         });
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
