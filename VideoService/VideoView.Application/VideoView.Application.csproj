@@ -19,7 +19,6 @@
     <ProjectReference Include="..\..\RecommendationService\Recommendation.Service\Recommendation.Service.csproj" />
     <ProjectReference Include="..\..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />
     <ProjectReference Include="..\Video.Persistence\Video.Persistence.csproj" />
-    <ProjectReference Include="..\Video.Service\Video.Service.csproj" />
   </ItemGroup>
 
 

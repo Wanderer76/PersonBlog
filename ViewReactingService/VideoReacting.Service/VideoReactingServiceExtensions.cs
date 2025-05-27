@@ -8,7 +8,8 @@ namespace VideoReacting.Service
     {
         public static void AddVideoReactingService(this IServiceCollection services)
         {
-            services.AddScoped<IViewHistoryService,DefaultViewHistoryService>();
+            services.AddScoped<IViewHistoryService, DefaultViewHistoryService>();
+            services.AddScoped<IReactionService, DefaultReactionService>();
         }
     }
 }

@@ -5,8 +5,6 @@ using Infrastructure.Middleware;
 using MessageBus;
 using Microsoft.AspNetCore.HttpOverrides;
 using Video.Persistence;
-using Video.Service;
-using VideoView.Application.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +16,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddVideoPersistence(builder.Configuration);
 builder.Services.AddFileStorage(builder.Configuration);
-builder.Services.AddVideoService();
 
 builder.Services.AddHttpClient("Profile", x =>
 {
@@ -36,8 +33,6 @@ builder.Services.AddHttpClient("Reacting", x =>
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
-builder.Services.AddMessageBus(builder.Configuration);
-builder.Services.AddHostedService<VideoReactionOutbox>();
 
 var app = builder.Build();
 
@@ -46,16 +41,6 @@ if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
-
-    using (var scope = app.Services.CreateScope())
-    {
-        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
-        foreach (var initializer in initializers)
-        {
-            initializer.Initialize();
-        }
-    }
-
 }
 
 app.UseCors(policy => policy.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader().AllowAnyMethod());

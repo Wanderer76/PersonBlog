@@ -1,22 +1,22 @@
-﻿using Infrastructure.Models;
+﻿
+using Infrastructure.Models;
 using MessageBus;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
 using Shared.Persistence;
-using Video.Domain.Entities;
-using Video.Domain.Events;
+using ViewReacting.Domain.Entities;
 using ViewReacting.Domain.Events;
+using Xunit.Sdk;
 
-namespace VideoView.Application.HostedServices
+namespace VideoReacting.API.HostedService
 {
-    public class VideoReactionOutbox : BackgroundService
+    public class ReactionOutbox : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMqMessageBus _messageBus;
 
-        public VideoReactionOutbox(IServiceProvider serviceProvider, RabbitMqMessageBus messageBus)
+        public ReactionOutbox(IServiceProvider serviceProvider, RabbitMqMessageBus messageBus)
         {
             _serviceProvider = serviceProvider;
             _messageBus = messageBus;
@@ -27,20 +27,13 @@ namespace VideoView.Application.HostedServices
             await using var connection = await _messageBus.GetConnectionAsync();
             await using var channel = await connection.CreateChannelAsync();
 
-            //await channel.ExchangeDeclareAsync(_settings.ExchangeName, ExchangeType.Direct, durable: true);
-            //await channel.QueueDeclareAsync(_settings.QueueName, durable: true, exclusive: false, autoDelete: false);
-            //await channel.QueueBindAsync(_settings.QueueName, _settings.ExchangeName, _settings.ViewRoutingKey);
-
-            //await channel.QueueDeclareAsync(_settings.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
-            //await channel.QueueBindAsync(_settings.SyncQueueName, _settings.ExchangeName, _settings.SyncRoutingKey);
-
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _serviceProvider.CreateScope();
 
-                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IVideoViewEntity>>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IVideoReactEntity>>();
 
-                var messages = await dbContext.Get<VideoEvent>()
+                var messages = await dbContext.Get<ReactingEvent>()
                     .Where(m => m.State == EventState.Pending && m.RetryCount < 3)
                     .OrderBy(m => m.CreatedAt)
                     .Take(100)
@@ -57,7 +50,7 @@ namespace VideoView.Application.HostedServices
 
                         var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
 
-                        await _messageBus.SendMessageAsync( QueueConstants.Exchange, routingKey, message);
+                        await _messageBus.SendMessageAsync(QueueConstants.Exchange, routingKey, message);
                     }
                     catch (Exception ex)
                     {
@@ -79,7 +72,7 @@ namespace VideoView.Application.HostedServices
             }
         }
 
-        private (string QueueName, string RoutingKey) GetRoutingKeyWithQueue(VideoEvent message)
+        private (string QueueName, string RoutingKey) GetRoutingKeyWithQueue(ReactingEvent message)
         {
             switch (message.EventType)
             {

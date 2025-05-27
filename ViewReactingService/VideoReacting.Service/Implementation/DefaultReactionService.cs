@@ -1,23 +1,22 @@
 ﻿using MessageBus;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
-using RabbitMQ.Client;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
-using Video.Domain.Entities;
-using Video.Domain.Events;
+using ViewReacting.Domain.Entities;
 using ViewReacting.Domain.Events;
+using ViewReacting.Domain.Services;
 
-namespace Video.Service.Interface.Default
+namespace VideoReacting.Service.Implementation
 {
     internal class DefaultReactionService : IReactionService
     {
-        private readonly IReadWriteRepository<IVideoViewEntity> _context;
+        private readonly IReadWriteRepository<IVideoReactEntity> _context;
         private readonly RabbitMqMessageBus _messageBus;
         private readonly RabbitMqVideoReactionConfig _reactionConfig = new();
 
-        public DefaultReactionService(IReadWriteRepository<IVideoViewEntity> context, RabbitMqMessageBus messageBus)
+        public DefaultReactionService(IReadWriteRepository<IVideoReactEntity> context, RabbitMqMessageBus messageBus)
         {
             _context = context;
             _messageBus = messageBus;
@@ -37,7 +36,7 @@ namespace Video.Service.Interface.Default
             //await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
             var now = DateTimeOffset.UtcNow;
             var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), reaction.UserId, reaction.PostId, now, reaction.RemoteIp, reaction.IsLike, true);
-            var videoEvent = new VideoEvent
+            var videoEvent = new ReactingEvent
             {
                 Id = eventData.EventId,
                 EventType = nameof(UserViewedPostEvent),
@@ -54,7 +53,7 @@ namespace Video.Service.Interface.Default
             //await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
             //await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
             //await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
-                var videoEvent = new VideoEvent
+                var videoEvent = new ReactingEvent
                 {
                     Id = GuidService.GetNewGuid(),
                     EventType = nameof(VideoViewEvent),

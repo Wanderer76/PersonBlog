@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
 using Shared.Services;
-using System.Security.AccessControl;
-using Video.Service.Interface;
 using VideoView.Application.Api;
 using VideoView.Application.Services;
 using ViewReacting.Domain.Models;
@@ -21,19 +19,17 @@ public class VideoController : BaseController
 {
     private const string HLSType = "application/x-mpegURL";
     private readonly IFileStorage storage;
-    private readonly IReactionService _videoService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ICacheService _cache;
 
-    public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IReactionService videoService, IHttpClientFactory httpClientFactory, ICacheService cache)
+    public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IHttpClientFactory httpClientFactory, ICacheService cache)
         : base(logger)
     {
         storage = factory.CreateFileStorage();
-        _videoService = videoService;
         _httpClientFactory = httpClientFactory;
         _cache = cache;
     }
-    
+
 
     [HttpGet("video/v2/{postId}/chunks/{*file}")]
     public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string file)
@@ -97,56 +93,31 @@ public class VideoController : BaseController
     [Authorize]
     public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
     {
-        HttpContext.TryGetUserFromContext(out var userId);
-
-        await _videoService.SetViewToPost(new ViewReacting.Domain.Events.VideoViewEvent
+        var client = _httpClientFactory.CreateClient("Reacting");
+        foreach (var i in HttpContext.Request.Headers)
         {
-            UserId = userId.Value,
-            IsCompleteWatch = viewRequest.IsComplete,
-            PostId = viewRequest.PostId,
-            WatchedTime = viewRequest.Time,
-        });
+            client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
+            
+        }
+        var result = await client.PostAsJsonAsync("Reaction/setView", viewRequest);
+        if (!result.IsSuccessStatusCode)
+            return BadRequest(result.Content);
         return Ok();
     }
 
     [HttpPost("setReaction/{postId:guid}")]
     public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
     {
-        HttpContext.TryGetUserFromContext(out var userId);
-        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        await _videoService.SetReactionToPost(new ReactionCreateModel
+        var client = _httpClientFactory.CreateClient("Reacting");
+        foreach (var i in HttpContext.Request.Headers)
         {
-            IsLike = isLike,
-            PostId = postId,
-            RemoteIp = remoteIp,
-            UserId = userId
-        });
-
-        //var session = GetUserSession();
-        //if (session != null)
-        //{
-        //    var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
-        //    if (userSession != null)
-        //    {
-        //        var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
-        //        if (postViewed != null)
-        //        {
-        //            postViewed.IsViewed = true;
-        //            postViewed.IsLike = isLike;
-        //            await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
-        //        }
-        //    }
-        //}
-
+            client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
+        }
+        var result = await client.PostAsync($"Reaction/setReaction/{postId}?isLike={isLike}", null);
+        if (!result.IsSuccessStatusCode)
+            return BadRequest(result.Content);
         return Ok();
     }
-}
-
-public class SetViewRequest
-{
-    public Guid PostId { get; set; }
-    public double Time { get; set; }
-    public bool IsComplete { get; set; }
 }
 
 internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, HistoryViewItem? UserPostInfo, List<string> Comment);

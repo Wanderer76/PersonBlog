@@ -2,6 +2,7 @@ using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using VideoReacting.API.Consumer;
+using VideoReacting.API.HostedService;
 using VideoReacting.Persistence;
 using VideoReacting.Service;
 using ViewReacting.Domain.Events;
@@ -16,11 +17,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddViewReactingPersistence(builder.Configuration);
 builder.Services.AddVideoReactingService();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<VideoViewEvent, VideoViewEventHandler>();
 
 builder.Services.AddHostedService<ViewHandlerHostedService>();
+builder.Services.AddHostedService<ReactionOutbox>();
 
 var app = builder.Build();
 
