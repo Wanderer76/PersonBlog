@@ -15,9 +15,6 @@ namespace Blog.Domain.Entities
         [JsonInclude]
         public DateTimeOffset CreatedAt { get; init; }
 
-        [ForeignKey(nameof(PostId))]
-        public Post Post { get; } = null!;
-
         [ForeignKey(nameof(PlayListId))]
         public PlayList PlayList { get; } = null!;
 

@@ -1,9 +1,7 @@
 ﻿using FFmpeg.Service.Models;
-using Minio.Helper;
 using Newtonsoft.Json;
 using Shared.Utils;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -14,15 +12,15 @@ namespace FFmpeg.Service.Internal
         private readonly FFMpegOptions fFMpegOptions;
         public FFMpegService(FFMpegOptions configuration)
         {
-            Xabe.FFmpeg.FFmpeg.SetExecutablesPath("../../ffmpeg");
             fFMpegOptions = configuration;
         }
 
         public async Task GeneratePreview(string input, string outputFilePath)
         {
-            var result = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Snapshot(input, outputFilePath, TimeSpan.FromSeconds(0));
-            await result.Start();
+            var args = $"-ss {TimeSpan.FromSeconds(1)} -i \"{input}\" -frames:v 1 -q:v 2 \"{outputFilePath}\"";
+            await ExecuteCommand(fFMpegOptions.FFMpegPath, args);
         }
+
         public async Task<FFProbeStream?> GetVideoMediaInfo(string input)
         {
             var inputMedia = await GetStreams(input);
@@ -48,6 +46,8 @@ namespace FFmpeg.Service.Internal
 
             var inputMedia = await GetStreams(input);
             var inputAudio = inputMedia.FirstOrDefault(x => x.CodecType == "audio");
+            var inputVideo = inputMedia.FirstOrDefault(x => x.CodecType == "video");
+
             for (int i = 0; i < options.Resolutions.Count; i++)
             {
                 string resolution = options.Resolutions[i];
@@ -57,9 +57,13 @@ namespace FFmpeg.Service.Internal
                 string rate = options.Bitrates[i];
                 string ab = options.AudioBitrates[i];
 
-                filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
+                if (inputVideo.Width > inputVideo.Height)
+                    filterComplexBuilder.Append($"[v{i + 1}]scale=w={width}:h={height}[v{i}out];");
+                else 
+                    filterComplexBuilder.Append($"[v{i + 1}]scale=w={height}:h={width}[v{i}out];");
 
-                string bufsize = rate.Replace("M", "0M").Replace("k", "k");
+
+                    string bufsize = rate.Replace("M", "0M").Replace("k", "k");
                 mapVideoParamsBuilder.Append($"-map \"[v{i}out]\" -c:v:{i} {fFMpegOptions.DefaultEncoder} " +
                     $"-b:v:{i} {rate} -maxrate:v:{i} {rate} -allow_skip_frames 1 -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset medium" +
                     $" -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
@@ -94,7 +98,7 @@ namespace FFmpeg.Service.Internal
             {
                 return [];
             }
-            var desirialized = JsonConvert.DeserializeObject<FFProbeObject>(value).Streams;
+            var desirialized = JsonConvert.DeserializeObject<FFProbeObject>(value)!.Streams;
             return desirialized ?? [];
         }
 
