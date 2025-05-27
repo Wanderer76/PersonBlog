@@ -66,6 +66,15 @@ public class PlayListController : BaseController
         return Ok(result.Value);
     }
 
+    [HttpPost("update")]
+    [Authorize]
+    [Produces(typeof(PlayListDetailViewModel))]
+    public async Task<IActionResult> UpdatePlayList([FromBody] PlayListUpdateRequest form)
+    {
+        var result = await _playListService.UpdatePlayListCommonDataAsync(form);
+        return Ok(result.Value);
+    }
+
     [HttpPost("addVideo")]
     [Authorize]
     [Produces(typeof(PlayListViewModel))]

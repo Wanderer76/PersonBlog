@@ -132,7 +132,6 @@ const PlaylistPage = () => {
     const [availableVideos, setAvailableVideos] = useState([]);
     const [selectedVideos, setSelectedVideos] = useState([]);
     const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
-    const navigate = useNavigate();
 
     const fetchPlaylistData = useCallback(async () => {
         const response = await API.get(`profile/api/Playlist/item/${playlistId}`);
@@ -166,18 +165,31 @@ const PlaylistPage = () => {
         if (!file) return;
 
         const formData = new FormData();
-        formData.append('cover', file);
+        formData.append('thumbnail', file);
 
-        const response = await API.post("playlist/api/update-cover", formData, true);
-        if (response.status === 200) {
-            setPlaylist(prev => ({ ...prev, thumbnailUrl: URL.createObjectURL(file) }));
+        const thumbnailId = await API.post("profile/api/Playlist/loadThumbnail", formData, true);
+        if (thumbnailId.status === 200) {
+            const response = await API.post("profile/api/Playlist/update", { playListId: playlistId, thumbnailId: thumbnailId.data.thumbnailId });
+            setIsEditingTitle(false);
+            const videosWithPositions = response.data.posts.map((video, index) => ({
+                ...video,
+                position: index + 1
+            }));
+            setPlaylist({ ...response.data, posts: videosWithPositions });
         }
     }, []);
 
+
     const saveTitleChanges = useCallback(async () => {
-        await API.put("playlist/api/update-title", { title: playlist.title });
+        const response = await API.post("profile/api/Playlist/update", { playListId: playlistId, title: playlist.title });
         setIsEditingTitle(false);
+        const videosWithPositions = response.data.posts.map((video, index) => ({
+            ...video,
+            position: index + 1
+        }));
+        setPlaylist({ ...response.data, posts: videosWithPositions });
     }, [playlist.title]);
+
 
     const removeVideo = useCallback(async (videoId) => {
         await API.post(`profile/api/Playlist/removeVideo`, {

@@ -8,6 +8,7 @@ namespace Blog.Domain.Services;
 public interface IPlayListService
 {
     Task<Result<PlayListDetailViewModel>> CreatePlayListAsync(PlayListCreateRequest playList);
+    Task<Result<PlayListDetailViewModel>> UpdatePlayListCommonDataAsync(PlayListUpdateRequest playList);
     Task<Result<PlayListViewModel>> AddVideoToPlayListAsync(PlayListItemAddRequest playList);
     Task<Result<PlayListViewModel>> RemoveVideoFromPlayListAsync(PlayListItemRemoveRequest playList);
     Task<Result<IReadOnlyList<PlayListViewModel>>> GetBlogPlayListsAsync(Guid blogId);

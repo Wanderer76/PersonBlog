@@ -6,6 +6,7 @@ using FileStorage.Service.Service;
 using Infrastructure.Interface;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Shared.Persistence;
 using Shared.Utils;
 
@@ -285,6 +286,64 @@ namespace Blog.Service.Services.Implementation
                 Title = playlist.Title,
                 Posts = await playlist.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync()
             };
+        }
+
+        public async Task<Result<PlayListDetailViewModel>> UpdatePlayListCommonDataAsync(PlayListUpdateRequest updateRequest)
+        {
+            using var fileStorage = _fileStorageFactory.CreateFileStorage();
+            var detailViewKey = new PlayListDetailCacheKey(updateRequest.PlayListId);
+
+            var key = new PlayListCacheKey(updateRequest.PlayListId);
+            var playlist = await _cacheService.GetOrAddDataAsync(key, async () =>
+            {
+                var data = await _repository.Get<PlayList>()
+                .Where(x => x.Id == updateRequest.PlayListId && x.IsDeleted == false)
+                .Include(x => x.PlayListItems)
+                .FirstOrDefaultAsync();
+                data.AssertFound();
+                return data;
+            });
+            var user = await _userSession.GetUserSessionAsync();
+
+            var playlistDetailViewModel = await _cacheService.GetOrAddDataAsync(detailViewKey, async () =>
+            {
+                return new PlayListDetailViewModel
+                {
+                    Id = playlist.Id,
+                    Title = playlist.Title,
+                    ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId.Value, playlist.ThumbnailId) : null,
+                    Posts = await playlist.PlayListItems.OrderBy(x => x.Position).ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
+                };
+            });
+
+            if (string.IsNullOrWhiteSpace(updateRequest.ThumbnailId) && string.IsNullOrWhiteSpace(updateRequest.Title))
+            {
+                return playlistDetailViewModel;
+            }
+
+            _repository.Attach(playlist);
+            if (!string.IsNullOrWhiteSpace(updateRequest.ThumbnailId))
+            {
+                if (!string.IsNullOrWhiteSpace(playlist.ThumbnailId))
+                {
+                    
+                    await fileStorage.RemoveFileAsync(user.UserId.Value, playlist.ThumbnailId);
+                }
+
+                playlist.ThumbnailId = updateRequest.ThumbnailId;
+            }
+            if (!string.IsNullOrWhiteSpace(updateRequest.Title))
+            {
+                playlist.Title = updateRequest.Title;
+            }
+            await _repository.SaveChangesAsync();
+
+
+            playlistDetailViewModel.Title = playlist.Title;
+            playlistDetailViewModel.ThumbnailUrl = await fileStorage.GetFileUrlAsync(user.UserId.Value,playlist.ThumbnailId);
+            await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
+            await _cacheService.SetCachedDataAsync(detailViewKey, playlistDetailViewModel, TimeSpan.FromMinutes(10));
+            return playlistDetailViewModel;
         }
     }
 }

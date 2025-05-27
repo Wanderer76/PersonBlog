@@ -8,3 +8,9 @@ public class PlayListCreateRequest
     public required List<Guid> PostIds { get; set; } = [];
 }
 
+public class PlayListUpdateRequest
+{
+    public required Guid PlayListId {  get; set; }
+    public string? Title { get; set; }
+    public string? ThumbnailId { get; set; }
+}
