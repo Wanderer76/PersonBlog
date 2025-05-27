@@ -129,7 +129,7 @@ namespace Blog.Service.Services.Implementation
                 .Where(x => x.VideoFile != null)
                 .Where(x => x.IsDeleted == false);
 
-            var removeExistPlaylistVideo = playlistId.HasValue
+            availablePostQuery = playlistId.HasValue
                 ?
                 availablePostQuery
                 .Where(x => !_repository.Get<PlayList>()
