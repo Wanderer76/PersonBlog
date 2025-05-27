@@ -148,6 +148,7 @@ namespace Blog.Service.Services.Implementation
                                     new VideoMetadataModel(
                                         videoFile.Id,
                                         videoFile.Length,
+                                        videoFile.Duration,
                                         videoFile.ContentType,
                                         videoFile.ObjectName
                                     ) : null,
@@ -199,20 +200,18 @@ namespace Blog.Service.Services.Implementation
 
             if (uploadVideoChunkDto.TotalChunkCount == uploadVideoChunkDto.ChunkNumber)
             {
-                var videoCreateEvent = new CombineFileChunksEvent
+                var videoCreateEvent = new CombineFileChunksCommand
                 {
-                    EventId = GuidService.GetNewGuid(),
                     VideoMetadataId = metadata.Id,
-                    IsCompleted = false,
                     PostId = uploadVideoChunkDto.PostId,
-                    CreatedAt = DateTimeOffset.UtcNow
                 };
 
                 var videoEvent = new VideoProcessEvent
                 {
-                    Id = videoCreateEvent.EventId,
+                    Id = GuidService.GetNewGuid(),
                     EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(CombineFileChunksEvent),
+                    EventType = nameof(CombineFileChunksCommand),
+                    CorrelationId = videoCreateEvent.VideoMetadataId
                 };
                 _context.Add(videoEvent);
                 await _context.SaveChangesAsync();
@@ -264,6 +263,7 @@ namespace Blog.Service.Services.Implementation
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
+                                videoMetadata.Duration,
                                 videoMetadata.ContentType,
                                 videoMetadata.ObjectName
                             ) : null,
@@ -316,6 +316,7 @@ namespace Blog.Service.Services.Implementation
                                 new VideoMetadataModel(
                                     videoMetadata.Id,
                                     videoMetadata.Length,
+                                    videoMetadata.Duration,
                                     videoMetadata.ContentType,
                                     videoMetadata.ObjectName
                                 ) : null,

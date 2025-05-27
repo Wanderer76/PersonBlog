@@ -23,16 +23,15 @@ namespace ReactionProcessing.Cli.HostedServices
 
         private async Task ProcessVideoReactionsEvents()
         {
-            var connection = await _messageBus.GetConnectionAsync();
+            using var connection = await _messageBus.GetConnectionAsync();
             channel ??= await connection.CreateChannelAsync();
-
             await channel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
             await channel.QueueDeclareAsync(_config.QueueName, durable: true, exclusive: false, autoDelete: false);
             await channel.QueueBindAsync(_config.QueueName, _config.ExchangeName, _config.ViewRoutingKey);
 
             try
             {
-                await _messageBus.SubscribeAsync(channel, _config.QueueName);
+                await _messageBus.SubscribeAsync(_config.QueueName);
             }
             catch (Exception ex)
             {

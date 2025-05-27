@@ -1,11 +1,15 @@
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
+using Blog.Domain.Entities;
+using Blog.Domain.Events;
 using Blog.Persistence;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using MassTransit;
 using MessageBus;
+using MessageBus.Configs;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
 
@@ -25,15 +29,55 @@ builder.Services.AddRedisCache(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>()
+    .AddSubscription<CombineFileChunksCommand,VideoProcessSagaHandler>()
+    .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>()
+    .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>()
+    .AddSubscription<VideoPublishedResponse, VideoProcessSagaHandler>()
+    .AddSubscription<VideoReadyToPublishEvent, VideoReadyToPublishEventHandler>()
     .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
+
+
+//builder.Services.AddMassTransit(x =>
+//{
+//    x.AddSagaStateMachine<VideoProcessingSaga, VideoProcessingSagaState>()
+//        .EntityFrameworkRepository(r =>
+//        {
+//            r.ConcurrencyMode = ConcurrencyMode.Optimistic;
+//            r.ExistingDbContext<ProfileDbContext>();
+//            r.UsePostgres(builder.Configuration["ConnectionStrings:ProfileDbContext"]);
+//        });
+
+//    x.AddConsumer<VideoReadyToPublishEventHandler>();
+
+//    x.UsingRabbitMq((ctx, cfg) =>
+//    {
+//        var rabbit = builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!;
+//        cfg.Host($"rabbitmq://{rabbit.HostName}:{rabbit.Port}", c =>
+//        {
+//            c.Username(rabbit.UserName);
+//            c.Password(rabbit.Password);
+//        });
+
+//        cfg.ReceiveEndpoint("video-publish", e =>
+//        {
+//            e.Durable = true;
+//            e.Exclusive = false;
+//            e.AutoDelete = false;
+
+//            e.ConfigureConsumer<VideoReadyToPublishEventHandler>(ctx);
+//        });
+//        cfg.ConfigureEndpoints(ctx);
+
+//    });
+
+//});
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = long.MaxValue;
 });
 
-builder.Services.AddHostedService<OutboxPublisherService>()
-    .AddHostedService<SyncProfileHostedService>();
+builder.Services.AddHostedService<OutboxPublisherService>();
 
 var app = builder.Build();
 

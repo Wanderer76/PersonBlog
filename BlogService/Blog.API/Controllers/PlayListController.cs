@@ -11,19 +11,19 @@ namespace Blog.API.Controllers;
 public class PlayListController : BaseController
 {
     private readonly IPlayListService _playListService;
-    private readonly IFileStorage _fileStorageFactory;
+    private readonly IFileStorage _fileStorage;
+
     public PlayListController(ILogger<PlayListController> logger, IPlayListService playListService, IFileStorageFactory fileStorageFactory)
         : base(logger)
     {
         _playListService = playListService;
-        _fileStorageFactory = fileStorageFactory.CreateFileStorage();
+        _fileStorage = fileStorageFactory.CreateFileStorage();
     }
 
     [HttpGet("list")]
     [Produces(typeof(IReadOnlyList<PlayListViewModel>))]
     public async Task<IActionResult> GetAllPlayLists(Guid blogId)
     {
-
         var result = await _playListService.GetBlogPlayListsAsync(blogId);
 
         if (result.IsFailure)
@@ -32,9 +32,22 @@ public class PlayListController : BaseController
         return Ok(result.Value);
     }
 
+    [HttpGet("availableVideos")]
+    [Authorize]
+    [Produces(typeof(IReadOnlyList<PlayListViewModel>))]
+    public async Task<IActionResult> GetAvailablePostsToPlayList(Guid? playlistId)
+    {
+        var result = await _playListService.GetAvailablePostsToPlayListByIdAsync(playlistId);
+
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+
+        return Ok(result.Value);
+    }
+
+
     [HttpGet("item/{id:guid}")]
     [Produces(typeof(PlayListDetailViewModel))]
-
     public async Task<IActionResult> GetPlayList(Guid id)
     {
         var result = await _playListService.GetPlayListDetailAsync(id);
@@ -49,12 +62,20 @@ public class PlayListController : BaseController
     [Produces(typeof(PlayListDetailViewModel))]
     public async Task<IActionResult> CreatePlayList([FromBody] PlayListCreateRequest form)
     {
-        var result = await _playListService.CreatePlayListAsync(new PlayListCreateRequest
-        {
-            Title = form.Title,
-            PostIds = form.PostIds,
-            ThumbnailId = form.ThumbnailId
-        });
+        var result = await _playListService.CreatePlayListAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+        return Ok(result.Value);
+    }
+
+    [HttpPost("update")]
+    [Authorize]
+    [Produces(typeof(PlayListDetailViewModel))]
+    public async Task<IActionResult> UpdatePlayList([FromBody] PlayListUpdateRequest form)
+    {
+        var result = await _playListService.UpdatePlayListCommonDataAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
@@ -64,12 +85,20 @@ public class PlayListController : BaseController
 
     public async Task<IActionResult> AddVideoToPlayList([FromBody] PlayListItemAddRequest form)
     {
-        var result = await _playListService.AddVideoToPlayListAsync(new PlayListItemAddRequest
-        {
-            PlayListId = form.PlayListId,
-            PostId = form.PostId,
-            Position = form.Position,
-        });
+        var result = await _playListService.AddVideoToPlayListAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+        return Ok(result.Value);
+    }
+    
+    [HttpPost("updatePositions")]
+    [Authorize]
+    [Produces(typeof(PlayListViewModel))]
+    public async Task<IActionResult> UpdatePostPositions([FromBody] ChangePostPositionRequest form)
+    {
+        var result = await _playListService.ChangePostPositionAsync(form);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
@@ -83,16 +112,23 @@ public class PlayListController : BaseController
             PlayListId = form.PlayListId,
             PostId = form.PostId,
         });
+        if (result.IsFailure)
+            return BadRequest(result.Error);
         return Ok(result.Value);
     }
 
     [HttpPost("loadThumbnail")]
     [Authorize]
     [Produces(typeof(string))]
-    public async Task<IActionResult> AddVideoToPlayList([FromBody] IFormFile from)
+    public async Task<IActionResult> AddVideoToPlayList([FromForm] IFormFile thumbnail)
     {
         var userId = HttpContext.GetUserFromContext();
-        var thumbnailId = await _fileStorageFactory.PutFileAsync(userId, from.Name, from.OpenReadStream());
-        return Ok(thumbnailId);
+        var thumbnailId = await _fileStorage.PutFileAsync(userId, GuidService.GetNewGuid(), thumbnail.OpenReadStream());
+        var url = await _fileStorage.GetFileUrlAsync(userId, thumbnailId);
+        return Ok(new
+        {
+            ThumbnailId = thumbnailId,
+            ThumbnailUrl = url
+        });
     }
 }

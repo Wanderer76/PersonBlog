@@ -1,14 +1,52 @@
-﻿
-namespace MessageBus.EventHandler
+﻿namespace MessageBus.EventHandler;
+
+public interface IEventHandler
 {
-    public interface IEventHandler
+    Task Handle(MessageContext @event);
+}
+
+public interface IEventHandler<TEvent> : IEventHandler
+{
+    Task Handle(MessageContext<TEvent> @event);
+    Task IEventHandler.Handle(MessageContext @event) => Handle(@event);
+}
+
+public class MessageContext
+{
+    public Guid? CorrelationId { get; }
+    public object Message { get; }
+
+    public MessageContext(Guid? correlationId, object message)
     {
-        Task Handle(object @event);
+        CorrelationId = correlationId;
+        Message = message;
     }
 
-    public interface IEventHandler<TEvent> : IEventHandler
+    public static MessageContext<T> Create<T>(Guid? correlationId, T message)
     {
-        Task Handle(TEvent @event);
-        Task IEventHandler.Handle(object @event) => Handle((TEvent)@event);
+        return new MessageContext<T>(correlationId, message);
+    }
+
+    public static MessageContext<T> Create<T>(MessageContext ctx)
+    {
+        return Create<T>(ctx.CorrelationId, (T)ctx.Message);
+    }
+}
+
+
+public sealed class MessageContext<TMessage>
+{
+    public Guid? CorrelationId { get; }
+    public TMessage Message { get; }
+
+    internal MessageContext(Guid? correlationId, TMessage message)
+    {
+        CorrelationId = correlationId;
+        Message = message;
+    }
+
+    public static implicit operator MessageContext<TMessage>(MessageContext t)
+    {
+        return MessageContext.Create<TMessage>(t);
     }
 }

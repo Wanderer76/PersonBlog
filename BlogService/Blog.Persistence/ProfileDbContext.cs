@@ -16,6 +16,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
     public DbSet<PlayList> PlayLists { get; set; }
     public DbSet<PlayListItem> PlayListItems { get; set; }
+    public DbSet<VideoProcessingSagaState> VideoProcessingSagaStates { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {

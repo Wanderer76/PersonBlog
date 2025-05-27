@@ -26,20 +26,14 @@ namespace VideoProcessing.Cli
             var connection = await _messageBus.GetConnectionAsync();
             var videoConverterChannel = await connection.CreateChannelAsync();
 
-            await videoConverterChannel.ExchangeDeclareAsync(_config.ExchangeName, ExchangeType.Direct, durable: true);
-            await videoConverterChannel.QueueDeclareAsync(_config.VideoProcessQueue, durable: true, exclusive: false, autoDelete: false);
+            await videoConverterChannel.ExchangeDeclareAsync("video-event", ExchangeType.Direct, durable: true);
+            await videoConverterChannel.QueueDeclareAsync("video-convert", durable: true, exclusive: false, autoDelete: false);
+            await videoConverterChannel.QueueDeclareAsync("combine-chunks", durable: true, exclusive: false, autoDelete: false);
 
-            await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.VideoConverterRoutingKey);
-            await videoConverterChannel.QueueBindAsync(_config.VideoProcessQueue, _config.ExchangeName, _config.FileChunksCombinerRoutingKey);
-
-            try
-            {
-                await _messageBus.SubscribeAsync(videoConverterChannel, _config.VideoProcessQueue);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            await videoConverterChannel.QueueBindAsync("combine-chunks", "video-event", "chunks.combine");
+            await videoConverterChannel.QueueBindAsync("video-convert", "video-event", "video.convert");
+            await _messageBus.SubscribeAsync("video-convert");
+            await _messageBus.SubscribeAsync("combine-chunks");
         }
 
 
