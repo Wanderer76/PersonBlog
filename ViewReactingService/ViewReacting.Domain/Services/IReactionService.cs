@@ -16,4 +16,5 @@ public class ReactionCreateModel
     public Guid? UserId { get; set; }
     public string? RemoteIp { get; set; }
     public bool? IsLike { get; set; }
+    public double Time {  get; set; }
 }

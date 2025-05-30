@@ -1,6 +1,3 @@
-using MessageBus;
-using MessageBus.Shared.Events;
-using ReactionProcessing.Cli.Handlers;
 using ReactionProcessing.Cli.HostedServices;
 using Video.Persistence;
 
@@ -14,8 +11,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHostedService<VideoReactionProcessingHostedService>();
 builder.Services.AddVideoPersistence(builder.Configuration);
-builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<UserViewedPostEvent, VideoViewEventHandler>();
 
 builder.Services.AddHttpClient("ProfileClient", config =>
 {

@@ -11,20 +11,20 @@ namespace VideoReacting.API.Controllers
     [ApiController]
     public class ReactionController : BaseController
     {
-        private readonly IReactionService _videoService;
+        private readonly IReactionService _reactionService;
 
         public ReactionController(ILogger<ReactionController> logger, IReactionService videoService) : base(logger)
         {
-            _videoService = videoService;
+            _reactionService = videoService;
         }
 
         [HttpPost("setView")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
         {
             HttpContext.TryGetUserFromContext(out var userId);
 
-            await _videoService.SetViewToPost(new VideoViewEvent
+            await _reactionService.SetViewToPost(new VideoViewEvent
             {
                 UserId = userId.Value,
                 IsCompleteWatch = viewRequest.IsComplete,
@@ -40,30 +40,13 @@ namespace VideoReacting.API.Controllers
         {
             HttpContext.TryGetUserFromContext(out var userId);
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            await _videoService.SetReactionToPost(new ReactionCreateModel
+            await _reactionService.SetReactionToPost(new ReactionCreateModel
             {
                 IsLike = isLike,
                 PostId = postId,
                 RemoteIp = remoteIp,
                 UserId = userId
             });
-
-            //var session = GetUserSession();
-            //if (session != null)
-            //{
-            //    var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
-            //    if (userSession != null)
-            //    {
-            //        var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
-            //        if (postViewed != null)
-            //        {
-            //            postViewed.IsViewed = true;
-            //            postViewed.IsLike = isLike;
-            //            await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
-            //        }
-            //    }
-            //}
-
             return Ok();
         }
     }

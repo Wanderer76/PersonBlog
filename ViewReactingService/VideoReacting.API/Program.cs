@@ -1,7 +1,6 @@
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
-using VideoReacting.API.Consumer;
 using VideoReacting.API.HostedService;
 using VideoReacting.Persistence;
 using VideoReacting.Service;
@@ -19,11 +18,11 @@ builder.Services.AddViewReactingPersistence(builder.Configuration);
 builder.Services.AddVideoReactingService();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<VideoViewEvent, VideoViewEventHandler>();
 
-builder.Services.AddHostedService<ViewHandlerHostedService>();
 builder.Services.AddHostedService<ReactionOutbox>();
 
 var app = builder.Build();
@@ -43,8 +42,11 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.UseAuthorization();
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors(policy => policy.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

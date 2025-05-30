@@ -1,10 +1,7 @@
 using FileStorage.Service;
 using Infrastructure.Extensions;
-using Infrastructure.Interface;
 using Infrastructure.Middleware;
-using MessageBus;
 using Microsoft.AspNetCore.HttpOverrides;
-using Video.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +11,6 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddVideoPersistence(builder.Configuration);
 builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddHttpClient("Profile", x =>

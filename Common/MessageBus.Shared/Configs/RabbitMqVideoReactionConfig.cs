@@ -1,6 +1,6 @@
 ﻿namespace MessageBus.Shared.Configs
 {
-    public class RabbitMqVideoReactionConfig
+    public static class RabbitMqVideoReactionConfig
     {
         public const string ExchangeName = "video-reaction";
         public const string QueueName = "video-reactions";

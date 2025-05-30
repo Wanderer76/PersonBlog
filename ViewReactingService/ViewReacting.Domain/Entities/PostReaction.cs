@@ -9,10 +9,10 @@ namespace ViewReacting.Domain.Entities
         public string IpAddress { get; private set; }
         public Guid PostId { get; set; }
         public double ReactionTime { get; set; }
-        public bool IsLike { get; set; }
+        public bool? IsLike { get; set; }
         public bool IsDelete { get; set; }
 
-        public PostReaction(Guid? userId, string ipAddress, Guid postId, double reactionTime, bool isLike)
+        public PostReaction(Guid? userId, string ipAddress, Guid postId, double reactionTime, bool? isLike)
         {
             Id = GuidService.GetNewGuid();
             UserId = userId;

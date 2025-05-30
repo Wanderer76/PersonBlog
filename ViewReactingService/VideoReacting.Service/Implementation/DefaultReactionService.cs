@@ -1,6 +1,5 @@
-﻿using MessageBus;
-using MessageBus.Shared.Configs;
-using MessageBus.Shared.Events;
+﻿using MessageBus.Shared.Events;
+using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using System.Text.Json;
@@ -13,13 +12,10 @@ namespace VideoReacting.Service.Implementation
     internal class DefaultReactionService : IReactionService
     {
         private readonly IReadWriteRepository<IVideoReactEntity> _context;
-        private readonly RabbitMqMessageBus _messageBus;
-        private readonly RabbitMqVideoReactionConfig _reactionConfig = new();
 
-        public DefaultReactionService(IReadWriteRepository<IVideoReactEntity> context, RabbitMqMessageBus messageBus)
+        public DefaultReactionService(IReadWriteRepository<IVideoReactEntity> context)
         {
             _context = context;
-            _messageBus = messageBus;
         }
 
         public Task RemoveReactionToPost(Guid postId)
@@ -29,17 +25,34 @@ namespace VideoReacting.Service.Implementation
 
         public async Task SetReactionToPost(ReactionCreateModel reaction)
         {
-            //await using var connection = await _messageBus.GetConnectionAsync();
-            //await using var channel = await connection.CreateChannelAsync();
-            //await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
-            //await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
-            //await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
-            var now = DateTimeOffset.UtcNow;
-            var eventData = new UserViewedPostEvent(GuidService.GetNewGuid(), reaction.UserId, reaction.PostId, now, reaction.RemoteIp, reaction.IsLike, true);
+            var hasView = await _context.Get<PostReaction>()
+              .Where(x => x.UserId == reaction.UserId || x.IpAddress == reaction.RemoteIp)
+              .FirstOrDefaultAsync();
+
+            if (hasView == null)
+            {
+                hasView = new PostReaction(reaction.UserId, reaction.RemoteIp, reaction.PostId, reaction.Time, reaction.IsLike);
+                _context.Add(hasView);
+            }
+            else
+            {
+                _context.Attach(hasView);
+                hasView.IsLike = reaction.IsLike;
+            }
+
+            var eventData = new UserReactionSyncEvent
+            {
+                EventId = GuidService.GetNewGuid(),
+                PostId = reaction.PostId,
+                UserId = reaction.UserId,
+                Time = reaction.Time,
+                IsLike = reaction.IsLike
+            };
+
             var videoEvent = new ReactingEvent
             {
                 Id = eventData.EventId,
-                EventType = nameof(UserViewedPostEvent),
+                EventType = nameof(UserReactionSyncEvent),
                 EventData = JsonSerializer.Serialize(eventData),
             };
             _context.Add(videoEvent);
@@ -48,20 +61,14 @@ namespace VideoReacting.Service.Implementation
 
         public async Task SetViewToPost(VideoViewEvent videoView)
         {
-            //await using var connection = await _messageBus.GetConnectionAsync();
-            //await using var channel = await connection.CreateChannelAsync();
-            //await channel.ExchangeDeclareAsync(_reactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
-            //await channel.QueueDeclareAsync(_reactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
-            //await channel.QueueBindAsync(_reactionConfig.QueueName, _reactionConfig.ExchangeName, _reactionConfig.ViewRoutingKey);
-                var videoEvent = new ReactingEvent
-                {
-                    Id = GuidService.GetNewGuid(),
-                    EventType = nameof(VideoViewEvent),
-                    EventData = JsonSerializer.Serialize(videoView),
-                };
-                _context.Add(videoEvent);
-                await _context.SaveChangesAsync();
-            }
+            var videoEvent = new ReactingEvent
+            {
+                Id = GuidService.GetNewGuid(),
+                EventType = nameof(VideoViewEvent),
+                EventData = JsonSerializer.Serialize(videoView),
+            };
+            _context.Add(videoEvent);
+            await _context.SaveChangesAsync();
         }
     }
-
+}
