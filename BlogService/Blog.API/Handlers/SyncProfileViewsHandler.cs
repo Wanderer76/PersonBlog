@@ -71,6 +71,7 @@ namespace Blog.API.Handlers
             .FirstOrDefaultAsync();
 
             var post = await _context.Get<Post>()
+                .AsTracking()
                 .FirstAsync(x => x.Id == @event.Message.PostId);
             if (existView == null)
             {

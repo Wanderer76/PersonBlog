@@ -8,12 +8,13 @@ using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using MassTransit;
 using System.Text.Json;
+using ViewReacting.Domain.Events;
 
 namespace Blog.API.HostedServices
 {
     public class OutboxPublisherService : BackgroundService
     {
-        private readonly IServiceProvider _serviceProvider; 
+        private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMqMessageBus _messageBus;
         private readonly IChannel _channel;
         private readonly IConnection _connection;
@@ -31,13 +32,13 @@ namespace Blog.API.HostedServices
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             await _channel.ExchangeDeclareAsync("video-event", "direct", true);
-            await _channel.QueueDeclareAsync("saga-queue",true,false,false);
+            await _channel.QueueDeclareAsync("saga-queue", true, false, false);
             await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
             await _messageBus.SubscribeAsync("saga-queue");
 
-            await _channel.ExchangeDeclareAsync(RabbitMqVideoReactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            await _channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
             await _channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
-            await _channel.QueueBindAsync(RabbitMqVideoReactionConfig.SyncQueueName, RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.SyncRoutingKey);
+            await _channel.QueueBindAsync(RabbitMqVideoReactionConfig.SyncQueueName, QueueConstants.Exchange, RabbitMqVideoReactionConfig.SyncRoutingKey);
             await _messageBus.SubscribeAsync(RabbitMqVideoReactionConfig.SyncQueueName);
 
             while (!stoppingToken.IsCancellationRequested)
@@ -63,7 +64,7 @@ namespace Blog.API.HostedServices
                         var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
                         //await requestClient.Publish(command);
                         message.CorrelationId = command.VideoMetadataId;
-                       
+
                         await _messageBus.SendMessageAsync("video-event", "saga", message);
                         await dbContext.SaveChangesAsync();
                     }

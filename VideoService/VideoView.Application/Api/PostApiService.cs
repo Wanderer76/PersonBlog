@@ -13,7 +13,7 @@ namespace VideoView.Application.Api
     {
         private const string PostManifest = "api/Post/manifest";
         private const string DetailPost = "api/Post/detail";
-        private const string UserPostInfo = "ViewHistory/item";
+        private const string UserPostInfo = "ViewHistory/userReaction";
         private const string CommonBlog = "api/Blog/blogViewerInfoByPost";
 
         public static async Task<Result<PostFileMetadataModel>> GetFileMetadataAsync(this IHttpClientFactory httpContextFactory, Guid postId)
@@ -60,7 +60,7 @@ namespace VideoView.Application.Api
             }
         }
 
-        public static async Task<Result<HistoryViewItem>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp)
+        public static async Task<Result<ReactionHistoryViewItem>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp)
         {
             var query = HttpUtility.ParseQueryString(string.Empty);
             if (userId.HasValue)
@@ -73,17 +73,17 @@ namespace VideoView.Application.Api
             {
                 try
                 {
-                    var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<HistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
+                    var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<ReactionHistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
                     if (result.PostId == Guid.Empty)
-                        return Result<HistoryViewItem>.Success(null);
-                    return Result<HistoryViewItem>.Success(result!);
+                        return Result<ReactionHistoryViewItem>.Success(null);
+                    return Result<ReactionHistoryViewItem>.Success(result!);
                 }
                 catch (Exception ex)
                 {
-                    return Result<HistoryViewItem>.Failure(new(ex.Message));
+                    return Result<ReactionHistoryViewItem>.Failure(new(ex.Message));
                 }
             }
-            return Result<HistoryViewItem>.Success(null);
+            return Result<ReactionHistoryViewItem>.Success(null);
         }
     }
 }

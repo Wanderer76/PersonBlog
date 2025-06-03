@@ -54,12 +54,13 @@ namespace VideoReacting.API.HostedService
                     try
                     {
                         dbContext.Attach(message);
+                        var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
+                        await _messageBus.SendMessageAsync(QueueConstants.Exchange, routingKey, message);
+                        
                         message.Processed();
                         await dbContext.SaveChangesAsync();
 
-                        var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
 
-                        await _messageBus.SendMessageAsync(QueueConstants.Exchange, routingKey, message);
                     }
                     catch (Exception ex)
                     {

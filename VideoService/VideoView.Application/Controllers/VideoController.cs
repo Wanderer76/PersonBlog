@@ -120,4 +120,4 @@ public class VideoController : BaseController
     }
 }
 
-internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, HistoryViewItem? UserPostInfo, List<string> Comment);
+internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, ReactionHistoryViewItem? UserPostInfo, List<string> Comment);

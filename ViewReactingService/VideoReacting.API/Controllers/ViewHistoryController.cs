@@ -38,5 +38,17 @@ namespace VideoReacting.API.Controllers
 
             return Ok(result.Value);
         }
+
+        [HttpGet("userReaction/{postId:guid}/{userId:guid}")]
+        public async Task<IActionResult> GetUserPostReaction(Guid postId, Guid userId)
+        {
+            var result = await _viewHistoryService.GetUserPostReactionAsync(postId, userId);
+            if (result.IsFailure)
+            {
+                return BadRequest(result.Error);
+            }
+
+            return Ok(result.Value);
+        }
     }
 }

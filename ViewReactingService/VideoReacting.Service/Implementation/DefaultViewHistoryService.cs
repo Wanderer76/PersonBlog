@@ -43,6 +43,37 @@ namespace VideoReacting.Service.Implementation
             return Result<UpdateViewState>.Success(state);
         }
 
+        public async Task<Result<ReactionHistoryViewItem>> GetUserPostReactionAsync(Guid postId, Guid userId)
+        {
+            var lastView = await _repository.Get<UserPostView>()
+                          .Where(x => x.UserId == userId)
+                          .Where(x => x.PostId == postId)
+                          .OrderByDescending(x => x.WatchedAt)
+                          .Select(x => new
+                          {
+                              LastWatched = x.WatchedAt.DateTime,
+                              WatchedTime = x.WatchedTime,
+                              PostId = x.PostId
+                          })
+                          .FirstOrDefaultAsync();
+
+            var reaction = await _repository.Get<PostReaction>()
+                          .Where(x => x.PostId == postId && x.UserId == userId)
+                          .FirstOrDefaultAsync();
+
+            var result = lastView == null && reaction == null
+                ? null
+                : new ReactionHistoryViewItem
+                {
+                    IsLike = reaction?.IsLike,
+                    LastWatched = lastView?.LastWatched,
+                    PostId = postId,
+                    WatchedTime = lastView?.WatchedTime
+                };
+
+            return result ?? new();
+        }
+
         public async Task<Result<HistoryViewItem>> GetUserViewHistoryItemAsync(Guid postId, Guid userId)
         {
             var key = new UserPostViewCacheKey(userId);
@@ -64,7 +95,7 @@ namespace VideoReacting.Service.Implementation
                   })
                 .FirstOrDefaultAsync();
 
-            return Result<HistoryViewItem>.Success(lastPreviousView?? new());
+            return Result<HistoryViewItem>.Success(lastPreviousView ?? new());
         }
 
         public async Task<Result<IReadOnlyList<HistoryViewItem>>> GetUserViewHistoryListAsync(Guid userId)

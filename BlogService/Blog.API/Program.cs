@@ -29,6 +29,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>()
+    .AddSubscription<UserReactionSyncEvent, SyncProfileViewsHandler>()
     .AddSubscription<CombineFileChunksCommand,VideoProcessSagaHandler>()
     .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>()
     .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>()

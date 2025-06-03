@@ -77,7 +77,7 @@ const VideoPage = function (props) {
     }, [searchParams.postId])
 
     async function setReaction(isLike) {
-        await API.post(`profile/api/Post/setReaction/${post.id}?isLike=${isLike}`)
+        await API.post(`/video/Video/setReaction/${post.id}?isLike=${isLike}`)
 
         if (isLike === true) {
             if (userView.isLike === true) {
