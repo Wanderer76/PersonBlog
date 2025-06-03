@@ -1,6 +1,7 @@
 ﻿using MessageBus.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Xunit.Sdk;
 
 namespace MessageBus.Internal
 {
@@ -25,6 +26,9 @@ namespace MessageBus.Internal
         {
             using var connection = await _messageBus.GetConnectionAsync();
             using var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
+            var subscribeMethod = typeof(RabbitMqMessageBus).GetMethod(nameof(RabbitMqMessageBus.SubscribeAsync), [typeof(string)]);
+            if (subscribeMethod == null)
+                throw new InvalidOperationException("SubscribeAsync method not found");
             foreach (var eventType in _subscriptionInfo.handlerInfos)
             {
                 var queue = eventType.Queue;
@@ -35,7 +39,8 @@ namespace MessageBus.Internal
                     await channel.ExchangeDeclareAsync(exchange.Name, exchange.ExchangeType, exchange.Durable, exchange.AutoDelete);
                     await channel.QueueBindAsync(queue.Name, exchange.Name, exchange.RoutingKey);
                 }
-                await _messageBus.SubscribeAsync(eventType.Queue.Name);
+                var genericSubscribe = subscribeMethod.MakeGenericMethod(eventType.HanldlerType);
+                await (Task)genericSubscribe.Invoke(_messageBus, [queue.Name])!;
             }
         }
 

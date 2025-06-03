@@ -73,7 +73,49 @@ namespace MessageBus
             return _factory.CreateConnectionAsync();
         }
 
-        public async Task SubscribeAsync(string queueName)
+        //public async Task SubscribeAsync(string queueName)
+        //{
+        //    var channel = await _connection.CreateChannelAsync();
+        //    await channel.BasicQosAsync(0, 10, false);
+        //    var consumer = new AsyncEventingBasicConsumer(channel);
+        //    consumer.ReceivedAsync += async (model, ea) =>
+        //    {
+        //        var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
+        //        using var scope = _serviceScope.CreateScope();
+
+        //        foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
+        //        {
+        //            if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
+        //            {
+        //                try
+        //                {
+        //                    var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
+        //                    Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
+        //                    ? null
+        //                    : Guid.Parse(ea.BasicProperties.CorrelationId);
+        //                    var context = new MessageContext(correlationId, handlerBody);
+        //                    await handler.Handle(context);
+        //                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+        //                }
+        //                catch (Exception e)
+        //                {
+        //                    await channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+        //                    {
+        //                        Body = body,
+        //                        Error = e
+        //                    })));
+        //                    await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+        //                }
+        //            }
+        //            else
+        //                await channel.BasicRejectAsync(ea.DeliveryTag, true);
+        //        }
+        //    };
+        //    await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+        //    _channels.Add(channel);
+        //}
+
+        public async Task SubscribeAsync<T>(string queueName)
         {
             var channel = await _connection.CreateChannelAsync();
             await channel.BasicQosAsync(0, 10, false);
@@ -83,17 +125,17 @@ namespace MessageBus
                 var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
                 using var scope = _serviceScope.CreateScope();
 
-                foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler>(body.EventType))
+                foreach (var handler in scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(body.EventType))
                 {
                     if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType))
                     {
                         try
                         {
-                            var handlerBody = JsonSerializer.Deserialize(body.EventData, eventType)!;
+                            var handlerBody = JsonSerializer.Deserialize<T>(body.EventData)!;
                             Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
                             ? null
                             : Guid.Parse(ea.BasicProperties.CorrelationId);
-                            var context = new MessageContext(correlationId, handlerBody);
+                            var context = new MessageContext<T>(correlationId, handlerBody);
                             await handler.Handle(context);
                             await channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
