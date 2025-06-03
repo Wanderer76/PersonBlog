@@ -18,9 +18,9 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
     private readonly IFileStorage _storage;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
-    private readonly RabbitMqMessageBus _messageBus;
+    private readonly IMessagePublish _messageBus;
 
-    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, RabbitMqMessageBus messageBus)
+    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, IMessagePublish messageBus)
     {
         _ffmpegService = ffmpegService;
         _storage = storage.CreateFileStorage();

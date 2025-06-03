@@ -26,7 +26,7 @@ namespace VideoReacting.Service.Implementation
         public async Task SetReactionToPost(ReactionCreateModel reaction)
         {
             var hasView = await _context.Get<PostReaction>()
-              .Where(x => x.UserId == reaction.UserId || x.IpAddress == reaction.RemoteIp)
+              .Where(x => (x.UserId == reaction.UserId || x.IpAddress == reaction.RemoteIp) && x.PostId == reaction.PostId)
               .FirstOrDefaultAsync();
 
             if (hasView == null)

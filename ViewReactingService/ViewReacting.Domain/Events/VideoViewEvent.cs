@@ -30,10 +30,10 @@ public class VideoViewEvent
 public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
 {
     private readonly IViewHistoryService _viewHistoryService;
-    private readonly RabbitMqMessageBus _messageBus;
+    private readonly IMessagePublish _messageBus;
     private readonly ICacheService _cacheService;
 
-    public VideoViewEventHandler(IViewHistoryService viewHistoryService, RabbitMqMessageBus messageBus, ICacheService cacheService)
+    public VideoViewEventHandler(IViewHistoryService viewHistoryService, IMessagePublish messageBus, ICacheService cacheService)
     {
         _viewHistoryService = viewHistoryService;
         _messageBus = messageBus;

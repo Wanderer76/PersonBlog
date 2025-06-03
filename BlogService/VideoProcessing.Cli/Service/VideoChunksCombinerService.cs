@@ -11,8 +11,8 @@ namespace VideoProcessing.Cli.Service
     public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>, IConsumer<CombineFileChunksCommand>
     {
         private readonly IFileStorage storage;
-        private readonly RabbitMqMessageBus _messageBus;
-        public VideoChunksCombinerService(IFileStorageFactory storage, RabbitMqMessageBus messageBus)
+        private readonly IMessagePublish _messageBus;
+        public VideoChunksCombinerService(IFileStorageFactory storage, IMessagePublish messageBus)
         {
             this.storage = storage.CreateFileStorage();
             _messageBus = messageBus;

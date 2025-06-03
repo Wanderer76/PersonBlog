@@ -16,16 +16,13 @@ namespace Blog.API.Handlers
         IEventHandler<VideoPublishedResponse>
     {
         private readonly IReadWriteRepository<IBlogEntity> _repository;
-        private readonly RabbitMqMessageBus _messageBus;
-        private readonly IChannel _channel;
+        private readonly IMessagePublish _messageBus;
         private readonly IServiceProvider _serviceProvider;
 
-        public VideoProcessSagaHandler(IReadWriteRepository<IBlogEntity> repository, RabbitMqMessageBus messageBus, IServiceProvider serviceProvider)
+        public VideoProcessSagaHandler(IReadWriteRepository<IBlogEntity> repository, IMessagePublish messageBus, IServiceProvider serviceProvider)
         {
             _repository = repository;
             _messageBus = messageBus;
-            var connection = _messageBus.GetConnectionAsync().GetAwaiter().GetResult();
-            _channel = connection.CreateChannelAsync().GetAwaiter().GetResult();
             _serviceProvider = serviceProvider;
         }
 

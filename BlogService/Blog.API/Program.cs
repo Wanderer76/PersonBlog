@@ -10,6 +10,7 @@ using Infrastructure.Interface;
 using MassTransit;
 using MessageBus;
 using MessageBus.Configs;
+using MessageBus.Models;
 using MessageBus.Shared.Configs;
 using MessageBus.Shared.Events;
 
@@ -28,13 +29,69 @@ builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>()
-    .AddSubscription<UserReactionSyncEvent, SyncProfileViewsHandler>()
-    .AddSubscription<CombineFileChunksCommand,VideoProcessSagaHandler>()
-    .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>()
-    .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>()
-    .AddSubscription<VideoPublishedResponse, VideoProcessSagaHandler>()
-    .AddSubscription<VideoReadyToPublishEvent, VideoReadyToPublishEventHandler>()
+    .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>(x =>
+    {
+        x.Name = "video-sync";
+        x.Exchange = new ExchangeParam
+        {
+            Name = "view-reacting",
+            RoutingKey = "video.sync"
+        };
+    })
+    .AddSubscription<UserReactionSyncEvent, SyncProfileViewsHandler>(x =>
+    {
+        x.Name = "video-sync"; 
+        x.Exchange = new ExchangeParam
+        {
+            Name = "view-reacting",
+            RoutingKey = "video.sync"
+        };
+    })
+    .AddSubscription<CombineFileChunksCommand, VideoProcessSagaHandler>(x =>
+    {
+        x.Name = "saga-queue";
+        x.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "saga"
+        };
+    })
+    .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>(x =>
+    {
+        x.Name = "saga-queue"; 
+        x.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "saga"
+        };
+    })
+    .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>(x =>
+    {
+        x.Name = "saga-queue"; 
+        x.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "saga"
+        };
+    })
+    .AddSubscription<VideoPublishedResponse, VideoProcessSagaHandler>(x =>
+    {
+        x.Name = "saga-queue";
+        x.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "saga"
+        };
+    })
+    .AddSubscription<VideoReadyToPublishEvent, VideoReadyToPublishEventHandler>(x =>
+    {
+        x.Name = "saga-queue";
+        x.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "saga"
+        };
+    })
     .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
 
 

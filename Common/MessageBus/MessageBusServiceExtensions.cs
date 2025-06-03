@@ -1,5 +1,6 @@
 ﻿using MessageBus.Configs;
 using MessageBus.EventHandler;
+using MessageBus.Internal;
 using MessageBus.Models;
 using MessageBus.Shared.Configs;
 using Microsoft.AspNetCore.Builder;
@@ -13,9 +14,11 @@ namespace MessageBus
     {
         public static IMessageBusBuilder AddMessageBus(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddSingleton<IMessagePublish, RabbitMqMessageBus>();
             services.AddSingleton<RabbitMqMessageBus>();
             services.AddOptions<MessageBusSubscriptionInfo>().Configure(x => new MessageBusSubscriptionInfo([]));
             services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
+            services.AddHostedService<DefaultHostedService>();
             //services.AddSingleton<RabbitMqVideoReactionConfig>();
             return new MessageBusBuilder(services);
         }
@@ -27,7 +30,7 @@ namespace MessageBus
             return builder;
         }
 
-        public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder)
+        public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> queue)
             where TEvent : class
             where THandle : class, IEventHandler<TEvent>
         {
@@ -35,19 +38,7 @@ namespace MessageBus
 
             builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
             {
-                sp.AddSubscription(typeof(TEvent).Name, typeof(TEvent));
-            });
-
-            return builder;
-        }
-        public static IMessageBusBuilder AddSubscription<THandle>(this IMessageBusBuilder builder)
-           where THandle : class, IEventHandler
-        {
-            builder.Services.AddKeyedScoped<IEventHandler, THandle>(typeof(object).Name);
-
-            builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
-            {
-                sp.AddSubscription(typeof(object).Name, typeof(object));
+                sp.AddSubscription(typeof(TEvent).Name, typeof(TEvent), queue);
             });
 
             return builder;

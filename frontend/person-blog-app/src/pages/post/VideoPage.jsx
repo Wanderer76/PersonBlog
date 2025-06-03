@@ -116,7 +116,7 @@ const VideoPage = function (props) {
         }
         setUserView((prev) => ({
             ...prev,
-            'isLike': prev.isLike === isLike ? null : isLike
+            isLike: prev.isLike === isLike ? null : isLike
         }))
     }
 

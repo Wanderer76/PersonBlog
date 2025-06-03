@@ -1,5 +1,7 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Domain.Events;
+using Blog.Domain.Services.Models;
+using Infrastructure.Services;
 using MessageBus.EventHandler;
 using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
@@ -12,10 +14,12 @@ namespace Blog.API.Handlers
     public class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>, IEventHandler<UserReactionSyncEvent>
     {
         private readonly IReadWriteRepository<IBlogEntity> _context;
+        private readonly ICacheService _cacheService;
 
-        public SyncProfileViewsHandler(IReadWriteRepository<IBlogEntity> context)
+        public SyncProfileViewsHandler(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService)
         {
             _context = context;
+            _cacheService = cacheService;
         }
 
         public async Task Handle(MessageContext<UserViewedSyncEvent> @event)
@@ -61,6 +65,7 @@ namespace Blog.API.Handlers
                 existView.IsViewed = @event.Message.IsViewed;
             }
             await _context.SaveChangesAsync();
+            await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
         }
 
         public async Task Handle(MessageContext<UserReactionSyncEvent> @event)
@@ -124,6 +129,7 @@ namespace Blog.API.Handlers
                 existView.IsLike = @event.Message.IsLike == existView.IsLike ? null : @event.Message.IsLike;
             }
             await _context.SaveChangesAsync();
+            await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
         }
 
         public async Task Handle(MessageContext @event)

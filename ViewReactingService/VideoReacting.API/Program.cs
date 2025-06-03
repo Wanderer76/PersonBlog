@@ -21,7 +21,11 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<VideoViewEvent, VideoViewEventHandler>();
+    .AddSubscription<VideoViewEvent, VideoViewEventHandler>(x =>
+    {
+        x.Name = QueueConstants.QueueName;
+        x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };
+    });
 
 builder.Services.AddHostedService<ReactionOutbox>();
 

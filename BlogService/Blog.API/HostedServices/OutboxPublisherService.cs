@@ -15,31 +15,27 @@ namespace Blog.API.HostedServices
     public class OutboxPublisherService : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMqMessageBus _messageBus;
-        private readonly IChannel _channel;
-        private readonly IConnection _connection;
+        private readonly IMessagePublish _messageBus;
         public OutboxPublisherService(
             IServiceProvider serviceProvider,
             ILogger<OutboxPublisherService> logger,
-            RabbitMqMessageBus messageBus)
+            IMessagePublish messageBus)
         {
             _serviceProvider = serviceProvider;
-            _connection = messageBus.GetConnectionAsync().GetAwaiter().GetResult();
-            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
             _messageBus = messageBus;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await _channel.ExchangeDeclareAsync("video-event", "direct", true);
-            await _channel.QueueDeclareAsync("saga-queue", true, false, false);
-            await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
-            await _messageBus.SubscribeAsync("saga-queue");
+            //await _channel.ExchangeDeclareAsync("video-event", "direct", true);
+            //await _channel.QueueDeclareAsync("saga-queue", true, false, false);
+            //await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
+            //await _messageBus.SubscribeAsync("saga-queue");
 
-            await _channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
-            await _channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
-            await _channel.QueueBindAsync(RabbitMqVideoReactionConfig.SyncQueueName, QueueConstants.Exchange, RabbitMqVideoReactionConfig.SyncRoutingKey);
-            await _messageBus.SubscribeAsync(RabbitMqVideoReactionConfig.SyncQueueName);
+            //await _channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
+            //await _channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
+            //await _channel.QueueBindAsync(RabbitMqVideoReactionConfig.SyncQueueName, QueueConstants.Exchange, RabbitMqVideoReactionConfig.SyncRoutingKey);
+            //await _messageBus.SubscribeAsync(RabbitMqVideoReactionConfig.SyncQueueName);
 
             while (!stoppingToken.IsCancellationRequested)
             {

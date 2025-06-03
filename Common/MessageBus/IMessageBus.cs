@@ -1,4 +1,5 @@
 ﻿
+using Infrastructure.Models;
 using RabbitMQ.Client;
 
 namespace MessageBus
@@ -10,4 +11,10 @@ namespace MessageBus
     //    Task SubscribeAsync<T>(IChannel connection, string queueName, Func<T, Task> messageHandler);
     //    Task<IConnection> GetConnectionAsync();
     //}
+
+    public interface IMessagePublish
+    {
+        Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent;
+        Task PublishAsync<T>(string exchangeName, string routingKey, T message, BasicProperties? cfg = null);
+    }
 }

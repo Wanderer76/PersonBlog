@@ -8,12 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using MessageBus.Models;
 using Microsoft.Extensions.Options;
 using Infrastructure.Models;
-using Shared.Utils;
-using Xunit.Sdk;
 
 namespace MessageBus
 {
-    public class RabbitMqMessageBus
+    internal class RabbitMqMessageBus : IMessagePublish, IDisposable
     {
         private readonly IConnectionFactory _factory;
         private readonly IServiceScopeFactory _serviceScope;
@@ -67,6 +65,7 @@ namespace MessageBus
                 Console.WriteLine(e.Message);
             }
         }
+
         public Task<IConnection> GetConnectionAsync()
         {
             return _factory.CreateConnectionAsync();
@@ -107,6 +106,12 @@ namespace MessageBus
                 }
             };
             await _channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+        }
+
+        public void Dispose()
+        {
+            _channel?.Dispose();
+            _connection?.Dispose();
         }
     }
 

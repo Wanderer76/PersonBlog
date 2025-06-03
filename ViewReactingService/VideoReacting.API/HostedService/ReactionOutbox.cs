@@ -15,9 +15,9 @@ namespace VideoReacting.API.HostedService
     public class ReactionOutbox : BackgroundService
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMqMessageBus _messageBus;
+        private readonly IMessagePublish _messageBus;
 
-        public ReactionOutbox(IServiceProvider serviceProvider, RabbitMqMessageBus messageBus)
+        public ReactionOutbox(IServiceProvider serviceProvider, IMessagePublish messageBus)
         {
             _serviceProvider = serviceProvider;
             _messageBus = messageBus;
@@ -25,15 +25,15 @@ namespace VideoReacting.API.HostedService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await using var connection = await _messageBus.GetConnectionAsync();
-            await using var channel = await connection.CreateChannelAsync();
-            await channel.ExchangeDeclareAsync(RabbitMqVideoReactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
-            await channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(RabbitMqVideoReactionConfig.QueueName, RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.ViewRoutingKey);
-            await channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
-            await channel.QueueDeclareAsync(QueueConstants.QueueName, durable: true, exclusive: false, autoDelete: false);
-            await channel.QueueBindAsync(QueueConstants.QueueName, QueueConstants.Exchange, QueueConstants.RoutingKey);
-            await _messageBus.SubscribeAsync(QueueConstants.QueueName);
+            //await using var connection = await _messageBus.GetConnectionAsync();
+            //await using var channel = await connection.CreateChannelAsync();
+            //await channel.ExchangeDeclareAsync(RabbitMqVideoReactionConfig.ExchangeName, ExchangeType.Direct, durable: true);
+            //await channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.QueueName, durable: true, exclusive: false, autoDelete: false);
+            //await channel.QueueBindAsync(RabbitMqVideoReactionConfig.QueueName, RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.ViewRoutingKey);
+            //await channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
+            //await channel.QueueDeclareAsync(QueueConstants.QueueName, durable: true, exclusive: false, autoDelete: false);
+            //await channel.QueueBindAsync(QueueConstants.QueueName, QueueConstants.Exchange, QueueConstants.RoutingKey);
+            //await _messageBus.SubscribeAsync(QueueConstants.QueueName);
 
 
             while (!stoppingToken.IsCancellationRequested)
@@ -50,7 +50,6 @@ namespace VideoReacting.API.HostedService
 
                 foreach (var message in messages)
                 {
-                    var nextNumber = await channel.GetNextPublishSequenceNumberAsync();
                     try
                     {
                         dbContext.Attach(message);

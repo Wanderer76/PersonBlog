@@ -5,6 +5,7 @@ using Infrastructure.Extensions;
 using MassTransit;
 using MessageBus;
 using MessageBus.Configs;
+using MessageBus.Models;
 using MessageBus.Shared.Configs;
 using VideoProcessing.Cli;
 using VideoProcessing.Cli.Service;
@@ -15,8 +16,24 @@ builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddFFMpeg(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<CombineFileChunksCommand, VideoChunksCombinerService>()
-    .AddSubscription<ConvertVideoCommand, ProcessVideoToHls>()
+    .AddSubscription<CombineFileChunksCommand, VideoChunksCombinerService>(h=> 
+    {
+        h.Name = "combine-chunks";
+        h.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "chunks.combine"
+        };
+    })
+    .AddSubscription<ConvertVideoCommand, ProcessVideoToHls>(x =>
+    {
+        x.Name = "video-convert";
+        x.Exchange = new ExchangeParam
+        {
+            Name = "video-event",
+            RoutingKey = "video.convert"
+        };
+    })
     .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
 builder.Services.AddHostedService<VideoConverterHostedService>();
 
