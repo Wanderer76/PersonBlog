@@ -104,8 +104,8 @@ namespace Blog.API.Handlers
         {
             saga.ObjectName = message.ObjectName;
             var scope = _serviceProvider.CreateScope();
-            var service = scope.ServiceProvider.GetKeyedService<IEventHandler>(typeof(VideoReadyToPublishEvent).Name);
-            await service.Handle(new MessageContext(saga.CorrelationId, new VideoReadyToPublishEvent
+            var service = scope.ServiceProvider.GetKeyedService<IEventHandler<VideoReadyToPublishEvent>>(typeof(VideoReadyToPublishEvent).Name);
+            await service.Handle(MessageContext.Create(saga.CorrelationId, new VideoReadyToPublishEvent
             {
                 PostId = message.PostId,
                 VideoMetadataId = message.VideoMetadataId,
