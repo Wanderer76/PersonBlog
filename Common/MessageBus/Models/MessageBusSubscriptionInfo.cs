@@ -41,6 +41,8 @@
         public bool Durable { get; set; } = true;
         public bool Exclusive { get; set; }
         public bool AutoDelete { get; set; }
+        public int PrefetchCount { get; set; } = 10; // количество сообщений, которые можно обрабатывать одновременно
+        //public int RetryCount { get; set; } = 3; // количество повторных попыток
         public ExchangeParam Exchange {  get; set; }
     }
 

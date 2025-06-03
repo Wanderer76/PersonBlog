@@ -1,13 +1,13 @@
-﻿using RabbitMQ.Client;
-using System.Text.Json;
-using System.Text;
-using RabbitMQ.Client.Events;
+﻿using Infrastructure.Models;
 using MessageBus.Configs;
 using MessageBus.EventHandler;
-using Microsoft.Extensions.DependencyInjection;
 using MessageBus.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Infrastructure.Models;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
+using System.Text.Json;
 
 namespace MessageBus
 {
@@ -17,7 +17,8 @@ namespace MessageBus
         private readonly IServiceScopeFactory _serviceScope;
         private readonly MessageBusSubscriptionInfo _subscriptionInfo;
         private readonly IConnection _connection;
-        private readonly IChannel _channel;
+        private readonly List<IChannel> _channels;
+
         public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
         {
             _factory = new ConnectionFactory
@@ -30,16 +31,17 @@ namespace MessageBus
             _subscriptionInfo = subscriptionInfo.Value;
             _serviceScope = serviceScope;
             _connection = _factory.CreateConnectionAsync().GetAwaiter().GetResult();
-            _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+            _channels = new List<IChannel>();
         }
 
         public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent
         {
             try
             {
+                using var channel = await _connection.CreateChannelAsync();
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
-                await _channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
+                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
                 {
                     Persistent = true,
                     CorrelationId = message.CorrelationId?.ToString(),
@@ -55,10 +57,10 @@ namespace MessageBus
         {
             try
             {
+                using var channel = await _connection.CreateChannelAsync();
                 var baseEvent = new BaseEvent { EventData = JsonSerializer.Serialize(message), EventType = typeof(T).Name, };
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
-
-                await _channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, cfg, body: body);
+                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, cfg, body: body);
             }
             catch (Exception e)
             {
@@ -73,7 +75,9 @@ namespace MessageBus
 
         public async Task SubscribeAsync(string queueName)
         {
-            var consumer = new AsyncEventingBasicConsumer(_channel);
+            var channel = await _connection.CreateChannelAsync();
+            await channel.BasicQosAsync(0, 10, false);
+            var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 var body = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span)!;
@@ -91,32 +95,34 @@ namespace MessageBus
                             : Guid.Parse(ea.BasicProperties.CorrelationId);
                             var context = new MessageContext(correlationId, handlerBody);
                             await handler.Handle(context);
-                            await _channel.BasicAckAsync(ea.DeliveryTag, false);
+                            await channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
                         catch (Exception e)
                         {
-                            await _channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+                            await channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
                             {
                                 Body = body,
                                 Error = e
                             })));
-                            await _channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                            await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
                         }
                     }
+                    else
+                        await channel.BasicRejectAsync(ea.DeliveryTag, true);
                 }
             };
-            await _channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+            await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+            _channels.Add(channel);
         }
 
         public void Dispose()
         {
-            _channel?.Dispose();
+            foreach (var i in _channels)
+            {
+                i?.CloseAsync().GetAwaiter().GetResult();
+                i?.Dispose();
+            }
             _connection?.Dispose();
         }
-    }
-
-    public class SubscribeOptions
-    {
-        public HashSet<string> RoutingKeys { get; set; } = [];
     }
 }

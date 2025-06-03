@@ -2,11 +2,8 @@
 using MessageBus.EventHandler;
 using MessageBus.Internal;
 using MessageBus.Models;
-using MessageBus.Shared.Configs;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 
 namespace MessageBus
 {
