@@ -11,11 +11,9 @@ namespace VideoProcessing.Cli.Service
     public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>, IConsumer<CombineFileChunksCommand>
     {
         private readonly IFileStorage storage;
-        private readonly IMessagePublish _messageBus;
-        public VideoChunksCombinerService(IFileStorageFactory storage, IMessagePublish messageBus)
+        public VideoChunksCombinerService(IFileStorageFactory storage)
         {
             this.storage = storage.CreateFileStorage();
-            _messageBus = messageBus;
         }
 
         public async Task Consume(ConsumeContext<CombineFileChunksCommand> context)
@@ -25,10 +23,10 @@ namespace VideoProcessing.Cli.Service
             await context.Publish(response);
         }
 
-        public async Task Handle(MessageContext<CombineFileChunksCommand> @event)
+        public async Task Handle(IMessageContext<CombineFileChunksCommand> @event)
         {
             var response = await CombineChunks(@event.Message);
-            await _messageBus.PublishAsync("video-event", "saga", response, new BasicProperties
+            await @event.PublishAsync("video-event", "saga", response, new MessageProperty
             {
                 CorrelationId = response.VideoMetadataId.ToString(),
             });

@@ -3,7 +3,6 @@ using Blog.Domain.Events;
 using MessageBus;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
 using Shared.Persistence;
 using Shared.Services;
 
@@ -16,17 +15,15 @@ namespace Blog.API.Handlers
         IEventHandler<VideoPublishedResponse>
     {
         private readonly IReadWriteRepository<IBlogEntity> _repository;
-        private readonly IMessagePublish _messageBus;
         private readonly IServiceProvider _serviceProvider;
 
-        public VideoProcessSagaHandler(IReadWriteRepository<IBlogEntity> repository, IMessagePublish messageBus, IServiceProvider serviceProvider)
+        public VideoProcessSagaHandler(IReadWriteRepository<IBlogEntity> repository, IServiceProvider serviceProvider)
         {
             _repository = repository;
-            _messageBus = messageBus;
             _serviceProvider = serviceProvider;
         }
 
-        public async Task Handle(MessageContext<CombineFileChunksCommand> @event)
+        public async Task Handle(IMessageContext<CombineFileChunksCommand> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
                 .Where(x => x.CorrelationId == @event.CorrelationId)
@@ -42,11 +39,15 @@ namespace Blog.API.Handlers
                 CurrentState = nameof(CombineFileChunksCommand)
             };
             _repository.Add(saga);
-            await StartSaga(saga, @event.Message);
+            saga.VideoMetadataId = @event.Message.VideoMetadataId;
+            saga.PostId = @event.Message.PostId;
+            await @event.PublishAsync("video-event", "chunks.combine", @event.Message, new MessageProperty { CorrelationId = saga.CorrelationId.ToString() });
+
+
             await _repository.SaveChangesAsync();
         }
 
-        public async Task Handle(MessageContext<ChunksCombinedResponse> @event)
+        public async Task Handle(IMessageContext<ChunksCombinedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
                 .Where(x => x.CorrelationId == @event.CorrelationId)
@@ -56,11 +57,11 @@ namespace Blog.API.Handlers
                 return;
             }
             _repository.Attach(saga);
-            await ProcessCombine(saga, @event.Message);
+            await ProcessCombine(saga, @event);
             await _repository.SaveChangesAsync();
         }
 
-        public async Task Handle(MessageContext<VideoConvertedResponse> @event)
+        public async Task Handle(IMessageContext<VideoConvertedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
                 .Where(x => x.CorrelationId == @event.CorrelationId)
@@ -70,11 +71,11 @@ namespace Blog.API.Handlers
                 return;
             }
             _repository.Attach(saga);
-            await ProcessConverted(saga, @event.Message);
+            await ProcessConverted(saga, @event);
             await _repository.SaveChangesAsync();
         }
 
-        public async Task Handle(MessageContext<VideoPublishedResponse> @event)
+        public async Task Handle(IMessageContext<VideoPublishedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
                 .Where(x => x.CorrelationId == @event.CorrelationId)
@@ -89,10 +90,7 @@ namespace Blog.API.Handlers
 
         private async Task StartSaga(VideoProcessingSagaState saga, CombineFileChunksCommand message)
         {
-            saga.VideoMetadataId = message.VideoMetadataId;
-            saga.PostId = message.PostId;
 
-            await _messageBus.PublishAsync("video-event", "chunks.combine", message, new BasicProperties { CorrelationId = saga.CorrelationId.ToString() });
         }
 
         private void ProcessFinal(VideoProcessingSagaState saga, VideoPublishedResponse message)
@@ -100,8 +98,9 @@ namespace Blog.API.Handlers
             throw new NotImplementedException();
         }
 
-        private async Task ProcessConverted(VideoProcessingSagaState saga, VideoConvertedResponse message)
+        private async Task ProcessConverted(VideoProcessingSagaState saga, IMessageContext<VideoConvertedResponse> context)
         {
+            var message = context.Message;
             saga.ObjectName = message.ObjectName;
             var scope = _serviceProvider.CreateScope();
             var service = scope.ServiceProvider.GetKeyedService<IEventHandler<VideoReadyToPublishEvent>>(typeof(VideoReadyToPublishEvent).Name);
@@ -114,12 +113,13 @@ namespace Blog.API.Handlers
                 PreviewId = message.PreviewId,
                 ProcessState = message.ProcessState,
                 CreatedAt = DateTimeService.Now()
-            }));
+            }, context));
             saga.CurrentState = nameof(VideoPublishedResponse);
         }
 
-        private async Task ProcessCombine(VideoProcessingSagaState saga, ChunksCombinedResponse message)
+        private async Task ProcessCombine(VideoProcessingSagaState saga, IMessageContext<ChunksCombinedResponse> @event)
         {
+            var message = @event.Message;
             saga.ObjectName = message.ObjectName;
 
             var video = await _repository.Get<VideoMetadata>()
@@ -132,34 +132,34 @@ namespace Blog.API.Handlers
             .Select(x => x.PreviewId)
             .FirstAsync();
 
-            await _messageBus.PublishAsync("video-event", "video.convert", new ConvertVideoCommand
+            await @event.PublishAsync("video-event", "video.convert", new ConvertVideoCommand
             {
                 VideoMetadataId = saga.VideoMetadataId,
                 ObjectName = saga.ObjectName!,
                 PostId = saga.PostId,
                 VideoMetadata = video,
                 HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId)
-            }, new BasicProperties { CorrelationId = saga.CorrelationId.ToString() });
+            }, new MessageProperty { CorrelationId = saga.CorrelationId.ToString() });
         }
-        async Task IEventHandler.Handle(MessageContext @event)
-        {
-            switch (@event.Message)
-            {
-                case CombineFileChunksCommand command:
-                    await Handle(MessageContext.Create(@event.CorrelationId, command));
-                    break;
-                case ChunksCombinedResponse response:
-                    await Handle(MessageContext.Create(@event.CorrelationId, response));
-                    break;
-                case VideoConvertedResponse response:
-                    await Handle(MessageContext.Create(@event.CorrelationId, response));
-                    break;
-                case VideoPublishedResponse response:
-                    await Handle(MessageContext.Create(@event.CorrelationId, response));
-                    break;
-                default:
-                    throw new ArgumentException($"Unsupported event type: {@event.Message.GetType()}");
-            }
-        }
+        //async Task IEventHandler.Handle(MessageContext @event)
+        //{
+        //    switch (@event.Message)
+        //    {
+        //        case CombineFileChunksCommand command:
+        //            await Handle(MessageContext.Create(@event.CorrelationId, command));
+        //            break;
+        //        case ChunksCombinedResponse response:
+        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
+        //            break;
+        //        case VideoConvertedResponse response:
+        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
+        //            break;
+        //        case VideoPublishedResponse response:
+        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
+        //            break;
+        //        default:
+        //            throw new ArgumentException($"Unsupported event type: {@event.Message.GetType()}");
+        //    }
+        //}
     }
 }

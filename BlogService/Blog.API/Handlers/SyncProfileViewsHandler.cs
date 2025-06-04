@@ -1,9 +1,8 @@
-﻿using Blog.Domain.Entities;
-using Blog.Domain.Events;
+﻿using Blog.Contracts.Events;
+using Blog.Domain.Entities;
 using Blog.Domain.Services.Models;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
-using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -22,7 +21,7 @@ namespace Blog.API.Handlers
             _cacheService = cacheService;
         }
 
-        public async Task Handle(MessageContext<UserViewedSyncEvent> @event)
+        public async Task Handle(IMessageContext<UserViewedSyncEvent> @event)
         {
             var userId = @event.Message.UserId;
             var ipAddress = @event.Message.RemoteIp;
@@ -68,7 +67,7 @@ namespace Blog.API.Handlers
             await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
         }
 
-        public async Task Handle(MessageContext<UserReactionSyncEvent> @event)
+        public async Task Handle(IMessageContext<UserReactionSyncEvent> @event)
         {
             var existView = await _context.Get<PostViewer>()
             .Where(x => x.PostId == @event.Message.PostId)
@@ -132,19 +131,19 @@ namespace Blog.API.Handlers
             await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
         }
 
-        public async Task Handle(MessageContext @event)
-        {
-            switch (@event.Message)
-            {
-                case UserReactionSyncEvent command:
-                    await Handle(MessageContext.Create(@event.CorrelationId, command));
-                    break;
-                case UserViewedSyncEvent response:
-                    await Handle(MessageContext.Create(@event.CorrelationId, response));
-                    break;
-                default:
-                    throw new ArgumentException();
-            }
-        }
+        //public async Task Handle(MessageContext @event)
+        //{
+        //    switch (@event.Message)
+        //    {
+        //        case UserReactionSyncEvent command:
+        //            await Handle(MessageContext.Create(@event.CorrelationId, command));
+        //            break;
+        //        case UserViewedSyncEvent response:
+        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
+        //            break;
+        //        default:
+        //            throw new ArgumentException();
+        //    }
+        //}
     }
 }

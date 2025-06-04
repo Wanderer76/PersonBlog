@@ -1,4 +1,4 @@
-﻿using MessageBus.Shared.Events;
+﻿using Blog.Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;

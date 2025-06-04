@@ -18,15 +18,13 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
     private readonly IFileStorage _storage;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
-    private readonly IMessagePublish _messageBus;
 
-    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets, IMessagePublish messageBus)
+    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
     {
         _ffmpegService = ffmpegService;
         _storage = storage.CreateFileStorage();
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
-        _messageBus = messageBus;
     }
     public async Task Consume(ConsumeContext<ConvertVideoCommand> context)
     {
@@ -35,10 +33,10 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
         await context.Publish(result);
     }
 
-    public async Task Handle(MessageContext<ConvertVideoCommand> @event)
+    public async Task Handle(IMessageContext<ConvertVideoCommand> @event)
     {
         var result = await HandleConversion(@event.Message);
-        await _messageBus.PublishAsync("video-event", "saga", result, new BasicProperties
+        await @event.PublishAsync("video-event", "saga", result, new MessageProperty
         {
             CorrelationId = result.VideoMetadataId.ToString(),
         });

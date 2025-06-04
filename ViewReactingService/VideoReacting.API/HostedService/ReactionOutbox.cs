@@ -1,14 +1,13 @@
 ﻿
+using Blog.Contracts.Events;
 using Infrastructure.Models;
 using MessageBus;
 using MessageBus.Shared.Configs;
-using MessageBus.Shared.Events;
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
 using Shared.Persistence;
+using System.Text.Json;
 using ViewReacting.Domain.Entities;
 using ViewReacting.Domain.Events;
-using Xunit.Sdk;
 
 namespace VideoReacting.API.HostedService
 {
@@ -53,9 +52,7 @@ namespace VideoReacting.API.HostedService
                     try
                     {
                         dbContext.Attach(message);
-                        var (queueName, routingKey) = GetRoutingKeyWithQueue(message);
-                        await _messageBus.SendMessageAsync(QueueConstants.Exchange, routingKey, message);
-                        
+                        await SendEvent(message);
                         message.Processed();
                         await dbContext.SaveChangesAsync();
 
@@ -81,16 +78,16 @@ namespace VideoReacting.API.HostedService
             }
         }
 
-        private (string QueueName, string RoutingKey) GetRoutingKeyWithQueue(ReactingEvent message)
+        private Task SendEvent(ReactingEvent message)
         {
             switch (message.EventType)
             {
                 case nameof(UserReactionSyncEvent):
-                    return (RabbitMqVideoReactionConfig.SyncQueueName, RabbitMqVideoReactionConfig.SyncRoutingKey);
+                    return _messageBus.PublishAsync(QueueConstants.Exchange, RabbitMqVideoReactionConfig.SyncRoutingKey, JsonSerializer.Deserialize<UserReactionSyncEvent>(message.EventData));
                 case nameof(UserViewedSyncEvent):
-                    return (RabbitMqVideoReactionConfig.SyncQueueName, RabbitMqVideoReactionConfig.SyncRoutingKey);
+                    return _messageBus.PublishAsync(QueueConstants.Exchange, RabbitMqVideoReactionConfig.SyncRoutingKey, JsonSerializer.Deserialize<UserViewedSyncEvent>(message.EventData));
                 case nameof(VideoViewEvent):
-                    return (QueueConstants.QueueName, QueueConstants.RoutingKey);
+                    return _messageBus.PublishAsync(QueueConstants.Exchange, QueueConstants.RoutingKey, JsonSerializer.Deserialize<VideoViewEvent>(message.EventData));
                 default:
                     throw new ArgumentException();
             }

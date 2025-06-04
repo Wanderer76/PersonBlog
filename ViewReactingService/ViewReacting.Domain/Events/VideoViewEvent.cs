@@ -1,8 +1,8 @@
-﻿using Infrastructure.Services;
+﻿using Blog.Contracts.Events;
+using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Shared.Configs;
-using MessageBus.Shared.Events;
 using Shared.Services;
 using System.Text.Json;
 using ViewReacting.Domain.Entities;
@@ -30,17 +30,15 @@ public class VideoViewEvent
 public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
 {
     private readonly IViewHistoryService _viewHistoryService;
-    private readonly IMessagePublish _messageBus;
     private readonly ICacheService _cacheService;
 
-    public VideoViewEventHandler(IViewHistoryService viewHistoryService, IMessagePublish messageBus, ICacheService cacheService)
+    public VideoViewEventHandler(IViewHistoryService viewHistoryService, ICacheService cacheService)
     {
         _viewHistoryService = viewHistoryService;
-        _messageBus = messageBus;
         _cacheService = cacheService;
     }
 
-    public async Task Handle(MessageContext<VideoViewEvent> @event)
+    public async Task Handle(IMessageContext<VideoViewEvent> @event)
     {
         var result = await _viewHistoryService.CreateOrUpdateViewHistory(new UserPostView(
              @event.Message.UserId,
@@ -51,18 +49,16 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
         await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.Message.UserId));
         //if (result.Value == UpdateViewState.Created)
         {
-            await _messageBus.SendMessageAsync(RabbitMqVideoReactionConfig.ExchangeName, RabbitMqVideoReactionConfig.SyncRoutingKey, new ReactingEvent
-            {
-                EventData = JsonSerializer.Serialize(new UserViewedSyncEvent
+            await @event.PublishAsync(
+                new UserViewedSyncEvent
                 {
                     EventId = @event.Message.UserId,
                     IsViewed = result.Value == UpdateViewState.Created ? @event.Message.IsCompleteWatch : true,
                     PostId = @event.Message.PostId,
                     UserId = @event.Message.UserId,
                     WatchedTime = DateTimeService.Now(),
-                }),
-                EventType = nameof(UserViewedSyncEvent),
-            });
+                }
+            );
         }
     }
 }

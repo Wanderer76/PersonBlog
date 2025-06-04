@@ -15,14 +15,15 @@
             _eventTypes = eventTypes;
         }
 
-        public void AddSubscription(string eventType, Type handlerType, Action<QueueParams> queue)
+        public void AddSubscription<TEvent>(Action<QueueParams> queue)
         {
-            _eventTypes.Add(eventType, handlerType);
+            var type = typeof(TEvent);
+            _eventTypes.Add(type.Name, type);
             var queueOptions = new QueueParams();
             queue(queueOptions);
             handlerInfos.Add(new HandlerInfo
             {
-                HanldlerType = handlerType,
+                HanldlerType = type,
                 Queue = queueOptions
             });
         }

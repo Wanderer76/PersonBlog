@@ -33,14 +33,17 @@ namespace MessageBus.Internal
             {
                 var queue = eventType.Queue;
                 var exchange = eventType.Queue.Exchange;
-                await channel.QueueDeclareAsync(queue.Name, durable: queue.Durable, exclusive: queue.Exclusive, autoDelete: queue.AutoDelete);
-                if (exchange != null)
+                if (!string.IsNullOrWhiteSpace(queue.Name))
                 {
-                    await channel.ExchangeDeclareAsync(exchange.Name, exchange.ExchangeType, exchange.Durable, exchange.AutoDelete);
-                    await channel.QueueBindAsync(queue.Name, exchange.Name, exchange.RoutingKey);
+                    await channel.QueueDeclareAsync(queue.Name, durable: queue.Durable, exclusive: queue.Exclusive, autoDelete: queue.AutoDelete);
+                    if (exchange != null)
+                    {
+                        await channel.ExchangeDeclareAsync(exchange.Name, exchange.ExchangeType, exchange.Durable, exchange.AutoDelete);
+                        await channel.QueueBindAsync(queue.Name, exchange.Name, exchange.RoutingKey);
+                    }
+                    var genericSubscribe = subscribeMethod.MakeGenericMethod(eventType.HanldlerType);
+                    await (Task)genericSubscribe.Invoke(_messageBus, [queue.Name])!;
                 }
-                var genericSubscribe = subscribeMethod.MakeGenericMethod(eventType.HanldlerType);
-                await (Task)genericSubscribe.Invoke(_messageBus, [queue.Name])!;
             }
         }
 

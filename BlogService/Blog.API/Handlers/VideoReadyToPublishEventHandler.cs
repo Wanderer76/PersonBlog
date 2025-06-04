@@ -24,7 +24,7 @@ namespace Blog.API.Handlers
             await PrepareToPublish(@event);
         }
 
-        public async Task Handle(MessageContext<VideoReadyToPublishEvent> @event)
+        public async Task Handle(IMessageContext<VideoReadyToPublishEvent> @event)
         {
             await PrepareToPublish(@event.Message);
         }

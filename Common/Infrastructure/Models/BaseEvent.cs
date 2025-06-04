@@ -1,6 +1,12 @@
 ﻿namespace Infrastructure.Models
 {
-    public class BaseEvent
+    public class BaseEvent<T>
+    {
+        public required string EventType { get; set; }
+        public required T EventData { get; set; }
+    }
+
+    public abstract class BaseEvent
     {
         public Guid Id { get; set; }
         public Guid? CorrelationId {  get; set; }

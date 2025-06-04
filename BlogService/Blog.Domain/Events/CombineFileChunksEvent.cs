@@ -1,6 +1,7 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Domain.Services.Models;
 using MassTransit;
+using MessageBus;
 
 namespace Blog.Domain.Events
 {
@@ -14,6 +15,7 @@ namespace Blog.Domain.Events
     //}
 
     //[EntityName("video-events")]
+    [EventPublish]
     public class CombineFileChunksCommand
     {
         public Guid VideoMetadataId { get; set; }
@@ -21,6 +23,7 @@ namespace Blog.Domain.Events
     }
 
     //[EntityName("video-events")]
+    [EventPublish]
     public class ChunksCombinedResponse
     {
         public Guid VideoMetadataId { get; set; }

@@ -23,6 +23,7 @@
       <ProjectReference Include="..\..\Common\MessageBus.Shared\MessageBus.Shared.csproj" />
       <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
       <ProjectReference Include="..\..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />
+      <ProjectReference Include="..\Blog.Contracts\Blog.Contracts.csproj" />
       <ProjectReference Include="..\Blog.Service\Blog.Service.csproj" />
     </ItemGroup>
 

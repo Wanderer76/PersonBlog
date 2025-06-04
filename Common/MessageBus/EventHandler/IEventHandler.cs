@@ -1,52 +1,49 @@
-﻿namespace MessageBus.EventHandler;
+﻿using Infrastructure.Models;
+namespace MessageBus.EventHandler;
 
 public interface IEventHandler
 {
-    Task Handle(MessageContext @event);
 }
 
-public interface IEventHandler<TEvent> : IEventHandler
+public interface IEventHandler<in TEvent> : IEventHandler
 {
-    Task Handle(MessageContext<TEvent> @event);
-    Task IEventHandler.Handle(MessageContext @event) => Handle(@event);
+    Task Handle(IMessageContext<TEvent> @event);
 }
 
-public class MessageContext
+public static class MessageContext
+{
+    public static IMessageContext<T> Create<T>(Guid? correlationId, T message, IMessagePublish messagePublish)
+    {
+        return new MessageContext<T>(correlationId, message, messagePublish);
+    }
+}
+public interface IMessageContext<out TMessage> : IMessagePublish
 {
     public Guid? CorrelationId { get; }
-    public object Message { get; }
-
-    public MessageContext(Guid? correlationId, object message)
-    {
-        CorrelationId = correlationId;
-        Message = message;
-    }
-
-    public static MessageContext<T> Create<T>(Guid? correlationId, T message)
-    {
-        return new MessageContext<T>(correlationId, message);
-    }
-
-    public static MessageContext<T> Create<T>(MessageContext ctx)
-    {
-        return Create<T>(ctx.CorrelationId, (T)ctx.Message);
-    }
+    public TMessage Message { get; }
 }
 
-
-public sealed class MessageContext<TMessage>
+internal sealed class MessageContext<TMessage> : IMessageContext<TMessage>
 {
     public Guid? CorrelationId { get; }
     public TMessage Message { get; }
 
-    internal MessageContext(Guid? correlationId, TMessage message)
+    private readonly IMessagePublish _publish;
+
+    internal MessageContext(Guid? correlationId, TMessage message, IMessagePublish publish)
     {
         CorrelationId = correlationId;
         Message = message;
+        _publish = publish;
     }
 
-    public static implicit operator MessageContext<TMessage>(MessageContext t)
+    public Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null)
     {
-        return MessageContext.Create<TMessage>(t);
+        return _publish.PublishAsync(exchangeName, routingKey, message, cfg);
+    }
+
+    public Task PublishAsync<T>(T message, MessageProperty? cfg = null)
+    {
+        return _publish.PublishAsync(message, cfg);
     }
 }

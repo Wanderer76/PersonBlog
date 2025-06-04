@@ -1,5 +1,6 @@
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
+using Blog.Contracts.Events;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Persistence;
@@ -12,7 +13,6 @@ using MessageBus;
 using MessageBus.Configs;
 using MessageBus.Models;
 using MessageBus.Shared.Configs;
-using MessageBus.Shared.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 

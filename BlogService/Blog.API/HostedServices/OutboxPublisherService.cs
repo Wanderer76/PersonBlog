@@ -61,7 +61,7 @@ namespace Blog.API.HostedServices
                         //await requestClient.Publish(command);
                         message.CorrelationId = command.VideoMetadataId;
 
-                        await _messageBus.SendMessageAsync("video-event", "saga", message);
+                        await _messageBus.PublishAsync("video-event", "saga", command);
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)
