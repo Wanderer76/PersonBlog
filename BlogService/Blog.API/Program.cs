@@ -1,18 +1,14 @@
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.Contracts.Events;
-using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Persistence;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
-using MassTransit;
 using MessageBus;
-using MessageBus.Configs;
 using MessageBus.Models;
-using MessageBus.Shared.Configs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +36,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     })
     .AddSubscription<UserReactionSyncEvent, SyncProfileViewsHandler>(x =>
     {
-        x.Name = "video-sync"; 
+        x.Name = "video-sync";
         x.Exchange = new ExchangeParam
         {
             Name = "view-reacting",
@@ -58,7 +54,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     })
     .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>(x =>
     {
-        x.Name = "saga-queue"; 
+        x.Name = "saga-queue";
         x.Exchange = new ExchangeParam
         {
             Name = "video-event",
@@ -67,7 +63,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     })
     .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>(x =>
     {
-        x.Name = "saga-queue"; 
+        x.Name = "saga-queue";
         x.Exchange = new ExchangeParam
         {
             Name = "video-event",
@@ -91,9 +87,7 @@ builder.Services.AddMessageBus(builder.Configuration)
             Name = "video-event",
             RoutingKey = "saga"
         };
-    })
-    .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
-
+    });
 
 //builder.Services.AddMassTransit(x =>
 //{

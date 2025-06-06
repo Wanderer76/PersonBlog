@@ -1,7 +1,6 @@
 ﻿using MessageBus.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Xunit.Sdk;
 
 namespace MessageBus.Internal
 {
@@ -29,21 +28,21 @@ namespace MessageBus.Internal
             var subscribeMethod = typeof(RabbitMqMessageBus).GetMethod(nameof(RabbitMqMessageBus.SubscribeAsync), [typeof(string)]);
             if (subscribeMethod == null)
                 throw new InvalidOperationException("SubscribeAsync method not found");
-            foreach (var eventType in _subscriptionInfo.handlerInfos)
+            foreach (var eventType in _subscriptionInfo.Handlers)
             {
                 var queue = eventType.Queue;
                 var exchange = eventType.Queue.Exchange;
-                if (!string.IsNullOrWhiteSpace(queue.Name))
+
+                var queueName = queue?.Name ?? eventType.HandlerType.FullName!;
+
+                await channel.QueueDeclareAsync(queueName, durable: queue.Durable, exclusive: queue.Exclusive, autoDelete: queue.AutoDelete);
+                if (exchange != null)
                 {
-                    await channel.QueueDeclareAsync(queue.Name, durable: queue.Durable, exclusive: queue.Exclusive, autoDelete: queue.AutoDelete);
-                    if (exchange != null)
-                    {
-                        await channel.ExchangeDeclareAsync(exchange.Name, exchange.ExchangeType, exchange.Durable, exchange.AutoDelete);
-                        await channel.QueueBindAsync(queue.Name, exchange.Name, exchange.RoutingKey);
-                    }
-                    var genericSubscribe = subscribeMethod.MakeGenericMethod(eventType.HanldlerType);
-                    await (Task)genericSubscribe.Invoke(_messageBus, [queue.Name])!;
+                    await channel.ExchangeDeclareAsync(exchange.Name, exchange.ExchangeType, exchange.Durable, exchange.AutoDelete);
+                    await channel.QueueBindAsync(queueName, exchange.Name, exchange.RoutingKey);
                 }
+                var genericSubscribe = subscribeMethod.MakeGenericMethod(eventType.HandlerType);
+                await (Task)genericSubscribe.Invoke(_messageBus, [queueName])!;
             }
         }
 

@@ -1,12 +1,12 @@
 ﻿namespace MessageBus.Models
 {
-    public sealed class MessageBusSubscriptionInfo
+    internal sealed class MessageBusSubscriptionInfo
     {
         public IReadOnlyDictionary<string, Type> EventTypes { get => _eventTypes; }
 
         private readonly Dictionary<string, Type> _eventTypes = [];
 
-        public readonly List<HandlerInfo> handlerInfos = new List<HandlerInfo>();
+        public readonly List<HandlerInfo> Handlers = new List<HandlerInfo>();
 
         public MessageBusSubscriptionInfo() { }
 
@@ -15,15 +15,15 @@
             _eventTypes = eventTypes;
         }
 
-        public void AddSubscription<TEvent>(Action<QueueParams> queue)
+        public void AddSubscription<TEvent>(Action<QueueParams>? queue)
         {
             var type = typeof(TEvent);
             _eventTypes.Add(type.Name, type);
             var queueOptions = new QueueParams();
-            queue(queueOptions);
-            handlerInfos.Add(new HandlerInfo
+            queue?.Invoke(queueOptions);
+            Handlers.Add(new HandlerInfo
             {
-                HanldlerType = type,
+                HandlerType = type,
                 Queue = queueOptions
             });
         }
@@ -31,8 +31,8 @@
 
     public class HandlerInfo
     {
-        public Type HanldlerType { get; init; }
-        public QueueParams Queue { get; init; }
+        public required Type HandlerType { get; init; }
+        public required QueueParams Queue { get; init; }
         public object Options { get; init; }
     }
 

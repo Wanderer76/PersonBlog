@@ -4,7 +4,6 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using MessageBus;
 using MessageBus.Models;
-using MessageBus.Shared.Configs;
 using VideoProcessing.Cli;
 using VideoProcessing.Cli.Service;
 
@@ -31,8 +30,8 @@ builder.Services.AddMessageBus(builder.Configuration)
             Name = "video-event",
             RoutingKey = "video.convert"
         };
-    })
-    .AddConnectionConfig(builder.Configuration.GetSection("RabbitMq:UploadVideoConfig").Get<RabbitMqUploadVideoConfig>()!);
+    });
+
 builder.Services.AddHostedService<VideoConverterHostedService>();
 
 //builder.Services.AddMassTransit(x =>

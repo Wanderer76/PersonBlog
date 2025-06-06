@@ -118,7 +118,7 @@ namespace MessageBus
             }
             if (value == null)
             {
-                var current = _subscriptionInfo.handlerInfos.First(x => x.HanldlerType == type);
+                var current = _subscriptionInfo.Handlers.First(x => x.HandlerType == type);
                 if (cfg.RoutingKey == null)
                 {
                     cfg.RoutingKey = current.Queue?.Exchange?.RoutingKey;

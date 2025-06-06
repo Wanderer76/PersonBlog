@@ -11,12 +11,11 @@ namespace MessageBus
     {
         public static IMessageBusBuilder AddMessageBus(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddSingleton<IMessagePublish, RabbitMqMessageBus>();
             services.AddSingleton<RabbitMqMessageBus>();
+            services.AddSingleton<IMessagePublish, RabbitMqMessageBus>(x => x.GetRequiredService<RabbitMqMessageBus>());
             services.AddOptions<MessageBusSubscriptionInfo>().Configure(x => new MessageBusSubscriptionInfo([]));
             services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
             services.AddHostedService<DefaultHostedService>();
-            //services.AddSingleton<RabbitMqVideoReactionConfig>();
             return new MessageBusBuilder(services);
         }
 
