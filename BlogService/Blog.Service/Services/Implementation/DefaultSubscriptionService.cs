@@ -89,7 +89,7 @@ namespace Blog.Service.Services.Implementation
                 .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                 .ToListAsync();
 
-            var subscriptions = await _readWriteRepository.Get<ProfileSubscription>()
+            var subscriptions = await _readWriteRepository.Get<PaymentSubscriber>()
                 .Where(x => x.UserId == userId)
                 .Where(s => s.SubscriptionLevel.BlogId == blogId && s.IsActive)
                 .ToListAsync();
@@ -111,7 +111,7 @@ namespace Blog.Service.Services.Implementation
                 old.IsActive = false;
             }
 
-            var result = new ProfileSubscription(userId, levelId);
+            var result = new PaymentSubscriber(userId, levelId);
             _readWriteRepository.Add(result);
             await _readWriteRepository.SaveChangesAsync();
         }

@@ -12,7 +12,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<VideoMetadata> VideoMetadata { get; set; }
     public DbSet<VideoProcessEvent> ProfileEventMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
-    public DbSet<ProfileSubscription> ProfileSubscriptions { get; set; }
+    public DbSet<PaymentSubscriber> ProfileSubscriptions { get; set; }
     public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
     public DbSet<PlayList> PlayLists { get; set; }
     public DbSet<PlayListItem> PlayListItems { get; set; }
@@ -98,7 +98,7 @@ public class ProfileDbContext : BaseDbContext
                 // });
             }
             {
-                var entity = modelBuilder.Entity<ProfileSubscription>();
+                var entity = modelBuilder.Entity<PaymentSubscriber>();
                 entity.HasKey(x => new { x.UserId, x.SubscriptionLevelId });
             }
             {

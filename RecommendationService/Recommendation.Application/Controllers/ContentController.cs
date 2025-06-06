@@ -32,32 +32,5 @@ namespace Blog.Application.Controllers
         {
             return Ok(await _recommendationService.GetRecommendationsAsync(page, pageSize, currentPostId));
         }
-
-
-        //public async Task<IActionResult> AddCommentToPost(CommentCreateForm form)
-        //{
-        //    return Ok();
-        //}
-
-        //public async Task<IActionResult> EditPostComment(CommentCreateForm form)
-        //{
-        //    return Ok();
-        //}
-
-        //public async Task<IActionResult> DeletePostComment(Guid id)
-        //{
-        //    return Ok();
-        //}
-
-        //public async Task AddReactionToPost(Guid id, ReactionType reactionType)
-        //{
-
-        //}
-        //public async Task DeleteReactionFromPost(Guid id, ReactionType reactionType)
-        //{
-
-        //}
-
-
     }
 }

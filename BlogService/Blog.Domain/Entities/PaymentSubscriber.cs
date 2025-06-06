@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Blog.Domain.Entities
 {
-    public class ProfileSubscription : IBlogEntity
+    public class PaymentSubscriber : IBlogEntity
     {
         public Guid UserId { get; set; }
         public Guid SubscriptionLevelId { get; set; }
@@ -14,9 +14,9 @@ namespace Blog.Domain.Entities
         [ForeignKey(nameof(SubscriptionLevelId))]
         public PaymentSubscription SubscriptionLevel { get; set; }
 
-        private ProfileSubscription() { }
+        private PaymentSubscriber() { }
 
-        public ProfileSubscription(Guid userId, Guid subscriptionLevelId)
+        public PaymentSubscriber(Guid userId, Guid subscriptionLevelId)
         {
             var now = DateTimeService.Now();
             UserId = userId;
