@@ -1,6 +1,8 @@
 ﻿using MessageBus.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
+using System.Reflection;
 
 namespace MessageBus.Internal
 {
@@ -32,14 +34,19 @@ namespace MessageBus.Internal
             {
                 var queue = eventType.Queue;
                 var exchange = eventType.Queue.Exchange;
+                var attributeData = eventType.GetType().GetCustomAttribute<EventPublishAttribute>(false);
 
                 var queueName = queue?.Name ?? eventType.HandlerType.FullName!;
 
                 await channel.QueueDeclareAsync(queueName, durable: queue.Durable, exclusive: queue.Exclusive, autoDelete: queue.AutoDelete);
-                if (exchange != null)
+
+                var exchangeName = exchange?.Name ?? attributeData?.Exchange;
+                var exchangeType = exchange?.ExchangeType ?? ExchangeType.Fanout;
+                var exchangeRoutingKey = exchange?.RoutingKey ?? attributeData?.RoutingKey;
+                if (exchangeName != null)
                 {
-                    await channel.ExchangeDeclareAsync(exchange.Name, exchange.ExchangeType, exchange.Durable, exchange.AutoDelete);
-                    await channel.QueueBindAsync(queueName, exchange.Name, exchange.RoutingKey);
+                    await channel.ExchangeDeclareAsync(exchangeName, exchangeType, exchange?.Durable ?? true, exchange?.AutoDelete ?? false);
+                    await channel.QueueBindAsync(queueName, exchangeName, exchangeRoutingKey);
                 }
                 var genericSubscribe = subscribeMethod.MakeGenericMethod(eventType.HandlerType);
                 await (Task)genericSubscribe.Invoke(_messageBus, [queueName])!;
