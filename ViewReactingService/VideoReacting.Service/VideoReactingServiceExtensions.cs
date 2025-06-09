@@ -10,6 +10,7 @@ namespace VideoReacting.Service
         {
             services.AddScoped<IViewHistoryService, DefaultViewHistoryService>();
             services.AddScoped<IReactionService, DefaultReactionService>();
+            services.AddScoped<ISubscribeService, DefaultSubscriptionService>();
         }
     }
 }

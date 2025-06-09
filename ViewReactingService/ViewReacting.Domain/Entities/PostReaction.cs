@@ -2,7 +2,7 @@
 
 namespace ViewReacting.Domain.Entities
 {
-    public class PostReaction : IVideoReactEntity
+    public class PostReaction : IUserEntity
     {
         public Guid Id { get; set; }
         public Guid? UserId { get; private set; }

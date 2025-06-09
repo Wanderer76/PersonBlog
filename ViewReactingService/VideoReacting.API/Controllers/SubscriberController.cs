@@ -1,0 +1,51 @@
+﻿using Infrastructure.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Shared.Services;
+using ViewReacting.Domain.Services;
+
+namespace VideoReacting.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class SubscriberController : BaseController
+    {
+        private readonly ISubscribeService _subscribeService;
+
+        public SubscriberController(ILogger<SubscriberController> logger, ISubscribeService subscribeService) : base(logger)
+        {
+            _subscribeService = subscribeService;
+        }
+
+        [HttpPost("subscribe/{blogId:guid}")]
+        [Authorize]
+        public async Task<IActionResult> SubscribeToBlog(Guid blogId)
+        {
+            try
+            {
+                var userId = HttpContext.GetUserFromContext();
+                await _subscribeService.SubscribeToBlogAsync(blogId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpPost("unsubscribe/{blogId:guid}")]
+        [Authorize]
+        public async Task<IActionResult> UnSubscribeToBlog(Guid blogId)
+        {
+            try
+            {
+                var userId = HttpContext.GetUserFromContext();
+                await _subscribeService.UnSubscribeToBlogAsync(blogId);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+    }
+}

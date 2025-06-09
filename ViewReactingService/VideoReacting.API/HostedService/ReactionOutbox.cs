@@ -39,7 +39,7 @@ namespace VideoReacting.API.HostedService
             {
                 using var scope = _serviceProvider.CreateScope();
 
-                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IVideoReactEntity>>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IUserEntity>>();
 
                 var messages = await dbContext.Get<ReactingEvent>()
                     .Where(m => m.State == EventState.Pending && m.RetryCount < 3)

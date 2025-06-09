@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BlogService\Blog.Contracts\Blog.Contracts.csproj" />
+    <ProjectReference Include="..\..\BlogService\Blog.Service\Blog.Service.csproj" />
     <ProjectReference Include="..\VideoReacting.Persistence\VideoReacting.Persistence.csproj" />
     <ProjectReference Include="..\ViewReacting.Domain\ViewReacting.Domain.csproj" />
   </ItemGroup>

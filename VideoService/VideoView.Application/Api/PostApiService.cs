@@ -75,7 +75,7 @@ namespace VideoView.Application.Api
                 {
                     var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<ReactionHistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
                     if (result.PostId == Guid.Empty)
-                        return Result<ReactionHistoryViewItem>.Success(null);
+                        return Result<ReactionHistoryViewItem>.Success(new());
                     return Result<ReactionHistoryViewItem>.Success(result!);
                 }
                 catch (Exception ex)
@@ -83,7 +83,7 @@ namespace VideoView.Application.Api
                     return Result<ReactionHistoryViewItem>.Failure(new(ex.Message));
                 }
             }
-            return Result<ReactionHistoryViewItem>.Success(null);
+            return Result<ReactionHistoryViewItem>.Success(new());
         }
     }
 }

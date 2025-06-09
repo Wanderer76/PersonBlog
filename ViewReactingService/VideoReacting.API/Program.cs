@@ -16,6 +16,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddViewReactingPersistence(builder.Configuration);
 builder.Services.AddVideoReactingService();
+builder.Services.AddUserSessionServices();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCors();
@@ -26,6 +27,11 @@ builder.Services.AddMessageBus(builder.Configuration)
         x.Name = QueueConstants.QueueName;
         x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };
     });
+
+builder.Services.AddHttpClient("Blog", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5069/api/");
+});
 
 builder.Services.AddHostedService<ReactionOutbox>();
 

@@ -40,6 +40,7 @@ const VideoPage = function (props) {
     const [userView, setUserView] = useState({
         isViewed: true,
         isLike: false,
+        hasSubscription:false
     })
 
     const [blog, setBlog] = useState({
@@ -175,16 +176,16 @@ const VideoPage = function (props) {
     }
 
     async function handleSubscribe() {
-        const current = userView?.isSubscribe;
+        const current = userView?.hasSubscription;
         var isError = false;
-        await API.post(`profile/api/Subscription/${userView?.isSubscribe ? 'unsubscribe' : 'subscribe'}/${blog.id}`).catch(e => {
+        await API.post(`video/api/Subscriber/${userView?.hasSubscription ? 'unsubscribe' : 'subscribe'}/${blog.id}`).catch(e => {
             isError = true
             alert(e.response.data)
         }).finally(() => {
             if (!isError) {
                 setUserView((prev => ({
                     ...prev,
-                    isSubscribe: !current
+                    hasSubscription: !current
                 })))
                 setBlog((prev => ({
                     ...prev,
@@ -329,7 +330,7 @@ function channelInfo(blog, handleSubscribe, userView) {
                 <div className="subscribers-count">{blog.subscribersCount} подписчиков</div>
             </div>
         </div>
-        <button className="subscribe-button" onClick={() => handleSubscribe()}>{blog.hasSubscription ? 'Вы подписаны' : 'Подписаться'}</button>
+        <button className="subscribe-button" onClick={() => handleSubscribe()}>{userView?.hasSubscription ? 'Вы подписаны' : 'Подписаться'}</button>
     </div>;
 }
 

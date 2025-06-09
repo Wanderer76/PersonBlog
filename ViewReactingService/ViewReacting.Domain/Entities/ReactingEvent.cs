@@ -2,7 +2,7 @@
 
 namespace ViewReacting.Domain.Entities
 {
-    public class ReactingEvent : BaseEvent, IVideoReactEntity
+    public class ReactingEvent : BaseEvent, IUserEntity
     {
     }
 }

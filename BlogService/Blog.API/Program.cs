@@ -1,5 +1,6 @@
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
+using Blog.API.Saga;
 using Blog.Contracts.Events;
 using Blog.Domain.Events;
 using Blog.Persistence;
@@ -9,6 +10,7 @@ using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Models;
+using ViewReacting.Domain.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,104 +27,24 @@ builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>(x =>
+    .AddVideoConvertSaga()
+    .AddSubscription<SubscribeCreateEvent, SubscribeHandlers>(x =>
     {
-        x.Name = "video-sync";
+        x.Name = "subscribers-sync";
         x.Exchange = new ExchangeParam
         {
-            Name = "view-reacting",
-            RoutingKey = "video.sync"
+            Name = "user-subscribe",
+            RoutingKey = "created"
         };
-    })
-    .AddSubscription<UserReactionSyncEvent, SyncProfileViewsHandler>(x =>
+    }).AddSubscription<SubscribeCancelEvent, SubscribeHandlers>(x =>
     {
-        x.Name = "video-sync";
+        x.Name = "subscribers-sync";
         x.Exchange = new ExchangeParam
         {
-            Name = "view-reacting",
-            RoutingKey = "video.sync"
-        };
-    })
-    .AddSubscription<CombineFileChunksCommand, VideoProcessSagaHandler>(x =>
-    {
-        x.Name = "saga-queue";
-        x.Exchange = new ExchangeParam
-        {
-            Name = "video-event",
-            RoutingKey = "saga"
-        };
-    })
-    .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>(x =>
-    {
-        x.Name = "saga-queue";
-        x.Exchange = new ExchangeParam
-        {
-            Name = "video-event",
-            RoutingKey = "saga"
-        };
-    })
-    .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>(x =>
-    {
-        x.Name = "saga-queue";
-        x.Exchange = new ExchangeParam
-        {
-            Name = "video-event",
-            RoutingKey = "saga"
-        };
-    })
-    .AddSubscription<VideoPublishedResponse, VideoProcessSagaHandler>(x =>
-    {
-        x.Name = "saga-queue";
-        x.Exchange = new ExchangeParam
-        {
-            Name = "video-event",
-            RoutingKey = "saga"
-        };
-    })
-    .AddSubscription<VideoReadyToPublishEvent, VideoReadyToPublishEventHandler>(x =>
-    {
-        x.Name = "saga-queue";
-        x.Exchange = new ExchangeParam
-        {
-            Name = "video-event",
-            RoutingKey = "saga"
+            Name = "user-subscribe",
+            RoutingKey = "canceled"
         };
     });
-
-//builder.Services.AddMassTransit(x =>
-//{
-//    x.AddSagaStateMachine<VideoProcessingSaga, VideoProcessingSagaState>()
-//        .EntityFrameworkRepository(r =>
-//        {
-//            r.ConcurrencyMode = ConcurrencyMode.Optimistic;
-//            r.ExistingDbContext<ProfileDbContext>();
-//            r.UsePostgres(builder.Configuration["ConnectionStrings:ProfileDbContext"]);
-//        });
-
-//    x.AddConsumer<VideoReadyToPublishEventHandler>();
-
-//    x.UsingRabbitMq((ctx, cfg) =>
-//    {
-//        var rabbit = builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!;
-//        cfg.Host($"rabbitmq://{rabbit.HostName}:{rabbit.Port}", c =>
-//        {
-//            c.Username(rabbit.UserName);
-//            c.Password(rabbit.Password);
-//        });
-
-//        cfg.ReceiveEndpoint("video-publish", e =>
-//        {
-//            e.Durable = true;
-//            e.Exclusive = false;
-//            e.AutoDelete = false;
-
-//            e.ConfigureConsumer<VideoReadyToPublishEventHandler>(ctx);
-//        });
-//        cfg.ConfigureEndpoints(ctx);
-
-//    });
-
-//});
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

@@ -9,6 +9,7 @@ namespace VideoReacting.Persistence
         public DbSet<UserPostView> UserPostViews { get; set; }
         public DbSet<ReactingEvent> ReactingEvents { get; set; }
         public DbSet<PostReaction> PostReactions { get; set; }
+        public DbSet<SubscribedChanel> SubscribedChanels { get; set; }
 
         public ViewReactingDbContext(DbContextOptions<ViewReactingDbContext> options) : base(options)
         {

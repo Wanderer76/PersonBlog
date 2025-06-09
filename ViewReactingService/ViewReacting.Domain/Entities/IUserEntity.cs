@@ -1,4 +1,4 @@
 ﻿namespace ViewReacting.Domain.Entities
 {
-    public interface IVideoReactEntity;
+    public interface IUserEntity;
 }

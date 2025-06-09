@@ -11,9 +11,9 @@ namespace VideoReacting.Service.Implementation
 {
     internal class DefaultReactionService : IReactionService
     {
-        private readonly IReadWriteRepository<IVideoReactEntity> _context;
+        private readonly IReadWriteRepository<IUserEntity> _context;
 
-        public DefaultReactionService(IReadWriteRepository<IVideoReactEntity> context)
+        public DefaultReactionService(IReadWriteRepository<IUserEntity> context)
         {
             _context = context;
         }

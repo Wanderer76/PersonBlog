@@ -44,7 +44,7 @@ public class ProfileDbContext : BaseDbContext
             }
             {
                 var entity = modelBuilder.Entity<Subscriber>();
-                entity.HasIndex(x => new { x.UserId, x.BlogId }).IsUnique();
+                entity.HasIndex(x => new { x.UserId, x.BlogId });
             }
             {
                 var entity = modelBuilder.Entity<Post>();

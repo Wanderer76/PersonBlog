@@ -1,8 +1,10 @@
-﻿using Infrastructure.Services;
+﻿using Blog.Service.Models.Blog;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using System.Net.Http.Json;
 using ViewReacting.Domain.Entities;
 using ViewReacting.Domain.Models;
 using ViewReacting.Domain.Services;
@@ -11,13 +13,14 @@ namespace VideoReacting.Service.Implementation
 {
     internal class DefaultViewHistoryService : IViewHistoryService
     {
-        private readonly IReadWriteRepository<IVideoReactEntity> _repository;
+        private readonly IReadWriteRepository<IUserEntity> _repository;
         private readonly ICacheService _cacheService;
-
-        public DefaultViewHistoryService(IReadWriteRepository<IVideoReactEntity> repository, ICacheService cacheService)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public DefaultViewHistoryService(IReadWriteRepository<IUserEntity> repository, ICacheService cacheService, IHttpClientFactory httpClientFactory)
         {
             _repository = repository;
             _cacheService = cacheService;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<Result<UpdateViewState>> CreateOrUpdateViewHistory(UserPostView postViewer)
@@ -61,10 +64,19 @@ namespace VideoReacting.Service.Implementation
                           .Where(x => x.PostId == postId && x.UserId == userId)
                           .FirstOrDefaultAsync();
 
-            var result = lastView == null && reaction == null
+            var blog =await  _httpClientFactory.CreateClient("Blog")
+                .GetFromJsonAsync<BlogModel>($"Blog/blogByPost/{postId}");
+
+
+            var subscription = await _repository.Get<SubscribedChanel>()
+                .Where(x => x.UserId == userId && x.BlogId == blog.Id)
+                .AnyAsync();
+
+            var result = lastView == null && reaction == null && !subscription
                 ? null
                 : new ReactionHistoryViewItem
                 {
+                    HasSubscription = subscription,
                     IsLike = reaction?.IsLike,
                     LastWatched = lastView?.LastWatched,
                     PostId = postId,

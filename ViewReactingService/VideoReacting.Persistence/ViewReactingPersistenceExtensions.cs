@@ -13,7 +13,7 @@ namespace VideoReacting.Persistence
             var connectionString = configuration["ConnectionStrings:VideoReactingDbContext"]!;
             services.AddNpgSqlDbContext<ViewReactingDbContext>(connectionString);
             services.AddScoped<IDbInitializer, ViewReactingDbInitializer>();
-            services.AddDefaultRepository<ViewReactingDbContext, IVideoReactEntity>();
+            services.AddDefaultRepository<ViewReactingDbContext, IUserEntity>();
         }
     }
 }

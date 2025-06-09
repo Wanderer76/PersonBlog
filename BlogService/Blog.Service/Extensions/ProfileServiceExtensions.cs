@@ -13,7 +13,7 @@ namespace Blog.Service.Extensions
             services.AddScoped<IBlogService, DefaultBlogService>();
             services.AddScoped<IVideoService, DefaultVideoService>();
             services.AddScoped<IUserPostService, DefaultUserPostService>();
-            services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
+            //services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
             services.AddScoped<ISubscriptionLevelService, DefaultSubscriptionLevelService>();
             services.AddScoped<IPlayListService, DefaultPlayListService>();
         }
