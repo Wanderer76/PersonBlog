@@ -28,14 +28,13 @@ const SignInForm = ({ onSwitchToSignUp }) => {
             return
         }
         try {
-            const resonse = await API.post('/auth/api/Auth/login',
-                JSON.stringify(body),
-                {
+            const resonse = await API.post('video/api/Auth/login', JSON.stringify(body),{
+                 
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                }
-            );
+                
+            });
 
             if (resonse.status === 200) {
                 const data = await resonse.data;

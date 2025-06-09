@@ -15,18 +15,39 @@
             _eventTypes = eventTypes;
         }
 
-        public void AddSubscription<TEvent>(Action<QueueParams>? queue)
+        public void AddSubscription<TEvent>(Action<QueueParams>? cfg)
         {
             var type = typeof(TEvent);
             _eventTypes.Add(type.Name, type);
             var queueOptions = new QueueParams();
-            queue?.Invoke(queueOptions);
+            cfg?.Invoke(queueOptions);
             Handlers.Add(new HandlerInfo
             {
                 HandlerType = type,
                 Queue = queueOptions
             });
         }
+
+        public void AddMessageInfo<TMessage>(Action<MessageInfo<TMessage>>? cfg)
+        {
+
+        }
+    }
+
+    public class MessageInfo<T>
+    {
+        public required T Type { get; init; }
+        public string CorrelationId { get => func?.Invoke(Type); }
+        public string RoutingKey { get; set; }
+        public string Exchange { get; set; }
+
+        private Func<T, string> func;
+
+        public void UseCorrelationId(Func<T, string> message)
+        {
+            func = message;
+        }
+
     }
 
     public class HandlerInfo
@@ -38,19 +59,19 @@
 
     public class QueueParams
     {
-        public string Name {  get; set; }
+        public string Name { get; set; }
         public bool Durable { get; set; } = true;
         public bool Exclusive { get; set; }
         public bool AutoDelete { get; set; }
         public int PrefetchCount { get; set; } = 10; // количество сообщений, которые можно обрабатывать одновременно
         //public int RetryCount { get; set; } = 3; // количество повторных попыток
-        public ExchangeParam Exchange {  get; set; }
+        public ExchangeParam Exchange { get; set; }
     }
 
     public class ExchangeParam
     {
         public string Name { get; set; }
-        public string RoutingKey {  get; set; }
+        public string RoutingKey { get; set; }
         public string ExchangeType { get; set; } = "direct";
         public bool Durable { get; set; } = true;
         public bool AutoDelete { get; set; }

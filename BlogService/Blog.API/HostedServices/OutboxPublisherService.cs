@@ -27,22 +27,10 @@ namespace Blog.API.HostedServices
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            //await _channel.ExchangeDeclareAsync("video-event", "direct", true);
-            //await _channel.QueueDeclareAsync("saga-queue", true, false, false);
-            //await _channel.QueueBindAsync("saga-queue", "video-event", "saga");
-            //await _messageBus.SubscribeAsync("saga-queue");
-
-            //await _channel.ExchangeDeclareAsync(QueueConstants.Exchange, ExchangeType.Direct, durable: true);
-            //await _channel.QueueDeclareAsync(RabbitMqVideoReactionConfig.SyncQueueName, durable: true, exclusive: false, autoDelete: false);
-            //await _channel.QueueBindAsync(RabbitMqVideoReactionConfig.SyncQueueName, QueueConstants.Exchange, RabbitMqVideoReactionConfig.SyncRoutingKey);
-            //await _messageBus.SubscribeAsync(RabbitMqVideoReactionConfig.SyncQueueName);
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 using var scope = _serviceProvider.CreateScope();
-
-                //var requestClient = scope.ServiceProvider.GetRequiredService<IBus>();
-
                 var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
 
                 var messages = await dbContext.Get<VideoProcessEvent>()
@@ -58,10 +46,7 @@ namespace Blog.API.HostedServices
                         dbContext.Attach(message);
                         message.Processed();
                         var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
-                        //await requestClient.Publish(command);
-                        message.CorrelationId = command.VideoMetadataId;
-
-                        await _messageBus.PublishAsync("video-event", "saga", command);
+                        await _messageBus.PublishAsync(command);
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)

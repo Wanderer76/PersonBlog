@@ -12,5 +12,6 @@ namespace Shared
         public DateTimeOffset ExpiredAt { get; set; }
         public string Type { get; set; }
         public Guid RoleId { get; set; }
+        public Guid BlogId {  get; set; }
     }
 }

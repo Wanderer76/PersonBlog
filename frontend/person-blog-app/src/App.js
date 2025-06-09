@@ -31,7 +31,7 @@ const PublicRoute = ({ children }) => {
 // Компонент проверки сессии
 const Session = ({ children }) => {
   useEffect(() => {
-    API.get("auth/api/Auth/session", { withCredentials: true })
+    API.get("video/api/Auth/session", { withCredentials: true })
       .catch(() => JwtTokenService.cleanAuth());
   }, []);
 

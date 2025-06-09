@@ -26,7 +26,7 @@ internal class DefaultAuthService : IAuthService
         _userSession = userSession;
     }
 
-    public async Task<Result<AuthResponse, Error>> Authenticate(LoginModel loginModel)
+    public async Task<Result<AuthResponse, Error>> Authenticate(LoginPasswordModel loginModel)
     {
         var user = await _context.Get<AppUser>()
             .Include(x => x.AppUserRoles)
@@ -36,10 +36,10 @@ internal class DefaultAuthService : IAuthService
 
         if (!PasswordHasher.Validate(user.Password, loginModel.Password))
         {
-            return Result<AuthResponse, Error>.Failure(new Error("400", "Неверный логин/пароль"));
+            return new Error("400", "Неверный логин/пароль");
         }
 
-        var response = _tokenService.GenerateToken(user);
+        var response = await _tokenService.GenerateTokenAsync(user);
 
         await _context.SaveChangesAsync();
 
@@ -57,7 +57,7 @@ internal class DefaultAuthService : IAuthService
 
         if (isUserExists)
         {
-            return Result<AuthResponse, Error>.Failure(new Error("400", "Пользователь с таким логином уже существует"));
+            return new Error("400", "Пользователь с таким логином уже существует");
         }
 
         var userId = Guid.NewGuid();
@@ -99,7 +99,7 @@ internal class DefaultAuthService : IAuthService
         _context.Add(profile);
         await _context.SaveChangesAsync();
 
-        return await Authenticate(new LoginModel(user.Login, registerModel.Password));
+        return await Authenticate(new LoginPasswordModel(user.Login, registerModel.Password));
     }
 
     public async ValueTask Logout()
@@ -115,11 +115,11 @@ internal class DefaultAuthService : IAuthService
 
     public async Task<Result<AuthResponse, Error>> Refresh(string refreshToken)
     {
-        var tokenModel = _tokenService.GetTokenRepresentaion(refreshToken);
+        var tokenModel = _tokenService.GetTokenRepresentation(refreshToken);
 
         if (tokenModel.Type != TokenTypes.Refresh)
         {
-            return Result<AuthResponse, Error>.Failure(new("400", "Не верный тип токена"));
+            return new Error("Не верный тип токена");
         }
 
         var userId = tokenModel.UserId;
@@ -132,9 +132,9 @@ internal class DefaultAuthService : IAuthService
 
         user.AssertFound("Пользователь не найден");
 
-        var response = _tokenService.GenerateToken(user);
+        var response = await _tokenService.GenerateTokenAsync(user);
         await _context.SaveChangesAsync();
-        return Result<AuthResponse, Error>.Success(response);
+        return response;
     }
 
 

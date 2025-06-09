@@ -129,7 +129,8 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     serverOptions.Limits.MaxRequestBodySize = long.MaxValue;
 });
 
-builder.Services.AddHostedService<OutboxPublisherService>();
+builder.Services.AddHostedService<OutboxPublisherService>()
+    .AddHostedService<PostRemoveHostedService>();
 
 var app = builder.Build();
 
@@ -149,7 +150,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseCors(policy => policy.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
+app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

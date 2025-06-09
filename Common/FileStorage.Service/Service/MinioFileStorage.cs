@@ -166,5 +166,10 @@ namespace FileStorage.Service.Service
         {
             _client.Dispose();
         }
+
+        public async Task RemoveBucketAsync(string bucketId)
+        {
+            await _client.RemoveBucketAsync(new Minio.DataModel.Args.RemoveBucketArgs().WithBucket(bucketId));
+        }
     }
 }

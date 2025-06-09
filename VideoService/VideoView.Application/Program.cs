@@ -1,3 +1,4 @@
+using AuthenticationApplication.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
@@ -12,6 +13,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddFileStorage(builder.Configuration);
+builder.Services.AddHttpClient("Auth", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5179/api/");
+});
 
 builder.Services.AddHttpClient("Profile", x =>
 {
@@ -39,7 +44,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(policy => policy.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
+app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor |

@@ -30,7 +30,7 @@ public class AuthController : BaseController
     {
         var session = GetUserSession();
         await _userSession.UpdateUserSession(session);
-        return Ok();
+        return Ok(await _userSession.UpdateUserSession(session));
     }
 
     [HttpPost("create")]
@@ -50,7 +50,7 @@ public class AuthController : BaseController
 
     [HttpPost("login")]
     [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> Login(LoginModel loginModel)
+    public async Task<IActionResult> Login(LoginPasswordModel loginModel)
     {
         var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Authenticate(loginModel);

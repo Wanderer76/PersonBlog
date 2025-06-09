@@ -38,6 +38,13 @@ namespace Blog.API.Controllers
             }
         }
 
+        [HttpGet("hasBlog/{userId:guid}")]
+        public async Task<IActionResult> GetBlogDetail(Guid userId)
+        {
+            var result = await _blogService.GetBlogByUserIdAsync(userId);
+            return Ok(result.Id);
+        }
+
         [HttpGet("detail")]
         [Authorize]
         public async Task<IActionResult> GetBlogDetail()

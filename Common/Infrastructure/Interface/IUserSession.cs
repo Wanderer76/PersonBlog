@@ -8,7 +8,7 @@ namespace Infrastructure.Interface
     public interface IUserSession
     {
         Task<UserSession> GetUserSessionAsync();
-        Task UpdateUserSession(string sessionId, string? token = null);
+        Task<Guid> UpdateUserSession(string sessionId, string? token = null);
     }
 
     internal class DefaultUserSession : IUserSession
@@ -38,13 +38,13 @@ namespace Infrastructure.Interface
             return sessionData;
         }
 
-        public async Task UpdateUserSession(string session, string? token = null)
+        public async Task<Guid> UpdateUserSession(string session, string? token = null)
         {
             token = _contextAccessor.HttpContext.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
-            await RefreshSession(session, token);
+            return await RefreshSession(session, token);
         }
 
-        private async Task RefreshSession(string? session, string? token = null)
+        private async Task<Guid> RefreshSession(string? session, string? token = null)
         {
             if (session != null)
             {
@@ -61,9 +61,11 @@ namespace Infrastructure.Interface
                         var tokenData = JwtUtils.GetTokenRepresentaion(token);
                         data!.UserId = tokenData.UserId;
                         data.UserName = tokenData.Login;
+                        data.BlogId = tokenData.BlogId;
                     }
                     await _cacheService.SetCachedDataAsync(new SessionKey(session), data!, TimeSpan.FromHours(1));
                 }
+                return Guid.Parse(session);
             }
             else
             {
@@ -74,6 +76,7 @@ namespace Infrastructure.Interface
                     SameSite = SameSiteMode.Strict,
                     HttpOnly = true
                 });
+                return sessionId;
             }
         }
     }

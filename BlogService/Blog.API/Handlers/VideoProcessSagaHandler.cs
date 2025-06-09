@@ -26,7 +26,7 @@ namespace Blog.API.Handlers
         public async Task Handle(IMessageContext<CombineFileChunksCommand> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
-                .Where(x => x.CorrelationId == @event.CorrelationId)
+                .Where(x => x.CorrelationId == @event.Message.VideoMetadataId)
                 .FirstOrDefaultAsync();
 
             if (saga != null)
@@ -50,7 +50,7 @@ namespace Blog.API.Handlers
         public async Task Handle(IMessageContext<ChunksCombinedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
-                .Where(x => x.CorrelationId == @event.CorrelationId)
+                .Where(x => x.CorrelationId == @event.Message.VideoMetadataId)
                 .FirstOrDefaultAsync();
             if (saga == null)
             {
@@ -64,7 +64,7 @@ namespace Blog.API.Handlers
         public async Task Handle(IMessageContext<VideoConvertedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
-                .Where(x => x.CorrelationId == @event.CorrelationId)
+                .Where(x => x.CorrelationId == @event.Message.VideoMetadataId)
                 .FirstOrDefaultAsync();
             if (saga == null)
             {
@@ -78,7 +78,7 @@ namespace Blog.API.Handlers
         public async Task Handle(IMessageContext<VideoPublishedResponse> @event)
         {
             var saga = await _repository.Get<VideoProcessingSagaState>()
-                .Where(x => x.CorrelationId == @event.CorrelationId)
+                .Where(x => x.CorrelationId == @event.Message.VideoMetadataId)
                 .FirstOrDefaultAsync();
             if (saga == null)
             {

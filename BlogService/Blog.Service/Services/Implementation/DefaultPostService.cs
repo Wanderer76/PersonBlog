@@ -164,7 +164,7 @@ namespace Blog.Service.Services.Implementation
             return new PostPagedListViewModel
             {
                 TotalPageCount = pagedPosts.TotalPagesCount,
-                TotalPostsCount = pagedPosts.TotalPagesCount * limit,
+                TotalPostsCount = pagedPosts.TotalPosts,
                 Posts = cachedPosts.OrderByDescending(x => x.CreatedAt),
             };
         }
@@ -178,6 +178,7 @@ namespace Blog.Service.Services.Implementation
             {
                 _context.Attach(post);
                 post.IsDeleted = true;
+                _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
             }
 
             await _cacheService.RemoveCachedDataAsync($"{nameof(PostModel)}:{id}");

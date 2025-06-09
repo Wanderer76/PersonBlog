@@ -28,7 +28,7 @@ public class TokenTypes
 
 public static class TokenExtensions
 {
-    public static TokenModel ToTokenModel(this Token token)
+    public static TokenModel ToTokenModel(this Token token, Guid? blogId = null)
     {
         return new TokenModel
         {
@@ -37,7 +37,8 @@ public static class TokenExtensions
             Login = token.Login,
             RoleId = token.RoleId,
             UserId = token.AppUserId,
-            Type = token.TokenType
+            Type = token.TokenType,
+            BlogId = blogId ?? Guid.Empty
         };
     }
 }

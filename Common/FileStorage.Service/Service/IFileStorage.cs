@@ -13,6 +13,7 @@ namespace FileStorage.Service.Service
         Task ReadFileAsync(Guid userId, string objectName, Stream output);
         Task<long> ReadFileByChunksAsync(Guid userId, string objectName, long offset, long length, Stream output);
         Task RemoveFileAsync(Guid bucketId, string objectName);
+        Task RemoveBucketAsync(string bucketId);
         IAsyncEnumerable<(string Objectname, IDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, VideoChunkUploadingInfo options);
     }
 

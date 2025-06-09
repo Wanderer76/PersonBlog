@@ -14,7 +14,10 @@ builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthServices();
-
+builder.Services.AddHttpClient("Blog", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5069/api/");
+});
 builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
 var app = builder.Build();
@@ -37,7 +40,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseHttpsRedirection();
-app.UseCors(policy => policy.WithOrigins("http://localhost:3000").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
+app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>

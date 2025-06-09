@@ -8,7 +8,7 @@ using RabbitMQ.Client;
 
 namespace VideoProcessing.Cli.Service
 {
-    public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>, IConsumer<CombineFileChunksCommand>
+    public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>
     {
         private readonly IFileStorage storage;
         public VideoChunksCombinerService(IFileStorageFactory storage)
@@ -16,20 +16,10 @@ namespace VideoProcessing.Cli.Service
             this.storage = storage.CreateFileStorage();
         }
 
-        public async Task Consume(ConsumeContext<CombineFileChunksCommand> context)
-        {
-            var cmd = context.Message;
-            var response = await CombineChunks(cmd);
-            await context.Publish(response);
-        }
-
         public async Task Handle(IMessageContext<CombineFileChunksCommand> @event)
         {
             var response = await CombineChunks(@event.Message);
-            await @event.PublishAsync("video-event", "saga", response, new MessageProperty
-            {
-                CorrelationId = response.VideoMetadataId.ToString(),
-            });
+            await @event.PublishAsync(response);
         }
 
         private async Task<ChunksCombinedResponse> CombineChunks(CombineFileChunksCommand @event)

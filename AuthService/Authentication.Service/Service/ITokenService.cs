@@ -8,7 +8,8 @@ namespace Authentication.Service.Service
     {
         Task ClearUserToken(string token);
         bool Validate(string token);
-        AuthResponse GenerateToken(AppUser user);
-        TokenModel GetTokenRepresentaion(string token);
+        Task<AuthResponse> GenerateTokenAsync(AppUser user);
+        AuthResponse GenerateToken(AppUser user,Dictionary<string, string> claims);
+        TokenModel GetTokenRepresentation(string token);
     }
 }

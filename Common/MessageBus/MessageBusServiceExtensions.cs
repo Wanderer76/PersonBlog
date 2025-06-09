@@ -26,14 +26,24 @@ namespace MessageBus
             return builder;
         }
 
-        public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> queue)
+        public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> cfg)
             where TEvent : class
             where THandle : class, IEventHandler<TEvent>
         {
             builder.Services.AddKeyedScoped<IEventHandler<TEvent>, THandle>(typeof(TEvent).Name);
             builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
             {
-                sp.AddSubscription<TEvent>(queue);
+                sp.AddSubscription<TEvent>(cfg);
+            });
+
+            return builder;
+        }
+        public static IMessageBusBuilder AddMessage<TEvent>(this IMessageBusBuilder builder, Action<MessageInfo<TEvent>> cfg)
+          where TEvent : class
+        {
+            builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
+            {
+                sp.AddMessageInfo<TEvent>(cfg);
             });
 
             return builder;

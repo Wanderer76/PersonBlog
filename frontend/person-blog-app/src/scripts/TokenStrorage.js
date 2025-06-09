@@ -1,4 +1,4 @@
-import { BaseApUrl } from "./apiMethod";
+import API, { BaseApUrl } from "./apiMethod";
 
 
 export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
@@ -26,10 +26,8 @@ export class JwtTokenService {
     }
 
     static async refreshToken() {
-        const url = `${BaseApUrl}/auth/api/Auth/refresh?refreshToken=` + getRefreshToken();
-        console.log(url)
         try {
-            var response = await fetch(url, {
+            var response = await fetch(`${BaseApUrl}/video/api/Auth/refresh?refreshToken=${getRefreshToken()}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

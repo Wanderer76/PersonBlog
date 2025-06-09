@@ -116,31 +116,41 @@ namespace MessageBus
                 value = type.GetCustomAttribute<EventPublishAttribute>(false);
                 _cachedValues.TryAdd(type, value);
             }
-            if (value == null)
+            //if (value == null)
+            //{
+            //    var current = _subscriptionInfo.Handlers.First(x => x.HandlerType == type);
+            //    if (cfg.RoutingKey == null)
+            //    {
+            //        cfg.RoutingKey = current.Queue?.Exchange?.RoutingKey;
+            //    }
+            //    if (cfg.Exchange == null)
+            //    {
+            //        cfg.Exchange = current.Queue?.Exchange?.Name;
+            //    }
+            //}
+
+            var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+            if (cfg.RoutingKey == null)
             {
-                var current = _subscriptionInfo.Handlers.First(x => x.HandlerType == type);
-                if (cfg.RoutingKey == null)
-                {
-                    cfg.RoutingKey = current.Queue?.Exchange?.RoutingKey;
-                }
-                if (cfg.Exchange == null)
-                {
-                    cfg.Exchange = current.Queue?.Exchange?.Name;
-                }
+                cfg.RoutingKey = value.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+            }
+            if (cfg.Exchange == null)
+            {
+                cfg.Exchange = value.Exchange ?? current?.Queue?.Exchange?.Name;
             }
 
-            if (value != null)
-            {
-                if (cfg.RoutingKey == null)
-                {
-                    cfg.RoutingKey = value.RoutingKey;
-                }
+            //if (value != null)
+            //{
+            //    if (cfg.RoutingKey == null)
+            //    {
+            //        cfg.RoutingKey = value.RoutingKey;
+            //    }
 
-                if (cfg.Exchange == null)
-                {
-                    cfg.Exchange = value.Exchange;
-                }
-            }
+            //    if (cfg.Exchange == null)
+            //    {
+            //        cfg.Exchange = value.Exchange;
+            //    }
+            //}
         }
 
         public Task<IConnection> GetConnectionAsync()

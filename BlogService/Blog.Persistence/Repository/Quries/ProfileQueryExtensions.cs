@@ -7,7 +7,7 @@ namespace Blog.Persistence.Repository.Quries
 {
     public static class ProfileQueryExtensions
     {
-        public static async Task<(int TotalPagesCount, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, int page, int limit)
+        public static async Task<(int TotalPagesCount, int TotalPosts, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, int page, int limit)
         {
             var totalPostsCount = await context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
@@ -22,8 +22,8 @@ namespace Blog.Persistence.Repository.Quries
                 .Take(limit)
                 .ToListAsync();
 
-            var pagesCount = totalPostsCount / limit;
-            return (pagesCount == 0 ? 1 : pagesCount, posts);
+            var pagesCount = Math.Ceiling(totalPostsCount / (double)limit);
+            return (pagesCount == 0 ? 1 : (int)pagesCount, totalPostsCount, posts);
         }
 
         public static async Task<IEnumerable<VideoProcessEvent>> GetForUpdate(this ProfileDbContext context)

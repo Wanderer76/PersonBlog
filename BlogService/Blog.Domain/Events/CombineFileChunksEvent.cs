@@ -1,6 +1,4 @@
 ﻿using Blog.Domain.Entities;
-using Blog.Domain.Services.Models;
-using MassTransit;
 using MessageBus;
 
 namespace Blog.Domain.Events
@@ -15,7 +13,7 @@ namespace Blog.Domain.Events
     //}
 
     //[EntityName("video-events")]
-    [EventPublish]
+    [EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class CombineFileChunksCommand
     {
         public Guid VideoMetadataId { get; set; }
@@ -23,7 +21,7 @@ namespace Blog.Domain.Events
     }
 
     //[EntityName("video-events")]
-    [EventPublish]
+    [EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class ChunksCombinedResponse
     {
         public Guid VideoMetadataId { get; set; }
@@ -33,17 +31,19 @@ namespace Blog.Domain.Events
     }
 
     //[EntityName("video-events")]
+    [EventPublish(Exchange = "video-event", RoutingKey = "video.convert")]
     public class ConvertVideoCommand
     {
         public Guid PostId { get; set; }
         public Guid VideoMetadataId { get; set; }
         public string ObjectName { get; set; }
-        public bool HasPreviewId {  get; set; }
+        public bool HasPreviewId { get; set; }
         public required VideoMetadata VideoMetadata { get; set; }
 
     }
 
     //[EntityName("video-events")]
+    [EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class VideoConvertedResponse
     {
         public Guid VideoMetadataId { get; set; }
@@ -53,7 +53,7 @@ namespace Blog.Domain.Events
         public string ObjectName { get; set; }
         public double Duration { get; set; }
         public ProcessState ProcessState { get; set; }
-        public string? Error {  get; set; }
+        public string? Error { get; set; }
 
     }
 }
