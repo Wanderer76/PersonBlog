@@ -65,14 +65,14 @@ public class VideoController : BaseController
             var session = GetUserSession();
             var userInfoCache = session == null ? null : await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
 
+            var blog = await _httpClientFactory.GetBlogModelAsync(postId);
             var post = _httpClientFactory.GetPostDetailViewAsync(postId);
-            var blog = _httpClientFactory.GetBlogModelAsync(postId);
-            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!);
+            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!,blog.Value?.Id);
 
-            await Task.WhenAll(post, blog, userInfo).ConfigureAwait(false);
+            await Task.WhenAll(post, userInfo).ConfigureAwait(false);
 
             var postResult = post.Result;
-            var blogResult = blog.Result;
+            var blogResult = blog;
             var userResult = userInfo.Result;
 
             var result = new VideoDataViewModel(

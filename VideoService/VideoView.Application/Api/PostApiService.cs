@@ -60,20 +60,13 @@ namespace VideoView.Application.Api
             }
         }
 
-        public static async Task<Result<ReactionHistoryViewItem>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp)
+        public static async Task<Result<ReactionHistoryViewItem>> GetUserViewInfoAsync(this IHttpClientFactory httpContextFactory, Guid postId, Guid? userId, string remoteIp, Guid? blogId)
         {
-            var query = HttpUtility.ParseQueryString(string.Empty);
-            if (userId.HasValue)
-            {
-                query["userId"] = HttpUtility.UrlEncode(userId.Value.ToString());
-            }
-            query["address"] = HttpUtility.UrlEncode(remoteIp);
-
             if (userId.HasValue)
             {
                 try
                 {
-                    var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<ReactionHistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}");
+                    var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<ReactionHistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}?blogId={blogId}");
                     if (result.PostId == Guid.Empty)
                         return Result<ReactionHistoryViewItem>.Success(new());
                     return Result<ReactionHistoryViewItem>.Success(result!);

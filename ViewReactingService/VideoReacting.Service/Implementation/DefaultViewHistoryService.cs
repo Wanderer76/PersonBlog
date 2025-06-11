@@ -46,7 +46,7 @@ namespace VideoReacting.Service.Implementation
             return Result<UpdateViewState>.Success(state);
         }
 
-        public async Task<Result<ReactionHistoryViewItem>> GetUserPostReactionAsync(Guid postId, Guid userId)
+        public async Task<Result<ReactionHistoryViewItem>> GetUserPostReactionAsync(Guid postId, Guid userId, Guid? blogId)
         {
             var lastView = await _repository.Get<UserPostView>()
                           .Where(x => x.UserId == userId)
@@ -64,16 +64,15 @@ namespace VideoReacting.Service.Implementation
                           .Where(x => x.PostId == postId && x.UserId == userId)
                           .FirstOrDefaultAsync();
 
-            var blog =await  _httpClientFactory.CreateClient("Blog")
-                .GetFromJsonAsync<BlogModel>($"Blog/blogByPost/{postId}");
 
-
-            var subscription = await _repository.Get<SubscribedChanel>()
-                .Where(x => x.UserId == userId && x.BlogId == blog.Id)
-                .AnyAsync();
+            var subscription = blogId.HasValue
+                ? await _repository.Get<SubscribedChanel>()
+                .Where(x => x.UserId == userId && x.BlogId == blogId.Value)
+                .AnyAsync()
+                : false;
 
             var result = lastView == null && reaction == null && !subscription
-                ? null
+                ? new()
                 : new ReactionHistoryViewItem
                 {
                     HasSubscription = subscription,
@@ -83,7 +82,7 @@ namespace VideoReacting.Service.Implementation
                     WatchedTime = lastView?.WatchedTime
                 };
 
-            return result ?? new();
+            return result;
         }
 
         public async Task<Result<HistoryViewItem>> GetUserViewHistoryItemAsync(Guid postId, Guid userId)

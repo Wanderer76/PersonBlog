@@ -40,9 +40,9 @@ namespace VideoReacting.API.Controllers
         }
 
         [HttpGet("userReaction/{postId:guid}/{userId:guid}")]
-        public async Task<IActionResult> GetUserPostReaction(Guid postId, Guid userId)
+        public async Task<IActionResult> GetUserPostReaction(Guid postId, Guid userId,Guid?blogId)
         {
-            var result = await _viewHistoryService.GetUserPostReactionAsync(postId, userId);
+            var result = await _viewHistoryService.GetUserPostReactionAsync(postId, userId,blogId);
             if (result.IsFailure)
             {
                 return BadRequest(result.Error);
