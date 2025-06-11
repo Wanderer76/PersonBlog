@@ -63,8 +63,8 @@ namespace VideoView.Application.Controllers
                     .Select(x => _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<BlogModel>($"api/Blog/blog/{x.BlogId}")));
                 return Ok(new PagedViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.TotalPostsCount, blogs));
             }
-
-            return Ok(subscriptions);
+            else
+                return Ok(new PagedViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.TotalPostsCount, []));
         }
     }
 }

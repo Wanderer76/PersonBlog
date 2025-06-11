@@ -14,7 +14,6 @@ namespace VideoReacting.API.Controllers
             _viewHistoryService = viewHistoryService;
         }
 
-
         [HttpGet("list/{userId:guid}")]
         public async Task<IActionResult> GetUserHistoryList(Guid userId)
         {
