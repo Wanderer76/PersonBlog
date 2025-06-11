@@ -1,10 +1,12 @@
 ﻿using Infrastructure.Interface;
 using MessageBus;
 using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using ViewReacting.Domain.Entities;
 using ViewReacting.Domain.Events;
+using ViewReacting.Domain.Models;
 using ViewReacting.Domain.Services;
 
 namespace VideoReacting.Service.Implementation
@@ -20,6 +22,26 @@ namespace VideoReacting.Service.Implementation
             _readWriteRepository = readWriteRepository;
             _userSession = userSession;
             _messagePublish = messagePublish;
+        }
+
+        public async Task<PagedViewModel<SubscribeViewModel>> GetUserSubscriptionListAsync(Guid userId, int page, int size)
+        {
+            var totalCount = await _readWriteRepository.Get<SubscribedChanel>()
+                .Where(x => x.UserId == userId)
+                .CountAsync();
+
+            var blogs = await _readWriteRepository.Get<SubscribedChanel>()
+                .Where(x => x.UserId == userId)
+                .OrderBy(x => x.CreatedAt)
+                .Skip((page - 1) * size)
+                .Take(size)
+                .Select(x => new SubscribeViewModel(x.BlogId,x.CreatedAt))
+                .AsAsyncEnumerable()
+                .ToListAsync();
+
+            var pagesCount = Math.Ceiling(totalCount / (double)size);
+
+            return new PagedViewModel<SubscribeViewModel>(pagesCount == 0 ? 1 : (int)pagesCount, totalCount, blogs);
         }
 
         public async Task SubscribeToBlogAsync(Guid blogId)

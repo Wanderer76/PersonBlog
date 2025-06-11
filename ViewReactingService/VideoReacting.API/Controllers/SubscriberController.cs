@@ -1,7 +1,9 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Models;
 using Shared.Services;
+using ViewReacting.Domain.Models;
 using ViewReacting.Domain.Services;
 
 namespace VideoReacting.API.Controllers
@@ -32,6 +34,7 @@ namespace VideoReacting.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
         [HttpPost("unsubscribe/{blogId:guid}")]
         [Authorize]
         public async Task<IActionResult> UnSubscribeToBlog(Guid blogId)
@@ -41,6 +44,23 @@ namespace VideoReacting.API.Controllers
                 var userId = HttpContext.GetUserFromContext();
                 await _subscribeService.UnSubscribeToBlogAsync(blogId);
                 return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("subscriptions")]
+        [Authorize]
+        [Produces<PagedViewModel<SubscribeViewModel>>]
+        public async Task<IActionResult> GetUserSubscriptionList(int page, int size)
+        {
+            try
+            {
+                var userId = HttpContext.GetUserFromContext();
+                var result = await _subscribeService.GetUserSubscriptionListAsync(userId,page,size);
+                return Ok(result);
             }
             catch (Exception ex)
             {

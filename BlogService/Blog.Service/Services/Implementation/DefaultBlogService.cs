@@ -1,6 +1,7 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Service.Exceptions;
 using Blog.Service.Models.Blog;
+using FileStorage.Service.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -12,14 +13,16 @@ namespace Blog.Service.Services.Implementation
     {
         private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly ICacheService _cacheService;
+        private readonly IFileStorageFactory _fileStorageFactory;
 
         private string GetBlogByIdKey(Guid id) => $"Blog:{id}";
         private string GetBlogByUserIdKey(Guid id) => $"Blog:UserId{id}";
 
-        public DefaultBlogService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService)
+        public DefaultBlogService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
             _cacheService = cacheService;
+            _fileStorageFactory = fileStorageFactory;
         }
 
         public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)
@@ -46,7 +49,7 @@ namespace Blog.Service.Services.Implementation
             };
             _context.Add(blog);
             await _context.SaveChangesAsync();
-            return blog.ToBlogModel();
+            return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
 
         public async Task DeleteBlogAsync(Guid id)
@@ -67,7 +70,7 @@ namespace Blog.Service.Services.Implementation
 
                 await _cacheService.SetCachedDataAsync(GetBlogByIdKey(id), result, TimeSpan.FromMinutes(10));
             }
-            return result.ToBlogModel();
+            return await result.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
 
         public async Task<BlogModel> GetBlogByPostIdAsync(Guid id)
@@ -76,7 +79,7 @@ namespace Blog.Service.Services.Implementation
                 .Where(x => x.Id == id)
                 .Select(x => x.Blog)
                 .FirstAsync();
-            return blog.ToBlogModel();
+            return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
@@ -90,7 +93,7 @@ namespace Blog.Service.Services.Implementation
 
                 await _cacheService.SetCachedDataAsync(GetBlogByUserIdKey(userId), blog, TimeSpan.FromMinutes(10));
             }
-            return blog.ToBlogModel();
+            return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
 
         public Task<BlogModel> UpdateBlogAsync(BlogEditDto model)

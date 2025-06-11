@@ -5,6 +5,7 @@ import { JwtTokenService } from './scripts/TokenStrorage';
 import API from './scripts/apiMethod';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
+import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -60,6 +61,7 @@ function App() {
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/conference/:id" element={<ConferencePage />} />
                 <Route path="/history" element={<HistoryPage />} />
+                <Route path="/subscriptions" element={<SubscriptionPage />} />
 
                 {/* Вложенные маршруты профиля */}
                 <Route path="/profile" >

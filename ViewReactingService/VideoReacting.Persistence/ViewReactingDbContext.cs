@@ -19,6 +19,12 @@ namespace VideoReacting.Persistence
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.HasDefaultSchema("VideoReacting");
+
+            {
+                var entity = modelBuilder.Entity<SubscribedChanel>();
+                entity.HasIndex(x => new { x.UserId, x.BlogId }).IsUnique();
+            }
+
         }
     }
 }
