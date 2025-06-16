@@ -6,6 +6,7 @@ import API from './scripts/apiMethod';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
+import ChannelPage from './pages/channel/ChannelPage';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -50,6 +51,7 @@ function App() {
               {/* Публичные маршруты */}
               <Route path="/" element={<MainPage />} />
               <Route path="/video/:postId" element={<VideoPage />} />
+              <Route path="/channel/:channelId" element={<ChannelPage />} />
               <Route path="/auth" element={
                 <PublicRoute>
                   <AuthPage />

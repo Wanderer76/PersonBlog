@@ -66,7 +66,7 @@ namespace Blog.API.Controllers
         //}
 
         [HttpGet("subscriptionLevelCreate")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> CreateSubscriptionLevel()
         {
             var result = await _subscriptionLevelService.GetAllSubscriptionsAsync();
@@ -77,7 +77,7 @@ namespace Blog.API.Controllers
         }
 
         [HttpPost("subscriptionLevelCreate")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> CreateSubscriptionLevel([FromBody] SubscriptionCreateDto form)
         {
             var result = await _subscriptionLevelService.CreateSubscriptionAsync(form);
