@@ -120,12 +120,10 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
         {
-            var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, page, limit);
 
-            var profileId = await _context.Get<PersonBlog>()
-                .Where(x => x.Id == blogId)
-                .Select(x => x.UserId)
-                .FirstAsync();
+
+
+            var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, _userSession, page, limit);
 
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var posts = new List<PostModel>(pagedPosts.Posts.Count());

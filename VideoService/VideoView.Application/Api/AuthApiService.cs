@@ -34,7 +34,7 @@ namespace VideoView.Application.Api
             }
             return new Error(await response.Content.ReadAsStringAsync());
         }
-        public static async Task UpdateSessionAsync(this IHttpClientFactory httpClientFactory, HttpContext context)
+        public static async Task<Guid> UpdateSessionAsync(this IHttpClientFactory httpClientFactory, HttpContext context)
         {
             var client = httpClientFactory.CreateClient(ClientName);
             foreach (var i in context.Request.Headers)
@@ -43,6 +43,7 @@ namespace VideoView.Application.Api
             }
             var a = await client.GetFromJsonAsync<Guid>("Auth/session");
             context.Response.Cookies.Append(SessionKey.Key, a.ToString());
+            return a;
         }
 
         public static async Task<Result<AuthResponse>> RefreshAsync(this IHttpClientFactory httpClientFactory, HttpContext context, string refreshToken)

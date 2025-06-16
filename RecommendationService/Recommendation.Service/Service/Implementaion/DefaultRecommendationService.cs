@@ -68,6 +68,7 @@ namespace Recommendation.Service.Service.Implementaion
                     BlogName = post.BlogName,
                     Title = post.Title,
                     VideoId = post.VideoId,
+                    BlogId = post.BlogId,
                     ViewCount = post.ViewCount
                 };
             }).ToList();

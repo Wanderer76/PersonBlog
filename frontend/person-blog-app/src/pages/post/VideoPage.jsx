@@ -40,7 +40,7 @@ const VideoPage = function (props) {
     const [userView, setUserView] = useState({
         isViewed: true,
         isLike: false,
-        hasSubscription:false
+        hasSubscription: false
     })
 
     const [blog, setBlog] = useState({
@@ -160,7 +160,7 @@ const VideoPage = function (props) {
                 return
             }
         }
-        
+
     }
 
     async function setViewEnd(player) {
@@ -221,7 +221,7 @@ const VideoPage = function (props) {
 
                         {videoWindow()}
                         {videoMetadata(post, userView, setReaction, navigate)}
-                        {channelInfo(blog, handleSubscribe, userView)}
+                        {channelInfo(blog, handleSubscribe, userView, navigate)}
 
                         <div className="video-description">
                             <span>Описание: </span>
@@ -321,9 +321,11 @@ function videoMetadata(post, userView, setReaction, navigate) {
 }
 
 
-function channelInfo(blog, handleSubscribe, userView) {
+function channelInfo(blog, handleSubscribe, userView, navigate) {
     return <div className="channel-info">
-        <div className="channel-left">
+        <div className="channel-left" onClick={() => {
+            navigate(`/channel/${blog.id}`)
+        }}>
             <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
             <div>
                 <div className="channel-name">{blog.name}</div>

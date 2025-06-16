@@ -67,5 +67,20 @@ namespace VideoReacting.API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpGet("hasSubscription/{blogId}")]
+        [Produces<HasSubscriptionModel>]
+        public async Task<IActionResult> HasSubscription(Guid blogId)
+        {
+            try
+            {
+                var result = await _subscribeService.CheckCurrentUserToSubscriptionAsync(blogId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

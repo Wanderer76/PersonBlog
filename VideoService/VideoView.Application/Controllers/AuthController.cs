@@ -61,8 +61,7 @@ namespace VideoView.Application.Controllers
         [HttpGet("session")]
         public async Task<IActionResult> CreateSession()
         {
-            await _httpClientFactory.UpdateSessionAsync(HttpContext);
-            return Ok();
+            return Ok(await _httpClientFactory.UpdateSessionAsync(HttpContext));
         }
     }
 }

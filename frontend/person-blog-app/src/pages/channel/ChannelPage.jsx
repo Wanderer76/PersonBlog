@@ -10,7 +10,7 @@ const ChannelPage = () => {
     const { channelId } = useParams();
     const navigate = useNavigate();
     const [channel, setChannel] = useState({
-        avatar: DefaultProfileIcon,
+        photoUrl: DefaultProfileIcon,
         name: "Название канала",
         description: "Описание канала",
         subscribersCount: 0,
@@ -45,7 +45,7 @@ const ChannelPage = () => {
                 if (response.status === 200) {
                     setChannel({
                         ...response.data,
-                        avatar: response.data.photoUrl || DefaultProfileIcon
+                        photoUrl: response.data.photoUrl || DefaultProfileIcon
                     });
                 }
             } catch (error) {
@@ -56,26 +56,47 @@ const ChannelPage = () => {
         loadChannelData();
     }, [channelId]);
 
-    // Загрузка видео
-    useEffect(() => {
-        const loadVideos = async () => {
-            try {
-                const response = await API.get(
-                    `/video/api/Video/channel/${channelId}?page=${page}&size=${pageSize}`
-                );
-                if (response.status === 200) {
-                    setVideos(prev => [...prev, ...response.data.items]);
-                    setHasMore(response.data.items.length >= pageSize);
-                }
-            } catch (error) {
-                console.error("Ошибка загрузки видео:", error);
-            }
-        };
+useEffect(() => {
+    const loadVideos = async () => {
+        try {
+            const response = await API.get(
+                `/video/api/Channel/posts/${channelId}?page=${page}&size=${pageSize}`
+            );
+            if (response.status === 200) {
+                // Преобразуем данные из API в нужный формат
+                const formattedVideos = response.data.posts.map(post => ({
+                    id: post.id,
+                    title: post.title,
+                    description: post.description,
+                    previewUrl: post.previewId,
+                    duration: formatDuration(post.videoData?.duration),
+                    views: 0, // Добавьте реальное количество просмотров, если оно есть в API
+                    createdAt: post.createdAt,
+                    state: post.state,
+                    errorMessage: post.errorMessage
+                }));
 
-        if (activeTab === 'videos') {
-            loadVideos();
+                setVideos(prev => [...prev, ...formattedVideos]);
+                setHasMore(page < response.data.totalPageCount);
+            }
+        } catch (error) {
+            console.error("Ошибка загрузки видео:", error);
         }
-    }, [channelId, page, activeTab]);
+    };
+
+    if (activeTab === 'videos') {
+        loadVideos();
+    }
+}, [channelId, page, activeTab]);
+
+// Вспомогательная функция для форматирования длительности
+const formatDuration = (seconds) => {
+    if (!seconds) return '0:00';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
 
     // Загрузка плейлистов
     useEffect(() => {
@@ -122,28 +143,36 @@ const ChannelPage = () => {
 
     // Рендер видео
     const renderVideos = () => {
-        return videos.map((video, index) => (
-            <div
-                key={video.id}
-                className={styles.videoCard}
-                ref={videos.length === index + 1 ? lastVideoRef : null}
-                onClick={() => navigate(`/video/${video.id}`)}
-            >
-                <div className={styles.thumbnail}>
-                    <img src={video.previewUrl} alt={video.title} />
-                    <span className={styles.duration}>{video.duration}</span>
-                </div>
-                <div className={styles.videoInfo}>
-                    <h3>{video.title}</h3>
-                    <div className={styles.meta}>
-                        <span>{video.views} просмотров</span>
-                        <span>•</span>
-                        <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+    return videos.map((video, index) => (
+        <div
+            key={video.id}
+            className={styles.videoCard}
+            ref={videos.length === index + 1 ? lastVideoRef : null}
+            onClick={() => video.state === 1 && navigate(`/video/${video.id}`)}
+        >
+            <div className={styles.thumbnail}>
+                <img src={video.previewUrl} alt={video.title} />
+                <span className={styles.duration}>{video.duration}</span>
+                {video.state !== 1 && (
+                    <div className={styles.videoStatus}>
+                        {video.state === 0 ? 'В обработке' : video.errorMessage || 'Ошибка'}
                     </div>
-                </div>
+                )}
             </div>
-        ));
-    };
+            <div className={styles.videoInfo}>
+                <h3>{video.title}</h3>
+                <div className={styles.meta}>
+                    <span>{video.views} просмотров</span>
+                    <span>•</span>
+                    <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+                </div>
+                {video.description && (
+                    <p className={styles.videoDescription}>{video.description}</p>
+                )}
+            </div>
+        </div>
+    ));
+};
 
     // Рендер плейлистов
     const renderPlaylists = () => {
@@ -174,7 +203,7 @@ const ChannelPage = () => {
                     <div className={styles.avatarSection}>
                         <div className={styles.avatarWrapper}>
                             <img
-                                src={channel.avatar}
+                                src={channel.photoUrl}
                                 alt={channel.name}
                                 className={styles.profileAvatar}
                             />

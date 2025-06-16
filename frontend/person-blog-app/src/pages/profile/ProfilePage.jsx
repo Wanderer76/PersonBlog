@@ -206,7 +206,7 @@ const ProfilePage = () => {
                 <div key={post.id} className="postCard" >
                     <article class="playlist-card">
                         <div class="playlist-cover" onClick={(e) => { e.preventDefault(); navigate(`/playlist/${post.id}`); }}>
-                            <img src={post.thumbnailUrl} alt="Обложка плейлиста"  />
+                            <img src={post.thumbnailUrl} alt="Обложка плейлиста" />
                             <span class="playlist-badge video-count">{post.posts.length} видео</span>
                             {/* <span class="playlist-badge privacy-status">Приватный</span> */}
                         </div>
@@ -234,6 +234,11 @@ const ProfilePage = () => {
         <div className="profileContainer">
             <div className="profileHeader">
                 <div className="avatarSection">
+
+                    <button className="btn btnSecondary">
+                        Редактировать профиль
+                    </button>
+
                     <div className="avatarWrapper">
                         <img
                             src={profile.photoUrl ?? DefaultProfileIcon}
@@ -254,8 +259,11 @@ const ProfilePage = () => {
                     </div>
                 </div>
 
-                <button className="btn btnSecondary">
-                    Редактировать профиль
+                <button className="btn btnRemove" onClick={() => {
+                    JwtTokenService.cleanAuth();
+                    navigate("/auth")
+                }}>
+                    Выход
                 </button>
             </div>
 

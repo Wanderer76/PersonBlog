@@ -16,12 +16,24 @@ namespace VideoReacting.Service.Implementation
         private readonly IReadWriteRepository<IUserEntity> _readWriteRepository;
         private readonly IUserSession _userSession;
         private readonly IMessagePublish _messagePublish;
-        
+
         public DefaultSubscriptionService(IReadWriteRepository<IUserEntity> readWriteRepository, IUserSession userSession, IMessagePublish messagePublish)
         {
             _readWriteRepository = readWriteRepository;
             _userSession = userSession;
             _messagePublish = messagePublish;
+        }
+
+        public async Task<HasSubscriptionModel> CheckCurrentUserToSubscriptionAsync(Guid blogId)
+        {
+            var currentUser = await _userSession.GetUserSessionAsync();
+            var hasSubscription = currentUser.UserId.HasValue
+                ? await _readWriteRepository.Get<SubscribedChanel>()
+                .Where(x => x.UserId == currentUser.UserId.Value)
+                .Where(x => x.BlogId == blogId)
+                .AnyAsync()
+                : false;
+            return new HasSubscriptionModel(blogId, hasSubscription);
         }
 
         public async Task<PagedViewModel<SubscribeViewModel>> GetUserSubscriptionListAsync(Guid userId, int page, int size)
@@ -35,7 +47,7 @@ namespace VideoReacting.Service.Implementation
                 .OrderBy(x => x.CreatedAt)
                 .Skip((page - 1) * size)
                 .Take(size)
-                .Select(x => new SubscribeViewModel(x.BlogId,x.CreatedAt))
+                .Select(x => new SubscribeViewModel(x.BlogId, x.CreatedAt))
                 .AsAsyncEnumerable()
                 .ToListAsync();
 

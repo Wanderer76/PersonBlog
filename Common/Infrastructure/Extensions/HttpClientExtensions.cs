@@ -12,7 +12,7 @@ namespace Shared.Utils
     {
         public static HttpClient CreateClientContextHeaders(this IHttpClientFactory factory, string type, HttpContext httpContext)
         {
-            var client = factory.CreateClient("Reacting");
+            var client = factory.CreateClient(type);
             foreach (var i in httpContext.Request.Headers)
             {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());

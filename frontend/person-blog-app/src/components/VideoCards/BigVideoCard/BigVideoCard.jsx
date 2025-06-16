@@ -21,7 +21,9 @@ const BigVideoCard = React.forwardRef(function ({ videoCardModel }, ref) {
             </div>
             <div className={styles.videoInfo}>
                 <h3 className={styles.videoTitle}>{videoCardModel.title}</h3>
-                <div className={styles.channelInfo}>
+                <div className={styles.channelInfo} onClick={() => {
+                    navigate(`/channel/${videoCardModel.blogId}`)
+                }}>
                     <img
                         src={videoCardModel.blogLogo || logo}
                         className={styles.channelIcon}

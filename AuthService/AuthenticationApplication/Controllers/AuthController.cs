@@ -29,7 +29,6 @@ public class AuthController : BaseController
     public async Task<IActionResult> CreateSession()
     {
         var session = GetUserSession();
-        await _userSession.UpdateUserSession(session);
         return Ok(await _userSession.UpdateUserSession(session));
     }
 
@@ -52,7 +51,7 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Login(LoginPasswordModel loginModel)
     {
-        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
+        var hasSession = Request.Headers.TryGetValue(SessionKey.Key, out var session);
         var response = await _authService.Authenticate(loginModel);
         if (response.IsSuccess)
         {
@@ -70,7 +69,7 @@ public class AuthController : BaseController
     [Produces(typeof(AuthResponse))]
     public async Task<IActionResult> Refresh(string refreshToken)
     {
-        var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
+        var hasSession = Request.Headers.TryGetValue(SessionKey.Key, out var session);
 
         var response = await _authService.Refresh(refreshToken);
         if (response.IsSuccess)

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Shared.Models;
 
 namespace Infrastructure.Models
 {
@@ -18,7 +19,7 @@ namespace Infrastructure.Models
 
         protected string? GetUserSession()
         {
-            var hasSession = Request.Cookies.TryGetValue("sessionId", out var session);
+            var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
             return session;
         }
 

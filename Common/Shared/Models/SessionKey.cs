@@ -4,7 +4,7 @@ namespace Shared.Models
 {
     public readonly struct SessionKey : ICacheKey
     {
-        public const string Key = "sessionId";
+        public const string Key = "SessionId";
 
         private readonly Guid sessionId;
 

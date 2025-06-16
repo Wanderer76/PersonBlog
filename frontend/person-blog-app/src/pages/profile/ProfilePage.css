@@ -212,6 +212,12 @@
     color: white;
 }
 
+
+.btnRemove {
+    background: #ff0000;
+    color: white;
+}
+
 .btnPrimary:hover {
     background: #ff6a00;
 }

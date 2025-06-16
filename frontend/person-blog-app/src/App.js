@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, Link } from 'react-rout
 import { lazy, Suspense, useEffect } from 'react';
 import './App.css';
 import { JwtTokenService } from './scripts/TokenStrorage';
-import API from './scripts/apiMethod';
+import API, { setSession } from './scripts/apiMethod';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
@@ -34,6 +34,9 @@ const PublicRoute = ({ children }) => {
 const Session = ({ children }) => {
   useEffect(() => {
     API.get("video/api/Auth/session", { withCredentials: true })
+      .then(response => {
+        setSession(response.data)
+      })
       .catch(() => JwtTokenService.cleanAuth());
   }, []);
 

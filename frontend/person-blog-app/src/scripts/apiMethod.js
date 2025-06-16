@@ -1,19 +1,24 @@
 import axios from 'axios';
-import { JwtTokenService } from './TokenStrorage';
+import { getSession, JwtTokenService, saveSession } from './TokenStrorage';
 
 export const BaseApUrl = 'http://localhost:7892';
 const API = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
     withCredentials: true,
+    sessionId: null
 });
 
 let refreshTokenPromise = null;
 
 API.interceptors.request.use(config => {
     config.headers.Authorization = JwtTokenService.getFormatedTokenForHeader();
+    config.headers.SessionId = getSession();
     return config;
 });
 
+export function setSession(session) {
+    saveSession(session)
+}
 API.interceptors.response.use(
     (response) => response,
     async (error) => {

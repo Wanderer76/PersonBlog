@@ -71,11 +71,7 @@ namespace Infrastructure.Interface
             {
                 var sessionId = GuidService.GetNewGuid();
                 await _cacheService.SetCachedDataAsync(new SessionKey(sessionId), new UserSession { SessionId = sessionId }, TimeSpan.FromHours(1));
-                _contextAccessor.HttpContext?.Response.Cookies.Append(SessionKey.Key, sessionId.ToString(), new CookieOptions
-                {
-                    SameSite = SameSiteMode.Strict,
-                    HttpOnly = true
-                });
+                _contextAccessor.HttpContext?.Response.Cookies.Append(SessionKey.Key, sessionId.ToString());
                 return sessionId;
             }
         }

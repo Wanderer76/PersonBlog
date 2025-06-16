@@ -77,7 +77,7 @@ const SubscriptionPage = function () {
                         <div className={styles.grid}>
                             {subscriptions.map(channel => (
                                 <Link
-                                    to={`/channel/${channel.profileId}`}
+                                    to={`/channel/${channel.id}`}
                                     key={channel.id}
                                     className={styles.card}
                                 >

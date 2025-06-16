@@ -49,6 +49,7 @@ namespace Blog.API.HostedServices
                     repository.Remove(post);
                 }
                 await repository.SaveChangesAsync();
+                await Task.Delay(3000);
             }
         }
     }
