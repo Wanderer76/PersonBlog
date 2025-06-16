@@ -1,4 +1,5 @@
-﻿using Blog.Service.Models.Blog;
+﻿using Blog.Domain.Services.Models.Playlist;
+using Blog.Service.Models.Blog;
 using Blog.Service.Models.Post;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -7,8 +8,6 @@ using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
     public class ChannelController : BaseController
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -42,6 +41,14 @@ namespace VideoView.Application.Controllers
         {
             using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
             var blog = await client.GetFromJsonAsync<PostPagedListViewModel>($"api/Post/list?blogId={channelId}&page={page}&limit={size}");
+            return Ok(blog);
+        }
+
+        [HttpGet("playLists/{channelId}")]
+        public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
+        {
+            using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
+            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListViewModel>>($"api/PlayList/list?blogId={channelId}");
             return Ok(blog);
         }
     }

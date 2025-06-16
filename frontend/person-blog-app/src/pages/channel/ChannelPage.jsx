@@ -103,7 +103,7 @@ const formatDuration = (seconds) => {
         const loadPlaylists = async () => {
             try {
                 const response = await API.get(
-                    `/video/api/PlayList/channel/${channelId}`
+                    `/video/api/Channel/playLists/${channelId}`
                 );
                 if (response.status === 200) {
                     setPlaylists(response.data);
@@ -184,7 +184,7 @@ const formatDuration = (seconds) => {
             >
                 <div className={styles.playlistThumbnail}>
                     <img src={playlist.thumbnailUrl} alt={playlist.title} />
-                    <span className={styles.videoCount}>{playlist.videosCount} видео</span>
+                    <span className={styles.videoCount}>{playlist.posts.length} видео</span>
                 </div>
                 <div className={styles.playlistInfo}>
                     <h3>{playlist.title}</h3>
