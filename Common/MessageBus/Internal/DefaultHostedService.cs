@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace MessageBus.Internal
 {
-    internal class DefaultHostedService : IHostedService, IDisposable
+    internal class DefaultHostedService : IHostedService, IAsyncDisposable
     {
         private readonly RabbitMqMessageBus _messageBus;
         private readonly MessageBusSubscriptionInfo _subscriptionInfo;
@@ -58,9 +58,12 @@ namespace MessageBus.Internal
             throw new NotImplementedException();
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
-            _messageBus?.Dispose();
+            if (_messageBus != null)
+            {
+                await _messageBus.DisposeAsync();
+            }
         }
     }
 }

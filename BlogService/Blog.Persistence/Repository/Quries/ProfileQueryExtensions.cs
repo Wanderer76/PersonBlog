@@ -8,7 +8,7 @@ namespace Blog.Persistence.Repository.Quries
 {
     public static class ProfileQueryExtensions
     {
-        public static async Task<(int TotalPagesCount, int TotalPosts, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, IUserSession userSession, int page, int limit)
+        public static async Task<(int TotalPagesCount, int TotalPosts, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, ICurrentUserService userSession, int page, int limit)
         {
             var userId = await context.Get<PersonBlog>()
                 .Where(x => x.Id == blogId)

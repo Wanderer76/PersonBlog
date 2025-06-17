@@ -21,8 +21,8 @@ namespace Blog.Service.Services.Implementation
         private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly ICacheService _cacheService;
-        private readonly IUserSession _userSession;
-        public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, IUserSession userSession)
+        private readonly ICurrentUserService _userSession;
+        public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userSession)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;

@@ -5,9 +5,9 @@ namespace Infrastructure.Extensions
 {
     public static class UserSessionExtensions
     {
-        public static Task<UserSession?> GetUserSessionCachedAsync(this ICacheService cacheService, Guid sessionId)
+        public static Task<UserModel?> GetUserSessionCachedAsync(this ICacheService cacheService, Guid sessionId)
         {
-            return cacheService.GetCachedDataAsync<UserSession>(new SessionKey(sessionId));
+            return cacheService.GetCachedDataAsync<UserModel>(new SessionKey(sessionId));
         }
     }
 }

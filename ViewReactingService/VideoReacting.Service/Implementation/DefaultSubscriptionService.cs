@@ -14,10 +14,10 @@ namespace VideoReacting.Service.Implementation
     internal class DefaultSubscriptionService : ISubscribeService
     {
         private readonly IReadWriteRepository<IUserEntity> _readWriteRepository;
-        private readonly IUserSession _userSession;
+        private readonly ICurrentUserService _userSession;
         private readonly IMessagePublish _messagePublish;
 
-        public DefaultSubscriptionService(IReadWriteRepository<IUserEntity> readWriteRepository, IUserSession userSession, IMessagePublish messagePublish)
+        public DefaultSubscriptionService(IReadWriteRepository<IUserEntity> readWriteRepository, ICurrentUserService userSession, IMessagePublish messagePublish)
         {
             _readWriteRepository = readWriteRepository;
             _userSession = userSession;

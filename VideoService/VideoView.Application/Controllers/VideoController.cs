@@ -5,7 +5,6 @@ using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Models;
 using Shared.Services;
 using VideoView.Application.Api;
 using VideoView.Application.Services;
@@ -55,15 +54,12 @@ public class VideoController : BaseController
     }
 
     [HttpGet("video/{postId:guid}")]
-    public async Task<IActionResult> GetPostData(Guid postId)
+    public async Task<IActionResult> GetPostData(Guid postId, bool? fromPlaylist = false)
     {
         try
         {
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             var hasUser = HttpContext.TryGetUserFromContext(out var userId);
-
-            var session = GetUserSession();
-            var userInfoCache = session == null ? null : await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
 
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
             var post = _httpClientFactory.GetPostDetailViewAsync(postId);

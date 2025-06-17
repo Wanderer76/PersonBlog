@@ -13,7 +13,7 @@ using System.Text.Json;
 
 namespace MessageBus
 {
-    internal class RabbitMqMessageBus : IMessagePublish, IDisposable
+    internal class RabbitMqMessageBus : IMessagePublish, IAsyncDisposable
     {
         private readonly IConnectionFactory _factory;
         private readonly IServiceScopeFactory _serviceScope;
@@ -201,11 +201,11 @@ namespace MessageBus
             _channels.Add(channel);
         }
 
-        public void Dispose()
+        public async ValueTask DisposeAsync()
         {
             foreach (var i in _channels)
             {
-                i?.CloseAsync().GetAwaiter().GetResult();
+                await i?.CloseAsync();
                 i?.Dispose();
             }
             _connection?.Dispose();

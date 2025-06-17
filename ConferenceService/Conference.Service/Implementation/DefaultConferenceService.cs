@@ -21,7 +21,7 @@ namespace Conference.Service.Implementation
             _cacheService = cacheService;
         }
 
-        public async Task AddParticipantToConferenceAsync(Guid id, Guid sessionId)
+        public async Task AddParticipantToConferenceAsync(Guid id, Guid userId)
         {
             var cacheKey = new ConferenceRoomKey(id);
             var conference = await _cacheService.GetConferenceRoomCacheAsync(cacheKey);
@@ -29,22 +29,22 @@ namespace Conference.Service.Implementation
                     .Include(x => x.Participants)
                     .FirstAsync(x => x.Id == id);
 
-            if (!conference.Participants.Any(x => x.SessionId == sessionId))
+            if (!conference.Participants.Any(x => x.UserId == userId))
             {
-                var session = (await _cacheService.GetUserSessionCachedAsync(sessionId))!;
-                conference.AddParticipant(new ConferenceParticipant(session.SessionId, session.UserId, conference.Id));
+                var session = (await _cacheService.GetUserSessionCachedAsync(userId))!;
+                conference.AddParticipant(new ConferenceParticipant(GuidService.GetNewGuid(), session.UserId, conference.Id));
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
         }
 
-        public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid sessionId, Guid postId)
+        public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid userId, Guid postId)
         {
             var roomId = GuidService.GetNewGuid();
-            var creatorUser = (await _cacheService.GetUserSessionCachedAsync(sessionId))!;
+            var creatorUser = (await _cacheService.GetUserSessionCachedAsync(userId))!;
             if (creatorUser.UserId.HasValue)
             {
-                var creator = new ConferenceParticipant(sessionId, creatorUser.UserId!.Value, roomId);
+                var creator = new ConferenceParticipant(GuidService.GetNewGuid(), creatorUser.UserId!.Value, roomId);
                 var conference = new ConferenceRoom(roomId, postId, creator);
                 _readWriteRepository.Add(conference);
                 await _readWriteRepository.SaveChangesAsync();
@@ -87,7 +87,7 @@ namespace Conference.Service.Implementation
                 .FirstAsync();
         }
 
-        public async Task RemoveParticipantToConferenceAsync(Guid roomId, Guid sessionId)
+        public async Task RemoveParticipantToConferenceAsync(Guid roomId, Guid userId)
         {
             var cacheKey = new ConferenceRoomKey(roomId);
             var conference = await _cacheService.GetConferenceRoomCacheAsync(cacheKey);
@@ -99,7 +99,7 @@ namespace Conference.Service.Implementation
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
 
-            var userToRemove = conference.Participants.FirstOrDefault(x => x.SessionId == sessionId);
+            var userToRemove = conference.Participants.FirstOrDefault(x => x.UserId == userId);
             if (userToRemove != null)
             {
                 conference.RemoveParticipant(userToRemove);

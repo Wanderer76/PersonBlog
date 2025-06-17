@@ -25,7 +25,7 @@ namespace Infrastructure.Extensions
         }
         public static void AddUserSessionServices(this IServiceCollection services)
         {
-            services.AddScoped<IUserSession, DefaultUserSession>();
+            services.AddScoped<ICurrentUserService, DefaultUserSession>();
             services.AddHttpContextAccessor();
         }
     }

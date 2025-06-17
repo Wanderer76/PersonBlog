@@ -65,7 +65,7 @@ namespace Conference.Service.Implementation
             if (conference == null)
                 throw new ArgumentException("no such conference");
 
-            var participantsUserNames = (await _cacheService.GetCachedDataAsync<UserSession>(conference.Participants.Select(x => new SessionKey(x.SessionId).GetKey())))
+            var participantsUserNames = (await _cacheService.GetCachedDataAsync<UserModel>(conference.Participants.Select(x => new SessionKey(x.SessionId).GetKey())))
                 .Where(x => x.UserId.HasValue)
                 .ToDictionary(x => x.UserId!.Value, x => x.UserName);
 

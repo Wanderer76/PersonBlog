@@ -16,10 +16,10 @@ namespace Blog.Service.Services.Implementation
         private readonly IReadWriteRepository<IBlogEntity> _repository;
         private readonly ICacheService _cacheService;
         private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly IUserSession _userSession;
+        private readonly ICurrentUserService _userSession;
         private readonly IPostService _postService;
 
-        public DefaultPlayListService(IReadWriteRepository<IBlogEntity> repository, ICacheService cacheService, IFileStorageFactory fileStorageFactory, IUserSession userSession, IPostService postService)
+        public DefaultPlayListService(IReadWriteRepository<IBlogEntity> repository, ICacheService cacheService, IFileStorageFactory fileStorageFactory, ICurrentUserService userSession, IPostService postService)
         {
             _repository = repository;
             _cacheService = cacheService;

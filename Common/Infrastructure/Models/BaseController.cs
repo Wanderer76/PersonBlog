@@ -10,17 +10,12 @@ namespace Infrastructure.Models
     public abstract class BaseController : ControllerBase
     {
         protected readonly ILogger<BaseController> _logger;
+
         protected string GetSessionKey(string session) => $"Session:{session}";
 
         protected BaseController(ILogger<BaseController> logger)
         {
             _logger = logger;
-        }
-
-        protected string? GetUserSession()
-        {
-            var hasSession = Request.Cookies.TryGetValue(SessionKey.Key, out var session);
-            return session;
         }
 
         protected void FillHeadersForVideoStreaming(long startPosition, long originalFileSize, long streamLength, long sendSize, string contentType)

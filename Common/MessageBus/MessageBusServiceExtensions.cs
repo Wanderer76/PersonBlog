@@ -43,7 +43,7 @@ namespace MessageBus
         {
             builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
             {
-                sp.AddMessageInfo<TEvent>(cfg);
+                sp.AddMessageInfo(cfg);
             });
 
             return builder;

@@ -35,6 +35,7 @@
 
         public static Result<TValue, TError> Success(TValue value) => new(value);
         public static Result<TValue, TError> Failure(TError error) => new(error);
+
         public static implicit operator Result<TValue, TError>(TValue value) => Success(value);
 
         public static implicit operator Result<TValue, TError>(TError error) => Failure(error);
@@ -49,7 +50,7 @@
 
     }
 
-    public class Result<TValue>
+    public sealed class Result<TValue>
     {
         private readonly Result<TValue, Error> _result;
 
@@ -71,12 +72,13 @@
             get => _result.Error;
         }
         public bool IsFailure => _result.IsFailure;
+        public bool ISSuccess => !IsFailure;
 
         public static Result<TValue> Success(TValue value) => new(value);
         public static Result<TValue> Failure(Error error) => new(error);
 
         public static implicit operator Result<TValue>(TValue value)
-        => Success(value);
+            => Success(value);
         public static implicit operator Result<TValue>(Error error)
             => Failure(error);
 

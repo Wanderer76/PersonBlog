@@ -17,9 +17,9 @@ internal class DefaultAuthService : IAuthService
 {
     private readonly IReadWriteRepository<IAuthEntity> _context;
     private readonly ITokenService _tokenService;
-    private readonly IUserSession _userSession;
+    private readonly ICurrentUserService _userSession;
 
-    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService, IUserSession userSession)
+    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService, ICurrentUserService userSession)
     {
         _context = context;
         _tokenService = tokenService;
@@ -44,7 +44,7 @@ internal class DefaultAuthService : IAuthService
         await _context.SaveChangesAsync();
 
         var session = await _userSession.GetUserSessionAsync();
-        await _userSession.UpdateUserSession(session.SessionId.ToString(), response.AccessToken);
+        await _userSession.UpdateUserSession(response.AccessToken);
 
         return Result<AuthResponse, Error>.Success(response);
     }

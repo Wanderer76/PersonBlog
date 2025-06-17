@@ -14,9 +14,9 @@ namespace Blog.Service.Services.Implementation
     {
         private readonly IReadWriteRepository<IBlogEntity> _readWriteRepository;
         private readonly ICacheService _cacheService;
-        private readonly IUserSession _userSession;
+        private readonly ICurrentUserService _userSession;
 
-        public DefaultSubscriptionLevelService(IReadWriteRepository<IBlogEntity> readWriteRepository, ICacheService cacheService, IUserSession userSession)
+        public DefaultSubscriptionLevelService(IReadWriteRepository<IBlogEntity> readWriteRepository, ICacheService cacheService, ICurrentUserService userSession)
         {
             _readWriteRepository = readWriteRepository;
             _cacheService = cacheService;

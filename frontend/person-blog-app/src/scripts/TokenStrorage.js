@@ -3,16 +3,6 @@ import API, { BaseApUrl } from "./apiMethod";
 
 export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
-export const SessionKey = 'SessionId';
-
-export function saveSession(token) {
-    sessionStorage.setItem(SessionKey, token);
-}
-
-export function getSession() {
-    sessionStorage.getItem(SessionKey);
-}
-
 
 export function saveAccessToken(token) {
     sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
@@ -60,7 +50,6 @@ export class JwtTokenService {
     static cleanAuth() {
         sessionStorage.removeItem(ACCESS_TOKEN_KEY);
         sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-        sessionStorage.removeItem(SessionKey);
     }
 
     static isAuth() {

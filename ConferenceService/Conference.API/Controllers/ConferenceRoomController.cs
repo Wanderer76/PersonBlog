@@ -1,5 +1,6 @@
 using Conference.Domain.Models;
 using Conference.Domain.Services;
+using Infrastructure.Interface;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,13 @@ namespace Conference.API.Controllers
     {
         private readonly ILogger<ConferenceRoomController> _logger;
         private readonly IConferenceRoomService _conferenceRoomService;
-
-        public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IConferenceRoomService conferenceRoomService)
+        private readonly ICurrentUserService _currentUserService;
+        public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IConferenceRoomService conferenceRoomService, ICurrentUserService currentUserService)
             : base(logger)
         {
             _logger = logger;
             _conferenceRoomService = conferenceRoomService;
+            _currentUserService = currentUserService;
         }
 
         [HttpPost("createConferenceToPost")]
@@ -25,7 +27,8 @@ namespace Conference.API.Controllers
         [Authorize]
         public async Task<IActionResult> Index(Guid postId)
         {
-            var result = await _conferenceRoomService.CreateConferenceRoomAsync(Guid.Parse(GetUserSession()!), postId);
+            var user = await _currentUserService.GetUserSessionAsync();
+            var result = await _conferenceRoomService.CreateConferenceRoomAsync(user.UserId.Value, postId);
             return Ok(result);
         }
 
@@ -41,7 +44,8 @@ namespace Conference.API.Controllers
         [HttpGet("join")]
         public async Task<IActionResult> Join(Guid roomId)
         {
-            await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, Guid.Parse(GetUserSession()!));
+            var user = await _currentUserService.GetUserSessionAsync();
+            await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, user.UserId.Value);
             return Ok();
         }
     }
