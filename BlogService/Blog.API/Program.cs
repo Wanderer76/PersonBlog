@@ -8,6 +8,7 @@ using Blog.Service.Extensions;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using Infrastructure.Middleware;
 using MessageBus;
 using MessageBus.Models;
 using ViewReacting.Domain.Events;
@@ -75,6 +76,7 @@ app.UseRouting();
 app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseJwtMiddleware();
 app.MapControllers();
 
 

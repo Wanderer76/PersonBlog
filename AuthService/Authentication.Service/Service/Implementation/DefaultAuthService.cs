@@ -42,8 +42,6 @@ internal class DefaultAuthService : IAuthService
         var response = await _tokenService.GenerateTokenAsync(user);
 
         await _context.SaveChangesAsync();
-
-        var session = await _userSession.GetUserSessionAsync();
         await _userSession.UpdateUserSession(response.AccessToken);
 
         return Result<AuthResponse, Error>.Success(response);
@@ -136,8 +134,6 @@ internal class DefaultAuthService : IAuthService
         await _context.SaveChangesAsync();
         return response;
     }
-
-
 
     public async Task<bool> ValidateToken(string token)
     {

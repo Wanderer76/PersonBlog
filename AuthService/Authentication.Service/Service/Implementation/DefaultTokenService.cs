@@ -6,6 +6,7 @@ using Shared.Persistence;
 using Shared.Services;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 [assembly: InternalsVisibleTo("Authentication.Test")]
 
@@ -43,10 +44,14 @@ namespace Authentication.Service.Service.Implementation
         {
             var (accessToken, refreshToken) = CreateTokenForUser(user);
 
-            var blog = await _httpClientFactory.CreateClient("Blog").GetFromJsonAsync<Guid?>($"Blog/hasBlog/{user.Id}");
+            var blog = await _httpClientFactory.CreateClient("Blog").GetAsync($"Blog/hasBlog/{user.Id}");
+            Guid? blogId = blog.IsSuccessStatusCode
+                ? await JsonSerializer.DeserializeAsync<Guid?>(blog.Content.ReadAsStream())
+                : null;
 
-            var accessTokenModel = accessToken.ToTokenModel(blog);
-            var refreshTokenModel = refreshToken.ToTokenModel(blog);
+
+            var accessTokenModel = accessToken.ToTokenModel(blogId);
+            var refreshTokenModel = refreshToken.ToTokenModel(blogId);
             var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessTokenModel, refreshTokenModel);
             return new AuthResponse
             {
