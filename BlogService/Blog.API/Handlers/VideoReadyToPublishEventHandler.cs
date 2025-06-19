@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Blog.Contracts.Events;
+using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Infrastructure.Services;
 using MassTransit;
@@ -26,10 +27,20 @@ namespace Blog.API.Handlers
 
         public async Task Handle(IMessageContext<VideoReadyToPublishEvent> @event)
         {
-            await PrepareToPublish(@event.Message);
+            var post  = await PrepareToPublish(@event.Message);
+            await @event.PublishAsync(new PostUpdateEvent
+            {
+                BlogId =post.BlogId,
+                PostId = post.Id,
+                ViewCount = post.ViewCount,
+                CreatedAt = post.CreatedAt,
+                Description = post.Description,
+                Title = post.Title,
+                UpdateType = UpdateType.Create
+            });
         }
 
-        private async Task PrepareToPublish(VideoReadyToPublishEvent @event)
+        private async Task<Post> PrepareToPublish(VideoReadyToPublishEvent @event)
         {
             var fileMetadata = await _repository.Get<VideoMetadata>()
                             .FirstAsync(x => x.Id == @event.VideoMetadataId);
@@ -57,6 +68,7 @@ namespace Blog.API.Handlers
             }
             await _repository.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
+            return post;
         }
     }
 }

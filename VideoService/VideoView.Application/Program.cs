@@ -30,6 +30,10 @@ builder.Services.AddHttpClient("Reacting", x =>
 {
     x.BaseAddress = new Uri("http://localhost:5153/api/");
 });
+builder.Services.AddHttpClient("Search", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5250/api/");
+});
 
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();

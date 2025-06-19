@@ -32,5 +32,16 @@ namespace Blog.Application.Controllers
         {
             return Ok(await _recommendationService.GetRecommendationsAsync(page, pageSize, currentPostId));
         }
+
+        [HttpPost("postListByIds")]
+        public async Task<IActionResult> GetRecommendations([FromBody] PostForm form)
+        {
+            return Ok(await _recommendationService.GetRecommendationsAsync(form.PostIds));
+        }
+    }
+
+    public class PostForm
+    {
+        public List<Guid> PostIds { get; set; }
     }
 }

@@ -65,6 +65,16 @@ namespace Blog.API.Handlers
             }
             await _context.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
+            await @event.PublishAsync(new PostUpdateEvent
+            {
+                BlogId = post.BlogId,
+                PostId = post.Id,
+                CreatedAt = post.CreatedAt,
+                Description = post.Description,
+                Title = post.Title,
+                UpdateType = UpdateType.Update,
+                ViewCount = post.ViewCount,
+            });
         }
 
         public async Task Handle(IMessageContext<UserReactionSyncEvent> @event)

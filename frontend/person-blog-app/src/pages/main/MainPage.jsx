@@ -51,7 +51,9 @@ const MainPage = function () {
 
                 <SideBar />
 
+
                 <div className="mainpage-content">
+                <input/>
                     <div className="mainpage-video-grid">
                         {videos.map((x, index) => {
                             if (videos.length === index + 1) {

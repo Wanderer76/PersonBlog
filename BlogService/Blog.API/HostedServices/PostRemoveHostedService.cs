@@ -20,7 +20,7 @@ namespace Blog.API.HostedServices
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _ = HandlePostRemove(cancellationToken);
+            //_ = HandlePostRemove(cancellationToken);
             return Task.CompletedTask;
         }
 
