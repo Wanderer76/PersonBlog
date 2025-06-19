@@ -2,7 +2,6 @@
 using Blog.Service.Models;
 using FileStorage.Service.Service;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using System.Collections.Concurrent;
@@ -89,7 +88,7 @@ namespace Recommendation.Service.Service.Implementaion
         public async Task<IEnumerable<VideoCardModel>> GetRecommendationsAsync(List<Guid> postIds)
         {
 
-            var cachedValues = (await _cacheService.GetCachedDataAsync<VideoCardModel>(postIds.Select(x => $"VideoCardModel:{x}"))).ToList();
+            var cachedValues = (await _cacheService.GetCachedDataAsync<VideoCardModel>(postIds.Select(x => new VideoCardModelCacheKey(x)))).ToList();
 
             var notCachedValues = postIds.Except(cachedValues.Select(x => x.PostId)).ToList();
 
@@ -144,7 +143,7 @@ namespace Recommendation.Service.Service.Implementaion
                     BlogId = post.BlogId,
                     ViewCount = post.ViewCount
                 };
-                await _cacheService.SetCachedDataAsync(model.GetKey(),model,TimeSpan.FromMinutes(30));
+                await _cacheService.SetCachedDataAsync(new VideoCardModelCacheKey(model.PostId), model, TimeSpan.FromMinutes(30));
                 cachedValues.Add(model);
             }
             return cachedValues;
