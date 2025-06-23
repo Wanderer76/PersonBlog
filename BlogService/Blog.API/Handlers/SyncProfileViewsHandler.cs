@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using System.Net;
+using System.Text.Json;
 
 namespace Blog.API.Handlers
 {
@@ -63,9 +64,8 @@ namespace Blog.API.Handlers
                 existView.UserIpAddress = ipAddress ?? string.Empty;
                 existView.IsViewed = @event.Message.IsViewed;
             }
-            await _context.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
-            await @event.PublishAsync(new PostUpdateEvent
+            var postUpdateEvent = new PostUpdateEvent
             {
                 BlogId = post.BlogId,
                 PostId = post.Id,
@@ -74,7 +74,9 @@ namespace Blog.API.Handlers
                 Title = post.Title,
                 UpdateType = UpdateType.Update,
                 ViewCount = post.ViewCount,
-            });
+            };
+            _context.Add(new VideoProcessEvent { EventData = JsonSerializer.Serialize(postUpdateEvent), EventType = nameof(PostUpdateEvent) });
+            await _context.SaveChangesAsync();
         }
 
         public async Task Handle(IMessageContext<UserReactionSyncEvent> @event)

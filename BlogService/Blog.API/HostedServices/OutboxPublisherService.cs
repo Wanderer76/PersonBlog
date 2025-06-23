@@ -9,6 +9,7 @@ using Blog.Domain.Events;
 using MassTransit;
 using System.Text.Json;
 using ViewReacting.Domain.Events;
+using Blog.Contracts.Events;
 
 namespace Blog.API.HostedServices
 {
@@ -45,8 +46,17 @@ namespace Blog.API.HostedServices
                     {
                         dbContext.Attach(message);
                         message.Processed();
-                        var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
-                        await _messageBus.PublishAsync(command);
+                        if (message.EventType == nameof(CombineFileChunksCommand))
+                        {
+                            var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
+                            await _messageBus.PublishAsync(command);
+                        }
+                        if(message.EventType == nameof(PostUpdateEvent))
+                        {
+                            var command = JsonSerializer.Deserialize<PostUpdateEvent>(message.EventData)!;
+                            await _messageBus.PublishAsync(command);
+                        }
+
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)

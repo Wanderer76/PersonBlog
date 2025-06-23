@@ -6,6 +6,7 @@ using MassTransit;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
+using System.Text.Json;
 
 namespace Blog.API.Handlers
 {
@@ -27,17 +28,7 @@ namespace Blog.API.Handlers
 
         public async Task Handle(IMessageContext<VideoReadyToPublishEvent> @event)
         {
-            var post  = await PrepareToPublish(@event.Message);
-            await @event.PublishAsync(new PostUpdateEvent
-            {
-                BlogId =post.BlogId,
-                PostId = post.Id,
-                ViewCount = post.ViewCount,
-                CreatedAt = post.CreatedAt,
-                Description = post.Description,
-                Title = post.Title,
-                UpdateType = UpdateType.Create
-            });
+            var post = await PrepareToPublish(@event.Message);
         }
 
         private async Task<Post> PrepareToPublish(VideoReadyToPublishEvent @event)
@@ -66,6 +57,18 @@ namespace Blog.API.Handlers
                 fileMetadata.ProcessState = ProcessState.Complete;
                 post.VideoFileId = fileMetadata.Id;
             }
+            var postUpdateEvent = new PostUpdateEvent
+            {
+                BlogId = post.BlogId,
+                PostId = post.Id,
+                ViewCount = post.ViewCount,
+                CreatedAt = post.CreatedAt,
+                Description = post.Description,
+                Title = post.Title,
+                UpdateType = UpdateType.Create
+            };
+
+            _repository.Add(new VideoProcessEvent { EventData = JsonSerializer.Serialize(postUpdateEvent), EventType = nameof(PostUpdateEvent) });
             await _repository.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
             return post;

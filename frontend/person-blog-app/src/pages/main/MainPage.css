@@ -59,7 +59,7 @@
 
 .search-button {
     padding: 10px 20px;
-    background-color: #065fd4;
+    background-color: #ff7b00;
     color: white;
     border: none;
     border-radius: 4px;
@@ -69,7 +69,7 @@
 }
 
 .search-button:hover {
-    background-color: #0549a8;
+    background-color: #ff6a00;
 }
 
 .clear-button {

@@ -19,7 +19,7 @@ namespace VideoProcessing.Cli.Service
         public async Task Handle(IMessageContext<CombineFileChunksCommand> @event)
         {
             var response = await CombineChunks(@event.Message);
-            await @event.PublishAsync(response);
+            await @event.PublishAsync("video-event", "saga.chunks.response", response);
         }
 
         private async Task<ChunksCombinedResponse> CombineChunks(CombineFileChunksCommand @event)

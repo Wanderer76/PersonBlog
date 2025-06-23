@@ -13,7 +13,7 @@ namespace Blog.Domain.Events
     //}
 
     //[EntityName("video-events")]
-    [EventPublish(Exchange = "video-event", RoutingKey = "saga")]
+    //[EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class CombineFileChunksCommand
     {
         public Guid VideoMetadataId { get; set; }
@@ -21,7 +21,7 @@ namespace Blog.Domain.Events
     }
 
     //[EntityName("video-events")]
-    [EventPublish(Exchange = "video-event", RoutingKey = "saga")]
+    //[EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class ChunksCombinedResponse
     {
         public Guid VideoMetadataId { get; set; }

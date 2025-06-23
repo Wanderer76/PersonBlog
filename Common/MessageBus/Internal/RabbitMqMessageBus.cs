@@ -132,11 +132,11 @@ namespace MessageBus
             var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
             if (cfg.RoutingKey == null)
             {
-                cfg.RoutingKey = value.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+                cfg.RoutingKey = value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
             }
             if (cfg.Exchange == null)
             {
-                cfg.Exchange = value.Exchange ?? current?.Queue?.Exchange?.Name;
+                cfg.Exchange = value?.Exchange ?? current?.Queue?.Exchange?.Name;
             }
 
             //if (value != null)
@@ -190,12 +190,16 @@ namespace MessageBus
                                 Error = e
                             })));
                             await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                            return;
                         }
 
                     }
                 }
                 else
-                    await channel.BasicRejectAsync(ea.DeliveryTag, true);
+                {
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, true);
+                    return;
+                }
             };
             await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
             _channels.Add(channel);

@@ -31,7 +31,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<CombineFileChunksCommand, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue";
+                    x.Name = "saga-queue-chunks-command";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
@@ -40,16 +40,16 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue";
+                    x.Name = "saga-queue-chunks-response";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
-                        RoutingKey = "saga"
+                        RoutingKey = "saga.chunks.response"
                     };
                 })
                 .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue";
+                    x.Name = "saga-queue-video";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
