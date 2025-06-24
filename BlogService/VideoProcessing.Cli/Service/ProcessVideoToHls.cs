@@ -36,7 +36,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
     public async Task Handle(IMessageContext<ConvertVideoCommand> @event)
     {
         var result = await HandleConversion(@event.Message);
-        await @event.PublishAsync("video-event", "saga", result, new MessageProperty
+        await @event.PublishAsync("video-event", "saga.video.convert", result, new MessageProperty
         {
             CorrelationId = result.VideoMetadataId.ToString(),
         });

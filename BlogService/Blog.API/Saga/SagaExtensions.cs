@@ -53,25 +53,25 @@ namespace Blog.API.Saga
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
-                        RoutingKey = "saga"
+                        RoutingKey = "saga.video.convert"
                     };
                 })
                 .AddSubscription<VideoPublishedResponse, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue";
+                    x.Name = "saga-queue-publish";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
-                        RoutingKey = "saga"
+                        RoutingKey = "saga.publish"
                     };
                 })
                 .AddSubscription<VideoReadyToPublishEvent, VideoReadyToPublishEventHandler>(x =>
                 {
-                    x.Name = "saga-queue";
+                    x.Name = "saga-queue-publish";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
-                        RoutingKey = "saga"
+                        RoutingKey = "saga.publish"
                     };
                 });
         }

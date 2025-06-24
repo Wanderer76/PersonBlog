@@ -116,8 +116,8 @@ namespace Blog.API.Controllers
             {
                 UserId = userId,
                 Type = PostType.Video,
-                Text = form.Description,
-                Title = form.Title,
+                Text = form.Description?.Trim(),
+                Title = form.Title.Trim(),
                 Video = form.Video,
                 Photos = form.Files,
                 IsPartial = form.IsPartial,
