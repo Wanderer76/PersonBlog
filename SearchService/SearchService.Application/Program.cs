@@ -23,6 +23,11 @@ builder.Services.AddMessageBus(builder.Configuration)
             ExchangeType = "fanout"
         };
     });
+builder.Services.AddHttpClient("Tokenizer", cfg =>
+{
+    cfg.BaseAddress = new Uri("http://127.0.0.1:8000/");
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

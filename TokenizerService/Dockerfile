@@ -10,7 +10,7 @@ COPY TokenizerService/requirements.txt ./requirements.txt
 # Устанавливаем pip-зависимости
 RUN pip install  --upgrade pip \
     && pip install -r requirements.txt
-RUN python -c "import nltk; nltk.download('stopwords')"
+RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('punkt_tab')"
 # Копируем всё содержимое TokenizerService внутрь контейнера
 COPY TokenizerService/ .
 
