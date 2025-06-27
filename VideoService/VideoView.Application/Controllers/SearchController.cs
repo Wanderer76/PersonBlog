@@ -2,11 +2,7 @@
 using Blog.Service.Models.Post;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Utils;
-using System.Collections.Generic;
 using System.Text.Encodings.Web;
-using System.Text.Json;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace VideoView.Application.Controllers
 {
@@ -34,6 +30,5 @@ namespace VideoView.Application.Controllers
 
             return Ok(await result.Content.ReadAsStringAsync());
         }
-
     }
 }

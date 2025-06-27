@@ -1,8 +1,5 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
-using Elastic.Transport;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using Search.Domain;
 using Search.Domain.Services;
 using Shared.Utils;
@@ -54,6 +51,77 @@ namespace Search.Service.Implementation
             //.Field(f => f.ViewCount, x => x.Order(SortOrder.Desc).NumericType(FieldSortNumericType.Long))
             //.Field(f => f.CreatedAt, x => x.Order(SortOrder.Asc).NumericType(FieldSortNumericType.Date))));
 
+            /*
+             var words = query.Title?
+    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Where(w => w.Length > 0)
+    .ToList() ?? new List<string>();
+
+var shouldQueries = new List<Query>();
+
+// Поиск по title
+foreach (var word in words)
+{
+    shouldQueries.Add(new MatchQuery("title")
+    {
+        Query = word,
+        Boost = 5,
+        Fuzziness = new Fuzziness("AUTO")
+    });
+}
+
+// Поиск по keywords.word
+foreach (var word in words)
+{
+    shouldQueries.Add(new NestedQuery
+    {
+        Path = "keywords",
+        Query = new ScriptScoreQuery
+        {
+            Query = new MatchQuery("keywords.word")
+            {
+                Query = word,
+                Fuzziness = new Fuzziness("AUTO")
+            },
+            Script = new Script
+            {
+                Source = """
+                    if (doc['keywords.score'].size() == 0 || doc['keywords.score'].value == 0) {
+                        return _score;
+                    } else {
+                        return _score * doc['keywords.score'].value;
+                    }
+                """
+            }
+        }
+    });
+}
+
+var searchRequest = new SearchRequest<PostIndex>("post-search")
+{
+    Size = 10,
+    Query = new BoolQuery
+    {
+        Should = shouldQueries,
+        MinimumShouldMatch = 1
+    },
+    Sort = new List<SortOptions>
+    {
+        SortOptions.Field(new Field("viewCount"), new FieldSort
+        {
+            Order = SortOrder.Desc,
+            NumericType = FieldSortNumericType.Long
+        }),
+        SortOptions.Field("createdAt", new FieldSort
+        {
+            Order = SortOrder.Desc,
+            NumericType = FieldSortNumericType.Date
+        })
+    }
+};
+             
+             
+             */
 
             var searchRequest = new SearchRequest<PostIndex>("post-search")
             {
@@ -65,7 +133,7 @@ namespace Search.Service.Implementation
             // Title с boost
             new MatchQuery("title")
             {
-                Query = $"*{query.Title}*",
+                Query = $"{query.Title}",
                 Boost = 5,
                 Fuzziness = new Fuzziness("AUTO")
             },
@@ -84,7 +152,7 @@ namespace Search.Service.Implementation
                     Script = new Script
                     {
                         Source = """
-                            if (doc['keywords.score'].size() == 0) {
+                            if (doc['keywords.score'].size() == 0 || doc['keywords.score'].value == 0) {
                                 return _score;
                             } else {
                                 return _score * doc['keywords.score'].value;
