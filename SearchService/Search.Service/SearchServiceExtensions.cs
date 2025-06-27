@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Search.Domain.Services;
 using Search.Service.Implementation;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace Search.Service
@@ -17,7 +18,6 @@ namespace Search.Service
             services.AddSingleton(client);
             services.AddScoped<ISearchService,ElasticSearchService>();
         }
-
 
         public static void UseSearchService(this IApplicationBuilder builder, IConfiguration configuration)
         {

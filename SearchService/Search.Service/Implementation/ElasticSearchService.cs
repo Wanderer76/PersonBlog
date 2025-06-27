@@ -26,33 +26,33 @@ namespace Search.Service.Implementation
         public async Task<Result<IEnumerable<PostModel>>> SearchAsync(SearchOptions query)
         {
             query.Title = query.Title.Trim();
-            var response = await _client.SearchAsync<PostIndex>(s => s
-            .Index(Index)
-            .From(query.Skip)
-            .Size(query.Take)
-            .Query(q => q
-            .Bool(b => b
-            .Should(
-                // Поиск по началу слов в Title
-                s1 => s1.Wildcard(m => m
-                .Field(f => f.Title)
-                .Value($"*{query.Title}*")
-                .CaseInsensitive(true)
-                .Boost(5)
-                ),
-                // Поиск по вложенному keywords.word, включая неполные слова
-                s2 => s2.Nested(n => n
-                .Path(p => p.Keywords)
-                .Query(nq => nq
-                .MatchPhrasePrefix(m => m
-                            .Field("keywords.word")
-                            .Query(query.Title)
-                            .MaxExpansions(50)
-                            .Boost(1)))))
-            ))
-            .Sort(srt => srt
-            .Field(f => f.ViewCount, x => x.Order(SortOrder.Desc).NumericType(FieldSortNumericType.Long))
-            .Field(f => f.CreatedAt, x => x.Order(SortOrder.Asc).NumericType(FieldSortNumericType.Date))));
+            //var response = await _client.SearchAsync<PostIndex>(s => s
+            //.Index(Index)
+            //.From(query.Skip)
+            //.Size(query.Take)
+            //.Query(q => q
+            //.Bool(b => b
+            //.Should(
+            //    // Поиск по началу слов в Title
+            //    s1 => s1.Wildcard(m => m
+            //    .Field(f => f.Title)
+            //    .Value($"*{query.Title}*")
+            //    .CaseInsensitive(true)
+            //    .Boost(5)
+            //    ),
+            //    // Поиск по вложенному keywords.word, включая неполные слова
+            //    s2 => s2.Nested(n => n
+            //    .Path(p => p.Keywords)
+            //    .Query(nq => nq
+            //    .MatchPhrasePrefix(m => m
+            //                .Field("keywords.word")
+            //                .Query(query.Title)
+            //                .MaxExpansions(50)
+            //                .Boost(1)))))
+            //))
+            //.Sort(srt => srt
+            //.Field(f => f.ViewCount, x => x.Order(SortOrder.Desc).NumericType(FieldSortNumericType.Long))
+            //.Field(f => f.CreatedAt, x => x.Order(SortOrder.Asc).NumericType(FieldSortNumericType.Date))));
 
 
             var searchRequest = new SearchRequest<PostIndex>("post-search")
@@ -95,13 +95,26 @@ namespace Search.Service.Implementation
             }
         },
                     MinimumShouldMatch = 1
+                },
+                Sort = new List<SortOptions>
+                {
+                    SortOptions.Field(new Field("viewCount"),new FieldSort
+                    {
+                        Order = SortOrder.Desc,
+                        NumericType = FieldSortNumericType.Long
+                    }),
+                    SortOptions.Field("createdAt",new FieldSort
+                    {
+                        Order = SortOrder.Desc,
+                        NumericType= FieldSortNumericType.Date
+                    })
                 }
             };
-            var response1 = await _client.SearchAsync<PostIndex>(searchRequest);
+            var response = await _client.SearchAsync<PostIndex>(searchRequest);
 
-            if (response1.IsValidResponse)
+            if (response.IsValidResponse)
             {
-                return Result<IEnumerable<PostModel>>.Success(response1.Documents.Select(x => x.ToPostModel()));
+                return Result<IEnumerable<PostModel>>.Success(response.Documents.Select(x => x.ToPostModel()));
             }
             return Result<IEnumerable<PostModel>>.Success([]);
         }
