@@ -1,9 +1,11 @@
 ﻿using Elastic.Clients.Elasticsearch;
-using Elastic.Clients.Elasticsearch.Analysis;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Elastic.Transport;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Search.Domain;
 using Search.Domain.Services;
 using Shared.Utils;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -12,7 +14,7 @@ namespace Search.Service.Implementation
     internal class ElasticSearchService : ISearchService
     {
         private readonly ElasticsearchClient _client;
-        private const string Index = "post-search-v2";
+        private const string Index = "post-search";
         private readonly IHttpClientFactory _httpClientFactory;
 
         public ElasticSearchService(ElasticsearchClient client, IHttpClientFactory httpClientFactory)
@@ -52,9 +54,54 @@ namespace Search.Service.Implementation
             .Field(f => f.ViewCount, x => x.Order(SortOrder.Desc).NumericType(FieldSortNumericType.Long))
             .Field(f => f.CreatedAt, x => x.Order(SortOrder.Asc).NumericType(FieldSortNumericType.Date))));
 
-            if (response.IsValidResponse)
+
+            var searchRequest = new SearchRequest<PostIndex>("post-search")
             {
-                return Result<IEnumerable<PostModel>>.Success(response.Documents.Select(x => x.ToPostModel()));
+                Size = 10,
+                Query = new BoolQuery
+                {
+                    Should = new List<Query>
+        {
+            // Title с boost
+            new MatchQuery("title")
+            {
+                Query = $"*{query.Title}*",
+                Boost = 5,
+                Fuzziness = new Fuzziness("AUTO")
+            },
+
+            // Nested поиск по keywords.word + script_score
+            new NestedQuery
+            {
+                Path = "keywords",
+                Query = new ScriptScoreQuery
+                {
+                    Query = new MatchQuery("keywords.word")
+                    {
+                        Query = query.Title,
+                        Fuzziness = new Fuzziness("AUTO")
+                    },
+                    Script = new Script
+                    {
+                        Source = """
+                            if (doc['keywords.score'].size() == 0) {
+                                return _score;
+                            } else {
+                                return _score * doc['keywords.score'].value;
+                            }
+                        """
+                    }
+                }
+            }
+        },
+                    MinimumShouldMatch = 1
+                }
+            };
+            var response1 = await _client.SearchAsync<PostIndex>(searchRequest);
+
+            if (response1.IsValidResponse)
+            {
+                return Result<IEnumerable<PostModel>>.Success(response1.Documents.Select(x => x.ToPostModel()));
             }
             return Result<IEnumerable<PostModel>>.Success([]);
         }

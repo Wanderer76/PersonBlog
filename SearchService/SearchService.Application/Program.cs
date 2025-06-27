@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSearchService();
+builder.Services.AddSearchService(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
     {
@@ -29,7 +29,7 @@ builder.Services.AddHttpClient("Tokenizer", cfg =>
 });
 
 var app = builder.Build();
-
+app.UseSearchService(app.Configuration);
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
