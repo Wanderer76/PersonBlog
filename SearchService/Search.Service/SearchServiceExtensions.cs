@@ -23,12 +23,12 @@ namespace Search.Service
         {
             using var scope = builder.ApplicationServices.CreateScope();
             var client = scope.ServiceProvider.GetRequiredService<ElasticsearchClient>();
-            var a = configuration.GetSection("PostSearchIndex:IndexSettingsJson").Get<object>();
+            var section = configuration.GetSection("PostSearchIndex")["IndexSettingsJson"];
 
             client.Transport.Request<StringResponse>(
                Elastic.Transport.HttpMethod.PUT,
                "/post-search",
-               PostData.String(JsonSerializer.Serialize(a)));
+               PostData.String(section));
         }
     }
 }
