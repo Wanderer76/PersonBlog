@@ -11,7 +11,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddSearchService();
+builder.Services.AddSearchService(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
     {
@@ -23,8 +23,13 @@ builder.Services.AddMessageBus(builder.Configuration)
             ExchangeType = "fanout"
         };
     });
-var app = builder.Build();
+builder.Services.AddHttpClient("Tokenizer", cfg =>
+{
+    cfg.BaseAddress = new Uri("http://127.0.0.1:8000/");
+});
 
+var app = builder.Build();
+app.UseSearchService(app.Configuration);
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
