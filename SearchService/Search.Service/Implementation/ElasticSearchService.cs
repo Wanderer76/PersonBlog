@@ -51,133 +51,131 @@ namespace Search.Service.Implementation
             //.Field(f => f.ViewCount, x => x.Order(SortOrder.Desc).NumericType(FieldSortNumericType.Long))
             //.Field(f => f.CreatedAt, x => x.Order(SortOrder.Asc).NumericType(FieldSortNumericType.Date))));
 
-            /*
-             var words = query.Title?
-    .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-    .Where(w => w.Length > 0)
-    .ToList() ?? new List<string>();
 
-var shouldQueries = new List<Query>();
+            var words = query.Title?
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(w => w.Length > 0)
+                .ToList() ?? [];
 
-// Поиск по title
-foreach (var word in words)
-{
-    shouldQueries.Add(new MatchQuery("title")
-    {
-        Query = word,
-        Boost = 5,
-        Fuzziness = new Fuzziness("AUTO")
-    });
-}
+            var shouldQueries = new List<Query>();
 
-// Поиск по keywords.word
-foreach (var word in words)
-{
-    shouldQueries.Add(new NestedQuery
-    {
-        Path = "keywords",
-        Query = new ScriptScoreQuery
-        {
-            Query = new MatchQuery("keywords.word")
+            // Поиск по title
+            foreach (var word in words)
             {
-                Query = word,
-                Fuzziness = new Fuzziness("AUTO")
-            },
-            Script = new Script
+                shouldQueries.Add(new MatchQuery("title")
+                {
+                    Query = word,
+                    Boost = 5,
+                    Fuzziness = new Fuzziness("AUTO")
+                });
+            }
+
+            // Поиск по keywords.word
+            foreach (var word in words)
             {
-                Source = """
+                shouldQueries.Add(new NestedQuery
+                {
+                    Path = "keywords",
+                    Query = new ScriptScoreQuery
+                    {
+                        Query = new MatchQuery("keywords.word")
+                        {
+                            Query = word,
+                            Fuzziness = new Fuzziness("AUTO")
+                        },
+                        Script = new Script
+                        {
+                            Source = """
                     if (doc['keywords.score'].size() == 0 || doc['keywords.score'].value == 0) {
                         return _score;
                     } else {
                         return _score * doc['keywords.score'].value;
                     }
                 """
+                        }
+                    }
+                });
             }
-        }
-    });
-}
-
-var searchRequest = new SearchRequest<PostIndex>("post-search")
-{
-    Size = 10,
-    Query = new BoolQuery
-    {
-        Should = shouldQueries,
-        MinimumShouldMatch = 1
-    },
-    Sort = new List<SortOptions>
-    {
-        SortOptions.Field(new Field("viewCount"), new FieldSort
-        {
-            Order = SortOrder.Desc,
-            NumericType = FieldSortNumericType.Long
-        }),
-        SortOptions.Field("createdAt", new FieldSort
-        {
-            Order = SortOrder.Desc,
-            NumericType = FieldSortNumericType.Date
-        })
-    }
-};
-             
-             
-             */
 
             var searchRequest = new SearchRequest<PostIndex>("post-search")
             {
                 Size = 10,
                 Query = new BoolQuery
                 {
-                    Should = new List<Query>
-        {
-            // Title с boost
-            new MatchQuery("title")
-            {
-                Query = $"{query.Title}",
-                Boost = 5,
-                Fuzziness = new Fuzziness("AUTO")
-            },
-
-            // Nested поиск по keywords.word + script_score
-            new NestedQuery
-            {
-                Path = "keywords",
-                Query = new ScriptScoreQuery
-                {
-                    Query = new MatchQuery("keywords.word")
-                    {
-                        Query = query.Title,
-                        Fuzziness = new Fuzziness("AUTO")
-                    },
-                    Script = new Script
-                    {
-                        Source = """
-                            if (doc['keywords.score'].size() == 0 || doc['keywords.score'].value == 0) {
-                                return _score;
-                            } else {
-                                return _score * doc['keywords.score'].value;
-                            }
-                        """
-                    }
-                }
-            }
-        },
+                    Should = shouldQueries,
                     MinimumShouldMatch = 1
                 },
                 Sort = new List<SortOptions>
                 {
-                    SortOptions.Field(new Field("viewCount"),new FieldSort
+                    SortOptions.Field(new Field("viewCount"), new FieldSort
                     {
                         Order = SortOrder.Desc,
                         NumericType = FieldSortNumericType.Long
                     }),
-                    SortOptions.Field("createdAt",new FieldSort
+                    SortOptions.Field("createdAt", new FieldSort
                     {
                         Order = SortOrder.Desc,
-                        NumericType= FieldSortNumericType.Date
+                        NumericType = FieldSortNumericType.Date
                     })
                 }
             };
+
+
+            //    var searchRequest = new SearchRequest<PostIndex>("post-search")
+            //    {
+            //        Size = 10,
+            //        Query = new BoolQuery
+            //        {
+            //            Should = new List<Query>
+            //{
+            //    // Title с boost
+            //    new MatchQuery("title")
+            //    {
+            //        Query = $"{query.Title}",
+            //        Boost = 5,
+            //        Fuzziness = new Fuzziness("AUTO")
+            //    },
+
+            //    // Nested поиск по keywords.word + script_score
+            //    new NestedQuery
+            //    {
+            //        Path = "keywords",
+            //        Query = new ScriptScoreQuery
+            //        {
+            //            Query = new MatchQuery("keywords.word")
+            //            {
+            //                Query = query.Title,
+            //                Fuzziness = new Fuzziness("AUTO")
+            //            },
+            //            Script = new Script
+            //            {
+            //                Source = """
+            //                    if (doc['keywords.score'].size() == 0 || doc['keywords.score'].value == 0) {
+            //                        return _score;
+            //                    } else {
+            //                        return _score * doc['keywords.score'].value;
+            //                    }
+            //                """
+            //            }
+            //        }
+            //    }
+            //},
+            //            MinimumShouldMatch = 1
+            //        },
+            //        Sort = new List<SortOptions>
+            //        {
+            //            SortOptions.Field(new Field("viewCount"),new FieldSort
+            //            {
+            //                Order = SortOrder.Desc,
+            //                NumericType = FieldSortNumericType.Long
+            //            }),
+            //            SortOptions.Field("createdAt",new FieldSort
+            //            {
+            //                Order = SortOrder.Desc,
+            //                NumericType= FieldSortNumericType.Date
+            //            })
+            //        }
+            //    };
             var response = await _client.SearchAsync<PostIndex>(searchRequest);
 
             if (response.IsValidResponse)
@@ -185,16 +183,6 @@ var searchRequest = new SearchRequest<PostIndex>("post-search")
                 return Result<IEnumerable<PostModel>>.Success(response.Documents.Select(x => x.ToPostModel()));
             }
             return Result<IEnumerable<PostModel>>.Success([]);
-        }
-
-        class TokenizerRequest
-        {
-            public string Text { get; set; }
-        }
-
-        class TokenizerResponse
-        {
-            public List<WordScore> Tokens { get; set; }
         }
 
         public async Task<Result<bool>> AddPostAsync(PostModel postModel)
@@ -270,5 +258,15 @@ var searchRequest = new SearchRequest<PostIndex>("post-search")
             }
             return false;
         }
+    }
+
+    internal class TokenizerRequest
+    {
+        public string Text { get; set; }
+    }
+
+    internal class TokenizerResponse
+    {
+        public List<WordScore> Tokens { get; set; }
     }
 }
