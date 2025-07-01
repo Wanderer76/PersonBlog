@@ -48,7 +48,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
+app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowAnyHeader().AllowAnyMethod());
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor |

@@ -46,18 +46,13 @@ namespace Blog.API.Controllers
             return Ok(result == null ? null : result.Value);
         }
 
-        class M
-        {
-            public Guid? HasBlog {  get; set; }
-        }
-
         [HttpGet("hasUserBlog")]
         [Authorize]
         public async Task<IActionResult> HasUserBlog()
         {
             var userId = HttpContext.GetUserFromContext();
             var result = await _blogService.HasUserBlogAsync(userId);
-            return Ok(new M { HasBlog = result});
+            return Ok(new HasBlogResponse { HasBlog = result});
         }
 
         [HttpGet("detail")]
@@ -124,5 +119,9 @@ namespace Blog.API.Controllers
             var result = await _blogService.GetBlogByIdAsync(blogId);
             return Ok(result);
         }
+    }
+    class HasBlogResponse
+    {
+        public Guid? HasBlog { get; set; }
     }
 }

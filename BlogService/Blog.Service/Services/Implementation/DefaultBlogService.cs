@@ -36,19 +36,26 @@ namespace Blog.Service.Services.Implementation
                 throw new BlogAlreadyExistsException("У данного пользователя уже существует блог");
             }
 
+            using var storage = _fileStorageFactory.CreateFileStorage();
             var blogId = GuidService.GetNewGuid();
+
+            var photoUrl = model.PhotoUrl == null
+                ? null
+                : await storage.PutFileAsync(blogId, model.PhotoUrl.FileName, model.PhotoUrl.OpenReadStream());
+
 
             var blog = new PersonBlog
             {
                 Id = blogId,
-                CreatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeService.Now(),
                 Title = model.Title,
                 Description = model.Description,
                 UserId = model.UserId,
-                PhotoUrl = null,//model.PhotoUrl,
+                PhotoUrl = photoUrl,
             };
             _context.Add(blog);
             await _context.SaveChangesAsync();
+            await _cacheService.RemoveCachedDataAsync(GetBlogByUserIdKey(model.UserId));
             return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
 

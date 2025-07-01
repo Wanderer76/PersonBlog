@@ -90,9 +90,10 @@ async function uploadChunk(chunkId) {
     formData.append("chunkData", chunk);
 
     try {
-        const response = await fetch('https://mmcljlkc-7892.euw.devtunnels.ms/profile/api/Post/uploadChunk', {
+        const response = await fetch('http://localhost:7892/profile/api/Post/uploadChunk', {
             method: 'POST',
             body: formData,
+
         });
 
         if (response.ok) {

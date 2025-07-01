@@ -30,7 +30,7 @@ namespace Blog.Service.Models.Blog
     {
         public static async Task<BlogModel> ToBlogModel(this PersonBlog blog, IFileStorage fileStorage)
         {
-            var fileUrl = blog.PhotoUrl == null ? null : await fileStorage.GetFileUrlAsync(blog.UserId, blog.PhotoUrl);
+            var fileUrl = blog.PhotoUrl == null ? null : await fileStorage.GetFileUrlAsync(blog.Id, blog.PhotoUrl);
             return new BlogModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, fileUrl, blog.UserId, blog.SubscriptionsCount);
         }
     }

@@ -40,7 +40,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseHttpsRedirection();
-app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowCredentials().AllowAnyHeader().AllowAnyMethod());
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>

@@ -4,7 +4,7 @@ import { getSession, JwtTokenService } from './TokenStrorage';
 export const BaseApUrl = 'http://localhost:7892';
 const API = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
-    withCredentials: true,
+    withCredentials: false,
 });
 
 let refreshTokenPromise = null;

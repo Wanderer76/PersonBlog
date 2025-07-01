@@ -11,10 +11,9 @@ const ProfilePage = () => {
 
     const [profile, setProfile] = useState({
         avatar: DefaultProfileIcon,
-        name: "Мой видеоблог",
-        email: "user@example.com",
-        totalPostsCount: 12,
-        createdAt: "15 марта 2024"
+        name: null,
+        totalPostsCount: 0,
+        createdAt: null
     });
     const blogId = useRef(null);
     const [page, setPage] = useState(1);
@@ -220,8 +219,16 @@ const ProfilePage = () => {
             <div className="profileHeader">
                 <div className="avatarSection">
 
-                    <button className="btn btnSecondary">
-                        Редактировать профиль
+                    <button className="btn btnSecondary" onClick={() => {
+                        if(blogId.current){
+
+                        }
+                        else{
+                            navigate('blog/create');
+                        }
+                    }}>
+                        {blogId.current && 'Редактировать профиль'}
+                        {!blogId.current && 'Создать блог'}
                     </button>
 
                     <div className="avatarWrapper">
@@ -237,8 +244,8 @@ const ProfilePage = () => {
                     <div className="profileInfo">
                         <h1 className="blogTitle">{profile.name}</h1>
                         <div className="profileMeta">
-                            <span className="email">📧 {profile.email}</span>
-                            <span className="registrationDate">📅 Зарегистрирован: {getLocalDateTime(profile.createdAt)}</span>
+                            {/* <span className="email">📧 {profile.email}</span> */}
+                            <span className="registrationDate">📅 Зарегистрирован: {profile.createdAt && getLocalDateTime(profile.createdAt)}</span>
                             <span className="postsCount">📝 Постов: {profile.totalPostsCount}</span>
                         </div>
                     </div>
