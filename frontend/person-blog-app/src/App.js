@@ -41,9 +41,11 @@ const Session = ({ children }) => {
 
 
     // при загрузке страницы триггерим догрузку всех чанков
-    navigator.serviceWorker?.controller?.postMessage({
-      type: 'UPLOAD_ALL_CHUNKS'
-    });
+    if (JwtTokenService.isAuth()) {
+      navigator.serviceWorker?.controller?.postMessage({
+        type: 'UPLOAD_ALL_CHUNKS'
+      });
+    }
     // API.get("video/api/Auth/session", { withCredentials: true })
     //   .then(response => {
     //     setSession(response.data)
