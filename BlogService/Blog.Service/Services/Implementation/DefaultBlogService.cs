@@ -114,5 +114,12 @@ namespace Blog.Service.Services.Implementation
 
             return blog.ToBlogUserInfoViewModel(hasSubscription);
         }
+
+        public async Task<Guid?> HasUserBlogAsync(Guid userId)
+        {
+            var isBlogAlreadyExists = await _context.Get<PersonBlog>()
+                            .FirstOrDefaultAsync(x => x.UserId == userId);
+            return isBlogAlreadyExists?.Id;
+        }
     }
 }

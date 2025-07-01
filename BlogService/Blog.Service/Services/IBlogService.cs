@@ -11,5 +11,6 @@ namespace Blog.Service.Services
         Task<BlogModel> GetBlogByPostIdAsync(Guid id);
         Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id,Guid?userId);
         Task<BlogModel> GetBlogByUserIdAsync(Guid userId);
+        Task<Guid?> HasUserBlogAsync(Guid userId);
     }
 }

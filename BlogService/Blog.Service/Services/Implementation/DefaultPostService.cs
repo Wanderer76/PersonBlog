@@ -22,12 +22,14 @@ namespace Blog.Service.Services.Implementation
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly ICacheService _cacheService;
         private readonly ICurrentUserService _userSession;
-        public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userSession)
+        private readonly IVideoService _videoService;
+        public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userSession, IVideoService videoService)
         {
             _context = context;
             _fileStorageFactory = fileStorageFactory;
             _cacheService = cacheService;
             _userSession = userSession;
+            _videoService = videoService;
         }
 
         public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
@@ -120,20 +122,18 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
         {
-
-
-
             var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, _userSession, page, limit);
 
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var posts = new List<PostModel>(pagedPosts.Posts.Count());
+            
             var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => $"{nameof(PostModel)}:{x.Id}"))).ToList();
             if (cachedPosts.Count != pagedPosts.Posts.Count())
             {
                 foreach (var post in pagedPosts.Posts.ExceptBy(cachedPosts.Select(x => x.Id), x => x.Id))
                 {
                     var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
-                    var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
+                    var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
                     var videoFile = post.VideoFile;
                     var postModel = new PostModel(
                                     post.Id,
@@ -183,13 +183,24 @@ namespace Blog.Service.Services.Implementation
             await _context.SaveChangesAsync();
         }
 
-        public async Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
+        public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
         {
             var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var cacheMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"{nameof(VideoMetadata)}:{uploadVideoChunkDto.PostId}");
-            var metadata = cacheMetadata ?? await _context.Get<VideoMetadata>()
-                    .Where(x => x.IsProcessed == true)
-                    .FirstAsync(x => x.PostId == uploadVideoChunkDto.PostId);
+            var metadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"{nameof(VideoMetadata)}:{uploadVideoChunkDto.PostId}");
+
+            if (metadata == null)
+            {
+                return new Error("Не существует метаданных поста");
+            }
+            var progress = await _videoService.GetUploadVideoMetadata(metadata.Id);
+
+            if (progress.IsFailure)
+            {
+                return progress.Error!;
+            }
+
+            if (progress.Value.LastUploadChunkNumber >= uploadVideoChunkDto.ChunkNumber)
+                return true;
 
             await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId, GuidService.GetNewGuid(), uploadVideoChunkDto.ChunkData, new VideoChunkUploadingInfo
             {
@@ -197,7 +208,11 @@ namespace Blog.Service.Services.Implementation
                 ChunkNumber = uploadVideoChunkDto.ChunkNumber,
             });
 
-            if (uploadVideoChunkDto.TotalChunkCount == uploadVideoChunkDto.ChunkNumber)
+            progress.Value.LastUploadChunkNumber++;
+
+            await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(600000));
+
+            if (progress.Value.LastUploadChunkNumber == progress.Value.TotalChunkCount)
             {
                 var videoCreateEvent = new CombineFileChunksCommand
                 {
@@ -212,9 +227,13 @@ namespace Blog.Service.Services.Implementation
                     EventType = nameof(CombineFileChunksCommand),
                     CorrelationId = videoCreateEvent.VideoMetadataId
                 };
+                metadata.ProcessState = ProcessState.Running;
+                _context.Add(metadata);
                 _context.Add(videoEvent);
                 await _context.SaveChangesAsync();
+                await _cacheService.RemoveCachedDataAsync(progress.Value);
             }
+            return true;
         }
 
         public async Task<PostModel> UpdatePostAsync(PostEditDto postEditDto)
