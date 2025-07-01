@@ -5,7 +5,15 @@ export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 
 export function saveAccessToken(token) {
+    
     sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+console.log('store seestion tokjen')
+    if (navigator.serviceWorker?.controller && token) {
+        navigator.serviceWorker.controller.postMessage({
+        type: 'SET_AUTH_TOKEN',
+        payload: token
+    });
+}
 }
 
 export function saveRefreshToken(token) {

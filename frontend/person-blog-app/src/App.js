@@ -1,11 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import './App.css';
-import { JwtTokenService } from './scripts/TokenStrorage';
+import { getAccessToken, JwtTokenService } from './scripts/TokenStrorage';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
 import ChannelPage from './pages/channel/ChannelPage';
+import { deleteChunk } from './serviceWorker/IndexedDB';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -32,6 +33,16 @@ const PublicRoute = ({ children }) => {
 // Компонент проверки сессии
 const Session = ({ children }) => {
   useEffect(() => {
+    // слушаем сообщения от Service Worker
+
+
+    // при загрузке страницы триггерим догрузку всех чанков
+
+
+    // при загрузке страницы триггерим догрузку всех чанков
+    navigator.serviceWorker?.controller?.postMessage({
+      type: 'UPLOAD_ALL_CHUNKS'
+    });
     // API.get("video/api/Auth/session", { withCredentials: true })
     //   .then(response => {
     //     setSession(response.data)

@@ -25,7 +25,7 @@ namespace Blog.Service.Services
         ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId);
         Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit);
         Task RemovePostByIdAsync(Guid id);
-        Task UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
+        Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
         Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
         Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
         Task SetVideoViewed(ViewedVideoModel value);

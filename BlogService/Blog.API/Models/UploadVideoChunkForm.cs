@@ -5,6 +5,7 @@ namespace Blog.API.Models
     public class UploadVideoChunkForm
     {
         public required Guid PostId { get; set; }
+        public required Guid FileId { get; set; }
         public required long ChunkNumber { get; set; }
         public required long TotalChunkCount { get; set; }
         public required IFormFile ChunkData { get; set; }
@@ -26,7 +27,8 @@ namespace Blog.API.Models
                 FileExtension = form.FileExtension,
                 FileName = form.FileName,
                 TotalSize = form.TotalSize,
-                Duration = double.Parse(form.Duration.Replace('.', ','))
+                Duration = double.Parse(form.Duration.Replace('.', ',')),
+                FileId = form.FileId,
             };
         }
     }

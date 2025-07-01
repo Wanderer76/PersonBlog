@@ -43,22 +43,27 @@ const ProfilePage = () => {
         const url = "/profile/api/Blog/detail";
 
         async function sendRequest() {
-            await API.get(url).then(response => {
-                if (response.status === 200) {
-                    return response.data
-                }
-                if (response.status === 401) {
-                    JwtTokenService.refreshToken();
-                    window.location.reload();
-                }
-            })
-                .then(result => {
-                    setProfile(result);
-                    if (!blogId.current)
-                        blogId.current = result.id
 
-                }, [])
+            const hasBlog = await API.get(`/profile/api/Blog/hasUserBlog`)
+            if (hasBlog.data.hasBlog !== null) {
+                await API.get(url).then(response => {
+                    if (response.status === 200) {
+                        return response.data
+                    }
+                    if (response.status === 401) {
+                        JwtTokenService.refreshToken();
+                        window.location.reload();
+                    }
+                })
+                    .then(result => {
+                        setProfile(result);
+                        if (!blogId.current)
+                            blogId.current = result.id
+
+                    }, [])
+            }
         }
+
         sendRequest();
     }, [])
 
@@ -118,58 +123,38 @@ const ProfilePage = () => {
         return posts.map((post, index) => {
             if (posts.length == index + 1) {
                 return (
-                    <div key={post.id} className="postCard" ref={lastPostRef}>
-                        <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
-                            <img src={post.previewId} alt={post.title} />
-                            <div className="videoDuration">{post.duration}</div>
-                            {post.type === 1 &&
-                                <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
-                        </div>
-                        <div className="postContent">
-                            <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
-                            <p className="postDescription">{post.description}</p>
-
-                            <div className="postMeta">
-                                <div className="postStats">
-                                    <span>👁 {post.views}</span>
-                                    <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
-                                </div>
-                                <div className="postActions">
-                                    <button className="btn btnPrimary">Редактировать</button>
-                                    <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <CreatePostCard key={post.id} post={post} lastPostRef={lastPostRef} navigate={navigate} handleRemove={handleRemove} />
                 );
             }
+            else
+                return (<CreatePostCard key={post.id} post={post} lastPostRef={null} navigate={navigate} handleRemove={handleRemove} />)
 
-            return (
-                <div key={post.id} className="postCard">
-                    <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
-                        <img src={post.previewId} alt={post.title} />
-                        <div className="videoDuration">{post.duration}</div>
-                        {post.type === 1 &&
-                            <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
-                    </div>
-                    <div className="postContent">
-                        <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
-                        <p className="postDescription">{post.description}</p>
+            // return (
+            //     <div key={post.id} className="postCard">
+            //         <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
+            //             <img src={post.previewId} alt={post.title} />
+            //             <div className="videoDuration">{post.duration}</div>
+            //             {post.type === 1 &&
+            //                 <div className="postStatus">{post.state === 1 ? "Опубликовано" : post.state === 0 ? "В обработке" : post.errorMessage}</div>}
+            //         </div>
+            //         <div className="postContent">
+            //             <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
+            //             <p className="postDescription">{post.description}</p>
 
-                        <div className="postMeta">
-                            <div className="postStats">
-                                <span>👁 {post.views}</span>
-                                <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <div className="postActions">
-                                <button className="btn btnPrimary" >Редактировать</button>
-                                <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
-                            </div>
-                        </div>
-                    </div>
+            //             <div className="postMeta">
+            //                 <div className="postStats">
+            //                     <span>👁 {post.views}</span>
+            //                     <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+            //                 </div>
+            //                 <div className="postActions">
+            //                     <button className="btn btnPrimary" >Редактировать</button>
+            //                     <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
+            //                 </div>
+            //             </div>
+            //         </div>
 
-                </div>
-            );
+            //     </div>
+            // );
         })
     }
 
@@ -300,3 +285,55 @@ const ProfilePage = () => {
 
 // Добавляем стили в документ
 export default ProfilePage;
+
+const CreatePostCard = function ({ post, lastPostRef, navigate, handleRemove }) {
+
+    const [uploadProgress, setUploadProgress] = useState(0);
+
+    if (post.state === 2) {
+        // if (result.posts.filter(x => x.state === 0).length > 0) {
+        navigator.serviceWorker?.addEventListener('message', (event) => {
+            if (event.data.type === 'CHUNK_UPLOADED') {
+                if (event.data.payload.postId == post.id) {
+                    const data = event.data.payload;
+                    setUploadProgress(Math.round(data.chunkNumber / data.totalChunks * 100))
+                }
+            }
+        });
+    }
+    // }
+    return (
+
+        <div className="postCard" ref={lastPostRef ? lastPostRef : null}>
+
+            <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
+                <img src={post.previewId} alt={post.title} />
+                <div className="videoDuration">{post.duration}</div>
+                {post.type === 1 &&
+                    <div className="postStatus">{
+                        post.state === 1
+                            ? "Опубликовано"
+                            : post.state === 0
+                                ? "В обработке"
+                                : post.state === 2 ?
+                                    `Загрузка ${uploadProgress}%`
+                                    : post.errorMessage
+                    }</div>}
+            </div>
+            <div className="postContent">
+                <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
+                <p className="postDescription">{post.description}</p>
+
+                <div className="postMeta">
+                    <div className="postStats">
+                        <span>👁 {post.views}</span>
+                        <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="postActions">
+                        <button className="btn btnPrimary">Редактировать</button>
+                        <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
+                    </div>
+                </div>
+            </div>
+        </div >);
+}

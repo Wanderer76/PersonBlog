@@ -158,11 +158,35 @@ namespace Blog.API.Controllers
             return Ok();
         }
 
-        [HttpPost("uploadChunk")]
+        [HttpGet("uploadProgress")]
         [Authorize]
+        public async Task<IActionResult> GetPostVideoUploadProgress(Guid fileId)
+        {
+            var result = await _videoService.GetUploadVideoMetadata(fileId);
+            if (result.ISSuccess)
+            {
+                return Ok(result.Value);
+            }
+
+            return BadRequest(result.Error);
+        }
+
+        [HttpPost("uploadProgress")]
+        [Authorize]
+        public async Task<IActionResult> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
+        {
+            var result = await _videoService.CreateUploadVideoMetadata(request);
+            if (result.ISSuccess)
+            {
+                return Ok(result.Value);
+            }
+
+            return BadRequest(result.Error);
+        }
+
+        [HttpPost("uploadChunk")]
         public async Task<IActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
         {
-            var userId = HttpContext.GetUserFromContext();
             try
             {
                 var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
@@ -170,7 +194,6 @@ namespace Blog.API.Controllers
                 using var data = uploadVideoChunk.ChunkData.OpenReadStream();
                 await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
                 {
-                    UserId = userId,
                     ChunkNumber = uploadVideoChunk.ChunkNumber,
                     TotalChunkCount = uploadVideoChunk.TotalChunkCount,
                     ChunkData = data,

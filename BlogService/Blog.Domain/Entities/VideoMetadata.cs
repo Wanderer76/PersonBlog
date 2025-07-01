@@ -17,6 +17,7 @@ namespace Blog.Domain.Entities
     {
         Running,
         Complete,
+        Load,
         Error
     }
 }

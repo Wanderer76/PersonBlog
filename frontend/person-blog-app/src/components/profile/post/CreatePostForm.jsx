@@ -2,8 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import './CreatePostForm.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
+import { saveChunk, deleteChunk } from "../../../serviceWorker/IndexedDB";
+import { getAccessToken, JwtTokenService } from "../../../scripts/TokenStrorage";
 
-const CreatePostForm = function (props) {
+const CreatePostForm = function () {
 
     const [postForm, setPostForm] = useState({ type: 1, title: "", description: "", video: null });
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -11,99 +13,134 @@ const CreatePostForm = function (props) {
     const navigate = useNavigate();
     const CHUNK_SIZE = 10 * 1024 * 1024;
     const isCreateDisabled = useRef(false);
+    const [createModel, setCreateModel] = useState(null);
+
     function updateForm(event) {
         const key = event.target.name;
         const value = key === 'video' ? event.target.files[0] : event.target.value;
         setPostForm((prev) => ({
             ...prev,
             [key]: value
-        }))
+        }));
     }
-
-
-    const [createModel, setCreateModel] = useState(null);
-
 
     useEffect(() => {
         const url = "/profile/api/Post/create";
         API.get(url).then(response => {
             setCreateModel(response.data);
-        })
+        });
     }, []);
-
 
     async function sendForm() {
         const url = "/profile/api/Post/create";
         let formData = new FormData();
         var postId = null;
-        Object.keys(postForm).forEach((key) => {
 
-            if (key !== "video")
-                formData.append(key, postForm[key])
+        Object.keys(postForm).forEach((key) => {
+            if (key !== "video") {
+                formData.append(key, postForm[key]);
+            }
         });
 
         await API.post(url, formData, {
             headers: {
                 ['Content-Type']: 'multipart/form-data'
             }
-        }
-        ).then(response => {
+        }).then(response => {
             if (response.status === 200) {
-                console.log(response.data)
+                console.log(response.data);
                 postId = response.data;
             }
-        })
+        });
 
-        if (postForm.video !== null) {
+        if (postForm.video !== null && postId !== null) {
             await uploadFile(postId);
         }
-        navigate('/profile')
+        navigate('/profile');
     }
 
     async function uploadFile(postId) {
         const file = postForm.video;
-
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-        let currentChunk = 0;
 
-        setUploadProgress(0);
+        // Получаем fileId от сервера
+        const progressResp = await API.post("/profile/api/Post/uploadProgress", {
+            postId: postId,
+            totalChunkCount: totalChunks,
+            totalSize: file.size
+        });
+
+        const progress = progressResp.data;
+        console.log("Upload progress:", progress);
+
+        let currentChunk = progress.lastUploadChunkNumber ?? 0;
+
+        setUploadProgress(Math.round(currentChunk / totalChunks * 100));
 
         while (currentChunk < totalChunks) {
             const start = currentChunk * CHUNK_SIZE;
             const end = Math.min(start + CHUNK_SIZE, file.size);
             const chunk = file.slice(start, end);
 
-            await uploadChunk(chunk, currentChunk + 1, totalChunks, file.name, postId, '.mp4', file.size);
+            await saveChunkAndNotifySW(
+                chunk,
+                currentChunk + 1,
+                totalChunks,
+                file.name,
+                postId,
+                '.mp4',
+                file.size,
+                progress.fileId
+            );
+
             currentChunk++;
             setUploadProgress(Math.round(currentChunk / totalChunks * 100));
         }
-        alert('Загрузка завершена');
+        alert('Видео успешно загружено!');
     }
 
-    async function uploadChunk(chunk, chunkNumber, totalChunks, fileName, postId, fileExtension, totalSize) {
-        const formData = new FormData();
-        formData.append('chunkNumber', chunkNumber);
-        formData.append('totalChunkCount', totalChunks);
-        formData.append('fileName', fileName);
-        formData.append('fileExtension', fileExtension);
-        formData.append('postId', postId);
-        formData.append('totalSize', totalSize);
-        formData.append('chunkData', chunk);
-        formData.append('duration', videoRef.current.duration)
-        try {
-            const response = await API.post('/profile/api/Post/uploadChunk', formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-            console.log(response);
-            if (response.status !== 200) throw new Error('Upload failed');
-        } catch (error) {
-            console.error('Error uploading chunk:', error);
+    async function saveChunkAndNotifySW(chunk, chunkNumber, totalChunks, fileName, postId, fileExtension, totalSize, fileId) {
+        const meta = {
+            chunkNumber,
+            totalChunks,
+            fileName,
+            fileExtension,
+            postId,
+            totalSize,
+            duration: videoRef.current?.duration ?? 0,
+            contentType: "video/mp4",
+            fileId
+        };
+
+        const chunkId = `${fileId}_${chunkNumber}`;
+
+        // ➡ сохраняем chunk в IndexedDB
+        await saveChunk(chunkId, chunk, meta);
+        if (meta.chunkNumber == totalChunks) {
+            navigator.serviceWorker?.controller?.postMessage({
+                type: 'UPLOAD_ALL_CHUNKS'
+            });
+        }
+
+        // // ➡ посылаем команду SW загрузить его
+        // if (navigator.serviceWorker?.controller) {
+        //     navigator.serviceWorker.controller.postMessage({
+        //         type: 'UPLOAD_CHUNK',
+        //         payload: { chunkId }
+        //     });
+        // }
+    }
+
+    function handleFileSelect(input) {
+        const file = input.target.files[0];
+        if (file) {
+            const videoURL = URL.createObjectURL(file);
+            if (videoRef.current) {
+                videoRef.current.src = videoURL;
+                videoRef.current.load();
+            }
         }
     }
-
 
     return (
         <>
@@ -163,7 +200,7 @@ const CreatePostForm = function (props) {
                     <div className="formGroup">
                         <label>Настройки приватности</label>
                         <div className="privacySettings">
-                            <select name="visibility" defaultValue={createModel?.visibility[0].value} onChange={updateForm}>
+                            <select name="visibility" defaultValue={createModel?.visibility?.[0]?.value} onChange={updateForm}>
                                 {createModel?.visibility?.map((v) => {
                                     return <option key={v.value} value={v.value}>{v.text}</option>
                                 })}
@@ -188,33 +225,6 @@ const CreatePostForm = function (props) {
             </div>
         </>
     );
-
-    function handleFileSelect(input) {
-        const file = input.target.files[0];
-        if (file) {
-            // Показать прелоадер
-            // document.getElementById('preloader').style.display = 'block';
-
-            // Предпросмотр видео
-            const videoPreview = document.getElementsByClassName('videoPreview');
-            const videoURL = URL.createObjectURL(file);
-            if (videoRef.current) {
-                videoRef.current.src = videoURL;
-                // videoRef.current.style.display = 'block';
-                videoRef.current.load();
-            }
-
-
-            // Запустить загрузку на сервер
-            // document.getElementById('<%= btnUpload.ClientID %>').click();
-        }
-    }
-
-    // Обработчик завершения загрузки
-    function uploadComplete() {
-        document.getElementById('preloader').style.display = 'none';
-    }
 }
-
 
 export default CreatePostForm;
