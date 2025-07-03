@@ -9,8 +9,6 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Conference.API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
     public class ConferenceChatController : BaseController
     {
         private readonly IConferenceChatService _conferenceChatService;
