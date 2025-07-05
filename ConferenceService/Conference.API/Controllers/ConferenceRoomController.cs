@@ -7,8 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Conference.API.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
     public class ConferenceRoomController : BaseController
     {
         private readonly ILogger<ConferenceRoomController> _logger;
@@ -37,7 +35,6 @@ namespace Conference.API.Controllers
         public async Task<IActionResult> GetConferenceRoomAsync(Guid roomId)
         {
             var result = await _conferenceRoomService.GetConferenceRoomByIdAsync(roomId);
-            //await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, Guid.Parse(GetUserSession()!));
             return Ok(result);
         }
 

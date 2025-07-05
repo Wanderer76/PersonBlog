@@ -3,6 +3,7 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
+using System.Net.WebSockets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +35,11 @@ builder.Services.AddHttpClient("Search", x =>
 {
     x.BaseAddress = new Uri("http://localhost:5250/api/");
 });
+builder.Services.AddHttpClient("Conference", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5193/api/");
+});
+
 
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();

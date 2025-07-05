@@ -8,6 +8,7 @@ import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel }
 import './ConferencePage.css';
 import '../post/VideoPage.css';
 import SideBar from "../../components/sidebar/SideBar";
+import { getAccessToken, JwtTokenService } from "../../scripts/TokenStrorage";
 
 const ConferencePage = function () {
     const conferenceId = useParams();
@@ -20,7 +21,7 @@ const ConferencePage = function () {
     const isSeeking = useRef(false); // Флаг блокировки обновлений
 
     useEffect(() => {
-        API.get(`http://localhost:5193/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
+        API.get(`video/api/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
             .then(async response => {
                 const postId = response.data.postId;
 
@@ -35,8 +36,7 @@ const ConferencePage = function () {
 
     useEffect(() => {
         const connection_chat = new HubConnectionBuilder()
-            .withUrl("http://localhost:5193/conference?conferenceId=" + conferenceId.id, {
-                headers: { 'conferenceId': `${conferenceId.id}` },
+            .withUrl(BaseApUrl + `/conference?conferenceId=${conferenceId.id}&token=${getAccessToken()}`, {
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets,
             })
@@ -248,7 +248,7 @@ const Messages = function ({ messages, setMessages, conferenceId }) {
         if (messageInput.trim()) {
             try {
 
-                await API.post("http://localhost:5193/api/ConferenceChat/sendMessage", {
+                await API.post("video/api/ConferenceChat/sendMessage", {
                     conferenceId: conferenceId,
                     message: messageInput
                 });
@@ -264,7 +264,7 @@ const Messages = function ({ messages, setMessages, conferenceId }) {
 
         setIsLoading(true);
         try {
-            const response = await API.get(`http://localhost:5193/api/ConferenceChat/messages/${conferenceId}`, {
+            const response = await API.get(`video/api/ConferenceChat/messages/${conferenceId}`, {
                 params: {
                     offset: pageNumber,
                     count: 10

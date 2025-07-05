@@ -282,7 +282,7 @@ const VideoPage = function (props) {
 }
 
 async function createConference(postId, navigate) {
-    const response = await API.post(`https://mmcljlkc-7892.euw.devtunnels.ms/ConferenceRoom/createConferenceToPost?postId=${postId}`, null, {
+    const response = await API.post(`video/api/ConferenceRoom/createConferenceToPost?postId=${postId}`, null, {
         headers: { Authorization: JwtTokenService.getFormatedTokenForHeader() }
     });
 
