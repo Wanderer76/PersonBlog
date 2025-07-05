@@ -1,6 +1,7 @@
 ﻿using Conference.Domain.Services;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.SignalR;
+using Shared.Services;
 using Shared.Utils;
 
 namespace Conference.Service.Hubs
@@ -153,8 +154,8 @@ namespace Conference.Service.Hubs
         private Guid? TryGetSession()
         {
             var context = Context.GetHttpContext();
-            var session = context.Request.Cookies["sessionId"];
-            return session == null ? null : Guid.Parse(session);
+            var session = context.Request.Query.TryGetValue("token",out var value);
+            return !session  ? null :JwtUtils.GetTokenRepresentaion(value).UserId;
         }
     }
     public class ConferenceChatModel

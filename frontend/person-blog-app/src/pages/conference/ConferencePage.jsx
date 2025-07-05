@@ -8,6 +8,7 @@ import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel }
 import './ConferencePage.css';
 import '../post/VideoPage.css';
 import SideBar from "../../components/sidebar/SideBar";
+import { getAccessToken, JwtTokenService } from "../../scripts/TokenStrorage";
 
 const ConferencePage = function () {
     const conferenceId = useParams();
@@ -35,8 +36,7 @@ const ConferencePage = function () {
 
     useEffect(() => {
         const connection_chat = new HubConnectionBuilder()
-            .withUrl(BaseApUrl + "/conference?conferenceId=" + conferenceId.id, {
-                headers: { 'conferenceId': `${conferenceId.id}` },
+            .withUrl(BaseApUrl + `/conference?conferenceId=${conferenceId.id}&token=${getAccessToken()}`, {
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets,
             })
