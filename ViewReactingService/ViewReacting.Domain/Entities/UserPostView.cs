@@ -10,6 +10,7 @@ namespace ViewReacting.Domain.Entities
         public double WatchedTime { get; set; }
         public bool IsCompleteWatch { get; set; }
         public DateTimeOffset WatchedAt { get; private set; }
+        public bool IsDelete {  get; private set; }
 
         public UserPostView(Guid userId, Guid postId, double watchedTime, bool isCompleteWatch)
         {
@@ -19,6 +20,7 @@ namespace ViewReacting.Domain.Entities
             WatchedTime = watchedTime;
             IsCompleteWatch = isCompleteWatch;
             WatchedAt = DateTimeService.Now();
+            IsDelete = false;
         }
     }
 

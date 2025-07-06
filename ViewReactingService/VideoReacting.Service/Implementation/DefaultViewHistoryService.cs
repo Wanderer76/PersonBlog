@@ -119,7 +119,7 @@ namespace VideoReacting.Service.Implementation
             }
 
             var lastPreviousView = await _repository.Get<UserPostView>()
-                .Where(x => x.UserId == userId)
+                .Where(x => x.UserId == userId && x.IsDelete == false)
                 .OrderByDescending(x => x.WatchedAt)
                 .AsAsyncEnumerable()
                 .Select(x => new HistoryViewItem

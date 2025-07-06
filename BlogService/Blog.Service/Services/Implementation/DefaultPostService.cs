@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Blog.Contracts.Events;
+using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Domain.Services.Models;
 using Blog.Persistence.Repository.Quries;
@@ -126,7 +127,7 @@ namespace Blog.Service.Services.Implementation
 
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var posts = new List<PostModel>(pagedPosts.Posts.Count());
-            
+
             var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => $"{nameof(PostModel)}:{x.Id}"))).ToList();
             if (cachedPosts.Count != pagedPosts.Posts.Count())
             {
@@ -177,6 +178,20 @@ namespace Blog.Service.Services.Implementation
                 _context.Attach(post);
                 post.IsDeleted = true;
                 _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
+                _context.Add(new VideoProcessEvent
+                {
+                    EventData = JsonSerializer.Serialize(new PostUpdateEvent
+                    {
+                        BlogId = post.BlogId,
+                        CreatedAt = DateTimeService.Now(),
+                        UpdateType = UpdateType.Delete,
+                        Description = post.Description,
+                        PostId = post.Id,
+                        Title = post.Title,
+                        ViewCount = post.ViewCount
+                    }),
+                    EventType = nameof(PostUpdateEvent)
+                });
             }
 
             await _cacheService.RemoveCachedDataAsync($"{nameof(PostModel)}:{id}");

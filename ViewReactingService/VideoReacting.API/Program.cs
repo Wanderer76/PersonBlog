@@ -1,3 +1,5 @@
+using Blog.Contracts.Events;
+using Blog.Domain.Entities;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
@@ -26,6 +28,15 @@ builder.Services.AddMessageBus(builder.Configuration)
     {
         x.Name = QueueConstants.QueueName;
         x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };
+    }) .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
+    {
+        cfg.Name = "userReaction-post-sync";
+        cfg.Durable = true;
+        cfg.Exchange = new MessageBus.Models.ExchangeParam
+        {
+            Name = "post-update",
+            ExchangeType = "fanout"
+        };
     });
 
 builder.Services.AddHttpClient("Blog", x =>
