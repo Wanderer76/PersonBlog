@@ -1,8 +1,9 @@
-﻿using Shared.Services;
+﻿using Infrastructure.Interface;
+using Shared.Services;
 
 namespace ViewReacting.Domain.Entities
 {
-    public class UserPostView : IUserEntity
+    public class UserPostView : IUserEntity, ISoftDelete
     {
         public Guid Id { get; private set; }
         public Guid UserId { get; private set; }
@@ -10,7 +11,8 @@ namespace ViewReacting.Domain.Entities
         public double WatchedTime { get; set; }
         public bool IsCompleteWatch { get; set; }
         public DateTimeOffset WatchedAt { get; private set; }
-        public bool IsDelete {  get; private set; }
+        public bool IsDelete { get; private set; }
+        public DateTimeOffset? DeleteDateTime { get; private set; }
 
         public UserPostView(Guid userId, Guid postId, double watchedTime, bool isCompleteWatch)
         {
