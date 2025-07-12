@@ -69,7 +69,7 @@ namespace Blog.Service.Services.Implementation
 
             if (post.Visibility == PostVisibility.Private)
             {
-                var session = await _userSession.GetUserSessionAsync();
+                var session = await _userSession.GetCurrentUserAsync();
                 if (session.UserId != post.UserId)
                 {
                     return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
@@ -320,7 +320,7 @@ namespace Blog.Service.Services.Implementation
 
                 if (post.Visibility == PostVisibility.Private)
                 {
-                    var session = await _userSession.GetUserSessionAsync();
+                    var session = await _userSession.GetCurrentUserAsync();
                     if (session.UserId != post.Blog.UserId)
                     {
                         throw new ArgumentException();

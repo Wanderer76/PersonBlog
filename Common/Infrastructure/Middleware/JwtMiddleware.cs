@@ -1,14 +1,11 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using Infrastructure.Models;
+using Infrastructure.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Shared;
 using Shared.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Middleware
 {
@@ -16,11 +13,12 @@ namespace Infrastructure.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly IConfiguration _configuration;
-
-        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration)
+        private readonly ICacheService _cacheService;
+        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration, ICacheService cacheService)
         {
             _next = requestDelegate;
             _configuration = configuration;
+            _cacheService = cacheService;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -30,7 +28,8 @@ namespace Infrastructure.Middleware
             if (requestToken != null)
             {
                 var token = JwtUtils.GetTokenRepresentaion(requestToken);
-                if (token.ExpiredAt <= DateTimeService.Now())
+                var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistToken(token.Id));
+                if (token.ExpiredAt <= DateTimeService.Now() || blackList != null)
                 {
                     context.Response.ContentType = "application/json";
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;

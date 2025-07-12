@@ -15,6 +15,7 @@ public class AuthOptions
 
 public class AppClaimTypes
 {
+    public const string Id = "id";
     public const string RoleId = "roleId";
     public const string Login = "login";
     public const string UserId = "userId";

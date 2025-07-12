@@ -34,14 +34,25 @@ namespace MessageBus.Internal
             {
                 var queue = eventType.Queue;
                 var exchange = eventType.Queue.Exchange;
-                var attributeData = eventType.GetType().GetCustomAttribute<EventPublishAttribute>(false);
+                var attributeData = eventType.HandlerType.GetCustomAttribute<EventPublishAttribute>(false);
 
-                var queueName = queue?.Name ?? eventType.HandlerType.FullName!;
+                var queueName = queue?.QueueName ?? eventType.HandlerType.FullName!;
 
                 await channel.QueueDeclareAsync(queueName, durable: queue.Durable, exclusive: queue.Exclusive, autoDelete: queue.AutoDelete);
 
                 var exchangeName = exchange?.Name ?? attributeData?.Exchange;
-                var exchangeType = exchange?.ExchangeType ?? ExchangeType.Fanout;
+
+                string? exchangeType;
+                if (exchange?.ExchangeType == null)
+                {
+                    exchangeType = (string?)((attributeData?.RoutingKey != null || exchange?.RoutingKey != null)
+                    ? ExchangeType.Direct : ExchangeType.Fanout);
+                }
+                else
+                {
+                    exchangeType = (exchange?.ExchangeType);
+                }
+
                 var exchangeRoutingKey = exchange?.RoutingKey ?? attributeData?.RoutingKey;
                 if (exchangeName != null)
                 {

@@ -8,8 +8,8 @@ namespace Infrastructure.Interface
 {
     public interface ICurrentUserService
     {
-        Task<UserModel> GetUserSessionAsync();
-        Task<Guid> UpdateUserSession(string token);
+        Task<UserModel> GetCurrentUserAsync();
+        Task<Guid> UpdateCurrentUserAsync(string token);
     }
 
     internal class DefaultUserSession : ICurrentUserService
@@ -23,7 +23,7 @@ namespace Infrastructure.Interface
             _contextAccessor = contextAccessor;
         }
 
-        public async Task<UserModel> GetUserSessionAsync()
+        public async Task<UserModel> GetCurrentUserAsync()
         {
             var token = _contextAccessor.HttpContext.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
 
@@ -41,7 +41,7 @@ namespace Infrastructure.Interface
             return sessionData;
         }
 
-        public async Task<Guid> UpdateUserSession(string token)
+        public async Task<Guid> UpdateCurrentUserAsync(string token)
         {
             var tokenRepr = JwtUtils.GetTokenRepresentaion(token);
             return await RefreshSession(tokenRepr);

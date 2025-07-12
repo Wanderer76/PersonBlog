@@ -15,7 +15,7 @@ namespace Blog.Persistence.Repository.Quries
                 .Select(x => x.UserId)
                 .FirstAsync();
 
-            var currentUser = await userSession.GetUserSessionAsync();
+            var currentUser = await userSession.GetCurrentUserAsync();
 
             var canAccessPrivate = currentUser.UserId.HasValue && currentUser.UserId == userId;
             //var paymentLevel = currentUser.UserId.HasValue

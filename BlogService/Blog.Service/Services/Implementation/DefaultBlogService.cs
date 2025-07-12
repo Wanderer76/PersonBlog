@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Blog.Contracts.Events;
+using Blog.Domain.Entities;
 using Blog.Service.Exceptions;
 using Blog.Service.Models.Blog;
 using FileStorage.Service.Service;
@@ -6,6 +7,7 @@ using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
+using System.Text.Json;
 
 namespace Blog.Service.Services.Implementation
 {
@@ -54,6 +56,13 @@ namespace Blog.Service.Services.Implementation
                 PhotoUrl = photoUrl,
             };
             _context.Add(blog);
+            var @event = new BlogCreateEvent(blogId, blog.UserId);
+            _context.Add(new VideoProcessEvent
+            {
+                EventData = JsonSerializer.Serialize(@event),
+                EventType = nameof(BlogCreateEvent),
+                CorrelationId = blogId,
+            });
             await _context.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync(GetBlogByUserIdKey(model.UserId));
             return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());

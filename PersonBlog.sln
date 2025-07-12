@@ -8,12 +8,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решен
 		docker-compose.yml = docker-compose.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{7BA53BDB-F42A-4016-AD99-C25468CDDAC8}"
-	ProjectSection(SolutionItems) = preProject
-		nginx-frontend-dev.conf = nginx-frontend-dev.conf
-		nginx.local-debug.conf = nginx.local-debug.conf
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Profile.Test", "Profile.Test\Profile.Test.csproj", "{A650D071-A346-4308-9C7D-D2AF36278CFF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlogService", "BlogService", "{4C3204E5-80AA-444F-8BBE-2844F3C33A0A}"
@@ -239,7 +233,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{7BA53BDB-F42A-4016-AD99-C25468CDDAC8} = {46B45E6F-2994-42A8-9FEB-69C8D854785E}
 		{AB4DA132-A80F-4024-9942-02D09B303F84} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
 		{897C553C-1BAD-4512-A727-5CC00649F5EC} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
 		{2A719AA6-294D-D9D1-BA70-15101C6A2713} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}

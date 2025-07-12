@@ -1,10 +1,12 @@
 ﻿using Shared;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Authentication.Domain.Entities;
 
 public class Token : IAuthEntity
 {
+    [Key]
     public Guid Id { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.Now;
@@ -12,7 +14,6 @@ public class Token : IAuthEntity
     public Guid AppUserId { get; set; }
 
     public string Login { get; set; }
-
     public Guid RoleId { get; set; }
     public string TokenType { get; set; } = null!;
 
@@ -32,6 +33,7 @@ public static class TokenExtensions
     {
         return new TokenModel
         {
+            Id = token.Id,
             CreatedAt = token.CreatedAt,
             ExpiredAt = token.ExpiredAt,
             Login = token.Login,

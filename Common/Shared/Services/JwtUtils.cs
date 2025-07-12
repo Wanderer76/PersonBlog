@@ -12,6 +12,7 @@ namespace Shared.Services
             var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
             return new TokenModel
             {
+                Id = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.Id).Value),
                 RoleId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.RoleId).Value),
                 UserId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.UserId).Value),
                 Type = jwtToken.Claims.First(x => x.Type == AppClaimTypes.Type).Value,
@@ -25,6 +26,7 @@ namespace Shared.Services
         {
             var accessClaims = new List<Claim>
             {
+                new Claim(AppClaimTypes.Id, access.Id.ToString()),
                 new Claim(AppClaimTypes.RoleId, access.RoleId.ToString()),
                 new Claim(AppClaimTypes.Login,access.Login),
                 new Claim(AppClaimTypes.UserId,access.UserId.ToString()),
@@ -34,6 +36,7 @@ namespace Shared.Services
             };
             var refreshClaims = new List<Claim>
             {
+                new Claim(AppClaimTypes.Id, refresh.Id.ToString()),
                 new Claim(AppClaimTypes.RoleId, refresh.RoleId.ToString()),
                 new Claim(AppClaimTypes.Login,refresh.Login),
                 new Claim(AppClaimTypes.UserId,refresh.UserId.ToString()),

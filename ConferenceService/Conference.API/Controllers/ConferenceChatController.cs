@@ -25,7 +25,7 @@ namespace Conference.API.Controllers
         [HttpPost("sendMessage")]
         public async Task SendMessage([FromBody] CreateMessageForm messageForm)
         {
-            var sessionId = await _userSession.GetUserSessionAsync();
+            var sessionId = await _userSession.GetCurrentUserAsync();
             var result = await _conferenceChatService.CreateMessageAsync(sessionId.UserId.Value, messageForm);
             await _hubContext.Clients.Group(messageForm.ConferenceId.ToString()).OnMessageSend(result);
         }

@@ -56,6 +56,11 @@ namespace Blog.API.HostedServices
                             var command = JsonSerializer.Deserialize<PostUpdateEvent>(message.EventData)!;
                             await _messageBus.PublishAsync(command);
                         }
+                        if (message.EventType == nameof(BlogCreateEvent))
+                        {
+                            var command = JsonSerializer.Deserialize<BlogCreateEvent>(message.EventData)!;
+                            await _messageBus.PublishAsync(command);
+                        }
 
                         await dbContext.SaveChangesAsync();
                     }

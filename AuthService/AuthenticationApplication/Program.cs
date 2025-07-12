@@ -1,7 +1,10 @@
 using Authentication.Peristence;
 using Authentication.Service;
+using Authentication.Service.Service;
+using Blog.Contracts.Events;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using MessageBus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,11 @@ builder.Services.AddHttpClient("Blog", x =>
 });
 builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddMessageBus(builder.Configuration)
+    .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(cfg =>
+    {
+        cfg.QueueName = "auth-blog";
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

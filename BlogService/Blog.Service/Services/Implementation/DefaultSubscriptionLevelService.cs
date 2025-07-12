@@ -76,7 +76,7 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<IEnumerable<SubscriptionLevelModel>> GetAllSubscriptionsAsync()
         {
-            var currentUser = await _userSession.GetUserSessionAsync();
+            var currentUser = await _userSession.GetCurrentUserAsync();
 
             var blogId = await _readWriteRepository.Get<PersonBlog>()
                 .Where(x => x.UserId == currentUser.UserId)

@@ -43,12 +43,15 @@ namespace Authentication.Service.Service.Implementation
         public async Task<AuthResponse> GenerateTokenAsync(AppUser user)
         {
             var (accessToken, refreshToken) = CreateTokenForUser(user);
+            //var blog = await _httpClientFactory.CreateClient("Blog").GetAsync($"Blog/hasBlog/{user.Id}");
+            //Guid? blogId = blog.IsSuccessStatusCode
+            //    ? await JsonSerializer.DeserializeAsync<Guid?>(blog.Content.ReadAsStream())
+            //    : null;
 
-            var blog = await _httpClientFactory.CreateClient("Blog").GetAsync($"Blog/hasBlog/{user.Id}");
-            Guid? blogId = blog.IsSuccessStatusCode
-                ? await JsonSerializer.DeserializeAsync<Guid?>(blog.Content.ReadAsStream())
-                : null;
-
+            var blogId = await _context.Get<AppProfile>()
+                .Where(x => x.UserId == user.Id)
+                .Select(x => x.BlogId)
+                .FirstOrDefaultAsync();
 
             var accessTokenModel = accessToken.ToTokenModel(blogId);
             var refreshTokenModel = refreshToken.ToTokenModel(blogId);
@@ -70,7 +73,7 @@ namespace Authentication.Service.Service.Implementation
                 Login = user.Login,
                 CreatedAt = DateTimeOffset.UtcNow,
                 ExpiredAt = DateTimeOffset.UtcNow.AddDays(10),
-                RoleId = user.AppUserRoles.First().UserRoleId
+                RoleId = user.AppUserRoles.First().UserRoleId,
             };
             var refreshToken = new Token
             {
@@ -107,6 +110,7 @@ namespace Authentication.Service.Service.Implementation
         {
             CreateTokenForUser(user);
 
+            var tokenId = claims.ContainsKey(AppClaimTypes.Id) ? Guid.Parse(claims[AppClaimTypes.Id]) : Guid.Empty;
             var blogId = claims.ContainsKey(AppClaimTypes.BlogId) ? Guid.Parse(claims[AppClaimTypes.BlogId]) : Guid.Empty;
             var roleId = claims.ContainsKey(AppClaimTypes.RoleId) ? Guid.Parse(claims[AppClaimTypes.RoleId]) : user.AppUserRoles.First().UserRoleId;
             var userId = claims.ContainsKey(AppClaimTypes.UserId) ? Guid.Parse(claims[AppClaimTypes.UserId]) : user.Id;
@@ -114,6 +118,7 @@ namespace Authentication.Service.Service.Implementation
 
             var accessModel = new TokenModel
             {
+                Id = tokenId,
                 CreatedAt = DateTimeService.Now(),
                 ExpiredAt = DateTimeOffset.UtcNow.AddMonths(1),
                 BlogId = blogId,
@@ -125,6 +130,7 @@ namespace Authentication.Service.Service.Implementation
 
             var refreshModel = new TokenModel
             {
+                Id = tokenId,
                 CreatedAt = DateTimeService.Now(),
                 ExpiredAt = DateTimeService.Now().AddYears(4),
                 BlogId = blogId,

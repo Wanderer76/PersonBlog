@@ -15,7 +15,7 @@ builder.Services.AddSearchService(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
     {
-        cfg.Name = "post-search-sync";
+        cfg.QueueName = "post-search-sync";
         cfg.Durable = true;
         cfg.Exchange = new MessageBus.Models.ExchangeParam
         {

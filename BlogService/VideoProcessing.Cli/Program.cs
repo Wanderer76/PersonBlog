@@ -15,7 +15,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<CombineFileChunksCommand, VideoChunksCombinerService>(h=> 
     {
-        h.Name = "combine-chunks";
+        h.QueueName = "combine-chunks";
         h.Exchange = new ExchangeParam
         {
             Name = "video-event",
@@ -24,7 +24,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     })
     .AddSubscription<ConvertVideoCommand, ProcessVideoToHls>(x =>
     {
-        x.Name = "video-convert";
+        x.QueueName = "video-convert";
         x.Exchange = new ExchangeParam
         {
             Name = "video-event",

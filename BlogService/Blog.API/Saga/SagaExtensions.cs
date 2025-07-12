@@ -13,7 +13,7 @@ namespace Blog.API.Saga
             return builder
                 .AddSubscription<UserViewedSyncEvent, SyncProfileViewsHandler>(x =>
                 {
-                    x.Name = "video-sync";
+                    x.QueueName = "video-sync";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "view-reacting",
@@ -22,7 +22,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<UserReactionSyncEvent, SyncProfileViewsHandler>(x =>
                 {
-                    x.Name = "video-sync";
+                    x.QueueName = "video-sync";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "view-reacting",
@@ -31,7 +31,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<CombineFileChunksCommand, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue-chunks-command";
+                    x.QueueName = "saga-queue-chunks-command";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
@@ -40,7 +40,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<ChunksCombinedResponse, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue-chunks-response";
+                    x.QueueName = "saga-queue-chunks-response";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
@@ -49,7 +49,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<VideoConvertedResponse, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue-video";
+                    x.QueueName = "saga-queue-video";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
@@ -58,7 +58,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<VideoPublishedResponse, VideoProcessSagaHandler>(x =>
                 {
-                    x.Name = "saga-queue-publish";
+                    x.QueueName = "saga-queue-publish";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",
@@ -67,7 +67,7 @@ namespace Blog.API.Saga
                 })
                 .AddSubscription<VideoReadyToPublishEvent, VideoReadyToPublishEventHandler>(x =>
                 {
-                    x.Name = "saga-queue-publish";
+                    x.QueueName = "saga-queue-publish";
                     x.Exchange = new ExchangeParam
                     {
                         Name = "video-event",

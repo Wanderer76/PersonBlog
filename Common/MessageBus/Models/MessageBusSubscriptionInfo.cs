@@ -59,7 +59,7 @@
 
     public class QueueParams
     {
-        public string Name { get; set; }
+        public string QueueName { get; set; }
         public bool Durable { get; set; } = true;
         public bool Exclusive { get; set; }
         public bool AutoDelete { get; set; }

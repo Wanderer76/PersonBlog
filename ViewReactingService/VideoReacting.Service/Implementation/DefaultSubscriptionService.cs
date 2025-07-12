@@ -26,7 +26,7 @@ namespace VideoReacting.Service.Implementation
 
         public async Task<HasSubscriptionModel> CheckCurrentUserToSubscriptionAsync(Guid blogId)
         {
-            var currentUser = await _userSession.GetUserSessionAsync();
+            var currentUser = await _userSession.GetCurrentUserAsync();
             var hasSubscription = currentUser.UserId.HasValue
                 ? await _readWriteRepository.Get<SubscribedChanel>()
                 .Where(x => x.UserId == currentUser.UserId.Value)
@@ -58,7 +58,7 @@ namespace VideoReacting.Service.Implementation
 
         public async Task SubscribeToBlogAsync(Guid blogId)
         {
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
             if (!user.UserId.HasValue)
             {
                 throw new ArgumentException();
@@ -88,7 +88,7 @@ namespace VideoReacting.Service.Implementation
 
         public async Task UnSubscribeToBlogAsync(Guid blogId)
         {
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
             var hasActiveSubscription = await _readWriteRepository.Get<SubscribedChanel>()
                 .Where(x => x.UserId == user.UserId.Value && x.BlogId == blogId)
                 .FirstOrDefaultAsync();

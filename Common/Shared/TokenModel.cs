@@ -4,6 +4,7 @@ namespace Shared
 {
     public class TokenModel
     {
+        public Guid Id { get; set; }
         public string Login { get; set; }
         public Guid UserId { get; set; }
         [JsonPropertyName("nbf")]

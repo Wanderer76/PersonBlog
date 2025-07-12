@@ -9,14 +9,14 @@ public class AppProfile : BaseEntity, IAuthEntity
     public Guid  Id { get; set; }
     
     [Required]
-    public string FirstName { get; set; } = string.Empty;
+    public string FirstName { get; set; }
 
     [Required]
-    public string SurName { get; set; } = string.Empty;
+    public string SurName { get; set; }
 
     [Required]
     [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    public string Email { get; set; }
 
     public string? LastName { get; set; }
 
@@ -25,6 +25,8 @@ public class AppProfile : BaseEntity, IAuthEntity
     public Guid UserId { get; set; }
     public string? PhotoUrl { get; set; }
     public ProfileState ProfileState { get; set; }
+
+    public Guid? BlogId { get; set; }
 
     //public List<ProfileSubscription> PaymentSubscriptions { get; set; } = [];
 

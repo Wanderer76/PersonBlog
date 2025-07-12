@@ -31,7 +31,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     .AddVideoConvertSaga()
     .AddSubscription<SubscribeCreateEvent, SubscribeHandlers>(x =>
     {
-        x.Name = "subscribers-sync";
+        x.QueueName = "subscribers-sync";
         x.Exchange = new ExchangeParam
         {
             Name = "user-subscribe",
@@ -39,7 +39,7 @@ builder.Services.AddMessageBus(builder.Configuration)
         };
     }).AddSubscription<SubscribeCancelEvent, SubscribeHandlers>(x =>
     {
-        x.Name = "subscribers-sync";
+        x.QueueName = "subscribers-sync";
         x.Exchange = new ExchangeParam
         {
             Name = "user-subscribe",

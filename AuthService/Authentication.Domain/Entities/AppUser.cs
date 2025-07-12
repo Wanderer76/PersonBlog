@@ -5,9 +5,10 @@ namespace Authentication.Domain.Entities;
 public class AppUser : IAuthEntity
 {
     [Key] public Guid Id { get; set; }
-    [Required] public string Login { get; set; } = string.Empty;
+    [Required] public string Login { get; set; }
 
-    [Required] [MinLength(6)] public string Password { get; set; } = string.Empty;
+    [Required] 
+    public string Password { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset LastAuthenticate { get; set; }

@@ -26,11 +26,11 @@ builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<VideoViewEvent, VideoViewEventHandler>(x =>
     {
-        x.Name = QueueConstants.QueueName;
+        x.QueueName = QueueConstants.QueueName;
         x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };
     }) .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
     {
-        cfg.Name = "userReaction-post-sync";
+        cfg.QueueName = "userReaction-post-sync";
         cfg.Durable = true;
         cfg.Exchange = new MessageBus.Models.ExchangeParam
         {

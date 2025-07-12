@@ -30,7 +30,7 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<Result<PlayListViewModel>> AddVideoToPlayListAsync(PlayListItemAddRequest playListItems)
         {
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
             user.AssertFound();
             var key = new PlayListCacheKey(playListItems.PlayListId);
 
@@ -95,7 +95,7 @@ namespace Blog.Service.Services.Implementation
             {
                 return Result<PostCommonModel>.Failure(new("404", "Не найден плейлист"));
             }
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
             var userBlogId = await _repository.Get<PersonBlog>()
                .Where(x => x.UserId == user.UserId.Value)
                .Select(x => x.Id)
@@ -121,7 +121,7 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<Result<PlayListDetailViewModel>> CreatePlayListAsync(PlayListCreateRequest playList)
         {
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
             user.AssertFound();
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
@@ -156,7 +156,7 @@ namespace Blog.Service.Services.Implementation
         {
             using var storage = _fileStorageFactory.CreateFileStorage();
 
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
             var userBlogId = await _repository.Get<PersonBlog>()
                 .Where(x => x.UserId == user.UserId)
                 .Select(x => x.Id)
@@ -244,7 +244,7 @@ namespace Blog.Service.Services.Implementation
 
             playlist.AssertFound();
 
-            var userId = (await _userSession.GetUserSessionAsync()).UserId;
+            var userId = (await _userSession.GetCurrentUserAsync()).UserId;
 
 
             var userBlogId = await _repository.Get<PersonBlog>()
@@ -276,7 +276,7 @@ namespace Blog.Service.Services.Implementation
                 .Include(x => x.PlayListItems)
                 .FirstOrDefaultAsync();
 
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
 
             if (playlist == null) { return Result<PlayListViewModel>.Failure(new("404", "Плейлист не найден")); }
 
@@ -296,7 +296,7 @@ namespace Blog.Service.Services.Implementation
             await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var userId = (await _userSession.GetUserSessionAsync()).UserId!.Value;
+            var userId = (await _userSession.GetCurrentUserAsync()).UserId!.Value;
 
             return new PlayListViewModel
             {
@@ -320,7 +320,7 @@ namespace Blog.Service.Services.Implementation
                 data.AssertFound();
                 return data;
             });
-            var user = await _userSession.GetUserSessionAsync();
+            var user = await _userSession.GetCurrentUserAsync();
 
             var userBlogId = await _repository.Get<PersonBlog>()
                 .Where(x => x.UserId == user.UserId.Value)

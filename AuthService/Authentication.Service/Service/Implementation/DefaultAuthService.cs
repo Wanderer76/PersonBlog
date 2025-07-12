@@ -42,7 +42,7 @@ internal class DefaultAuthService : IAuthService
         var response = await _tokenService.GenerateTokenAsync(user);
 
         await _context.SaveChangesAsync();
-        await _userSession.UpdateUserSession(response.AccessToken);
+        await _userSession.UpdateCurrentUserAsync(response.AccessToken);
 
         return Result<AuthResponse, Error>.Success(response);
     }
@@ -102,7 +102,7 @@ internal class DefaultAuthService : IAuthService
 
     public async ValueTask Logout()
     {
-        var user = await _userSession.GetUserSessionAsync();
+        var user = await _userSession.GetCurrentUserAsync();
         if (user.UserId.HasValue)
         {
             await _context.Get<Token>()
