@@ -71,6 +71,7 @@ namespace Blog.API.Handlers
             _repository.Add(new VideoProcessEvent { EventData = JsonSerializer.Serialize(postUpdateEvent), EventType = nameof(PostUpdateEvent) });
             await _repository.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
+            await _cacheService.RemoveCachedDataAsync($"VideoMetadata:{post.Id}");
             return post;
         }
     }

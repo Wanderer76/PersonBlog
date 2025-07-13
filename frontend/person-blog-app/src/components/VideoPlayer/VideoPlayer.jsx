@@ -4,12 +4,14 @@ import 'video.js/dist/video-js.css';
 import './qualitySelector/plugin.js';
 import 'hls.js';
 import './Player.css';
+import { BaseApUrl } from '../../scripts/apiMethod.js';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
 export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay, onEnded }) => {
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
 
+  const url =  `${BaseApUrl}/video/Video/video/v2/${path.postId}/chunks/${path.objectName}`;
   const options = {
     autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,
@@ -38,7 +40,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
       fullscreenToggle: true
     },
     sources: {
-      src: path.url,
+      src: url,
     }
   };
 

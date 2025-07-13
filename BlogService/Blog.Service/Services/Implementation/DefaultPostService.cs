@@ -86,7 +86,7 @@ namespace Blog.Service.Services.Implementation
                 await _cacheService.SetCachedDataAsync($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
             }
 
-            return Result<PostFileMetadataModel, ErrorList>.Success(new PostFileMetadataModel(
+            return new PostFileMetadataModel(
                 fileMetadata.ContentType,
                 fileMetadata.Length,
                 fileMetadata.Name,
@@ -94,7 +94,7 @@ namespace Blog.Service.Services.Implementation
                 fileMetadata.Id,
                 fileMetadata.ObjectName,
                 await _fileStorageFactory.CreateFileStorage().GetFileUrlAsync(postId, post.PreviewId.ToString()),
-                postId));
+                postId);
         }
 
         public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
@@ -280,6 +280,20 @@ namespace Blog.Service.Services.Implementation
             _context.Attach(post);
             post.Title = postEditDto.Title;
             post.Description = postEditDto.Description;
+
+            var postUpdateEvent = new PostUpdateEvent
+            {
+                BlogId = post.BlogId,
+                CreatedAt = post.CreatedAt,
+                Description = post.Description,
+                PostId = post.Id,
+                Title = post.Title,
+                UpdateType = UpdateType.Update,
+                ViewCount = post.ViewCount
+            };
+
+            _context.Add(new VideoProcessEvent { EventData = JsonSerializer.Serialize(postUpdateEvent), EventType = nameof(PostUpdateEvent), Id = GuidService.GetNewGuid() });
+
             await _context.SaveChangesAsync();
 
             var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await storage.GetFileUrlAsync(post.Id, post.PreviewId);
@@ -305,6 +319,7 @@ namespace Blog.Service.Services.Implementation
                         );
 
             await _cacheService.SetCachedDataAsync($"PostModel:{result.Id}", result, TimeSpan.FromHours(10));
+            await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
 
             return result;
         }
@@ -359,6 +374,7 @@ namespace Blog.Service.Services.Implementation
             return cacheData;
         }
 
+        [Obsolete]
         public Task SetVideoViewed(ViewedVideoModel value)
         {
             throw new NotImplementedException();
@@ -481,6 +497,35 @@ namespace Blog.Service.Services.Implementation
         public Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync()
         {
             return Task.FromResult(Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName())));
+        }
+
+        public async Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId)
+        {
+            var currentUser = await _userSession.GetCurrentUserAsync();
+
+            var post = await _context.Get<Post>()
+                .FirstOrDefaultAsync(x => x.Id == postId);
+
+            if(post == null)
+            {
+                return new Error("Пост не найден");
+            }
+
+            if (currentUser.BlogId != post.BlogId)
+            {
+                return new Error("Пост не относится к вашему блогу");
+            }
+
+            return new PostEditViewModel(
+            
+                post.Id,
+                post.Title,
+                post.Description,
+                post.PreviewId,
+                post.Visibility,
+                post.PaymentSubscriptionId
+            );
+
         }
     }
 }

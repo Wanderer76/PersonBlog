@@ -133,6 +133,16 @@ namespace Blog.API.Controllers
             }
         }
 
+        [HttpGet("edit/{postId:guid}")]
+        [Authorize]
+        public async Task<IActionResult> EditPost(Guid postId)
+        {
+            var result = await _postService.GetPostUpdateModelAsync(postId);
+            if (result.ISSuccess)
+                return Ok(result.Value);
+            return BadRequest(result.Error);
+        }
+
         [HttpPost("edit")]
         [Authorize]
         public async Task<IActionResult> EditPost([FromForm] PostEditForm form)

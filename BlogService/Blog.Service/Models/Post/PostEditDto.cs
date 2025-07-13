@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Blog.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace Blog.Service.Models.Post
 {
@@ -17,6 +18,26 @@ namespace Blog.Service.Models.Post
             Description = description;
             Title = title;
             PreviewId = previewId;
+        }
+    }
+
+    public class PostEditViewModel
+    {
+        public Guid Id { get; }
+        public string Title { get; }
+        public string Description { get; }
+        public string PreviewId { get; }
+        public PostVisibility Visibility { get; }
+        public Guid? PaymentSubscriptionId { get; }
+
+        public PostEditViewModel(Guid id, string title, string description, string previewId, PostVisibility visibility, Guid? paymentSubscriptionId)
+        {
+            Id = id;
+            Title = title;
+            Description = description;
+            PreviewId = previewId;
+            Visibility = visibility;
+            PaymentSubscriptionId = paymentSubscriptionId;
         }
     }
 }

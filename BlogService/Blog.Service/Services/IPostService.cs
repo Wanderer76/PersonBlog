@@ -32,5 +32,6 @@ namespace Blog.Service.Services
         Task SetReactionToPost(ReactionCreateModel value);
         Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
         Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync();
+        Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId);
     }
 }

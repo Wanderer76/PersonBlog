@@ -220,10 +220,10 @@ const ProfilePage = () => {
                 <div className="avatarSection">
 
                     <button className="btn btnSecondary" onClick={() => {
-                        if(blogId.current){
-
+                        if (blogId.current) {
+                            navigate('blog/edit')
                         }
-                        else{
+                        else {
                             navigate('blog/create');
                         }
                     }}>
@@ -337,7 +337,7 @@ const CreatePostCard = function ({ post, lastPostRef, navigate, handleRemove }) 
                         <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="postActions">
-                        <button className="btn btnPrimary">Редактировать</button>
+                        <button className="btn btnPrimary" onClick={() => navigate(`post/edit/${post.id}`)}>Редактировать</button>
                         <button className="btn btnSecondary" onClick={() => handleRemove(post.id)}>Удалить</button>
                     </div>
                 </div>

@@ -140,6 +140,7 @@ namespace Blog.Service.Services.Implementation
             var playlist = new PlayList(playList.Title, blogId, thumbnail, playList.PostIds);
             _repository.Add(playlist);
             await _repository.SaveChangesAsync();
+            await _cacheService.RemoveCachedDataAsync(new PlayListCacheKey(blogId));
 
             var result = new PlayListDetailViewModel
             {

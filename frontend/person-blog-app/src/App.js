@@ -6,7 +6,6 @@ import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
 import ChannelPage from './pages/channel/ChannelPage';
-import { deleteChunk } from './serviceWorker/IndexedDB';
 import CreateBlogForm from './components/profile/blog/CreateBlogForm';
 
 // Ленивая загрузка компонентов
@@ -16,6 +15,7 @@ const ProfilePage = lazy(() => import('./pages/profile/ProfilePage'));
 const VideoPage = lazy(() => import('./pages/post/VideoPage'));
 const ConferencePage = lazy(() => import('./pages/conference/ConferencePage'));
 const CreatePostForm = lazy(() => import('./components/profile/post/CreatePostForm'));
+const EditPostForm = lazy(() => import('./components/profile/post/EditPostForm'));
 const HistoryPage = lazy(() => import('./pages/history/HistoryPage'));
 const Header = lazy(() => import('./components/header/Header'));
 
@@ -85,6 +85,7 @@ function App() {
                 <Route path="/profile" >
                   <Route index element={<ProfilePage />} />
                   <Route path="post/create" element={<CreatePostForm />} />
+                  <Route path="post/edit/:id" element={<EditPostForm/>} />
                   <Route path="blog/create" element={<CreateBlogForm />} />
                   <Route path="history" element={<HistoryPage />} />
                   <Route path="playList/create" element={<CreatePlaylistForm />} />
