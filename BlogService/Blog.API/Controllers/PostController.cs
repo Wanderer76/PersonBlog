@@ -121,7 +121,8 @@ namespace Blog.API.Controllers
                 Video = form.Video,
                 Photos = form.Files,
                 IsPartial = form.IsPartial,
-                Visibility = form.Visibility
+                Visibility = form.Visibility,
+                Thumbnail = form.Thumbnail
             });
             if (result.IsSuccess)
             {

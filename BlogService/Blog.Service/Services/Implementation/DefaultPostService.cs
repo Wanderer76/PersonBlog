@@ -8,6 +8,7 @@ using Blog.Service.Models.Post;
 using FileStorage.Service.Service;
 using Infrastructure.Interface;
 using Infrastructure.Services;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;
@@ -54,6 +55,12 @@ namespace Blog.Service.Services.Implementation
             }
 
             var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility);
+            if(postCreateDto.Thumbnail != null)
+            {
+                using var storage = _fileStorageFactory.CreateFileStorage();
+                var previewUrl = await storage.PutFileAsync(post.Id, GuidService.GetNewGuid(), postCreateDto.Thumbnail.OpenReadStream());
+                post.PreviewId = previewUrl;
+            }
             _context.Add(post);
             await _context.SaveChangesAsync();
 

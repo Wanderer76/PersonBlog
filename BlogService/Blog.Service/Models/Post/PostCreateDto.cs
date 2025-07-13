@@ -11,6 +11,7 @@ namespace Blog.Service.Models.Post
         public Guid? SubscriptionLevelId { get; set; }
         public PostType Type { get; set; }
         public IFormFile? Video { get; set; }
+        public IFormFile? Thumbnail { get; set; }
         public IFormFileCollection Photos { get; set; }
         public bool IsPartial { get; set; }
         public PostVisibility Visibility { get; set; }

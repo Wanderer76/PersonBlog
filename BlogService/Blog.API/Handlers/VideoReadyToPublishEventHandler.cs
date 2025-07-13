@@ -50,7 +50,8 @@ namespace Blog.API.Handlers
             }
             else
             {
-                post.PreviewId = @event.PreviewId;
+                if (@event.PreviewId != null)
+                    post.PreviewId = @event.PreviewId;
                 fileMetadata.IsProcessed = false;
                 fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
                 fileMetadata.Duration = @event.Duration;

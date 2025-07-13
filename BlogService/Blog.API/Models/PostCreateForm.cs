@@ -11,6 +11,7 @@ namespace Blog.API.Models
         public PostType Type { get; set; }
         public IFormFile? Video { get; set; }
         public IFormFile? PreviewId { get; set; }
+        public IFormFile? Thumbnail { get; set; }
         public IFormFileCollection? Files { get; set; }
         public PostVisibility Visibility { get; set; }
         public bool IsPartial { get; set; }

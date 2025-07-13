@@ -7,7 +7,7 @@ import { getAccessToken, JwtTokenService } from "../../../scripts/TokenStrorage"
 
 const CreatePostForm = function () {
 
-    const [postForm, setPostForm] = useState({ type: 1, title: "", description: "", video: null });
+    const [postForm, setPostForm] = useState({ type: 1, title: null, description: null, video: null });
     const [uploadProgress, setUploadProgress] = useState(0);
     const videoRef = useRef(null);
     const navigate = useNavigate();
@@ -17,7 +17,7 @@ const CreatePostForm = function () {
 
     function updateForm(event) {
         const key = event.target.name;
-        const value = key === 'video' ? event.target.files[0] : event.target.value;
+        const value = (key === 'video' || key === 'thumbnail') ? event.target.files[0] : event.target.value;
         setPostForm((prev) => ({
             ...prev,
             [key]: value
@@ -41,6 +41,7 @@ const CreatePostForm = function () {
                 formData.append(key, postForm[key]);
             }
         });
+
 
         await API.post(url, formData, {
             headers: {
@@ -158,15 +159,39 @@ const CreatePostForm = function () {
                             onChange={updateForm}
                         />
                     </div>
-
-                    <div className="uploadArea" onClick={() => document.querySelector('.fileInput').click()}>
+                    <div className="formGroup">
+                        <label>Превью (миниатюра)</label>
+                        <div className="uploadThumbnail" onClick={() => document.querySelector('.thumbnailInput').click()}>
+                            {postForm.thumbnail ? (
+                                <img
+                                    src={URL.createObjectURL(postForm.thumbnail)}
+                                    alt="Превью"
+                                    className="thumbnailPreview"
+                                />
+                            ) : (
+                                <>
+                                    <span>📷</span>
+                                    <p>Выберите изображение</p>
+                                </>
+                            )}
+                        </div>
+                        <input
+                            name="thumbnail"
+                            type="file"
+                            className="thumbnailInput fileInput"
+                            accept="image/*"
+                            hidden
+                            onChange={updateForm}
+                        />
+                    </div>
+                    <div className="uploadArea" onClick={() => document.querySelector('.videoInput').click()}>
                         <div className="cameraIcon">🎥</div>
                         <h3>Выберите файл для загрузки</h3>
                         <p>или перетащите видео файл</p>
                         <input
                             name='video'
                             type="file"
-                            className="fileInput"
+                            className="videoInput fileInput"
                             accept=".mp4,.mkv"
                             hidden
                             onChange={(e) => {
