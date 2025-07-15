@@ -23,7 +23,7 @@ namespace Infrastructure.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var requestToken = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(' ').Last();
+            var requestToken = context.Request.Headers.Authorization.FirstOrDefault()?.Split(' ').Last();
 
             if (requestToken != null)
             {

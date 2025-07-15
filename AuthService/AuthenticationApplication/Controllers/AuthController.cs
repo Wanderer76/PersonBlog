@@ -1,8 +1,8 @@
 ﻿using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
-using Infrastructure.Interface;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthenticationApplication.Controllers;
@@ -43,7 +43,6 @@ public class AuthController : BaseController
         var response = await _authService.Authenticate(loginModel);
         if (response.IsSuccess)
         {
-            await _userSession.UpdateCurrentUserAsync(response.Value.AccessToken);
             return Ok(response.Value);
         }
         else
@@ -60,7 +59,6 @@ public class AuthController : BaseController
         var response = await _authService.Refresh(refreshToken);
         if (response.IsSuccess)
         {
-            await _userSession.UpdateCurrentUserAsync(response.Value.AccessToken);
             return Ok(response.Value);
         }
         else

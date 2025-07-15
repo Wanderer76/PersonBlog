@@ -1,7 +1,7 @@
 using Conference.Domain.Models;
 using Conference.Domain.Services;
-using Infrastructure.Interface;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

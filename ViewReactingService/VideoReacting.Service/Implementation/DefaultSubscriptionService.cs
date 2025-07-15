@@ -1,4 +1,4 @@
-﻿using Infrastructure.Interface;
+﻿using Infrastructure.Services;
 using MessageBus;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;

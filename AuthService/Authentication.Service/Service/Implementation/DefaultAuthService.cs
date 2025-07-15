@@ -3,7 +3,7 @@ using Authentication.Domain.Interfaces.Models.Profile;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
-using Infrastructure.Interface;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -42,7 +42,6 @@ internal class DefaultAuthService : IAuthService
         var response = await _tokenService.GenerateTokenAsync(user);
 
         await _context.SaveChangesAsync();
-        await _userSession.UpdateCurrentUserAsync(response.AccessToken);
 
         return Result<AuthResponse, Error>.Success(response);
     }

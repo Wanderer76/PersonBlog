@@ -1,4 +1,4 @@
-﻿using Infrastructure.Interface;
+﻿using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -25,7 +25,7 @@ namespace Infrastructure.Extensions
         }
         public static void AddUserSessionServices(this IServiceCollection services)
         {
-            services.AddScoped<ICurrentUserService, DefaultUserSession>();
+            services.AddScoped<ICurrentUserService, HttpContextUserService>();
             services.AddHttpContextAccessor();
         }
     }

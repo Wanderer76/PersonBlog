@@ -6,7 +6,6 @@ using Blog.Persistence.Repository.Quries;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using FileStorage.Service.Service;
-using Infrastructure.Interface;
 using Infrastructure.Services;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;

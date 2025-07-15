@@ -1,7 +1,6 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models;
-using Infrastructure.Interface;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;

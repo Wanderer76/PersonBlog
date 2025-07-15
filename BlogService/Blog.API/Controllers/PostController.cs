@@ -7,6 +7,7 @@ using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using Blog.Service.Services;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Services;
@@ -21,13 +22,14 @@ namespace Blog.API.Controllers
         private readonly IUserPostService _userPostService;
         private readonly IVideoService _videoService;
         private readonly ISubscriptionLevelService _subscriptionLevelService;
-
-        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService) : base(logger)
+        private readonly ICurrentUserService _currentUserService;
+        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService) : base(logger)
         {
             _postService = postService;
             _userPostService = userPostService;
             _videoService = videoService;
             _subscriptionLevelService = subscriptionLevelService;
+            _currentUserService = currentUserService;
         }
 
         [HttpGet("manifest/{postId:guid}")]
@@ -68,23 +70,6 @@ namespace Blog.API.Controllers
                 RemoteIp = remoteIp,
                 UserId = userId
             });
-
-            //var session = GetUserSession();
-            //if (session != null)
-            //{
-            //    var userSession = await _cache.GetCachedDataAsync<UserSession>(GetSessionKey(session!));
-            //    if (userSession != null)
-            //    {
-            //        var postViewed = userSession.PostViews.Where(x => x.PostId == postId).FirstOrDefault();
-            //        if (postViewed != null)
-            //        {
-            //            postViewed.IsViewed = true;
-            //            postViewed.IsLike = isLike;
-            //            await _cache.SetCachedDataAsync(GetSessionKey(session), userSession, TimeSpan.FromMinutes(10));
-            //        }
-            //    }
-            //}
-
             return Ok();
         }
 
@@ -111,10 +96,10 @@ namespace Blog.API.Controllers
         [Authorize]
         public async Task<IActionResult> AddPostToBlog([FromForm] PostCreateForm form)
         {
-            var userId = HttpContext.GetUserFromContext();
+            var user = await _currentUserService.GetCurrentUserAsync();
             var result = await _postService.CreatePostAsync(new PostCreateDto
             {
-                UserId = userId,
+                UserId = user.UserId!.Value,
                 Type = PostType.Video,
                 Text = form.Description?.Trim(),
                 Title = form.Title.Trim(),

@@ -1,5 +1,4 @@
 ﻿using Blog.Domain.Entities;
-using Infrastructure.Interface;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using ReadContext = Shared.Persistence.IReadRepository<Blog.Domain.Entities.IBlogEntity>;

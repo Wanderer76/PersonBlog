@@ -1,8 +1,8 @@
 ﻿using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Conference.Service.Hubs;
-using Infrastructure.Interface;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;

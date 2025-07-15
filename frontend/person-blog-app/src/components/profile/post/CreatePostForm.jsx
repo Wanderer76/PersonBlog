@@ -2,254 +2,226 @@ import React, { useEffect, useRef, useState } from "react";
 import './CreatePostForm.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
-import { saveChunk, deleteChunk } from "../../../serviceWorker/IndexedDB";
-import { getAccessToken, JwtTokenService } from "../../../scripts/TokenStrorage";
+import { saveChunk } from "../../../serviceWorker/IndexedDB";
+import { 
+  TitleInput, 
+  ThumbnailUpload, 
+  DescriptionTextarea, 
+  PrivacySelect, 
+  ActionButtons 
+} from "./CommonComponents";
 
 const CreatePostForm = function () {
+  const [postForm, setPostForm] = useState({ 
+    type: 1, 
+    title: "", 
+    description: "", 
+    video: null,
+    thumbnail: null
+  });
+  
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createModel, setCreateModel] = useState(null);
+  const videoRef = useRef(null);
+  const navigate = useNavigate();
+  const CHUNK_SIZE = 10 * 1024 * 1024;
 
-    const [postForm, setPostForm] = useState({ type: 1, title: null, description: null, video: null });
-    const [uploadProgress, setUploadProgress] = useState(0);
-    const videoRef = useRef(null);
-    const navigate = useNavigate();
-    const CHUNK_SIZE = 10 * 1024 * 1024;
-    const isCreateDisabled = useRef(false);
-    const [createModel, setCreateModel] = useState(null);
+  function updateForm(event) {
+    const key = event.target.name;
+    const value = (key === 'video' || key === 'thumbnail') 
+      ? event.target.files[0] 
+      : event.target.value;
+      
+    setPostForm(prev => ({ ...prev, [key]: value }));
+  }
 
-    function updateForm(event) {
-        const key = event.target.name;
-        const value = (key === 'video' || key === 'thumbnail') ? event.target.files[0] : event.target.value;
-        setPostForm((prev) => ({
-            ...prev,
-            [key]: value
-        }));
+  useEffect(() => {
+    API.get("/profile/api/Post/create")
+      .then(response => setCreateModel(response.data));
+  }, []);
+
+  async function sendForm() {
+    if (!postForm.title.trim()) {
+      alert("Пожалуйста, добавьте название видео");
+      return;
     }
+    
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
+    try {
+      const url = "/profile/api/Post/create";
+      const formData = new FormData();
+      let postId = null;
 
-    useEffect(() => {
-        const url = "/profile/api/Post/create";
-        API.get(url).then(response => {
-            setCreateModel(response.data);
-        });
-    }, []);
+      Object.keys(postForm).forEach(key => {
+        if (key !== "video") formData.append(key, postForm[key] ?? '');
+      });
 
-    async function sendForm() {
-        const url = "/profile/api/Post/create";
-        let formData = new FormData();
-        var postId = null;
+      const response = await API.post(url, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
 
-        Object.keys(postForm).forEach((key) => {
-            if (key !== "video") {
-                formData.append(key, postForm[key]);
-            }
-        });
-
-
-        await API.post(url, formData, {
-            headers: {
-                ['Content-Type']: 'multipart/form-data'
-            }
-        }).then(response => {
-            if (response.status === 200) {
-                console.log(response.data);
-                postId = response.data;
-            }
-        });
-
-        if (postForm.video !== null && postId !== null) {
-            await uploadFile(postId);
+      if (response.status === 200) {
+        postId = response.data;
+        if (postForm.video) {
+          await uploadFile(postId);
         }
-        navigate('/profile');
+      }
+    } catch (error) {
+      console.error("Ошибка создания поста:", error);
+      alert("Произошла ошибка при создании поста");
+    } finally {
+      setIsSubmitting(false);
+      navigate('/profile');
     }
+  }
 
-    async function uploadFile(postId) {
-        const file = postForm.video;
-        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  async function uploadFile(postId) {
+    const file = postForm.video;
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
-        // Получаем fileId от сервера
-        const progressResp = await API.post("/profile/api/Post/uploadProgress", {
-            postId: postId,
-            totalChunkCount: totalChunks,
-            totalSize: file.size
-        });
+    const progressResp = await API.post("/profile/api/Post/uploadProgress", {
+      postId: postId,
+      totalChunkCount: totalChunks,
+      totalSize: file.size
+    });
 
-        const progress = progressResp.data;
-        console.log("Upload progress:", progress);
+    const progress = progressResp.data;
+    let currentChunk = progress.lastUploadChunkNumber ?? 0;
+    setUploadProgress(Math.round(currentChunk / totalChunks * 100));
 
-        let currentChunk = progress.lastUploadChunkNumber ?? 0;
+    while (currentChunk < totalChunks) {
+      const start = currentChunk * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
 
-        setUploadProgress(Math.round(currentChunk / totalChunks * 100));
+      await saveChunkAndNotifySW(
+        chunk,
+        currentChunk + 1,
+        totalChunks,
+        file.name,
+        postId,
+        '.mp4',
+        file.size,
+        progress.fileId
+      );
 
-        while (currentChunk < totalChunks) {
-            const start = currentChunk * CHUNK_SIZE;
-            const end = Math.min(start + CHUNK_SIZE, file.size);
-            const chunk = file.slice(start, end);
-
-            await saveChunkAndNotifySW(
-                chunk,
-                currentChunk + 1,
-                totalChunks,
-                file.name,
-                postId,
-                '.mp4',
-                file.size,
-                progress.fileId
-            );
-
-            currentChunk++;
-            setUploadProgress(Math.round(currentChunk / totalChunks * 100));
-        }
-        alert('Видео успешно загружено!');
+      currentChunk++;
+      setUploadProgress(Math.round(currentChunk / totalChunks * 100));
     }
+  }
 
-    async function saveChunkAndNotifySW(chunk, chunkNumber, totalChunks, fileName, postId, fileExtension, totalSize, fileId) {
-        const meta = {
-            chunkNumber,
-            totalChunks,
-            fileName,
-            fileExtension,
-            postId,
-            totalSize,
-            duration: videoRef.current?.duration ?? 0,
-            contentType: "video/mp4",
-            fileId
-        };
+  async function saveChunkAndNotifySW(chunk, chunkNumber, totalChunks, fileName, 
+                                      postId, fileExtension, totalSize, fileId) {
+    const meta = {
+      chunkNumber,
+      totalChunks,
+      fileName,
+      fileExtension,
+      postId,
+      totalSize,
+      duration: videoRef.current?.duration ?? 0,
+      contentType: "video/mp4",
+      fileId
+    };
 
-        const chunkId = `${fileId}_${chunkNumber}`;
-
-        // ➡ сохраняем chunk в IndexedDB
-        await saveChunk(chunkId, chunk, meta);
-        if (meta.chunkNumber == totalChunks) {
-            navigator.serviceWorker?.controller?.postMessage({
-                type: 'UPLOAD_ALL_CHUNKS'
-            });
-        }
-
-        // // ➡ посылаем команду SW загрузить его
-        // if (navigator.serviceWorker?.controller) {
-        //     navigator.serviceWorker.controller.postMessage({
-        //         type: 'UPLOAD_CHUNK',
-        //         payload: { chunkId }
-        //     });
-        // }
+    const chunkId = `${fileId}_${chunkNumber}`;
+    await saveChunk(chunkId, chunk, meta);
+    
+    if (chunkNumber === totalChunks) {
+      navigator.serviceWorker?.controller?.postMessage({
+        type: 'UPLOAD_ALL_CHUNKS'
+      });
     }
+  }
 
-    function handleFileSelect(input) {
-        const file = input.target.files[0];
-        if (file) {
-            const videoURL = URL.createObjectURL(file);
-            if (videoRef.current) {
-                videoRef.current.src = videoURL;
-                videoRef.current.load();
-            }
-        }
+  function handleFileSelect(input) {
+    const file = input.target.files[0];
+    if (!file) return;
+    
+    // Проверка размера файла (макс. 500MB)
+    if (file.size > 500 * 1024 * 1024) {
+      alert("Файл слишком большой. Максимальный размер 500MB");
+      return;
     }
+    
+    const videoURL = URL.createObjectURL(file);
+    if (videoRef.current) {
+      videoRef.current.src = videoURL;
+      videoRef.current.load();
+    }
+  }
 
-    return (
-        <>
-            <div className="modal">
-                <div className="createPostForm">
-                    <h1>Создать видео-пост</h1>
+  return (
+    <div className="modal">
+      <div className="createPostForm">
+        <h1>Создать видео-пост</h1>
 
-                    <div className="formGroup">
-                        <label>Название</label>
-                        <input
-                            className="modalContent"
-                            type="text"
-                            placeholder="Добавьте название вашего видео"
-                            name="title"
-                            onChange={updateForm}
-                        />
-                    </div>
-                    <div className="formGroup">
-                        <label>Превью (миниатюра)</label>
-                        <div className="uploadThumbnail" onClick={() => document.querySelector('.thumbnailInput').click()}>
-                            {postForm.thumbnail ? (
-                                <img
-                                    src={URL.createObjectURL(postForm.thumbnail)}
-                                    alt="Превью"
-                                    className="thumbnailPreview"
-                                />
-                            ) : (
-                                <>
-                                    <span>📷</span>
-                                    <p>Выберите изображение</p>
-                                </>
-                            )}
-                        </div>
-                        <input
-                            name="thumbnail"
-                            type="file"
-                            className="thumbnailInput fileInput"
-                            accept="image/*"
-                            hidden
-                            onChange={updateForm}
-                        />
-                    </div>
-                    <div className="uploadArea" onClick={() => document.querySelector('.videoInput').click()}>
-                        <div className="cameraIcon">🎥</div>
-                        <h3>Выберите файл для загрузки</h3>
-                        <p>или перетащите видео файл</p>
-                        <input
-                            name='video'
-                            type="file"
-                            className="videoInput fileInput"
-                            accept=".mp4,.mkv"
-                            hidden
-                            onChange={(e) => {
-                                updateForm(e);
-                                handleFileSelect(e);
-                            }}
-                        />
-                    </div>
+        <TitleInput 
+          value={postForm.title}
+          onChange={updateForm}
+          placeholder="Добавьте название вашего видео"
+        />
 
-                    <div className="previewContainer">
-                        <video className="videoPreview" ref={videoRef} controls />
-                        <div className="progressBar">
-                            <div
-                                className="progressFill"
-                                style={{ width: `${uploadProgress}%` }}
-                            />
-                        </div>
-                    </div>
+        <ThumbnailUpload 
+          thumbnail={postForm.thumbnail}
+          onChange={updateForm}
+        />
 
-                    <div className="formGroup">
-                        <label>Описание</label>
-                        <textarea
-                            className="modalContent description"
-                            rows="4"
-                            placeholder="Добавьте описание к вашему видео"
-                            name="description"
-                            onChange={updateForm}
-                        />
-                    </div>
+        <div className="formGroup">
+          <label>Видео</label>
+          <div className="uploadArea" onClick={() => document.querySelector('.videoInput').click()}>
+            <div className="cameraIcon">🎥</div>
+            <h3>Выберите файл для загрузки</h3>
+            <p>или перетащите видео файл</p>
+            <input
+              name='video'
+              type="file"
+              className="videoInput fileInput"
+              accept=".mp4,.mkv"
+              hidden
+              onChange={(e) => {
+                updateForm(e);
+                handleFileSelect(e);
+              }}
+            />
+          </div>
+        </div>
 
-                    <div className="formGroup">
-                        <label>Настройки приватности</label>
-                        <div className="privacySettings">
-                            <select name="visibility" defaultValue={createModel?.visibility?.[0]?.value} onChange={updateForm}>
-                                {createModel?.visibility?.map((v) => {
-                                    return <option key={v.value} value={v.value}>{v.text}</option>
-                                })}
-                            </select>
-                            <span>🔒</span>
-                        </div>
-                    </div>
+        <div className="previewContainer">
+          <video className="videoPreview" ref={videoRef} controls />
+          <div className="progressBar">
+            <div
+              className="progressFill"
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        </div>
 
-                    <div className="actionButtons">
-                        <button className="btn btnSecondary" onClick={() => navigate('/profile')}>
-                            Закрыть
-                        </button>
-                        <button className="btn btnPrimary" disabled={isCreateDisabled.current} onClick={() => {
-                            isCreateDisabled.current = true;
-                            sendForm();
-                            isCreateDisabled.current = false;
-                        }}>
-                            Создать
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </>
-    );
+        <DescriptionTextarea 
+          value={postForm.description}
+          onChange={updateForm}
+          placeholder="Добавьте описание к вашему видео"
+        />
+
+        <PrivacySelect 
+          options={createModel?.visibility}
+          value={postForm.visibility}
+          onChange={updateForm}
+        />
+
+        <ActionButtons
+          onCancel={() => navigate('/profile')}
+          onSubmit={sendForm}
+          cancelText="Закрыть"
+          submitText="Создать"
+          isSubmitting={isSubmitting}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default CreatePostForm;

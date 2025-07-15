@@ -1,274 +1,219 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import './CreatePostForm.css';
-import API, { BaseApUrl } from "../../../scripts/apiMethod";
+import API from "../../../scripts/apiMethod";
 import { useNavigate, useParams } from "react-router-dom";
 import VideoPlayer from "../../VideoPlayer/VideoPlayer";
+import { 
+  TitleInput, 
+  ThumbnailEdit, 
+  DescriptionTextarea, 
+  PrivacySelect, 
+  ActionButtons 
+} from "./CommonComponents";
 
 const EditPostForm = () => {
-    const queryParam  = useParams(); // Получаем ID поста из URL
-    const [postForm, setPostForm] = useState({
-        id: queryParam.id,
-        type: 1,
-        title: "",
-        description: "",
-        visibility: 1,
-        videoUrl: "",
-        thumbnailUrl: "",
-        vidoeObjectName: "",
-        thumbnailFile: null // Новое поле для загрузки обложки
-    });
-    const [createModel, setCreateModel] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    visibility: 1,
+    thumbnailUrl: ""
+  });
+  
+  const [videoInfo, setVideoInfo] = useState({
+    objectName: ""
+  });
+  
+  const [createModel, setCreateModel] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-    // Загрузка начальных данных
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [createFormRes, postRes] = await Promise.all([
-                    API.get("/profile/api/Post/create"),
-                    API.get(`/profile/api/Post/edit/${queryParam.id}`)
-                ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [formConfig, postData] = await Promise.all([
+          API.get("/profile/api/Post/create"),
+          API.get(`/profile/api/Post/edit/${id}`)
+        ]);
 
-                const postData = postRes.data;
+        const previewData = await API.get(`/profile/api/Post/manifest/${id}`);
 
-                let previewData = { data: {} };
-                if (postData) {
-                    previewData = await API.get(`/profile/api/Post/manifest/${queryParam.id}`);
-                }
-
-                setCreateModel(createFormRes.data);
-
-                setPostForm((prev) => ({
-                    ...prev,
-                    id: postData.id,
-                    type: postData.type || 1,
-                    title: postData.title || "",
-                    description: postData.description || "",
-                    visibility: postData.visibility !== undefined ? postData.visibility : 1,
-                    videoUrl: postData.videoUrl || "",
-                    thumbnailUrl: previewData.data?.previewUrl || "",
-                    vidoeObjectName: previewData.data?.objectName || ""
-                }));
-
-            } catch (err) {
-                console.error("Ошибка при загрузке данных:", err);
-                setError("Не удалось загрузить данные поста.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [queryParam.id]);
-
-    const updateForm = (event) => {
-        const key = event.target.name;
-        const value = event.target.value;
-        setPostForm((prev) => ({
-            ...prev,
-            [key]: value
-        }));
-    };
-
-    const handleThumbnailChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setPostForm(prev => ({
-                    ...prev,
-                    thumbnailFile: file,
-                    thumbnailUrl: e.target.result // Предпросмотр
-                }));
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleUpdatePost = async () => {
-        const url = `/profile/api/Post/edit`;
-        const formData = new FormData();
-
-        // Добавляем текстовые поля
-        Object.keys(postForm).forEach((key) => {
-            if (
-                key !== "videoUrl" &&
-                key !== "thumbnailUrl" &&
-                key !== "vidoeObjectName" &&
-                key !== "thumbnailFile"
-            ) {
-                formData.append(key, postForm[key]);
-            }
+        setCreateModel(formConfig.data);
+        setFormData({
+          title: postData.data.title || "",
+          description: postData.data.description || "",
+          visibility: postData.data.visibility ?? 1,
+          thumbnailUrl: previewData.data?.previewUrl || ""
+        });
+        
+        setVideoInfo({
+          objectName: previewData.data?.objectName || ""
         });
 
-        // Если есть новый файл обложки — добавляем его
-        if (postForm.thumbnailFile) {
-            formData.append("previewId", postForm.thumbnailFile);
-        }
-
-        formData.append('id',queryParam.id);
-
-        try {
-            const response = await API.post(url, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-
-            if (response.status === 200) {
-                navigate('/profile');
-            }
-        } catch (error) {
-            console.error("Ошибка при обновлении поста:", error);
-            alert("Произошла ошибка при сохранении изменений.");
-        }
+      } catch (err) {
+        console.error("Ошибка загрузки данных:", err);
+        setError("Не удалось загрузить данные поста");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    if (isLoading) {
-        return (
-            <div className="modal">
-                <div className="loading">⏳ Загрузка данных...</div>
-            </div>
-        );
+    fetchData();
+  }, [id]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Проверка размера файла (макс. 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Размер изображения должен быть меньше 5MB");
+      return;
     }
 
-    if (error) {
-        return (
-            <div className="modal">
-                <div className="error">
-                    <h2>Ошибка</h2>
-                    <p>{error}</p>
-                    <button onClick={() => navigate(-1)} className="btn btnPrimary">Назад</button>
-                </div>
-            </div>
-        );
-    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFormData(prev => ({
+        ...prev,
+        thumbnailUrl: e.target.result,
+        thumbnailFile: file
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
+  const handleUpdatePost = async () => {
+    if (!formData.title.trim()) {
+      alert("Пожалуйста, добавьте название видео");
+      return;
+    }
+    
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
+    try {
+      const payload = new FormData();
+      payload.append('id', id);
+      payload.append('title', formData.title);
+      payload.append('description', formData.description);
+      payload.append('visibility', formData.visibility);
+      
+      if (formData.thumbnailFile) {
+        payload.append("previewId", formData.thumbnailFile);
+      }
+
+      const response = await API.post("/profile/api/Post/edit", payload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.status === 200) {
+        navigate('/profile');
+      }
+    } catch (error) {
+      console.error("Ошибка обновления:", error);
+      alert("Произошла ошибка при сохранении изменений");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
     return (
-        <div className="modal">
-            <div className="createPostForm">
-                <h1>Редактировать видео-пост</h1>
-
-                {/* Название */}
-                <div className="formGroup">
-                    <label>Название</label>
-                    <input
-                        className="modalContent"
-                        type="text"
-                        placeholder="Добавьте название вашего видео"
-                        name="title"
-                        value={postForm.title}
-                        onChange={updateForm}
-                    />
-                </div>
-
-                {/* Заставка с возможностью редактирования */}
-                <div className="formGroup">
-                    <label>Заставка видео</label>
-                    <div className="thumbnailContainer">
-                        {postForm.thumbnailUrl ? (
-                            <img
-                                src={postForm.thumbnailUrl}
-                                alt="Заставка видео"
-                                className="thumbnailImage"
-                            />
-                        ) : (
-                            <div className="thumbnailPlaceholder">
-                                <span>🖼️</span>
-                                <p>Заставка не доступна</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Кнопка выбора файла */}
-                    <div style={{ marginTop: '10px' }}>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            id="thumbnailInput"
-                            onChange={handleThumbnailChange}
-                        />
-                        <label htmlFor="thumbnailInput" className="btn btnSecondary">
-                            Выбрать новую заставку
-                        </label>
-                    </div>
-                </div>
-
-                {/* Видео через VideoPlayer */}
-                <div className="formGroup">
-                    <label>Видео</label>
-                    <div className="videoContainer">
-                        {postForm.vidoeObjectName && postForm.id ? (
-                            <VideoPlayer
-                                key={postForm.id}
-                                path={{
-                                    label: '',
-                                    
-                                    postId: postForm.id,
-                                    autoplay: false,
-                                    objectName: postForm.vidoeObjectName
-                                }}
-                            />
-                        ) : (
-                            <div className="videoPlaceholder">
-                                <span>🎥</span>
-                                <p>Видео не доступно</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="notice">
-                    Видео нельзя изменить после загрузки
-                </div>
-
-                {/* Описание */}
-                <div className="formGroup">
-                    <label>Описание</label>
-                    <textarea
-                        className="modalContent description"
-                        rows="4"
-                        placeholder="Добавьте описание к вашему видео"
-                        name="description"
-                        value={postForm.description}
-                        onChange={updateForm}
-                    />
-                </div>
-
-                {/* Приватность */}
-                <div className="formGroup">
-                    <label>Настройки приватности</label>
-                    <div className="privacySettings">
-                        <select
-                            name="visibility"
-                            value={postForm.visibility}
-                            onChange={updateForm}
-                        >
-                            {createModel?.visibility?.map((v) => (
-                                <option key={v.value} value={v.value}>
-                                    {v.text}
-                                </option>
-                            ))}
-                        </select>
-                        <span>🔒</span>
-                    </div>
-                </div>
-
-                {/* Кнопки */}
-                <div className="actionButtons">
-                    <button className="btn btnSecondary" onClick={() => navigate('/profile')}>
-                        Отменить
-                    </button>
-                    <button className="btn btnPrimary" onClick={handleUpdatePost}>
-                        Сохранить изменения
-                    </button>
-                </div>
-            </div>
-        </div>
+      <div className="modal loading-modal">
+        <div className="loading-spinner"></div>
+        <p>Загрузка данных...</p>
+      </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="modal error-modal">
+        <div className="error-content">
+          <h2>Ошибка</h2>
+          <p>{error}</p>
+          <button 
+            onClick={() => navigate(-1)} 
+            className="btn btnPrimary"
+          >
+            Назад
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal edit-post-modal">
+      <div className="createPostForm">
+        <h1>Редактировать видео-пост</h1>
+        
+        <TitleInput 
+          value={formData.title}
+          onChange={handleInputChange}
+          placeholder="Добавьте название вашего видео"
+        />
+
+        <ThumbnailEdit 
+          thumbnailUrl={formData.thumbnailUrl}
+          onChange={handleThumbnailChange}
+        />
+
+        <div className="formGroup">
+          <label>Видео</label>
+          <div className="video-preview-container">
+            {videoInfo.objectName ? (
+              <VideoPlayer
+                key={id}
+                path={{
+                  postId: id,
+                  autoplay: false,
+                  objectName: videoInfo.objectName
+                }}
+              />
+            ) : (
+              <div className="video-placeholder">
+                <span>🎥</span>
+                <p>Видео не доступно</p>
+              </div>
+            )}
+          </div>
+          <p className="notice">
+            Видео нельзя изменить после загрузки
+          </p>
+        </div>
+
+        <DescriptionTextarea 
+          value={formData.description}
+          onChange={handleInputChange}
+          placeholder="Добавьте описание к вашему видео"
+        />
+
+        <PrivacySelect 
+          options={createModel?.visibility}
+          value={formData.visibility}
+          onChange={handleInputChange}
+        />
+
+        <ActionButtons
+          onCancel={() => navigate('/profile')}
+          onSubmit={handleUpdatePost}
+          cancelText="Отменить"
+          submitText="Сохранить изменения"
+          isSubmitting={isSubmitting}
+        />
+      </div>
+    </div>
+  );
 };
 
 export default EditPostForm;
