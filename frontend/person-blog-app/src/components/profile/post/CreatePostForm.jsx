@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import './CreatePostForm.css';
+import styles from './CreatePostForm.module.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 import { saveChunk } from "../../../serviceWorker/IndexedDB";
@@ -19,7 +19,7 @@ const CreatePostForm = function () {
     video: null,
     thumbnail: null
   });
-  
+  const fileInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createModel, setCreateModel] = useState(null);
@@ -155,8 +155,8 @@ const CreatePostForm = function () {
   }
 
   return (
-    <div className="modal">
-      <div className="createPostForm">
+     <div className={styles.modal}>
+            <div className={styles.createPostForm}>
         <h1>Создать видео-пост</h1>
 
         <TitleInput 
@@ -170,36 +170,36 @@ const CreatePostForm = function () {
           onChange={updateForm}
         />
 
-        <div className="formGroup">
-          <label>Видео</label>
-          <div className="uploadArea" onClick={() => document.querySelector('.videoInput').click()}>
-            <div className="cameraIcon">🎥</div>
-            <h3>Выберите файл для загрузки</h3>
-            <p>или перетащите видео файл</p>
-            <input
-              name='video'
-              type="file"
-              className="videoInput fileInput"
-              accept=".mp4,.mkv"
-              hidden
-              onChange={(e) => {
-                updateForm(e);
-                handleFileSelect(e);
-              }}
-            />
-          </div>
-        </div>
+                      <div className={styles.formGroup}>
+                    <label>Видео</label>
+                    <div className={styles.uploadArea} onClick={() => fileInputRef.current?.click()}>
+                        <div className={styles.cameraIcon}>🎥</div>
+                        <h3>Выберите файл для загрузки</h3>
+                        <p>или перетащите видео файл</p>
+                        <input
+                            ref={fileInputRef}
+                            name='video'
+                            type="file"
+                            className={`${styles.videoInput} ${styles.fileInput}`}
+                            accept=".mp4,.mkv"
+                            hidden
+                            onChange={(e) => {
+                                updateForm(e);
+                                handleFileSelect(e);
+                            }}
+                        />
+                    </div>
+                </div>
 
-        <div className="previewContainer">
-          <video className="videoPreview" ref={videoRef} controls />
-          <div className="progressBar">
-            <div
-              className="progressFill"
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-        </div>
-
+                <div className={styles.previewContainer}>
+                    <video className={styles.videoPreview} ref={videoRef} controls />
+                    <div className={styles.progressBar}>
+                        <div
+                            className={styles.progressFill}
+                            style={{ width: `${uploadProgress}%` }}
+                        />
+                    </div>
+                </div>
         <DescriptionTextarea 
           value={postForm.description}
           onChange={updateForm}

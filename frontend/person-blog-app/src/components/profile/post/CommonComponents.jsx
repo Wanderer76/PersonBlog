@@ -1,11 +1,12 @@
-import './CreatePostForm.css';
+import { useRef } from 'react';
+import styles from './CreatePostForm.module.css';
 
 // Общий компонент для ввода названия
 export const TitleInput = ({ value, onChange, placeholder }) => (
-    <div className='formGroup'>
+    <div className={styles.formGroup}>
         <label>Название</label>
         <input
-            className="modalContent"
+            className={styles.modalContent}
             type="text"
             placeholder={placeholder}
             name="title"
@@ -16,47 +17,56 @@ export const TitleInput = ({ value, onChange, placeholder }) => (
 );
 
 // Общий компонент для миниатюры (создание)
-export const ThumbnailUpload = ({ thumbnail, onChange }) => (
-    <div className="formGroup">
-        <label>Превью (миниатюра)</label>
-        <div className="uploadThumbnail" onClick={() => document.querySelector('.thumbnailInput').click()}>
-            {thumbnail ? (
-                <img
-                    src={typeof thumbnail === 'string' ? thumbnail : URL.createObjectURL(thumbnail)}
-                    alt="Превью"
-                    className="thumbnailPreview"
-                />
-            ) : (
-                <>
-                    <span>📷</span>
-                    <p>Выберите изображение</p>
-                </>
-            )}
+export const ThumbnailUpload = ({ thumbnail, onChange }) => {
+    const fileInputRef = useRef(null);
+
+    const handleClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    return (
+        <div className={styles.formGroup}>
+            <label>Превью (миниатюра)</label>
+            <div className={styles.uploadThumbnail} onClick={handleClick}>
+                {thumbnail ? (
+                    <img
+                        src={typeof thumbnail === 'string' ? thumbnail : URL.createObjectURL(thumbnail)}
+                        alt="Превью"
+                        className={styles.thumbnailPreview}
+                    />
+                ) : (
+                    <>
+                        <span>📷</span>
+                        <p>Выберите изображение</p>
+                    </>
+                )}
+            </div>
+            <input
+                ref={fileInputRef}
+                name="thumbnail"
+                type="file"
+                className={`${styles.thumbnailInput} ${styles.fileInput}`}
+                accept="image/*"
+                hidden
+                onChange={onChange}
+            />
         </div>
-        <input
-            name="thumbnail"
-            type="file"
-            className="thumbnailInput fileInput"
-            accept="image/*"
-            hidden
-            onChange={onChange}
-        />
-    </div>
-);
+    );
+};
 
 // Общий компонент для миниатюры (редактирование)
 export const ThumbnailEdit = ({ thumbnailUrl, onChange }) => (
-    <div className="formGroup">
+    <div className={styles.formGroup}>
         <label>Заставка видео</label>
-        <div className="thumbnailContainer">
+        <div className={styles.thumbnailContainer}>
             {thumbnailUrl ? (
                 <img
                     src={thumbnailUrl}
                     alt="Заставка видео"
-                    className="thumbnailImage"
+                    className={styles.thumbnailImage}
                 />
             ) : (
-                <div className="thumbnailPlaceholder">
+                <div className={styles.thumbnailPlaceholder}>
                     <span>🖼️</span>
                     <p>Заставка не доступна</p>
                 </div>
@@ -70,7 +80,7 @@ export const ThumbnailEdit = ({ thumbnailUrl, onChange }) => (
                 id="thumbnailInput"
                 onChange={onChange}
             />
-            <label htmlFor="thumbnailInput" className="btn btnSecondary">
+            <label htmlFor="thumbnailInput" className={`${styles.btn} ${styles.btnSecondary}`}>
                 Выбрать новую заставку
             </label>
         </div>
@@ -79,10 +89,10 @@ export const ThumbnailEdit = ({ thumbnailUrl, onChange }) => (
 
 // Общий компонент для описания
 export const DescriptionTextarea = ({ value, onChange, placeholder }) => (
-    <div className="formGroup">
+    <div className={styles.formGroup}>
         <label>Описание</label>
         <textarea
-            className="modalContent description"
+            className={`${styles.modalContent} ${styles.description}`}
             rows="4"
             placeholder={placeholder}
             name="description"
@@ -94,9 +104,9 @@ export const DescriptionTextarea = ({ value, onChange, placeholder }) => (
 
 // Общий компонент для настроек приватности
 export const PrivacySelect = ({ options, value, onChange }) => (
-    <div className="formGroup">
+    <div className={styles.formGroup}>
         <label>Настройки приватности</label>
-        <div className="privacySettings">
+        <div className={styles.privacySettings}>
             <select name="visibility" value={value} onChange={onChange}>
                 {options?.map((v) => (
                     <option key={v.value} value={v.value}>
@@ -117,16 +127,16 @@ export const ActionButtons = ({
     submitText,
     isSubmitting = false
 }) => (
-    <div className="actionButtons">
+    <div className={styles.actionButtons}>
         <button
-            className="btn btnSecondary"
+            className={`${styles.btn} ${styles.btnSecondary}`}
             onClick={onCancel}
             disabled={isSubmitting}
         >
             {cancelText}
         </button>
         <button
-            className="btn btnPrimary"
+            className={`${styles.btn} ${styles.btnPrimary}`}
             onClick={onSubmit}
             disabled={isSubmitting}
         >

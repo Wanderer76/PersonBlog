@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import './CreatePostForm.css';
+import styles from './CreatePostForm.module.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate, useParams } from "react-router-dom";
 import VideoPlayer from "../../VideoPlayer/VideoPlayer";
@@ -153,8 +153,8 @@ const EditPostForm = () => {
   }
 
   return (
-    <div className="modal">
-      <div className="createPostForm">
+   <div className={styles.modal}>
+            <div className={styles.createPostForm}>
         <h1>Редактировать видео-пост</h1>
         
         <TitleInput 
@@ -168,29 +168,26 @@ const EditPostForm = () => {
           onChange={handleThumbnailChange}
         />
 
-        <div className="formGroup">
-          <label>Видео</label>
-          <div className="videoPreview">
-            {videoInfo.objectName ? (
-              <VideoPlayer
-                key={id}
-                path={{
-                  postId: id,
-                  autoplay: false,
-                  objectName: videoInfo.objectName
-                }}
-              />
-            ) : (
-              <div className="cameraIcon">
-                <span>🎥</span>
-                <p>Видео не доступно</p>
-              </div>
-            )}
-          </div>
-          <p className="notice">
-            Видео нельзя изменить после загрузки
-          </p>
-        </div>
+                <div className={styles.formGroup}>
+                    <label>Видео</label>
+                    <div className={styles.videoPreview}>
+                        {videoInfo.objectName ? (
+                            <VideoPlayer
+                                key={id}
+                                path={{
+                                    postId: id,
+                                    autoplay: false,
+                                    objectName: videoInfo.objectName
+                                }}
+                            />
+                        ) : (
+                            <div className={styles.cameraIcon}>
+                                <span>🎥</span>
+                                <p>Видео не доступно</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
         <DescriptionTextarea 
           value={formData.description}

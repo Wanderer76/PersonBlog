@@ -1,13 +1,13 @@
 import React, { useRef, useState } from "react";
-import '../post/CreatePostForm.css';
+import styles from '../post/CreatePostForm.module.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 
 const CreateBlogForm = function () {
-    const [blogForm, setBlogForm] = useState({ 
-        title: null, 
-        description: null, 
-        photoUrl: null 
+    const [blogForm, setBlogForm] = useState({
+        title: null,
+        description: null,
+        photoUrl: null
     });
     const [uploadProgress, setUploadProgress] = useState(0);
     const [imagePreview, setImagePreview] = useState(null);
@@ -64,14 +64,14 @@ const CreateBlogForm = function () {
     }
 
     return (
-        <div className="modal">
-            <div className="createPostForm">
+        <div className={styles.modal}>
+            <div className={styles.createPostForm}>
                 <h1>Создать блог</h1>
 
-                <div className="formGroup">
+                <div className={styles.formGroup}>
                     <label>Название</label>
                     <input
-                        className="modalContent"
+                        className={styles.modalContent}
                         type="text"
                         placeholder="Добавьте название вашего блога"
                         name="title"
@@ -80,14 +80,15 @@ const CreateBlogForm = function () {
                     />
                 </div>
 
-                <div className="uploadArea" onClick={() => document.querySelector('.fileInput').click()}>
-                    <div className="cameraIcon">📷</div>
+                <div className={styles.uploadArea} onClick={() => document.getElementById('avatar').click()}>
+                    <div className={styles.cameraIcon}>📷</div>
                     <h3>Выберите обложку для блога</h3>
                     <p>или перетащите изображение</p>
                     <input
+                        id="avatar"
                         name='photoUrl'
                         type="file"
-                        className="fileInput"
+                        className={styles.fileInput}
                         accept="image/*"
                         hidden
                         onChange={(e) => {
@@ -98,26 +99,26 @@ const CreateBlogForm = function () {
                 </div>
 
                 {imagePreview && (
-                    <div className="previewContainer">
-                        <img 
-                            src={imagePreview} 
-                            alt="Предпросмотр обложки" 
-                            className="videoPreview"
+                    <div className={styles.previewContainer}>
+                        <img
+                            src={imagePreview}
+                            alt="Предпросмотр обложки"
+                            className={styles.videoPreview}
                             style={{ objectFit: 'cover' }}
                         />
-                        <div className="progressBar">
+                        <div className={styles.progressBar}>
                             <div
-                                className="progressFill"
+                                className={styles.progressFill}
                                 style={{ width: `${uploadProgress}%` }}
                             />
                         </div>
                     </div>
                 )}
 
-                <div className="formGroup">
+                <div className={styles.formGroup}>
                     <label>Описание</label>
                     <textarea
-                        className="modalContent description"
+                        className={`${styles.modalContent} ${styles.description}`}
                         rows="4"
                         placeholder="Добавьте описание к вашему блогу"
                         name="description"
@@ -125,12 +126,12 @@ const CreateBlogForm = function () {
                     />
                 </div>
 
-                <div className="actionButtons">
-                    <button className="btn btnSecondary" onClick={() => navigate('/profile')}>
+                <div className={styles.actionButtons}>
+                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => navigate('/profile')}>
                         Закрыть
                     </button>
-                    <button 
-                        className="btn btnPrimary" 
+                    <button
+                        className={`${styles.btn} ${styles.btnPrimary}`}
                         disabled={isCreateDisabled.current || !blogForm.title}
                         onClick={() => {
                             isCreateDisabled.current = true;
