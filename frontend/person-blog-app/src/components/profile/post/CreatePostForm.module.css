@@ -1,4 +1,4 @@
-.modal  {
+.modal {
     position: fixed;
     background: white;
     top: 0;
@@ -148,6 +148,7 @@ select {
     font-size: 32px;
     margin-bottom: 8px;
 }
+
 .uploadThumbnail {
     border: 2px dashed #ccc;
     padding: 20px;
@@ -168,4 +169,40 @@ select {
     object-fit: fill;
     width: 100%;
     height: auto;
+}
+
+.hasThumbnail {
+    position: relative;
+    padding: 0;
+    overflow: hidden;
+}
+
+.thumbnailOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.hasThumbnail:hover .thumbnailOverlay {
+    opacity: 1;
+}
+
+.thumbnailOverlay span {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.thumbnailOverlay p {
+    margin: 0;
+    font-size: 14px;
 }

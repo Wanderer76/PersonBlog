@@ -3,19 +3,19 @@ import styles from './CreatePostForm.module.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate } from "react-router-dom";
 import { saveChunk } from "../../../serviceWorker/IndexedDB";
-import { 
-  TitleInput, 
-  ThumbnailUpload, 
-  DescriptionTextarea, 
-  PrivacySelect, 
-  ActionButtons 
+import {
+  TitleInput,
+  ThumbnailUpload,
+  DescriptionTextarea,
+  PrivacySelect,
+  ActionButtons
 } from "./CommonComponents";
 
 const CreatePostForm = function () {
-  const [postForm, setPostForm] = useState({ 
-    type: 1, 
-    title: "", 
-    description: "", 
+  const [postForm, setPostForm] = useState({
+    type: 1,
+    title: "",
+    description: "",
     video: null,
     thumbnail: null
   });
@@ -29,10 +29,10 @@ const CreatePostForm = function () {
 
   function updateForm(event) {
     const key = event.target.name;
-    const value = (key === 'video' || key === 'thumbnail') 
-      ? event.target.files[0] 
+    const value = (key === 'video' || key === 'thumbnail')
+      ? event.target.files[0]
       : event.target.value;
-      
+
     setPostForm(prev => ({ ...prev, [key]: value }));
   }
 
@@ -46,10 +46,10 @@ const CreatePostForm = function () {
       alert("Пожалуйста, добавьте название видео");
       return;
     }
-    
+
     if (isSubmitting) return;
     setIsSubmitting(true);
-    
+
     try {
       const url = "/profile/api/Post/create";
       const formData = new FormData();
@@ -113,8 +113,8 @@ const CreatePostForm = function () {
     }
   }
 
-  async function saveChunkAndNotifySW(chunk, chunkNumber, totalChunks, fileName, 
-                                      postId, fileExtension, totalSize, fileId) {
+  async function saveChunkAndNotifySW(chunk, chunkNumber, totalChunks, fileName,
+    postId, fileExtension, totalSize, fileId) {
     const meta = {
       chunkNumber,
       totalChunks,
@@ -129,7 +129,7 @@ const CreatePostForm = function () {
 
     const chunkId = `${fileId}_${chunkNumber}`;
     await saveChunk(chunkId, chunk, meta);
-    
+
     if (chunkNumber === totalChunks) {
       navigator.serviceWorker?.controller?.postMessage({
         type: 'UPLOAD_ALL_CHUNKS'
@@ -140,13 +140,13 @@ const CreatePostForm = function () {
   function handleFileSelect(input) {
     const file = input.target.files[0];
     if (!file) return;
-    
+
     // Проверка размера файла (макс. 500MB)
-    if (file.size > 500 * 1024 * 1024) {
-      alert("Файл слишком большой. Максимальный размер 500MB");
-      return;
-    }
-    
+    // if (file.size > 500 * 1024 * 1024) {
+    //   alert("Файл слишком большой. Максимальный размер 500MB");
+    //   return;
+    // }
+
     const videoURL = URL.createObjectURL(file);
     if (videoRef.current) {
       videoRef.current.src = videoURL;
@@ -155,58 +155,58 @@ const CreatePostForm = function () {
   }
 
   return (
-     <div className={styles.modal}>
-            <div className={styles.createPostForm}>
+    <div className={styles.modal}>
+      <div className={styles.createPostForm}>
         <h1>Создать видео-пост</h1>
 
-        <TitleInput 
+        <TitleInput
           value={postForm.title}
           onChange={updateForm}
           placeholder="Добавьте название вашего видео"
         />
 
-        <ThumbnailUpload 
+        <ThumbnailUpload
           thumbnail={postForm.thumbnail}
           onChange={updateForm}
         />
 
-                      <div className={styles.formGroup}>
-                    <label>Видео</label>
-                    <div className={styles.uploadArea} onClick={() => fileInputRef.current?.click()}>
-                        <div className={styles.cameraIcon}>🎥</div>
-                        <h3>Выберите файл для загрузки</h3>
-                        <p>или перетащите видео файл</p>
-                        <input
-                            ref={fileInputRef}
-                            name='video'
-                            type="file"
-                            className={`${styles.videoInput} ${styles.fileInput}`}
-                            accept=".mp4,.mkv"
-                            hidden
-                            onChange={(e) => {
-                                updateForm(e);
-                                handleFileSelect(e);
-                            }}
-                        />
-                    </div>
-                </div>
+        <div className={styles.formGroup}>
+          <label>Видео</label>
+          <div className={styles.uploadArea} onClick={() => fileInputRef.current?.click()}>
+            <div className={styles.cameraIcon}>🎥</div>
+            <h3>Выберите файл для загрузки</h3>
+            <p>или перетащите видео файл</p>
+            <input
+              ref={fileInputRef}
+              name='video'
+              type="file"
+              className={`${styles.videoInput} ${styles.fileInput}`}
+              accept=".mp4,.mkv"
+              hidden
+              onChange={(e) => {
+                updateForm(e);
+                handleFileSelect(e);
+              }}
+            />
+          </div>
+        </div>
 
-                <div className={styles.previewContainer}>
-                    <video className={styles.videoPreview} ref={videoRef} controls />
-                    <div className={styles.progressBar}>
-                        <div
-                            className={styles.progressFill}
-                            style={{ width: `${uploadProgress}%` }}
-                        />
-                    </div>
-                </div>
-        <DescriptionTextarea 
+        <div className={styles.previewContainer}>
+          <video className={styles.videoPreview} ref={videoRef} controls />
+          <div className={styles.progressBar}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${uploadProgress}%` }}
+            />
+          </div>
+        </div>
+        <DescriptionTextarea
           value={postForm.description}
           onChange={updateForm}
           placeholder="Добавьте описание к вашему видео"
         />
 
-        <PrivacySelect 
+        <PrivacySelect
           options={createModel?.visibility}
           value={postForm.visibility}
           onChange={updateForm}

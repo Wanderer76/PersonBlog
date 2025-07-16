@@ -17,42 +17,42 @@ export const TitleInput = ({ value, onChange, placeholder }) => (
 );
 
 // Общий компонент для миниатюры (создание)
-export const ThumbnailUpload = ({ thumbnail, onChange }) => {
-    const fileInputRef = useRef(null);
+// export const ThumbnailUpload = ({ thumbnail, onChange }) => {
+//     const fileInputRef = useRef(null);
 
-    const handleClick = () => {
-        fileInputRef.current?.click();
-    };
+//     const handleClick = () => {
+//         fileInputRef.current?.click();
+//     };
 
-    return (
-        <div className={styles.formGroup}>
-            <label>Превью (миниатюра)</label>
-            <div className={styles.uploadThumbnail} onClick={handleClick}>
-                {thumbnail ? (
-                    <img
-                        src={typeof thumbnail === 'string' ? thumbnail : URL.createObjectURL(thumbnail)}
-                        alt="Превью"
-                        className={styles.thumbnailPreview}
-                    />
-                ) : (
-                    <>
-                        <span>📷</span>
-                        <p>Выберите изображение</p>
-                    </>
-                )}
-            </div>
-            <input
-                ref={fileInputRef}
-                name="thumbnail"
-                type="file"
-                className={`${styles.thumbnailInput} ${styles.fileInput}`}
-                accept="image/*"
-                hidden
-                onChange={onChange}
-            />
-        </div>
-    );
-};
+//     return (
+//         <div className={styles.formGroup}>
+//             <label>Превью (миниатюра)</label>
+//             <div className={styles.uploadThumbnail} onClick={handleClick}>
+//                 {thumbnail ? (
+//                     <img
+//                         src={typeof thumbnail === 'string' ? thumbnail : URL.createObjectURL(thumbnail)}
+//                         alt="Превью"
+//                         className={styles.thumbnailPreview}
+//                     />
+//                 ) : (
+//                     <>
+//                         <span>📷</span>
+//                         <p>Выберите изображение</p>
+//                     </>
+//                 )}
+//             </div>
+//             <input
+//                 ref={fileInputRef}
+//                 name="thumbnail"
+//                 type="file"
+//                 className={`${styles.thumbnailInput} ${styles.fileInput}`}
+//                 accept="image/*"
+//                 hidden
+//                 onChange={onChange}
+//             />
+//         </div>
+//     );
+// };
 
 // Общий компонент для миниатюры (редактирование)
 export const ThumbnailEdit = ({ thumbnailUrl, onChange }) => (
@@ -86,6 +86,60 @@ export const ThumbnailEdit = ({ thumbnailUrl, onChange }) => (
         </div>
     </div>
 );
+
+export const ThumbnailUpload = ({ thumbnail, onChange }) => {
+    const fileInputRef = useRef(null);
+
+    const handleClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    // Определяем источник изображения
+    const thumbnailSrc = typeof thumbnail === 'string'
+        ? thumbnail
+        : thumbnail instanceof File
+            ? URL.createObjectURL(thumbnail)
+            : null;
+
+    return (
+        <div className={styles.formGroup}>
+            <label>{thumbnailSrc ? 'Заставка видео' : 'Превью (миниатюра)'}</label>
+
+            <div
+                className={`${styles.uploadThumbnail} ${thumbnailSrc ? styles.hasThumbnail : ''}`}
+                onClick={handleClick}
+            >
+                {thumbnailSrc ? (
+                    <>
+                        <img
+                            src={thumbnailSrc}
+                            alt="Превью"
+                            className={styles.thumbnailPreview}
+                        />
+                        <div className={styles.thumbnailOverlay}>
+                            <span>✏️</span>
+                            <p>Изменить изображение</p>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <span>📷</span>
+                        <p>Выберите изображение</p>
+                    </>
+                )}
+            </div>
+
+            <input
+                ref={fileInputRef}
+                name="thumbnail"
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={onChange}
+            />
+        </div>
+    );
+};
 
 // Общий компонент для описания
 export const DescriptionTextarea = ({ value, onChange, placeholder }) => (

@@ -3,29 +3,30 @@ import styles from './CreatePostForm.module.css';
 import API from "../../../scripts/apiMethod";
 import { useNavigate, useParams } from "react-router-dom";
 import VideoPlayer from "../../VideoPlayer/VideoPlayer";
-import { 
-  TitleInput, 
-  ThumbnailEdit, 
-  DescriptionTextarea, 
-  PrivacySelect, 
-  ActionButtons 
+import {
+  TitleInput,
+  ThumbnailEdit,
+  DescriptionTextarea,
+  PrivacySelect,
+  ActionButtons,
+  ThumbnailUpload
 } from "./CommonComponents";
 
 const EditPostForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     visibility: 1,
     thumbnailUrl: ""
   });
-  
+
   const [videoInfo, setVideoInfo] = useState({
     objectName: ""
   });
-  
+
   const [createModel, setCreateModel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,7 +50,7 @@ const EditPostForm = () => {
           visibility: postData.data.visibility ?? 1,
           thumbnailUrl: previewData.data?.previewUrl || ""
         });
-        
+
         setVideoInfo({
           objectName: previewData.data?.objectName || ""
         });
@@ -96,17 +97,17 @@ const EditPostForm = () => {
       alert("Пожалуйста, добавьте название видео");
       return;
     }
-    
+
     if (isSubmitting) return;
     setIsSubmitting(true);
-    
+
     try {
       const payload = new FormData();
       payload.append('id', id);
       payload.append('title', formData.title);
       payload.append('description', formData.description);
       payload.append('visibility', formData.visibility);
-      
+
       if (formData.thumbnailFile) {
         payload.append("previewId", formData.thumbnailFile);
       }
@@ -141,8 +142,8 @@ const EditPostForm = () => {
         <div className="error-content">
           <h2>Ошибка</h2>
           <p>{error}</p>
-          <button 
-            onClick={() => navigate(-1)} 
+          <button
+            onClick={() => navigate(-1)}
             className="btn btnPrimary"
           >
             Назад
@@ -153,49 +154,49 @@ const EditPostForm = () => {
   }
 
   return (
-   <div className={styles.modal}>
-            <div className={styles.createPostForm}>
+    <div className={styles.modal}>
+      <div className={styles.createPostForm}>
         <h1>Редактировать видео-пост</h1>
-        
-        <TitleInput 
+
+        <TitleInput
           value={formData.title}
           onChange={handleInputChange}
           placeholder="Добавьте название вашего видео"
         />
 
-        <ThumbnailEdit 
-          thumbnailUrl={formData.thumbnailUrl}
+        <ThumbnailUpload
+          thumbnail={formData.thumbnailUrl}
           onChange={handleThumbnailChange}
         />
 
-                <div className={styles.formGroup}>
-                    <label>Видео</label>
-                    <div className={styles.videoPreview}>
-                        {videoInfo.objectName ? (
-                            <VideoPlayer
-                                key={id}
-                                path={{
-                                    postId: id,
-                                    autoplay: false,
-                                    objectName: videoInfo.objectName
-                                }}
-                            />
-                        ) : (
-                            <div className={styles.cameraIcon}>
-                                <span>🎥</span>
-                                <p>Видео не доступно</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+        <div className={styles.formGroup}>
+          <label>Видео</label>
+          <div className={styles.videoPreview}>
+            {videoInfo.objectName ? (
+              <VideoPlayer
+                key={id}
+                path={{
+                  postId: id,
+                  autoplay: false,
+                  objectName: videoInfo.objectName
+                }}
+              />
+            ) : (
+              <div className={styles.cameraIcon}>
+                <span>🎥</span>
+                <p>Видео не доступно</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-        <DescriptionTextarea 
+        <DescriptionTextarea
           value={formData.description}
           onChange={handleInputChange}
           placeholder="Добавьте описание к вашему видео"
         />
 
-        <PrivacySelect 
+        <PrivacySelect
           options={createModel?.visibility}
           value={formData.visibility}
           onChange={handleInputChange}
