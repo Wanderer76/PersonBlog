@@ -153,7 +153,7 @@ const EditPostForm = () => {
   }
 
   return (
-    <div className="modal edit-post-modal">
+    <div className="modal">
       <div className="createPostForm">
         <h1>Редактировать видео-пост</h1>
         
@@ -170,7 +170,7 @@ const EditPostForm = () => {
 
         <div className="formGroup">
           <label>Видео</label>
-          <div className="video-preview-container">
+          <div className="videoPreview">
             {videoInfo.objectName ? (
               <VideoPlayer
                 key={id}
@@ -181,7 +181,7 @@ const EditPostForm = () => {
                 }}
               />
             ) : (
-              <div className="video-placeholder">
+              <div className="cameraIcon">
                 <span>🎥</span>
                 <p>Видео не доступно</p>
               </div>
