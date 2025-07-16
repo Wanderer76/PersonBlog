@@ -8,8 +8,14 @@ public class HistoryViewItem
     public double WatchedTime { get; set; }
 }
 
+public class LikedViewItem
+{
+    public Guid Id { get; set; }
+    public Guid PostId { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
 
-public class ReactionHistoryViewItem
+    public class ReactionHistoryViewItem
 {
     public DateTime? LastWatched { get; set; }
     public Guid PostId { get; set; }

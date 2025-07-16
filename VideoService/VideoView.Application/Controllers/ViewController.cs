@@ -61,13 +61,58 @@ public class ViewController : BaseController
 
         return Ok(result);
     }
+    [HttpGet("liked")]
+    [Authorize]
+    public async Task<IActionResult> GetLikedHistory()
+    {
+        HttpContext.TryGetUserFromContext(out var userId);
+
+        var result = await _cache.GetOrAddDataAsync(new LikedCacheKey(userId.Value), async () =>
+        {
+            var historyItems = userId.HasValue ?
+           await _httpClientFactory.CreateClient("Reacting").GetFromJsonAsync<IReadOnlyList<LikedViewItem>>($"LikedHistory/list/{userId.Value}")
+           : [];
+
+            var postPreviews = historyItems!
+               .DistinctBy(x => x.PostId)
+               .Select(x => _httpClientFactory.GetPostDetailViewAsync(x.PostId))
+               .ToList();
+
+            var previews = (await Task.WhenAll(postPreviews))
+                .Where(x => !x.IsFailure)
+                .Select(x => x.Value)
+                .ToDictionary(x => x.Id);
+
+            return historyItems!
+                        .Where(x => previews.ContainsKey(x.PostId))
+                        .Select(x => new UserLikedViewItem(
+                            x.Id,
+                            x.PostId,
+                            x.CreatedAt,
+                            previews[x.PostId]
+                        ))
+                        .GroupBy(x => x.CreatedAt.Date)
+                        .OrderByDescending(x => x.Key)
+                        .ToDictionary(x => x.Key, x => x.Select(a => a).ToList());
+        });
+
+        return Ok(result);
+    }
 }
 
 internal record UserHistoryViewItem(Guid Id, Guid PostId, DateTime LastWatched, double WatchedTime, PostDetailViewModel PostDetail);
+internal record UserLikedViewItem(Guid Id, Guid PostId, DateTime CreatedAt, PostDetailViewModel PostDetail);
 
 public sealed class ViewCacheModel(Guid userId) : ICacheKey
 {
     private const string Key = nameof(ViewCacheModel);
+    public Guid UserId { get; } = userId;
+    public string GetKey() => $"{Key}:{UserId}";
+}
+
+public sealed class LikedCacheKey(Guid userId) : ICacheKey
+{
+    private const string Key = nameof(LikedCacheKey);
     public Guid UserId { get; } = userId;
     public string GetKey() => $"{Key}:{UserId}";
 }

@@ -1,0 +1,115 @@
+  /* Стили истории просмотров */
+  .dayGroup {
+    margin-bottom: 30px;
+  }
+  
+  .dayHeader {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .historyList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .historyItem {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+  
+  .historyItem:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .thumbnail {
+    width: 180px;
+    height: 100px;
+    object-fit: cover;
+    position: relative;
+    flex-shrink: 0;
+  }
+  
+  .details {
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .meta {
+    font-size: 13px;
+    color: #606060;
+    margin-top: auto;
+  }
+  
+  .author {
+    margin-bottom: 4px;
+  }
+  
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .watchTime {
+    font-size: 12px;
+    color: #909090;
+    margin-top: 4px;
+  }
+  
+  .menuContainer {
+    position: relative;
+  }
+  
+  .menuBtn {
+    margin-left: auto;
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #606060;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+  }
+  
+  
+  @media (max-width: 768px) {
+
+    .thumbnail {
+      width: 120px;
+      height: 70px;
+    }
+    
+    .title {
+      font-size: 14px;
+    }
+  
+    .meta {
+      font-size: 12px;
+    }
+  }

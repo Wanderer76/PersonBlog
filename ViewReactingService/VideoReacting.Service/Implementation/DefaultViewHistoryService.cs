@@ -46,6 +46,29 @@ namespace VideoReacting.Service.Implementation
             return Result<UpdateViewState>.Success(state);
         }
 
+        public async Task<Result<IReadOnlyList<LikedViewItem>>> GetUserLikedHistoryListAsync(Guid userId)
+        {
+           return await _repository.Get<PostReaction>()
+                .Where(x => x.UserId == userId)
+                .Where(x => x.IsLike != null)
+                .GroupBy(x => x.PostId)
+                .Select(x => new
+                {
+                    x.Key,
+                    x.OrderByDescending(x => x.CreatedAt).First().CreatedAt,
+                    x.OrderByDescending(x => x.CreatedAt).First().Id
+                })
+                .AsAsyncEnumerable()
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new LikedViewItem
+                {
+                    PostId = x.Key,
+                    CreatedAt = x.CreatedAt.DateTime,
+                    Id = x.Id
+                })
+                .ToListAsync();
+        }
+
         public async Task<Result<ReactionHistoryViewItem>> GetUserPostReactionAsync(Guid postId, Guid userId, Guid? blogId)
         {
             var lastView = await _repository.Get<UserPostView>()

@@ -7,6 +7,7 @@ import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
 import ChannelPage from './pages/channel/ChannelPage';
 import CreateBlogForm from './components/profile/blog/CreateBlogForm';
+import LikedPage from './pages/liked/LikedPage';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -80,6 +81,7 @@ function App() {
                 <Route path="/conference/:id" element={<ConferencePage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/subscriptions" element={<SubscriptionPage />} />
+                <Route path="/liked" element={<LikedPage />} />
 
                 {/* Вложенные маршруты профиля */}
                 <Route path="/profile" >

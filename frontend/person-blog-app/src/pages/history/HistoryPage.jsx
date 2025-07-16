@@ -6,33 +6,32 @@ import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard"
 import SideBar from "../../components/sidebar/SideBar";
 import styles from './HistoryPage.module.css';
 import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../scripts/LocalDate";
+import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 
 const HistoryPage = function (props) {
 
-    const [historyList, setHistoryList] = useState([]);
-    const navigate = useNavigate();
-    useState(() => {
+  const [historyList, setHistoryList] = useState([]);
+  const navigate = useNavigate();
+  useState(() => {
 
-        API.get("video/api/View/history").then(response => {
-            console.log(response)
-            if (response.status == 200) {
-                setHistoryList(response.data)
-                console.log(response.data)
-            }
-        })
+    API.get("video/api/View/history").then(response => {
+      if (response.status == 200) {
+        setHistoryList(response.data)
+      }
+    })
 
-    }, [])
+  }, [])
 
-    if (!JwtTokenService.isAuth())
-        return (<>
-            <div>Вы не авторизованы</div>
-        </>);
+  if (!JwtTokenService.isAuth())
+    return (<>
+      <div>Вы не авторизованы</div>
+    </>);
 
-const HistoryItem = ({ item, navigate }) => {
+  const HistoryItem = ({ item, navigate }) => {
     const [showMenu, setShowMenu] = useState(false);
-  
+
     return (
-      <div className={styles.historyItem} onClick={()=>{
+      <div className={styles.historyItem} onClick={() => {
         navigate(`/video/${item.postId}?time=${item.watchTime}`)
       }}>
         <img src={item.previewUrl} alt="Превью" className={styles.thumbnail} />
@@ -49,49 +48,49 @@ const HistoryItem = ({ item, navigate }) => {
             <div className={styles.watchTime}>{getLocalDate(item.lastWatched)}</div>
           </div>
         </div>
-        <div className={styles.menuContainer }>
-          <button 
-            className={styles.menuBtn} 
+        <div className={styles.menuContainer}>
+          <button
+            className={styles.menuBtn}
             onClick={() => setShowMenu(!showMenu)}
           >
             ⋮
           </button>
-          
+
         </div>
       </div>
     );
   };
 
-    return (<>
-        <div className={styles.pageContainer}>
-            <SideBar />
-            <div className={styles.contentContainer}>
-                <div className={styles.historyContainer }>
-                    {Object.entries(historyList).map(([day, items]) => (
-                        items.length > 0 && (
-                            <div key={day} className={styles.dayGroup}>
-                                <h2 className={styles.dayHeader }>{getLocalDate(day)}</h2>
-                                <div className={styles.historyList}>
-                                    {items.map(x => {
-                                        var data = {
-                                            postId: x.postDetail.id,
-                                            previewUrl: x.postDetail.previewUrl,
-                                            title: x.postDetail.title,
-                                            description: x.postDetail.description,
-                                            viewCount: x.postDetail.viewCount,
-                                            watchTime: x.watchedTime,
-                                            lastWatched:x.lastWatched
-                                        }
-                                        return <HistoryItem item={data} navigate={navigate} key={x.id} />
-                                    })}
-                                </div>
-                            </div>
-                        )
-                    ))}
+  return (<>
+    <div className={styles.pageContainer}>
+      <SideBar />
+      <div className={styles.contentContainer}>
+        <div className={styles.historyContainer}>
+          {Object.entries(historyList).map(([day, items]) => (
+            items.length > 0 && (
+              <div key={day} className={styles.dayGroup}>
+                <h2 className={styles.dayHeader}>{getLocalDate(day)}</h2>
+                <div className={styles.historyList}>
+                  {items.map(x => {
+                    var data = {
+                      postId: x.postDetail.id,
+                      previewUrl: x.postDetail.previewUrl,
+                      title: x.postDetail.title,
+                      description: x.postDetail.description,
+                      viewCount: x.postDetail.viewCount,
+                      watchTime: x.watchedTime,
+                      lastWatched: x.lastWatched
+                    }
+                    return <PostListItem item={data} navigate={() => navigate(`/video/${data.postId}?time=${data.watchTime}`)} key={x.id} />
+                  })}
                 </div>
-            </div>
+              </div>
+            )
+          ))}
         </div>
-    </>);
+      </div>
+    </div>
+  </>);
 
 
 }

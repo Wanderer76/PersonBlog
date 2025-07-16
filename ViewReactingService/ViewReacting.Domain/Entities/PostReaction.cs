@@ -11,6 +11,7 @@ namespace ViewReacting.Domain.Entities
         public double ReactionTime { get; set; }
         public bool? IsLike { get; set; }
         public bool IsDelete { get; private set; }
+        public DateTimeOffset CreatedAt { get; private set; }
 
         public PostReaction(Guid? userId, string ipAddress, Guid postId, double reactionTime, bool? isLike)
         {
@@ -21,6 +22,7 @@ namespace ViewReacting.Domain.Entities
             ReactionTime = reactionTime;
             IsLike = isLike;
             IsDelete = false;
+            CreatedAt = DateTimeService.Now();
         }
     }
 }

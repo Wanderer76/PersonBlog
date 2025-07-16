@@ -1,0 +1,50 @@
+.pageContainer {
+    width: 95%;
+    max-width: 100%;
+    margin: 20px auto;
+    display: flex;
+}
+
+.contentContainer {
+    flex: 1;
+    padding: 20px;
+}
+
+.likedContainer {
+    max-width: 80%;
+}
+
+/* Стили истории просмотров */
+.dayGroup {
+    margin-bottom: 30px;
+}
+
+.dayHeader {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.likedList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+
+@media (max-width: 768px) {
+    .page-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid #e5e5e5;
+    }
+}
