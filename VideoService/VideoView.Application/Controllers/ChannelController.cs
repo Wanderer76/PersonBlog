@@ -1,9 +1,9 @@
 ﻿using Blog.Domain.Services.Models.Playlist;
 using Blog.Service.Models.Blog;
 using Blog.Service.Models.Post;
+using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Utils;
 using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers

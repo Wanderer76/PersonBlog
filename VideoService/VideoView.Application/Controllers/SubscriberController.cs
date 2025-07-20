@@ -1,9 +1,9 @@
 ﻿using Blog.Service.Models.Blog;
+using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
-using Shared.Utils;
 using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers

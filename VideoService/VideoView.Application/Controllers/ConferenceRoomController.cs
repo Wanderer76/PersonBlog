@@ -1,10 +1,10 @@
 ﻿using Blog.Domain.Entities;
 using Conference.Domain.Models;
+using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Utils;
 
 namespace VideoView.Application.Controllers
 {

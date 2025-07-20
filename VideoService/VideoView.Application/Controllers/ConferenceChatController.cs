@@ -1,10 +1,10 @@
 ﻿using Conference.Domain.Models;
 using Conference.Domain.Services;
+using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Shared.Utils;
 
 namespace VideoView.Application.Controllers
 {
