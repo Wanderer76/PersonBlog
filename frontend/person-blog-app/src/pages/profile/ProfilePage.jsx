@@ -83,6 +83,19 @@ const ProfilePage = () => {
         }
     }, [blogId.current])
 
+
+    async function handleRemovePlaylist(id) {
+        API.post(`/profile/api/PlayList/removePlaylist/${id}`)
+            .then(response => {
+                if (response.status === 200) {
+                    setPlayLists(prev => [...prev.filter(x => x.id != id)])
+                }
+                if(response.status === 400){
+                    alert(response.data);
+                }
+            });
+    }
+
     async function loadPosts() {
         if (blogId.current) {
             const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${page}&limit=${pageSize}`;
@@ -158,53 +171,26 @@ const ProfilePage = () => {
     }
 
     function drawPlayLists() {
-        return playLists.map((post, index) => {
-            // if (playLists.length == index + 1) {
-            //     return (
-            //         <div key={post.id} className="postCard" ref={lastPostRef} >
-            //             <article class="playlist-card">
-            //                 <div class="playlist-cover">
-            //                     <img src={post.thumbnailUrl} alt="Обложка плейлиста" />
-            //                     <span class="playlist-badge video-count">{post.posts.length} видео</span>
-            //                     {/* <span class="playlist-badge privacy-status">Приватный</span> */}
-            //                 </div>
-            //                 <div class="playlist-info">
-            //                     <h3 class="playlist-title">{post.title}</h3>
-            //                     <p class="playlist-description">{post?.description}</p>
-            //                     {/* <div class="playlist-stats">
-            //                         <span>1.2K просмотров</span>
-            //                         <span>•</span>
-            //                         <span>3 дня назад</span>
-            //                     </div> */}
-            //                     <div class="playlist-actions">
-            //                         <button class="btn btnPrimary">Редактировать</button>
-            //                         <button class="btn btnSecondary">Удалить</button>
-            //                     </div>
-            //                 </div>
-            //             </article>
-            //         </div>
-            //     );
-            // }
-
+        return playLists.map((playlist, index) => {
             return (
-                <div key={post.id} className="postCard" >
-                    <article class="playlist-card">
-                        <div class="playlist-cover" onClick={(e) => { e.preventDefault(); navigate(`/playlist/${post.id}`); }}>
-                            <img src={post.thumbnailUrl} alt="Обложка плейлиста" />
-                            <span class="playlist-badge video-count">{post.posts.length} видео</span>
+                <div key={playlist.id} className="postCard" >
+                    <article className="playlist-card">
+                        <div className="playlist-cover" onClick={(e) => { e.preventDefault(); navigate(`/playlist/${playlist.id}`); }}>
+                            <img src={playlist.thumbnailUrl} alt="Обложка плейлиста" />
+                            <span className="playlist-badge video-count">{playlist.posts.length} видео</span>
                             {/* <span class="playlist-badge privacy-status">Приватный</span> */}
                         </div>
-                        <div class="playlist-info">
-                            <h3 class="playlist-title">{post.title}</h3>
-                            <p class="playlist-description">{post?.description}</p>
+                        <div className="playlist-info">
+                            <h3 className="playlist-title">{playlist.title}</h3>
+                            <p className="playlist-description">{playlist?.description}</p>
                             {/* <div class="playlist-stats">
                                 <span>1.2K просмотров</span>
                                 <span>•</span>
                                 <span>3 дня назад</span>
                             </div> */}
-                            <div class="playlist-actions">
-                                <button class="btn btnPrimary">Редактировать</button>
-                                <button class="btn btnSecondary">Удалить</button>
+                            <div className="playlist-actions">
+                                <button className="btn btnPrimary">Редактировать</button>
+                                <button className="btn btnSecondary" onClick={() => handleRemovePlaylist(playlist.id)}>Удалить</button>
                             </div>
                         </div>
                     </article>

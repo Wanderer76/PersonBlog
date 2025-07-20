@@ -102,6 +102,17 @@ public class PlayListController : BaseController
         return Ok(result.Value);
     }
 
+    [HttpPost("removePlaylist/{id:guid}")]
+    [Authorize]
+    [Produces(typeof(PlayListViewModel))]
+    public async Task<IActionResult> RemovePlayList(Guid id)
+    {
+        var result = await _playListService.RemovePlayListAsync(id);
+        if (result.IsFailure)
+            return BadRequest(result.Error);
+        return Ok();
+    }
+
     [HttpPost("removeVideo")]
     [Authorize]
     [Produces(typeof(PlayListViewModel))]

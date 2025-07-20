@@ -124,6 +124,16 @@ namespace Blog.Domain.Entities
             item.Position = destination;
             return true;
         }
+
+        public void RemovePlayList()
+        {
+            IsDeleted = true;
+        }
+
+        public void RestorePlayList()
+        {
+            IsDeleted = false;
+        }
     }
 
     public readonly struct PlayListCacheKey(Guid id) : ICacheKey

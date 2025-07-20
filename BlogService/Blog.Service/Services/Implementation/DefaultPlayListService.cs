@@ -252,7 +252,6 @@ namespace Blog.Service.Services.Implementation
                 .Select(x => new { x.UserId, x.Id })
                 .FirstAsync();
 
-
             var canEdit = userBlogId.UserId == userId;
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
@@ -266,6 +265,28 @@ namespace Blog.Service.Services.Implementation
                 Posts = await playlist.PlayListItems.OrderBy(x => x.Position).ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
             };
 
+        }
+
+        public async Task<Result<bool>> RemovePlayListAsync(Guid id)
+        {
+            var playlist = await _repository.Get<PlayList>()
+                .Where(x => x.Id == id)
+                .FirstOrDefaultAsync();
+
+            var user = await _userSession.GetCurrentUserAsync();
+
+            if (playlist == null)
+                return new Error("Плейлист не найден");
+
+            if (user.BlogId != playlist.BlogId)
+            {
+                return new Error("Вы не являетесь владельцем блога");
+            }
+
+            _repository.Attach(playlist);
+            playlist.RemovePlayList();
+            await _repository.SaveChangesAsync();
+            return true;
         }
 
         public async Task<Result<PlayListViewModel>> RemoveVideoFromPlayListAsync(PlayListItemRemoveRequest playListRequest)
