@@ -8,7 +8,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
 		<ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+		<ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
 	</ItemGroup>
 
 </Project>

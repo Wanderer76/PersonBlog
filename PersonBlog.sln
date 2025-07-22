@@ -100,6 +100,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Comments.API", "CommentServ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Comments.Persistence", "CommentService\Comments.Persistence\Comments.Persistence.csproj", "{C7F043E8-C752-42A8-AFAB-CE277D43B8A3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Authentication.Contract", "AuthService\Authentication.Contract\Authentication.Contract.csproj", "{DD0E9B58-BDC2-4F16-A3AC-07558211512F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -254,6 +256,10 @@ Global
 		{C7F043E8-C752-42A8-AFAB-CE277D43B8A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7F043E8-C752-42A8-AFAB-CE277D43B8A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7F043E8-C752-42A8-AFAB-CE277D43B8A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD0E9B58-BDC2-4F16-A3AC-07558211512F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD0E9B58-BDC2-4F16-A3AC-07558211512F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD0E9B58-BDC2-4F16-A3AC-07558211512F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD0E9B58-BDC2-4F16-A3AC-07558211512F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -295,6 +301,7 @@ Global
 		{3E245012-24CB-45AD-9203-EA01B3B035B6} = {114231EF-E90D-4464-BCA0-0401722BD11B}
 		{90988A51-6D27-4520-B250-8A9481FE0A0B} = {114231EF-E90D-4464-BCA0-0401722BD11B}
 		{C7F043E8-C752-42A8-AFAB-CE277D43B8A3} = {114231EF-E90D-4464-BCA0-0401722BD11B}
+		{DD0E9B58-BDC2-4F16-A3AC-07558211512F} = {2F412D8A-52D9-471B-A60E-118733AC4B4A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

@@ -1,7 +1,10 @@
+using Authentication.Contract.Events;
+using Comments.Domain.Services;
 using Comments.Persistence.Extensions;
 using Comments.Service.Extensions;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using MessageBus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +19,11 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddUserSessionServices();
 builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
-
+builder.Services.AddMessageBus(builder.Configuration)
+    .AddSubscription<UserCreateEvent, UserCreateEventHandler>(cfg =>
+    {
+        cfg.QueueName = "comment-userprofile-create";
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

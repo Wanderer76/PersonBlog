@@ -1,6 +1,7 @@
 using Authentication.Peristence;
 using Authentication.Service;
 using Authentication.Service.Service;
+using AuthenticationApplication.HostedServices;
 using Blog.Contracts.Events;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
@@ -28,6 +29,9 @@ builder.Services.AddMessageBus(builder.Configuration)
     {
         cfg.QueueName = "auth-blog";
     });
+
+builder.Services.AddHostedService<EventPublishService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

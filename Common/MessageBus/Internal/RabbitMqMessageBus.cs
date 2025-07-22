@@ -75,6 +75,7 @@ namespace MessageBus
                 Console.WriteLine(e.Message);
             }
         }
+
         /// <summary>
         /// если задан конфиг значения аттрибута EventPublishAttribute игнорируются
         /// </summary>
@@ -116,41 +117,9 @@ namespace MessageBus
                 value = type.GetCustomAttribute<EventPublishAttribute>(false);
                 _cachedValues.TryAdd(type, value);
             }
-            //if (value == null)
-            //{
-            //    var current = _subscriptionInfo.Handlers.First(x => x.HandlerType == type);
-            //    if (cfg.RoutingKey == null)
-            //    {
-            //        cfg.RoutingKey = current.Queue?.Exchange?.RoutingKey;
-            //    }
-            //    if (cfg.Exchange == null)
-            //    {
-            //        cfg.Exchange = current.Queue?.Exchange?.Name;
-            //    }
-            //}
-
             var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
-            if (cfg.RoutingKey == null)
-            {
-                cfg.RoutingKey = value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
-            }
-            if (cfg.Exchange == null)
-            {
-                cfg.Exchange = value?.Exchange ?? current?.Queue?.Exchange?.Name;
-            }
-
-            //if (value != null)
-            //{
-            //    if (cfg.RoutingKey == null)
-            //    {
-            //        cfg.RoutingKey = value.RoutingKey;
-            //    }
-
-            //    if (cfg.Exchange == null)
-            //    {
-            //        cfg.Exchange = value.Exchange;
-            //    }
-            //}
+            cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+            cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
         }
 
         public Task<IConnection> GetConnectionAsync()

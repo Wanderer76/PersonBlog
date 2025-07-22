@@ -12,6 +12,7 @@ public class AuthenticationDbContext : BaseDbContext
     public DbSet<AppUserRole> AppUserRoles { get; set; }
     public DbSet<Token> Tokens { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
+    public DbSet<AuthEvent> AuthEvents { get; set; }
     public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options)
     {
     }

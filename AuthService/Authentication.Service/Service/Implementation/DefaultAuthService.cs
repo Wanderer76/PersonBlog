@@ -1,4 +1,6 @@
-﻿using Authentication.Domain.Entities;
+﻿using Authentication.Contract.Events;
+using Authentication.Domain;
+using Authentication.Domain.Entities;
 using Authentication.Domain.Interfaces.Models.Profile;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
@@ -9,6 +11,7 @@ using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 [assembly: InternalsVisibleTo("Authentication.Test")]
 
 namespace Authentication.Service.Service.Implementation;
@@ -93,6 +96,16 @@ internal class DefaultAuthService : IAuthService
                 lastName: profileCreateModel.LastName ?? string.Empty,
                 userId: profileCreateModel.UserId
             );
+
+        var userCreateEvent = new UserCreateEvent
+        {
+            UserId = userId,
+            CreatedAt = DateTimeService.Now(),
+            PhotoUrl = profile.PhotoUrl,
+            UserName = user.Login
+        };
+
+        _context.Add(new AuthEvent { EventData = JsonSerializer.Serialize(userCreateEvent), EventType = nameof(UserCreateEvent) });
         _context.Add(profile);
         await _context.SaveChangesAsync();
 
