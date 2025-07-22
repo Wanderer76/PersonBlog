@@ -8,16 +8,20 @@ import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
 import SmallVideoCard from '../../components/VideoCards/SmallVideoCard';
 import SideBar from '../../components/sidebar/SideBar';
+import CommentsList from '../../components/comment/Comment';
 
 const VideoPage = function (props) {
     const searchParams = useParams();
     const queryParams = new URLSearchParams(window.location.search)
+    const [time, setTime] = useState(queryParams.get('time'))
     const [isLoading, setIsLoading] = useState(true);
-    const watchedTime = useRef(0);
     const [recommendations, setRecommendations] = useState([]);
+    const watchedTime = useRef(0);
+    const [comments, setComments] = useState([]);
+    const [commentCount, setCommentCount] = useState(0);
+    const [newCommentText, setNewCommentText] = useState('');
     const limit = 40;
     const navigate = useNavigate();
-    const [time, setTime] = useState(queryParams.get('time'))
     const nextThresholdRef = useRef(30);
 
     const [post, setPostData] = useState({
@@ -74,8 +78,42 @@ const VideoPage = function (props) {
                 }
             });
 
-
+        API.get(`video/api/Comments/list?postId=${searchParams.postId}`)
+            .then(response => {
+                if (response.status === 200) {
+                    setComments(response.data.comments);
+                    setCommentCount(response.data.count);
+                }
+            });
     }, [searchParams.postId])
+
+
+    const handleAddComment = async (replyId = null) => {
+        if (!newCommentText.trim()) return;
+
+        try {
+            const response = await API.post(`video/api/Comments/create`, {
+                postId: searchParams.postId,
+                replyTo: replyId,
+                text: newCommentText
+            });
+
+            if (response.status === 200) {
+                API.get(`video/api/Comments/list?postId=${searchParams.postId}`)
+                    .then(response => {
+                        if (response.status === 200) {
+                            setComments(response.data.comments);
+                            setCommentCount(response.data.count);
+                        }
+                    });
+                setNewCommentText('');
+            }
+        } catch (error) {
+            console.error("Ошибка при добавлении комментария:", error);
+        }
+    };
+
+
 
     async function setReaction(isLike) {
         await API.post(`/video/Video/setReaction/${post.id}?isLike=${isLike}`)
@@ -229,22 +267,30 @@ const VideoPage = function (props) {
                         </div>
 
                         <div className="comments-section">
-                            <h3>432 комментария</h3>
-
-                            <div className="comment">
-                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                                <div className="comment-content">
-                                    <div className="comment-author">Иван Петров</div>
-                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
+                            <h3>{commentCount} комментария</h3>
+                            {JwtTokenService.isAuth() && (
+                                <div className="add-comment">
+                                    <img src={"https://picsum.photos/40/40"}
+                                        className="comment-avatar" alt="Ваш аватар" />
+                                    <div className="comment-input-container">
+                                        <input
+                                            type="text"
+                                            value={newCommentText}
+                                            onChange={(e) => setNewCommentText(e.target.value)}
+                                            placeholder="Добавьте комментарий..."
+                                            className="comment-input"
+                                        />
+                                        <button
+                                            onClick={() => handleAddComment()}
+                                            className="btn btnPrimary"
+                                            disabled={!newCommentText.trim()}>
+                                            Отправить
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div className="comment">
-                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                                <div className="comment-content">
-                                    <div className="comment-author">Иван Петров</div>
-                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                                </div>
+                            )}
+                            <div className="comments-list">
+                                <CommentsList comments={comments} postId={searchParams.postId} />
                             </div>
 
                         </div>
@@ -258,7 +304,7 @@ const VideoPage = function (props) {
                     </aside>
                 </div>
             </div>
-        </div>
+        </div >
     );
 
 

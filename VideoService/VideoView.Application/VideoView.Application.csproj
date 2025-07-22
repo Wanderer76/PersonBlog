@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\AuthService\Authentication.Service\Authentication.Service.csproj" />
     <ProjectReference Include="..\..\BlogService\Blog.Service\Blog.Service.csproj" />
+    <ProjectReference Include="..\..\CommentService\Comments.Domain\Comments.Domain.csproj" />
     <ProjectReference Include="..\..\ConferenceService\Conference.Domain\Conference.Domain.csproj" />
     <ProjectReference Include="..\..\RecommendationService\Recommendation.Service\Recommendation.Service.csproj" />
     <ProjectReference Include="..\..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />

@@ -128,7 +128,9 @@ namespace Blog.Service.Services.Implementation
                 .Where(x => x.BlogId == blog.Id && x.UserId == userId.Value)
                 .AnyAsync();
 
-            return blog.ToBlogUserInfoViewModel(hasSubscription);
+            using var storage = _fileStorageFactory.CreateFileStorage();
+
+            return await blog.ToBlogUserInfoViewModel(hasSubscription, storage);
         }
 
         public async Task<Guid?> HasUserBlogAsync(Guid userId)

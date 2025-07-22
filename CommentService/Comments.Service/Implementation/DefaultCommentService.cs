@@ -40,6 +40,7 @@ internal class DefaultCommentService : ICommentService
         await _repository.SaveChangesAsync();
         var userEntity = await _repository.Get<UserProfile>()
             .FirstOrDefaultAsync(x => x.UserId == user.UserId.Value);
+
         return new CommentCreateResponse
         {
             Id = comment.Id,
@@ -47,11 +48,12 @@ internal class DefaultCommentService : ICommentService
             PhotoUrl = userEntity?.PhotoUrl,
             ReplyTo = createRequest.ReplyTo,
             Text = createRequest.Text,
-            Username = user.UserName
+            Username = user.UserName,
+            CreatedAt = comment.CreatedAt
         };
     }
 
-    public async Task<Result<IReadOnlyList<CommentListItem>>> GetCommentsListByPostAsync(Guid postId)
+    public async Task<Result<CommentsListViewModel>> GetCommentsListByPostAsync(Guid postId)
     {
         var comments = await _repository.Get<Comment>()
             .Where(x => x.PostId == postId)
@@ -70,11 +72,11 @@ internal class DefaultCommentService : ICommentService
             .OrderByDescending(x => x.CreatedAt)
             .ToList();
 
-        return result;
+        return new CommentsListViewModel(comments.Count, result);
     }
 
 
-    public Task<Result<bool>> RemoveCommentAsync(Guid commentId)
+    public Task<Result> RemoveCommentAsync(Guid commentId)
     {
         throw new NotImplementedException();
     }

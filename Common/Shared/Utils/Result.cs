@@ -50,6 +50,25 @@
 
     }
 
+    public sealed class Result
+    {
+        private readonly Error? _error;
+        private Result(Error? error)
+        {
+            _error = error;
+        }
+
+        public Error? Error
+        {
+            get => _error;
+        }
+        public bool IsFailure => _error != null;
+        public bool IsSuccess => _error == null;
+
+        public static Result Success() => new(null);
+        public static Result Failure(Error error) => new(error);
+    }
+
     public sealed class Result<TValue>
     {
         private readonly Result<TValue, Error> _result;

@@ -39,6 +39,10 @@ builder.Services.AddHttpClient("Conference", x =>
 {
     x.BaseAddress = new Uri("http://localhost:5193/api/");
 });
+builder.Services.AddHttpClient("Comments", x =>
+{
+    x.BaseAddress = new Uri("http://localhost:5124/api/");
+});
 
 
 builder.Services.AddRedisCache(builder.Configuration);
