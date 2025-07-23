@@ -158,7 +158,8 @@ namespace Blog.Service.Services.Implementation
                                         videoFile.ObjectName
                                     ) : null,
                                     isProcessed,
-                                    isProcessed == ProcessState.Error ? videoFile?.ErrorMessage : null
+                                    isProcessed == ProcessState.Error ? videoFile?.ErrorMessage : null,
+                                    post.ViewCount
                                 );
                     posts.Add(postModel);
                     cachedPosts.Add(postModel);
@@ -321,7 +322,8 @@ namespace Blog.Service.Services.Implementation
                                 videoMetadata.ObjectName
                             ) : null,
                             isProcessed,
-                            isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null
+                            isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null,
+                            post.ViewCount
                         );
 
             await _cacheService.SetCachedDataAsync($"PostModel:{result.Id}", result, TimeSpan.FromHours(10));

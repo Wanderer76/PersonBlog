@@ -56,47 +56,47 @@ const ChannelPage = () => {
         loadChannelData();
     }, [channelId]);
 
-useEffect(() => {
-    const loadVideos = async () => {
-        try {
-            const response = await API.get(
-                `/video/api/Channel/posts/${channelId}?page=${page}&size=${pageSize}`
-            );
-            if (response.status === 200) {
-                // Преобразуем данные из API в нужный формат
-                const formattedVideos = response.data.posts.map(post => ({
-                    id: post.id,
-                    title: post.title,
-                    description: post.description,
-                    previewUrl: post.previewId,
-                    duration: formatDuration(post.videoData?.duration),
-                    views: 0, // Добавьте реальное количество просмотров, если оно есть в API
-                    createdAt: post.createdAt,
-                    state: post.state,
-                    errorMessage: post.errorMessage
-                }));
+    useEffect(() => {
+        const loadVideos = async () => {
+            try {
+                const response = await API.get(
+                    `/video/api/Channel/posts/${channelId}?page=${page}&size=${pageSize}`
+                );
+                if (response.status === 200) {
+                    // Преобразуем данные из API в нужный формат
+                    const formattedVideos = response.data.posts.map(post => ({
+                        id: post.id,
+                        title: post.title,
+                        description: post.description,
+                        previewUrl: post.previewId,
+                        duration: formatDuration(post.videoData?.duration),
+                        viewCount: post.viewCount,
+                        createdAt: post.createdAt,
+                        state: post.state,
+                        errorMessage: post.errorMessage
+                    }));
 
-                setVideos(prev => [...prev, ...formattedVideos]);
-                setHasMore(page < response.data.totalPageCount);
+                    setVideos(prev => [...prev, ...formattedVideos]);
+                    setHasMore(page < response.data.totalPageCount);
+                }
+            } catch (error) {
+                console.error("Ошибка загрузки видео:", error);
             }
-        } catch (error) {
-            console.error("Ошибка загрузки видео:", error);
+        };
+
+        if (activeTab === 'videos') {
+            loadVideos();
         }
+    }, [channelId, page]);
+
+    // Вспомогательная функция для форматирования длительности
+    const formatDuration = (seconds) => {
+        if (!seconds) return '0:00';
+
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
-
-    if (activeTab === 'videos') {
-        loadVideos();
-    }
-}, [channelId, page, activeTab]);
-
-// Вспомогательная функция для форматирования длительности
-const formatDuration = (seconds) => {
-    if (!seconds) return '0:00';
-    
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
 
     // Загрузка плейлистов
     useEffect(() => {
@@ -116,7 +116,7 @@ const formatDuration = (seconds) => {
         if (activeTab === 'playlists') {
             loadPlaylists();
         }
-    }, [channelId, activeTab]);
+    }, [channelId]);
 
     // Подписка/отписка
     const handleSubscribe = async () => {
@@ -143,36 +143,36 @@ const formatDuration = (seconds) => {
 
     // Рендер видео
     const renderVideos = () => {
-    return videos.map((video, index) => (
-        <div
-            key={video.id}
-            className={styles.videoCard}
-            ref={videos.length === index + 1 ? lastVideoRef : null}
-            onClick={() => video.state === 1 && navigate(`/video/${video.id}`)}
-        >
-            <div className={styles.thumbnail}>
-                <img src={video.previewUrl} alt={video.title} />
-                <span className={styles.duration}>{video.duration}</span>
-                {video.state !== 1 && (
-                    <div className={styles.videoStatus}>
-                        {video.state === 0 ? 'В обработке' : video.errorMessage || 'Ошибка'}
-                    </div>
-                )}
-            </div>
-            <div className={styles.videoInfo}>
-                <h3>{video.title}</h3>
-                <div className={styles.meta}>
-                    <span>{video.views} просмотров</span>
-                    <span>•</span>
-                    <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+        return videos.map((video, index) => (
+            <div
+                key={video.id}
+                className={styles.videoCard}
+                ref={videos.length === index + 1 ? lastVideoRef : null}
+                onClick={() => video.state === 1 && navigate(`/video/${video.id}`)}
+            >
+                <div className={styles.thumbnail}>
+                    <img src={video.previewUrl} alt={video.title} />
+                    <span className={styles.duration}>{video.duration}</span>
+                    {video.state !== 1 && (
+                        <div className={styles.videoStatus}>
+                            {video.state === 0 ? 'В обработке' : video.errorMessage || 'Ошибка'}
+                        </div>
+                    )}
                 </div>
-                {video.description && (
-                    <p className={styles.videoDescription}>{video.description}</p>
-                )}
+                <div className={styles.videoInfo}>
+                    <h3>{video.title}</h3>
+                    <div className={styles.meta}>
+                        <span>{video.viewCount} просмотров</span>
+                        <span>•</span>
+                        <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {video.description && (
+                        <p className={styles.videoDescription}>{video.description}</p>
+                    )}
+                </div>
             </div>
-        </div>
-    ));
-};
+        ));
+    };
 
     // Рендер плейлистов
     const renderPlaylists = () => {
