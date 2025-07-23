@@ -59,6 +59,10 @@ internal class DefaultCommentService : ICommentService
             .Where(x => x.PostId == postId)
             .ToListAsync();
 
+        var commentsCount = await _repository.Get<Comment>()
+            .Where(x => x.PostId == postId)
+            .CountAsync();
+
         var userIds = (await _repository.Get<UserProfile>()
             .Join(_repository.Get<Comment>().Where(x => x.PostId == postId),
             outer => outer.UserId,
@@ -72,18 +76,60 @@ internal class DefaultCommentService : ICommentService
             .OrderByDescending(x => x.CreatedAt)
             .ToList();
 
-        return new CommentsListViewModel(comments.Count, result);
+        return new CommentsListViewModel(commentsCount, result);
     }
 
 
-    public Task<Result> RemoveCommentAsync(Guid commentId)
+    public async Task<Result> RemoveCommentAsync(Guid commentId)
     {
-        throw new NotImplementedException();
+        var comment = await _repository.Get<Comment>()
+            .FirstOrDefaultAsync(x => x.Id == commentId);
+
+        if(comment == null)
+        {
+            return Result.Failure(new("Комментария не существует"));
+        }
+
+        _repository.Attach(comment);
+        comment.Remove();
+        await _repository.SaveChangesAsync();
+        return Result.Success();
     }
 
-    public Task<Result<CommentCreateResponse>> UpdateCommentAsync(CommentCreateRequest createRequest)
+    public async Task<Result<CommentCreateResponse>> UpdateCommentAsync(CommentUpdateRequest createRequest)
     {
-        throw new NotImplementedException();
+        var comment = await _repository.Get<Comment>()
+             .FirstOrDefaultAsync(x => x.Id == createRequest.CommentId);
+
+        if (comment == null)
+        {
+            return Result<CommentCreateResponse>.Failure(new("Комментария не существует"));
+        }
+
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
+
+        if (comment.UserId != currentUser.UserId.Value)
+        {
+            return Result<CommentCreateResponse>.Failure(new("Вы не можете редактировать чужой комментарий"));
+        }
+
+        var userEntity = await _repository.Get<UserProfile>()
+            .FirstOrDefaultAsync(x => x.UserId == currentUser.UserId.Value);
+
+        _repository.Attach(comment);
+        comment.UpdateComment(createRequest.Text);
+        await _repository.SaveChangesAsync();
+
+        return new CommentCreateResponse
+        {
+            Id = comment.Id,
+            UserId = currentUser.UserId.Value,
+            PhotoUrl = userEntity?.PhotoUrl,
+            ReplyTo = comment.ParentId,
+            Text = createRequest.Text,
+            Username = currentUser.UserName,
+            CreatedAt = comment.CreatedAt
+        };
     }
 
     private static CommentListItem MapToCommentListItem(TreeItem<Comment> commentTreeItem, Func<Guid, string?> getUserName)

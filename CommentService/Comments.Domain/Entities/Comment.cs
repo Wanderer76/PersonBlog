@@ -18,6 +18,8 @@ public class Comment : ICommentEntity, ISoftDelete
     [ForeignKey(nameof(ParentId))]
     public Comment? Parent { get; private set; }
 
+    public List<Comment> Children { get; private set; }
+
     public Comment(Guid userId, Guid postId, string text, Guid? parentId)
     {
         Id = GuidService.GetNewGuid();
@@ -39,5 +41,11 @@ public class Comment : ICommentEntity, ISoftDelete
     {
         IsDelete = false;
         DeleteDateTime = null;
+    }
+
+    public void UpdateComment(string text)
+    {
+        Text = text;
+        CreatedAt = DateTimeService.Now();
     }
 }
