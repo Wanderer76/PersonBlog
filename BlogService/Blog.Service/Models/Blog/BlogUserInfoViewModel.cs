@@ -28,7 +28,7 @@ namespace Blog.Service.Models.Blog
     {
         public static async Task<BlogUserInfoViewModel> ToBlogUserInfoViewModel(this PersonBlog blog, bool hasSubscription, IFileStorage fileStorage)
         {
-            return new BlogUserInfoViewModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, await fileStorage.GetFileUrlAsync(blog.Id,blog.PhotoUrl), hasSubscription, blog.SubscriptionsCount);
+            return new BlogUserInfoViewModel(blog.Id, blog.Title, blog.Description, blog.CreatedAt, blog.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(blog.Id, blog.PhotoUrl) : null, hasSubscription, blog.SubscriptionsCount);
         }
     }
 }

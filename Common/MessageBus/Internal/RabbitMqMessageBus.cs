@@ -17,9 +17,9 @@ namespace MessageBus
     {
         private readonly IConnectionFactory _factory;
         private readonly IServiceScopeFactory _serviceScope;
-        private readonly MessageBusSubscriptionInfo _subscriptionInfo;
         private readonly IConnection _connection;
-        private readonly List<IChannel> _channels;
+        private readonly ConcurrentBag<IChannel> _channels;
+        private readonly MessageBusSubscriptionInfo _subscriptionInfo;
         private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
         public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
         {
@@ -33,7 +33,7 @@ namespace MessageBus
             _subscriptionInfo = subscriptionInfo.Value;
             _serviceScope = serviceScope;
             _connection = _factory.CreateConnectionAsync().GetAwaiter().GetResult();
-            _channels = new List<IChannel>();
+            _channels = [];
             _cachedValues = [];
         }
 
@@ -85,6 +85,11 @@ namespace MessageBus
         /// <returns></returns>
         public async Task PublishAsync<T>(T message, MessageProperty? cfg = null)
         {
+            if(typeof(T) == typeof(BaseEvent))
+            {
+                throw new InvalidOperationException("T не должен быть BaseEvent");
+            }
+
             try
             {
                 cfg ??= new MessageProperty();
@@ -101,6 +106,36 @@ namespace MessageBus
                     Persistent = cfg.Persistence,
                 }, body: body);
 
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+
+        /// <summary>
+        /// Для публикации у события должен быть определен аттрибут EventPublishAttribute
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="cfg"></param>
+        /// <returns></returns>
+        public async Task PublishEventAsync(BaseEvent message, MessageProperty? cfg = null)
+        {
+            try
+            {
+                cfg ??= new MessageProperty();
+                var type = _subscriptionInfo.EventTypes[message.EventType];
+                var value = type.GetCustomAttribute<EventPublishAttribute>(false);
+                var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+                cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+                cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
+                using var channel = await _connection.CreateChannelAsync();
+                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, new JsonSerializerOptions { Converters = { new BaseEventJsonConverter() } }));
+                await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
+                {
+                    CorrelationId = cfg.CorrelationId,
+                    Persistent = cfg.Persistence,
+                }, body: body);
             }
             catch (Exception e)
             {
@@ -149,7 +184,6 @@ namespace MessageBus
                             : Guid.Parse(ea.BasicProperties.CorrelationId);
                             var context = MessageContext.Create(correlationId, handlerBody, this);
                             await handler.Handle(context);
-                            await channel.BasicAckAsync(ea.DeliveryTag, false);
                         }
                         catch (Exception e)
                         {
@@ -163,6 +197,8 @@ namespace MessageBus
                         }
 
                     }
+                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+
                 }
                 else
                 {

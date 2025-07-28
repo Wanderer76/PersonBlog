@@ -46,22 +46,7 @@ namespace Blog.API.HostedServices
                     {
                         dbContext.Attach(message);
                         message.Processed();
-                        if (message.EventType == nameof(CombineFileChunksCommand))
-                        {
-                            var command = JsonSerializer.Deserialize<CombineFileChunksCommand>(message.EventData)!;
-                            await _messageBus.PublishAsync(command);
-                        }
-                        if(message.EventType == nameof(PostUpdateEvent))
-                        {
-                            var command = JsonSerializer.Deserialize<PostUpdateEvent>(message.EventData)!;
-                            await _messageBus.PublishAsync(command);
-                        }
-                        if (message.EventType == nameof(BlogCreateEvent))
-                        {
-                            var command = JsonSerializer.Deserialize<BlogCreateEvent>(message.EventData)!;
-                            await _messageBus.PublishAsync(command);
-                        }
-
+                        await _messageBus.PublishEventAsync(message);
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)

@@ -4,6 +4,7 @@ using MessageBus.Internal;
 using MessageBus.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace MessageBus
 {
@@ -13,7 +14,12 @@ namespace MessageBus
         {
             services.AddSingleton<RabbitMqMessageBus>();
             services.AddSingleton<IMessagePublish, RabbitMqMessageBus>(x => x.GetRequiredService<RabbitMqMessageBus>());
-            services.AddOptions<MessageBusSubscriptionInfo>().Configure(x => new MessageBusSubscriptionInfo([]));
+
+            var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
+                 .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
+                 .ToList();
+
+            services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
             services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
             services.AddHostedService<DefaultHostedService>();
             return new MessageBusBuilder(services);

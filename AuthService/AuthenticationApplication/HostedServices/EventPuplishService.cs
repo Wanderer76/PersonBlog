@@ -1,10 +1,7 @@
-﻿
-using Authentication.Contract.Events;
-using Authentication.Domain.Entities;
+﻿using Authentication.Domain.Entities;
 using MessageBus;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
-using System.Text.Json;
 
 namespace AuthenticationApplication.HostedServices;
 
@@ -43,14 +40,10 @@ public class EventPublishService : IHostedService
 
             foreach (var @event in events)
             {
-                if (@event.EventType == nameof(UserCreateEvent))
-                {
-                    var data = JsonSerializer.Deserialize<UserCreateEvent>(@event.EventData);
-                    await publisher.PublishAsync(data);
-                }
 
                 repository.Attach(@event);
-                @event.State = Infrastructure.Models.EventState.Processed;
+                @event.Processed();
+                await publisher.PublishEventAsync(@event);
                 await repository.SaveChangesAsync();
             }
 

@@ -17,6 +17,7 @@ public static class MessageContext
         return new MessageContext<T>(correlationId, message, messagePublish);
     }
 }
+
 public interface IMessageContext<out TMessage> : IMessagePublish
 {
     public Guid? CorrelationId { get; }
@@ -45,5 +46,10 @@ internal sealed class MessageContext<TMessage> : IMessageContext<TMessage>
     public Task PublishAsync<T>(T message, MessageProperty? cfg = null)
     {
         return _publish.PublishAsync(message, cfg);
+    }
+
+    public Task PublishEventAsync(BaseEvent message, MessageProperty? cfg = null)
+    {
+        return _publish.PublishEventAsync(message, cfg);
     }
 }

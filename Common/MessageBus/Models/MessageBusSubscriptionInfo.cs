@@ -3,22 +3,16 @@
     internal sealed class MessageBusSubscriptionInfo
     {
         public IReadOnlyDictionary<string, Type> EventTypes { get => _eventTypes; }
-
-        private readonly Dictionary<string, Type> _eventTypes = [];
-
         public readonly List<HandlerInfo> Handlers = new List<HandlerInfo>();
 
+        private  Dictionary<string, Type> _eventTypes;
+        
         public MessageBusSubscriptionInfo() { }
-
-        public MessageBusSubscriptionInfo(Dictionary<string, Type> eventTypes)
-        {
-            _eventTypes = eventTypes;
-        }
 
         public void AddSubscription<TEvent>(Action<QueueParams>? cfg)
         {
             var type = typeof(TEvent);
-            _eventTypes.Add(type.Name, type);
+            _eventTypes.TryAdd(type.Name, type);
             var queueOptions = new QueueParams();
             cfg?.Invoke(queueOptions);
             Handlers.Add(new HandlerInfo
@@ -31,6 +25,12 @@
         public void AddMessageInfo<TMessage>(Action<MessageInfo<TMessage>>? cfg)
         {
 
+        }
+
+        internal void Init(List<Type> types)
+        {
+            _eventTypes = types
+                .ToDictionary(x => x.Name, x => x);
         }
     }
 
