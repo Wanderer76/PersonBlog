@@ -1,14 +1,8 @@
-﻿using MassTransit;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Blog.Domain.Entities
 {
-    public class VideoProcessingSagaState : SagaStateMachineInstance, IBlogEntity
+    public class VideoProcessingSagaState :  IBlogEntity
     {
         [Key]
         public Guid CorrelationId { get; set; }

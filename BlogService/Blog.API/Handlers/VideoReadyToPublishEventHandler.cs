@@ -2,7 +2,6 @@
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Infrastructure.Services;
-using MassTransit;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -10,7 +9,7 @@ using System.Text.Json;
 
 namespace Blog.API.Handlers
 {
-    public class VideoReadyToPublishEventHandler : IConsumer<VideoReadyToPublishEvent>, IEventHandler<VideoReadyToPublishEvent>
+    public class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyToPublishEvent>
     {
         private readonly IReadWriteRepository<IBlogEntity> _repository;
         private readonly ICacheService _cacheService;
@@ -18,12 +17,6 @@ namespace Blog.API.Handlers
         {
             _repository = repository;
             _cacheService = cacheService;
-        }
-
-        public async Task Consume(ConsumeContext<VideoReadyToPublishEvent> context)
-        {
-            var @event = context.Message;
-            await PrepareToPublish(@event);
         }
 
         public async Task Handle(IMessageContext<VideoReadyToPublishEvent> @event)

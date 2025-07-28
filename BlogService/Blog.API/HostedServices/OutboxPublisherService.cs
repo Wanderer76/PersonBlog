@@ -1,15 +1,8 @@
-﻿using RabbitMQ.Client;
-using Shared.Persistence;
+﻿using Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using MessageBus;
 using Infrastructure.Models;
-using MessageBus.Shared.Configs;
 using Blog.Domain.Entities;
-using Blog.Domain.Events;
-using MassTransit;
-using System.Text.Json;
-using ViewReacting.Domain.Events;
-using Blog.Contracts.Events;
 
 namespace Blog.API.HostedServices
 {

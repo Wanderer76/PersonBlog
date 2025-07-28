@@ -1,10 +1,7 @@
 ﻿using Blog.Domain.Events;
 using FileStorage.Service.Service;
-using MassTransit;
-using MessageBus;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
 
 namespace VideoProcessing.Cli.Service
 {

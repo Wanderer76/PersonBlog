@@ -3,16 +3,14 @@ using Blog.Domain.Events;
 using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using FileStorage.Service.Service;
-using MassTransit;
 using MessageBus;
 using MessageBus.EventHandler;
-using RabbitMQ.Client;
 using Shared.Services;
 using Shared.Utils;
 
 namespace VideoProcessing.Cli.Service;
 
-public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<ConvertVideoCommand>
+public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 {
     private readonly IFFMpegService _ffmpegService;
     private readonly IFileStorage _storage;
@@ -25,12 +23,6 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>, IConsumer<C
         _storage = storage.CreateFileStorage();
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
-    }
-    public async Task Consume(ConsumeContext<ConvertVideoCommand> context)
-    {
-        var msg = context.Message;
-        var result = await HandleConversion(msg);
-        await context.Publish(result);
     }
 
     public async Task Handle(IMessageContext<ConvertVideoCommand> @event)
