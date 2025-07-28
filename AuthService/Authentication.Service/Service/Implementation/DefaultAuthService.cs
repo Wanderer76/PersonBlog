@@ -105,7 +105,7 @@ internal class DefaultAuthService : IAuthService
             UserName = user.Login
         };
 
-        _context.Add(new AuthEvent { EventData = JsonSerializer.Serialize(userCreateEvent), EventType = nameof(UserCreateEvent) });
+        _context.Add(AuthEvent.Create(userCreateEvent));
         _context.Add(profile);
         await _context.SaveChangesAsync();
 

@@ -12,15 +12,21 @@ namespace Infrastructure.Models
     public abstract class BaseEvent
     {
         public Guid Id { get; set; }
-        public Guid? CorrelationId {  get; set; }
+        public Guid? CorrelationId { get; set; }
         public DateTimeOffset CreatedAt { get; private set; } = DateTimeOffset.UtcNow;
         public EventState State { get => _state; set => _state = value; }
-        public required string EventType { get; set; }
-        public required string EventData { get; set; } // Сериализованный JSON события
+        public string EventType { get; set; }
+        public string EventData { get; set; } // Сериализованный JSON события
         public int RetryCount { get; set; }
         public string? ErrorMessage { get; private set; }
 
         private EventState _state = EventState.Pending;
+
+        protected BaseEvent(string eventData, string eventType)
+        {
+            EventData = eventData;
+            EventType = eventType;
+        }
 
         public void SetErrorMessage(string message)
         {

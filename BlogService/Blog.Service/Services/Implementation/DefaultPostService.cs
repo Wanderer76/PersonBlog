@@ -53,7 +53,7 @@ namespace Blog.Service.Services.Implementation
             }
 
             var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility);
-            if(postCreateDto.Thumbnail != null)
+            if (postCreateDto.Thumbnail != null)
             {
                 using var storage = _fileStorageFactory.CreateFileStorage();
                 var previewUrl = await storage.PutFileAsync(post.Id, GuidService.GetNewGuid(), postCreateDto.Thumbnail.OpenReadStream());
@@ -184,20 +184,16 @@ namespace Blog.Service.Services.Implementation
                 _context.Attach(post);
                 post.IsDeleted = true;
                 _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
-                _context.Add(new VideoProcessEvent
+                _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
                 {
-                    EventData = JsonSerializer.Serialize(new PostUpdateEvent
-                    {
-                        BlogId = post.BlogId,
-                        CreatedAt = DateTimeService.Now(),
-                        UpdateType = UpdateType.Delete,
-                        Description = post.Description,
-                        PostId = post.Id,
-                        Title = post.Title,
-                        ViewCount = post.ViewCount
-                    }),
-                    EventType = nameof(PostUpdateEvent)
-                });
+                    BlogId = post.BlogId,
+                    CreatedAt = DateTimeService.Now(),
+                    UpdateType = UpdateType.Delete,
+                    Description = post.Description,
+                    PostId = post.Id,
+                    Title = post.Title,
+                    ViewCount = post.ViewCount
+                }));
             }
 
             await _cacheService.RemoveCachedDataAsync($"{nameof(PostModel)}:{id}");
@@ -241,13 +237,7 @@ namespace Blog.Service.Services.Implementation
                     PostId = uploadVideoChunkDto.PostId,
                 };
 
-                var videoEvent = new VideoProcessEvent
-                {
-                    Id = GuidService.GetNewGuid(),
-                    EventData = JsonSerializer.Serialize(videoCreateEvent),
-                    EventType = nameof(CombineFileChunksCommand),
-                    CorrelationId = videoCreateEvent.VideoMetadataId
-                };
+                var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
                 metadata.ProcessState = ProcessState.Running;
                 _context.Add(metadata);
                 _context.Add(videoEvent);
@@ -298,7 +288,7 @@ namespace Blog.Service.Services.Implementation
                 ViewCount = post.ViewCount
             };
 
-            _context.Add(new VideoProcessEvent { EventData = JsonSerializer.Serialize(postUpdateEvent), EventType = nameof(PostUpdateEvent), Id = GuidService.GetNewGuid() });
+            _context.Add(VideoProcessEvent.Create(postUpdateEvent));
 
             await _context.SaveChangesAsync();
 
@@ -513,7 +503,7 @@ namespace Blog.Service.Services.Implementation
             var post = await _context.Get<Post>()
                 .FirstOrDefaultAsync(x => x.Id == postId);
 
-            if(post == null)
+            if (post == null)
             {
                 return new Error("Пост не найден");
             }
@@ -524,7 +514,7 @@ namespace Blog.Service.Services.Implementation
             }
 
             return new PostEditViewModel(
-            
+
                 post.Id,
                 post.Title,
                 post.Description,

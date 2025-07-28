@@ -57,12 +57,7 @@ namespace Blog.Service.Services.Implementation
             };
             _context.Add(blog);
             var @event = new BlogCreateEvent(blogId, blog.UserId);
-            _context.Add(new VideoProcessEvent
-            {
-                EventData = JsonSerializer.Serialize(@event),
-                EventType = nameof(BlogCreateEvent),
-                CorrelationId = blogId,
-            });
+            _context.Add(VideoProcessEvent.Create(@event, blogId));
             await _context.SaveChangesAsync();
             await _cacheService.RemoveCachedDataAsync(GetBlogByUserIdKey(model.UserId));
             return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());

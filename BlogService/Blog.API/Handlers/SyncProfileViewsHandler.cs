@@ -75,7 +75,7 @@ namespace Blog.API.Handlers
                 UpdateType = UpdateType.Update,
                 ViewCount = post.ViewCount,
             };
-            _context.Add(new VideoProcessEvent { EventData = JsonSerializer.Serialize(postUpdateEvent), EventType = nameof(PostUpdateEvent) });
+            _context.Add(VideoProcessEvent.Create(postUpdateEvent));
             await _context.SaveChangesAsync();
         }
 

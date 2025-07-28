@@ -49,24 +49,14 @@ namespace VideoReacting.Service.Implementation
                 IsLike = reaction.IsLike
             };
 
-            var videoEvent = new ReactingEvent
-            {
-                Id = eventData.EventId,
-                EventType = nameof(UserReactionSyncEvent),
-                EventData = JsonSerializer.Serialize(eventData),
-            };
+            var videoEvent = ReactingEvent.Create(eventData, eventData.EventId);
             _context.Add(videoEvent);
             await _context.SaveChangesAsync();
         }
 
         public async Task SetViewToPost(VideoViewEvent videoView)
         {
-            var videoEvent = new ReactingEvent
-            {
-                Id = GuidService.GetNewGuid(),
-                EventType = nameof(VideoViewEvent),
-                EventData = JsonSerializer.Serialize(videoView),
-            };
+            var videoEvent = ReactingEvent.Create(videoView, GuidService.GetNewGuid());
             _context.Add(videoEvent);
             await _context.SaveChangesAsync();
         }
