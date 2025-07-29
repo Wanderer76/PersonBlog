@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Infrastructure.Test
+namespace Common
 {
     public class PriorityOrderer : ITestCaseOrderer
     {

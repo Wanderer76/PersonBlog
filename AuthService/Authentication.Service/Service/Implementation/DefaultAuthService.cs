@@ -12,7 +12,7 @@ using Shared.Services;
 using Shared.Utils;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-[assembly: InternalsVisibleTo("Authentication.Test")]
+[assembly: InternalsVisibleTo("AuthTests")]
 
 namespace Authentication.Service.Service.Implementation;
 
@@ -35,18 +35,27 @@ internal class DefaultAuthService : IAuthService
             .Include(x => x.AppUserRoles)
             .FirstOrDefaultAsync(x => x.Login == loginModel.Login);
 
-        user.AssertFound();
-
-        if (!PasswordHasher.Validate(user.Password, loginModel.Password))
+        if (user == null)
         {
-            return new Error("400", "Неверный логин/пароль");
+            return new Error("400", "Пользователь не найден");
         }
+        try
+        {
+            if (!PasswordHasher.Validate(user.Password, loginModel.Password))
+            {
+                return new Error("400", "Неверный логин/пароль");
+            }
 
-        var response = await _tokenService.GenerateTokenAsync(user);
+            var response = await _tokenService.GenerateTokenAsync(user);
 
-        await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-        return Result<AuthResponse, Error>.Success(response);
+            return Result<AuthResponse, Error>.Success(response);
+        }
+        catch (Exception ex)
+        {
+            return new Error(ex.Message);
+        }
     }
 
     public async Task<Result<AuthResponse, Error>> Register(RegisterModel registerModel)
