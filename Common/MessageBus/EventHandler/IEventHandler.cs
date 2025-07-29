@@ -43,7 +43,7 @@ internal sealed class MessageContext<TMessage> : IMessageContext<TMessage>
         return _publish.PublishAsync(exchangeName, routingKey, message, cfg);
     }
 
-    public Task PublishAsync<T>(T message, MessageProperty? cfg = null)
+    public Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null)
     {
         return _publish.PublishAsync(message, cfg);
     }

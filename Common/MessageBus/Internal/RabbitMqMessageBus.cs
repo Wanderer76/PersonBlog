@@ -62,7 +62,7 @@ namespace MessageBus
             {
                 cfg ??= new MessageProperty();
                 using var channel = await _connection.CreateChannelAsync();
-                var baseEvent = new BaseEvent<T> { EventData = message, EventType = typeof(T).Name, };
+                var baseEvent = BaseEvent<T>.Create(message);
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
                 await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
                 {
@@ -83,13 +83,8 @@ namespace MessageBus
         /// <param name="message"></param>
         /// <param name="cfg"></param>
         /// <returns></returns>
-        public async Task PublishAsync<T>(T message, MessageProperty? cfg = null)
+        public async Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null)
         {
-            if(typeof(T) == typeof(BaseEvent))
-            {
-                throw new InvalidOperationException("T не должен быть BaseEvent");
-            }
-
             try
             {
                 cfg ??= new MessageProperty();
@@ -97,8 +92,7 @@ namespace MessageBus
 
                 using var channel = await _connection.CreateChannelAsync();
 
-                var baseEvent = new BaseEvent<T> { EventData = message, EventType = typeof(T).Name, };
-                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
+                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
                 await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
                 {

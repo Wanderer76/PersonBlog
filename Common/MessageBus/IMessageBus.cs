@@ -6,7 +6,7 @@ namespace MessageBus
     {
         //Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent;
         Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null);
-        Task PublishAsync<T>(T message, MessageProperty? cfg = null);
+        Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null);
         Task PublishEventAsync(BaseEvent message, MessageProperty? cfg = null);
     }
 

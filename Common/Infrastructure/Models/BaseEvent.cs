@@ -5,8 +5,25 @@ namespace Infrastructure.Models
 {
     public sealed class BaseEvent<T>
     {
-        public required string EventType { get; set; }
-        public required T EventData { get; set; }
+        public string EventType { get; private set; }
+        public T EventData { get; private set; }
+
+        public BaseEvent(T eventData)
+        : this(typeof(T).Name, eventData)
+        {
+        }
+
+        [JsonConstructor]
+        private BaseEvent(string eventType, T eventData)
+        {
+            EventType = eventType;
+            EventData = eventData;
+        }
+
+        public static BaseEvent<T> Create(T data)
+        {
+            return new BaseEvent<T>(data);
+        }
     }
 
     public abstract class BaseEvent

@@ -1,4 +1,5 @@
-﻿using Infrastructure.Services;
+﻿using Infrastructure.Models;
+using Infrastructure.Services;
 using MessageBus;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
@@ -78,12 +79,12 @@ namespace VideoReacting.Service.Implementation
             var newSubscription = new SubscribedChanel(user.UserId!.Value, blogId);
             _readWriteRepository.Add(newSubscription);
             await _readWriteRepository.SaveChangesAsync();
-            await _messagePublish.PublishAsync(new SubscribeCreateEvent
+            await _messagePublish.PublishAsync(BaseEvent<SubscribeCreateEvent>.Create(new SubscribeCreateEvent
             {
                 BlogId = blogId,
                 CreatedAt = newSubscription.CreatedAt,
                 UserId = newSubscription.UserId
-            });
+            }));
         }
 
         public async Task UnSubscribeToBlogAsync(Guid blogId)
@@ -98,12 +99,12 @@ namespace VideoReacting.Service.Implementation
 
             _readWriteRepository.Remove(hasActiveSubscription);
             await _readWriteRepository.SaveChangesAsync();
-            await _messagePublish.PublishAsync(new SubscribeCancelEvent
+            await _messagePublish.PublishAsync(BaseEvent<SubscribeCancelEvent>.Create(new SubscribeCancelEvent
             {
                 UserId = user.UserId.Value,
                 CreatedAt = DateTimeService.Now(),
                 BlogId = blogId
-            });
+            }));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Blog.Contracts.Events;
+using Infrastructure.Models;
 using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
@@ -47,9 +48,8 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
              @event.Message.IsCompleteWatch
              ));
         await _cacheService.RemoveCachedDataAsync(new UserPostViewCacheKey(@event.Message.UserId));
-        //if (result.Value == UpdateViewState.Created)
         {
-            await @event.PublishAsync(
+            await @event.PublishAsync(BaseEvent<UserViewedSyncEvent>.Create(
                 new UserViewedSyncEvent
                 {
                     EventId = @event.Message.UserId,
@@ -58,7 +58,7 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
                     UserId = @event.Message.UserId,
                     WatchedTime = DateTimeService.Now(),
                 }
-            );
+            ));
         }
     }
 }
