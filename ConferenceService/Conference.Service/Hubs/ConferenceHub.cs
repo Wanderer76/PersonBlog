@@ -1,6 +1,7 @@
 ﻿using Conference.Domain.Services;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Shared.Services;
 using Shared.Utils;
 
@@ -154,8 +155,8 @@ namespace Conference.Service.Hubs
         private Guid? TryGetSession()
         {
             var context = Context.GetHttpContext();
-            var session = context.Request.Query.TryGetValue("token",out var value);
-            return !session  ? null :JwtUtils.GetTokenRepresentaion(value).UserId;
+            var session = context.Request.Query.TryGetValue("token", out var value);
+            return !session ? null : JwtUtils.GetTokenRepresentaion(value).UserId;
         }
     }
     public class ConferenceChatModel
@@ -164,7 +165,7 @@ namespace Conference.Service.Hubs
         public double CurrentTime { get; set; }
         public Dictionary<Guid, string> ConferenceParticipants { get; set; }
     }
-    public readonly struct ConferenceChatModelCacheKey
+    public class ConferenceChatModelCacheKey : ICacheKey
     {
         public const string Key = "HubConference";
         private readonly Guid _id;
@@ -173,6 +174,9 @@ namespace Conference.Service.Hubs
         {
             _id = id;
         }
+
+        public string GetKey() => $"{Key}:{_id}";
+
         public static implicit operator string(ConferenceChatModelCacheKey key) => $"{Key}:{key._id}";
     }
 }

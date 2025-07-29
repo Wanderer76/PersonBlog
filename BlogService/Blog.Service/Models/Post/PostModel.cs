@@ -1,5 +1,6 @@
 ﻿using Blog.Domain.Entities;
 using Blog.Domain.Services.Models;
+using Shared.Services;
 
 namespace Blog.Service.Models.Post
 {
@@ -29,5 +30,18 @@ namespace Blog.Service.Models.Post
             ErrorMessage = errorMessage;
             ViewCount = viewCount;
         }
+    }
+
+    public sealed class PostModelCacheKey : ICacheKey
+    {
+        private const string Key = nameof(PostModel);
+        private readonly Guid id;
+
+        public PostModelCacheKey(Guid id)
+        {
+            this.id = id;
+        }
+
+        public string GetKey() => $"{Key}:{id}";
     }
 }

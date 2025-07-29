@@ -37,4 +37,17 @@ namespace Blog.Domain.Entities
             UpdatedAt = now;
         }
     }
+
+    public class PaymentSubscriptionCacheKey : ICacheKey
+    {
+        private const string Key = nameof(PaymentSubscription);
+        private readonly Guid id;
+
+        public PaymentSubscriptionCacheKey(Guid blogId)
+        {
+            this.id = blogId;
+        }
+
+        public string GetKey() => $"{Key}:{id}";
+    }
 }

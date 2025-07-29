@@ -35,11 +35,12 @@ public class VideoController : BaseController
     {
         if (file.EndsWith("playlist.m3u8"))
         {
-            var playlistParsed = await _cache.GetCachedDataAsync<string>(file);
+            var key = new FileCacheKey(file);
+            var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
             if (playlistParsed == null)
             {
                 playlistParsed = await storage.ProcessManifestAsync(postId, file);
-                await _cache.SetCachedDataAsync(file, playlistParsed, TimeSpan.FromMinutes(15));
+                await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
             }
 
             return Content(playlistParsed, HLSType);
@@ -117,3 +118,15 @@ public class VideoController : BaseController
 }
 
 internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, ReactionHistoryViewItem? UserPostInfo, List<string> Comment);
+
+file class FileCacheKey : ICacheKey
+{
+    private readonly string file;
+
+    public FileCacheKey(string file)
+    {
+        this.file = file;
+    }
+
+    public string GetKey() => file;
+}

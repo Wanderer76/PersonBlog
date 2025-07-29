@@ -1,5 +1,6 @@
 ﻿using FileStorage.Service.Models;
 using Shared.Models;
+using Shared.Services;
 
 namespace Blog.Domain.Entities
 {
@@ -19,5 +20,18 @@ namespace Blog.Domain.Entities
         Complete,
         Load,
         Error
+    }
+
+    public sealed class VideoMetadataCacheKey : ICacheKey
+    {
+        public const string Key = nameof(VideoMetadata);
+        private readonly Guid id;
+
+        public VideoMetadataCacheKey(Guid id)
+        {
+            this.id = id;
+        }
+
+        public string GetKey() => $"{Key}:{id}";
     }
 }

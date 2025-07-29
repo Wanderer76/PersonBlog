@@ -1,6 +1,7 @@
 ﻿using Blog.Contracts.Events;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
+using Blog.Service.Models.Post;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
@@ -64,8 +65,8 @@ namespace Blog.API.Handlers
 
             _repository.Add(VideoProcessEvent.Create(postUpdateEvent));
             await _repository.SaveChangesAsync();
-            await _cacheService.RemoveCachedDataAsync($"PostModel:{post.Id}");
-            await _cacheService.RemoveCachedDataAsync($"VideoMetadata:{post.Id}");
+            await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(post.Id));
+            await _cacheService.RemoveCachedDataAsync(new VideoMetadataCacheKey(post.Id));
             return post;
         }
     }

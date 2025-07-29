@@ -57,7 +57,7 @@ namespace Blog.Service.Services.Implementation
                 return new Error("Не удалось получить данные о прогрессе загрузки");
             }
 
-            var cacheKey = $"{nameof(VideoMetadata)}:{uploadVideoChunk.PostId}";
+            var cacheKey = new VideoMetadataCacheKey(uploadVideoChunk.PostId);
 
             var cacheResult = await _cacheService.GetCachedDataAsync<VideoMetadata>(cacheKey);
 

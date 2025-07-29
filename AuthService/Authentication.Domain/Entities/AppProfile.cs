@@ -1,4 +1,5 @@
 ﻿using Shared;
+using Shared.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace Authentication.Domain.Entities;
@@ -50,4 +51,17 @@ public class AppProfile : BaseEntity, IAuthEntity
     {
         return new AppProfile(birthdate, email, firstName, surName, lastName, userId);
     }
+}
+
+public class AppProfileCacheKey : ICacheKey
+{
+    private const string Key = nameof(AppProfile);
+    private readonly Guid id;
+
+    public AppProfileCacheKey(Guid id)
+    {
+        this.id = id;
+    }
+
+    public string GetKey() => $"{Key}:{id}";
 }

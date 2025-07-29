@@ -80,15 +80,16 @@ namespace Blog.Service.Services.Implementation
                     return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
                 }
             }
+            var key = new VideoMetadataCacheKey(postId);
 
-            var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"VideoMetadata:{postId}");
+            var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(key);
             if (fileMetadata == null)
             {
                 fileMetadata = await _context.Get<VideoMetadata>()
                     .Where(x => x.PostId == postId)
                     .FirstAsync();
 
-                await _cacheService.SetCachedDataAsync($"VideoMetadata:{postId}", fileMetadata, TimeSpan.FromHours(1));
+                await _cacheService.SetCachedDataAsync(key, fileMetadata, TimeSpan.FromHours(1));
             }
 
             return new PostFileMetadataModel(
@@ -133,7 +134,7 @@ namespace Blog.Service.Services.Implementation
             var fileStorage = _fileStorageFactory.CreateFileStorage();
             var posts = new List<PostModel>(pagedPosts.Posts.Count());
 
-            var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => $"{nameof(PostModel)}:{x.Id}"))).ToList();
+            var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => new PostModelCacheKey(x.Id)))).ToList();
             if (cachedPosts.Count != pagedPosts.Posts.Count())
             {
                 foreach (var post in pagedPosts.Posts.ExceptBy(cachedPosts.Select(x => x.Id), x => x.Id))
@@ -162,7 +163,7 @@ namespace Blog.Service.Services.Implementation
                                 );
                     posts.Add(postModel);
                     cachedPosts.Add(postModel);
-                    await _cacheService.SetCachedDataAsync($"{nameof(PostModel)}:{postModel.Id}", postModel, TimeSpan.FromHours(10));
+                    await _cacheService.SetCachedDataAsync(new PostModelCacheKey(postModel.Id), postModel, TimeSpan.FromHours(10));
 
                 }
             }
@@ -196,14 +197,14 @@ namespace Blog.Service.Services.Implementation
                 }));
             }
 
-            await _cacheService.RemoveCachedDataAsync($"{nameof(PostModel)}:{id}");
+            await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
             await _context.SaveChangesAsync();
         }
 
         public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
         {
             var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var metadata = await _cacheService.GetCachedDataAsync<VideoMetadata>($"{nameof(VideoMetadata)}:{uploadVideoChunkDto.PostId}");
+            var metadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(new VideoMetadataCacheKey(uploadVideoChunkDto.PostId));
 
             if (metadata == null)
             {
@@ -315,7 +316,7 @@ namespace Blog.Service.Services.Implementation
                             post.ViewCount
                         );
 
-            await _cacheService.SetCachedDataAsync($"PostModel:{result.Id}", result, TimeSpan.FromHours(10));
+            await _cacheService.SetCachedDataAsync(new PostModelCacheKey(result.Id), result, TimeSpan.FromHours(10));
             await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
 
             return result;

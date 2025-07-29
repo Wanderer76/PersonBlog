@@ -17,9 +17,6 @@ namespace Blog.Service.Services.Implementation
         private readonly ICacheService _cacheService;
         private readonly IFileStorageFactory _fileStorageFactory;
 
-        private string GetBlogByIdKey(Guid id) => $"Blog:{id}";
-        private string GetBlogByUserIdKey(Guid id) => $"Blog:UserId{id}";
-
         public DefaultBlogService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
@@ -59,7 +56,7 @@ namespace Blog.Service.Services.Implementation
             var @event = new BlogCreateEvent(blogId, blog.UserId);
             _context.Add(VideoProcessEvent.Create(@event, blogId));
             await _context.SaveChangesAsync();
-            await _cacheService.RemoveCachedDataAsync(GetBlogByUserIdKey(model.UserId));
+            await _cacheService.RemoveCachedDataAsync(new BlogByUserIdCacheKey(model.UserId));
             return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
 
@@ -73,13 +70,14 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogByIdAsync(Guid id)
         {
-            var result = await _cacheService.GetCachedDataAsync<PersonBlog>(GetBlogByIdKey(id));
+            var key = new BlogByIdCacheKey(id);
+            var result = await _cacheService.GetCachedDataAsync<PersonBlog>(key);
             if (result == null)
             {
                 result = await _context.Get<PersonBlog>()
                     .FirstAsync(x => x.Id == id);
 
-                await _cacheService.SetCachedDataAsync(GetBlogByIdKey(id), result, TimeSpan.FromMinutes(10));
+                await _cacheService.SetCachedDataAsync(key, result, TimeSpan.FromMinutes(10));
             }
             return await result.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
@@ -95,14 +93,15 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
         {
-            var blog = await _cacheService.GetCachedDataAsync<PersonBlog>(GetBlogByUserIdKey(userId));
+            var key = new BlogByUserIdCacheKey(userId);
+            var blog = await _cacheService.GetCachedDataAsync<PersonBlog>(key);
             if (blog == null)
             {
                 blog = await _context.Get<PersonBlog>()
                     .Where(x => x.UserId == userId)
                     .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
 
-                await _cacheService.SetCachedDataAsync(GetBlogByUserIdKey(userId), blog, TimeSpan.FromMinutes(10));
+                await _cacheService.SetCachedDataAsync(key, blog, TimeSpan.FromMinutes(10));
             }
             return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
         }
@@ -134,5 +133,30 @@ namespace Blog.Service.Services.Implementation
                             .FirstOrDefaultAsync(x => x.UserId == userId);
             return isBlogAlreadyExists?.Id;
         }
+    }
+
+    public class BlogByUserIdCacheKey : ICacheKey
+    {
+        public const string Key = nameof(BlogByUserIdCacheKey);
+        private readonly Guid userId;
+
+        public BlogByUserIdCacheKey(Guid userId)
+        {
+            this.userId = userId;
+        }
+
+        public string GetKey() => $"{Key}:{userId}";
+    }
+    public class BlogByIdCacheKey : ICacheKey
+    {
+        public const string Key = nameof(BlogByIdCacheKey);
+        private readonly Guid id;
+
+        public BlogByIdCacheKey(Guid id)
+        {
+            this.id = id;
+        }
+
+        public string GetKey() => $"{Key}:{id}";
     }
 }

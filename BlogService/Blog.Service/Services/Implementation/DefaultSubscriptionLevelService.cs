@@ -54,22 +54,20 @@ namespace Blog.Service.Services.Implementation
 
             _readWriteRepository.Add(newLevel);
             await _readWriteRepository.SaveChangesAsync();
-            await _cacheService.RemoveCachedDataAsync($"{nameof(PaymentSubscription)}:${subscriptionLevel.BlogId}");
+            await _cacheService.RemoveCachedDataAsync(new PaymentSubscriptionCacheKey(subscriptionLevel.BlogId));
             return newLevel.ToLevelModel();
         }
 
         private async Task<IEnumerable<PaymentSubscription>> GetSubscriptionsCachedByBlogId(Guid blogId)
         {
-            var cachedData = await _cacheService.GetCachedDataAsync<IEnumerable<PaymentSubscription>>($"{nameof(PaymentSubscription)}:${blogId}");
-            if (cachedData == null)
+
+            var cachedData = await _cacheService.GetOrAddDataAsync(new PaymentSubscriptionCacheKey(blogId), () =>
             {
-                var data = await _readWriteRepository.Get<PaymentSubscription>()
+                return _readWriteRepository.Get<PaymentSubscription>()
                     .Where(x => x.BlogId == blogId && x.IsDeleted == false)
                     .ToListAsync();
+            });
 
-                await _cacheService.SetCachedDataAsync($"{nameof(PaymentSubscription)}:${blogId}", data, TimeSpan.FromHours(1));
-                cachedData = data;
-            }
             return cachedData;
         }
 

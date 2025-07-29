@@ -24,7 +24,8 @@ namespace Authentication.Peristence.Repository
 
         public static async Task<AppProfile?> GetProfileByUserIdAsync(this ReadContext context, ICacheService cache, Guid userId)
         {
-            var profile = await cache.GetCachedDataAsync<AppProfile>($"{nameof(AppProfile)}:{userId}");
+            var key = new AppProfileCacheKey(userId);
+            var profile = await cache.GetCachedDataAsync<AppProfile>(key);
             if (profile == null)
             {
                 profile = await context.Get<AppProfile>()
@@ -33,7 +34,7 @@ namespace Authentication.Peristence.Repository
                     .FirstOrDefaultAsync();
 
                 if (profile != null)
-                    await cache.SetCachedDataAsync($"{nameof(AppProfile)}:{userId}", profile, TimeSpan.FromMinutes(10));
+                    await cache.SetCachedDataAsync(key, profile, TimeSpan.FromMinutes(10));
             }
             return profile;
         }
