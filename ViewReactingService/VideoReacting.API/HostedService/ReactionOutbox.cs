@@ -1,7 +1,7 @@
 ﻿
 using Blog.Contracts.Events;
-using Infrastructure.Models;
 using MessageBus;
+using MessageBus.Models;
 using MessageBus.Shared.Configs;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;

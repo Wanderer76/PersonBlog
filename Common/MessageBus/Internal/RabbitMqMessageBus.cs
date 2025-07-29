@@ -1,5 +1,4 @@
-﻿using Infrastructure.Models;
-using MessageBus.Configs;
+﻿using MessageBus.Configs;
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;

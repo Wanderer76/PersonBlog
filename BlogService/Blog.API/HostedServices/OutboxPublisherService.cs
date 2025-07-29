@@ -1,8 +1,8 @@
 ﻿using Shared.Persistence;
 using Microsoft.EntityFrameworkCore;
 using MessageBus;
-using Infrastructure.Models;
 using Blog.Domain.Entities;
+using MessageBus.Models;
 
 namespace Blog.API.HostedServices
 {

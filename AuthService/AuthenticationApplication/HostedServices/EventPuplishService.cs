@@ -1,5 +1,6 @@
 ﻿using Authentication.Domain.Entities;
 using MessageBus;
+using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
@@ -34,7 +35,7 @@ public class EventPublishService : IHostedService
             var publisher = scope.ServiceProvider.GetRequiredService<IMessagePublish>();
 
             var events = await repository.Get<AuthEvent>()
-                .Where(x => x.State == Infrastructure.Models.EventState.Pending)
+                .Where(x => x.State == EventState.Pending)
                 .Take(100)
                 .ToListAsync(cancellationToken);
 

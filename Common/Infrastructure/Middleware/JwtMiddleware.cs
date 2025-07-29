@@ -28,7 +28,7 @@ namespace Infrastructure.Middleware
             if (requestToken != null)
             {
                 var token = JwtUtils.GetTokenRepresentaion(requestToken);
-                var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistToken(token.Id));
+                var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistTokenCacheKey(token.Id));
                 if (token.ExpiredAt <= DateTimeService.Now() || blackList != null)
                 {
                     context.Response.ContentType = "application/json";

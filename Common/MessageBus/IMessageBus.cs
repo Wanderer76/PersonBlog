@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+﻿using MessageBus.Models;
 
 namespace MessageBus
 {

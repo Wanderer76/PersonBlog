@@ -2,13 +2,13 @@
 
 namespace Infrastructure.Models
 {
-    public sealed class BlacklistToken : ICacheKey
+    public sealed class BlacklistTokenCacheKey : ICacheKey
     {
-        public const string Key = nameof(BlacklistToken);
+        public const string Key = nameof(BlacklistTokenCacheKey);
 
         private readonly Guid userId;
 
-        public BlacklistToken(Guid userId)
+        public BlacklistTokenCacheKey(Guid userId)
         {
             this.userId = userId;
         }

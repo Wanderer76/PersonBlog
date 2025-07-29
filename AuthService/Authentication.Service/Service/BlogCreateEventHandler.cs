@@ -35,7 +35,7 @@ namespace Authentication.Service.Service
 
             if (token != null)
             {
-                await _cacheService.SetCachedDataAsync(new BlacklistToken(token.Id), token.ToTokenModel(profile.BlogId), (token.ExpiredAt - token.CreatedAt));
+                await _cacheService.SetCachedDataAsync(new BlacklistTokenCacheKey(token.Id), token.ToTokenModel(profile.BlogId), (token.ExpiredAt - token.CreatedAt));
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Infrastructure.Models
+namespace MessageBus.Models
 {
     public sealed class BaseEvent<T>
     {

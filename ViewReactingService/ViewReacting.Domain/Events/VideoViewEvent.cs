@@ -1,8 +1,8 @@
 ﻿using Blog.Contracts.Events;
-using Infrastructure.Models;
 using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
+using MessageBus.Models;
 using MessageBus.Shared.Configs;
 using Shared.Services;
 using System.Text.Json;

@@ -1,6 +1,6 @@
-﻿using Infrastructure.Models;
-using Infrastructure.Services;
+﻿using Infrastructure.Services;
 using MessageBus;
+using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;

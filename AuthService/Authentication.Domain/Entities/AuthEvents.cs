@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+﻿using MessageBus.Models;
 using Shared.Services;
 using System;
 using System.Collections.Generic;

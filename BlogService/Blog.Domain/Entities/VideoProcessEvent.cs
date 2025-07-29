@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+﻿using MessageBus.Models;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Shared.Services;
 using System.Text.Json;
