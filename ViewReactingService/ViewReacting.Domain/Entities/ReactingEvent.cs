@@ -6,14 +6,26 @@ namespace ViewReacting.Domain.Entities
 {
     public class ReactingEvent : BaseEvent, IUserEntity
     {
-        public ReactingEvent(string eventData, string eventType) : base(eventData, eventType)
+        private ReactingEvent(string eventData, string eventType)
+            : base(GuidService.GetNewGuid(), null, eventData, eventType)
         {
         }
 
-        public static ReactingEvent Create<T>(T message, Guid? id, Guid? corellationId = null)
+        private ReactingEvent(Guid? correlationId, string eventData, string eventType)
+           : this(GuidService.GetNewGuid(), correlationId, eventData, eventType)
+        {
+        }
+
+        private ReactingEvent(Guid id, Guid? correlationId, string eventData, string eventType)
+           : base(id, correlationId, eventData, eventType)
+        {
+        }
+
+        public static ReactingEvent Create<T>(T message, Guid? id, Guid? correlationId = null)
         {
             var data = JsonSerializer.Serialize(message);
-            return new ReactingEvent(data, typeof(T).Name) { Id = id ?? GuidService.GetNewGuid(), CorrelationId = corellationId };
+            id ??= GuidService.GetNewGuid();
+            return new ReactingEvent(id.Value, correlationId, data, typeof(T).Name);
         }
     }
 }

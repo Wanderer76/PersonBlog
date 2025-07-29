@@ -22,10 +22,13 @@ namespace Infrastructure.Models
 
         private EventState _state = EventState.Pending;
 
-        protected BaseEvent(string eventData, string eventType)
+        protected BaseEvent(Guid id, Guid? correlationId, string eventData, string eventType)
         {
+            Id = id;
+            CorrelationId = correlationId;
             EventData = eventData;
             EventType = eventType;
+            _state = EventState.Pending;
         }
 
         public void SetErrorMessage(string message)
