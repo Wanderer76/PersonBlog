@@ -112,7 +112,7 @@ namespace MessageBus
         /// <param name="message"></param>
         /// <param name="cfg"></param>
         /// <returns></returns>
-        public async Task PublishEventAsync(BaseEvent message, MessageProperty? cfg = null)
+        public async Task PublishAsync(BaseEvent message, MessageProperty? cfg = null)
         {
             try
             {

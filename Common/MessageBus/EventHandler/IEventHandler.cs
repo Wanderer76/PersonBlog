@@ -48,8 +48,8 @@ internal sealed class MessageContext<TMessage> : IMessageContext<TMessage>
         return _publish.PublishAsync(message, cfg);
     }
 
-    public Task PublishEventAsync(BaseEvent message, MessageProperty? cfg = null)
+    public Task PublishAsync(BaseEvent message, MessageProperty? cfg = null)
     {
-        return _publish.PublishEventAsync(message, cfg);
+        return _publish.PublishAsync(message, cfg);
     }
 }

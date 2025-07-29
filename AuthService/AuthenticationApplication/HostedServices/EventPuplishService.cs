@@ -44,7 +44,7 @@ public class EventPublishService : IHostedService
 
                 repository.Attach(@event);
                 @event.Processed();
-                await publisher.PublishEventAsync(@event);
+                await publisher.PublishAsync(@event);
                 await repository.SaveChangesAsync();
             }
 

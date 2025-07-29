@@ -39,7 +39,7 @@ namespace Blog.API.HostedServices
                     {
                         dbContext.Attach(message);
                         message.Processed();
-                        await _messageBus.PublishEventAsync(message);
+                        await _messageBus.PublishAsync(message);
                         await dbContext.SaveChangesAsync();
                     }
                     catch (Exception ex)
