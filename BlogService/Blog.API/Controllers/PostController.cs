@@ -124,7 +124,7 @@ namespace Blog.API.Controllers
         public async Task<IActionResult> EditPost(Guid postId)
         {
             var result = await _postService.GetPostUpdateModelAsync(postId);
-            if (result.ISSuccess)
+            if (result.IsSuccess)
                 return Ok(result.Value);
             return BadRequest(result.Error);
         }
@@ -159,7 +159,7 @@ namespace Blog.API.Controllers
         public async Task<IActionResult> GetPostVideoUploadProgress(Guid fileId)
         {
             var result = await _videoService.GetUploadVideoMetadata(fileId);
-            if (result.ISSuccess)
+            if (result.IsSuccess)
             {
                 return Ok(result.Value);
             }
@@ -172,7 +172,7 @@ namespace Blog.API.Controllers
         public async Task<IActionResult> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
         {
             var result = await _videoService.CreateUploadVideoMetadata(request);
-            if (result.ISSuccess)
+            if (result.IsSuccess)
             {
                 return Ok(result.Value);
             }

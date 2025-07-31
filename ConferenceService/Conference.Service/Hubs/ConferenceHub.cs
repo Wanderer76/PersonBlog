@@ -156,7 +156,7 @@ namespace Conference.Service.Hubs
         {
             var context = Context.GetHttpContext();
             var session = context.Request.Query.TryGetValue("token", out var value);
-            return !session ? null : JwtUtils.GetTokenRepresentaion(value).UserId;
+            return !session ? null : JwtUtils.GetTokenRepresentaion(value).Value.UserId;
         }
     }
     public class ConferenceChatModel

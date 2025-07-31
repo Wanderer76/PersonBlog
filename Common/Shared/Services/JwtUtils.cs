@@ -1,4 +1,5 @@
 ﻿using Microsoft.IdentityModel.Tokens;
+using Shared.Utils;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -6,20 +7,24 @@ namespace Shared.Services
 {
     public static class JwtUtils
     {
-        public static TokenModel GetTokenRepresentaion(string token)
+        public static Result<TokenModel> GetTokenRepresentaion(string token)
         {
             var handler = new JwtSecurityTokenHandler();
-            var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
-            return new TokenModel
+            if (handler.CanReadToken(token))
             {
-                Id = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.Id).Value),
-                RoleId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.RoleId).Value),
-                UserId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.UserId).Value),
-                Type = jwtToken.Claims.First(x => x.Type == AppClaimTypes.Type).Value,
-                ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(jwtToken.Claims.First(x => x.Type == "exp").Value)).ToUniversalTime(),
-                Login = jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.Login).Value,
-                BlogId = Guid.Parse(jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.BlogId).Value)
-            };
+                var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
+                return new TokenModel
+                {
+                    Id = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.Id).Value),
+                    RoleId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.RoleId).Value),
+                    UserId = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.UserId).Value),
+                    Type = jwtToken.Claims.First(x => x.Type == AppClaimTypes.Type).Value,
+                    ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(jwtToken.Claims.First(x => x.Type == "exp").Value)).ToUniversalTime(),
+                    Login = jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.Login).Value,
+                    BlogId = Guid.Parse(jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.BlogId).Value)
+                };
+            }
+            return Result<TokenModel>.Failure(new Error("", "cannot read token"));
         }
 
         public static (string access, string refresh) GetJwtTokens(TokenModel access, TokenModel refresh)

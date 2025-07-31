@@ -4,7 +4,6 @@ namespace MessageBus
 {
     public interface IMessagePublish
     {
-        //Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent;
         Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null);
         Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null);
         Task PublishAsync(BaseEvent message, MessageProperty? cfg = null);

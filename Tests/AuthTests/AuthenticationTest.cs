@@ -96,7 +96,8 @@ namespace AuthTests
         [Fact]
         public async Task Register_CreatesUser_AndAuthenticates()
         {
-            var users = new List<AppUser>().BuildMockDbSet();
+            var userList = new List<AppUser>();
+            var users = userList.BuildMockDbSet();
             _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
             var regModel = new RegisterModel
             {
@@ -111,6 +112,16 @@ namespace AuthTests
 
             _tokenServiceMock.Setup(x => x.GenerateTokenAsync(It.IsAny<AppUser>()))
                              .ReturnsAsync(new AuthResponse());
+            _repoMock.Setup(x => x.Add(It.IsAny<IAuthEntity>()))
+                     .Callback((IAuthEntity entity) =>
+                     {
+                         if (entity is AppUser user)
+                         {
+                             userList.Add(user);
+                         }
+                     });
+
+            _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
             var result = await _authService.Register(regModel);
 

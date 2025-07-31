@@ -91,7 +91,7 @@
             get => _result.Error;
         }
         public bool IsFailure => _result.IsFailure;
-        public bool ISSuccess => !IsFailure;
+        public bool IsSuccess => !IsFailure;
 
         public static Result<TValue> Success(TValue value) => new(value);
         public static Result<TValue> Failure(Error error) => new(error);

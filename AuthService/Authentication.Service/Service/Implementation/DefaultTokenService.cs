@@ -22,12 +22,12 @@ internal class DefaultTokenService : ITokenService
     public bool Validate(string token)
     {
         var tokenRepresentation = JwtUtils.GetTokenRepresentaion(token);
-        if (tokenRepresentation == null)
+        if (tokenRepresentation.IsFailure)
         {
             return false;
         }
         var now = DateTimeOffset.UtcNow;
-        if (tokenRepresentation.ExpiredAt < now)
+        if (tokenRepresentation.Value.ExpiredAt < now)
         {
             return false;
         }
@@ -98,7 +98,10 @@ internal class DefaultTokenService : ITokenService
 
     public TokenModel GetTokenRepresentation(string token)
     {
-        return JwtUtils.GetTokenRepresentaion(token);
+        var result = JwtUtils.GetTokenRepresentaion(token);
+        if (result.IsFailure)
+            return null;
+        return result.Value;
     }
 
     public AuthResponse GenerateToken(AppUser user, Dictionary<string, string> claims)

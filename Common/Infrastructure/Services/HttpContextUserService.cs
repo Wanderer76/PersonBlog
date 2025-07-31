@@ -2,6 +2,8 @@
 using Shared;
 using Shared.Models;
 using Shared.Services;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("AuthTests")]
 
 namespace Infrastructure.Services
 {
@@ -26,14 +28,14 @@ namespace Infrastructure.Services
 
             var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
 
-            var sessionData = tokenRepr != null
-                ? new UserModel
+            var sessionData = tokenRepr == null || tokenRepr.IsFailure
+                ? UserModel.AnonymousUser()
+                : new UserModel
                 {
-                    UserId = tokenRepr.UserId,
-                    UserName = tokenRepr.Login,
-                    BlogId = tokenRepr.BlogId,
-                }
-                : UserModel.AnonymousUser();
+                    UserId = tokenRepr.Value.UserId,
+                    UserName = tokenRepr.Value.Login,
+                    BlogId = tokenRepr.Value.BlogId,
+                };
             userModel = sessionData;
             return userModel;
         }

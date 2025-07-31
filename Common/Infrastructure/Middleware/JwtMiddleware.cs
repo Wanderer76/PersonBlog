@@ -28,8 +28,14 @@ namespace Infrastructure.Middleware
             if (requestToken != null)
             {
                 var token = JwtUtils.GetTokenRepresentaion(requestToken);
-                var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistTokenCacheKey(token.Id));
-                if (token.ExpiredAt <= DateTimeService.Now() || blackList != null)
+                if (token.IsFailure)
+                {
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    await context.Response.StartAsync();
+                }
+                var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistTokenCacheKey(token.Value.Id));
+                if (token.Value.ExpiredAt <= DateTimeService.Now() || blackList != null)
                 {
                     context.Response.ContentType = "application/json";
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
@@ -37,7 +43,7 @@ namespace Infrastructure.Middleware
                 }
                 else
                 {
-                    context.Items.Add("userId", token.UserId);
+                    context.Items.Add("userId", token.Value.UserId);
                 }
             }
             await _next(context);
