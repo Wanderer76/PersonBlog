@@ -38,41 +38,31 @@ namespace MessageBus
 
         public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent
         {
-            try
-            {
-                using var channel = await _connection.CreateChannelAsync();
-                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
-                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
-                {
-                    Persistent = true,
-                    CorrelationId = message.CorrelationId?.ToString(),
-                }, body: body);
-            }
-            catch (Exception e)
+            using var channel = await _connection.CreateChannelAsync();
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
+            await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
             {
-                Console.WriteLine(e.Message);
-            }
+                Persistent = true,
+                CorrelationId = message.CorrelationId?.ToString(),
+            }, body: body);
+
         }
 
         public async Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null)
         {
-            try
+
+            cfg ??= new MessageProperty();
+            using var channel = await _connection.CreateChannelAsync();
+            var baseEvent = BaseEvent<T>.Create(message);
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
+            await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
             {
-                cfg ??= new MessageProperty();
-                using var channel = await _connection.CreateChannelAsync();
-                var baseEvent = BaseEvent<T>.Create(message);
-                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
-                await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
-                {
-                    CorrelationId = cfg.CorrelationId,
-                    Persistent = cfg.Persistence,
-                }, body: body);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+                CorrelationId = cfg.CorrelationId,
+                Persistent = cfg.Persistence,
+            }, body: body);
+
         }
 
         /// <summary>
@@ -84,26 +74,21 @@ namespace MessageBus
         /// <returns></returns>
         public async Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null)
         {
-            try
+
+            cfg ??= new MessageProperty();
+            ConfigureProperties<T>(cfg);
+
+            using var channel = await _connection.CreateChannelAsync();
+
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
+            await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
             {
-                cfg ??= new MessageProperty();
-                ConfigureProperties<T>(cfg);
+                CorrelationId = cfg.CorrelationId,
+                Persistent = cfg.Persistence,
+            }, body: body);
 
-                using var channel = await _connection.CreateChannelAsync();
 
-                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-
-                await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
-                {
-                    CorrelationId = cfg.CorrelationId,
-                    Persistent = cfg.Persistence,
-                }, body: body);
-
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
         }
 
         /// <summary>
@@ -114,26 +99,21 @@ namespace MessageBus
         /// <returns></returns>
         public async Task PublishAsync(BaseEvent message, MessageProperty? cfg = null)
         {
-            try
+
+            cfg ??= new MessageProperty();
+            var type = _subscriptionInfo.EventTypes[message.EventType];
+            var value = type.GetCustomAttribute<EventPublishAttribute>(false);
+            var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+            cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+            cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
+            using var channel = await _connection.CreateChannelAsync();
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, new JsonSerializerOptions { Converters = { new BaseEventJsonConverter() } }));
+            await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
             {
-                cfg ??= new MessageProperty();
-                var type = _subscriptionInfo.EventTypes[message.EventType];
-                var value = type.GetCustomAttribute<EventPublishAttribute>(false);
-                var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
-                cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
-                cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
-                using var channel = await _connection.CreateChannelAsync();
-                var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, new JsonSerializerOptions { Converters = { new BaseEventJsonConverter() } }));
-                await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
-                {
-                    CorrelationId = cfg.CorrelationId,
-                    Persistent = cfg.Persistence,
-                }, body: body);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+                CorrelationId = cfg.CorrelationId,
+                Persistent = cfg.Persistence,
+            }, body: body);
+
         }
 
         private void ConfigureProperties<T>(MessageProperty cfg)

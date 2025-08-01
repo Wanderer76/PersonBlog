@@ -109,6 +109,7 @@ services:
       - backend      
   auth-app:
     container_name: auth-app
+    depends_on: [rabbitMq]
     build:
         context: ./
         dockerfile: ./AuthService/AuthenticationApplication/Dockerfile
@@ -120,6 +121,7 @@ services:
       - backend      
   blog-app:
     container_name: blog-app
+    depends_on: [rabbitMq]
     build:
         context: ./
         dockerfile: ./BlogService/Blog.API/Dockerfile
@@ -127,6 +129,20 @@ services:
       - "5069:8080" 
     environment:
       - ASPNETCORE_ENVIRONMENT=Realese
+    networks:
+      - backend
+  videoprocess-app:
+    depends_on: [blog-app]
+    container_name: videoprocess-app
+    build:
+        context: ./
+        dockerfile: ./BlogService/VideoProcessing.Cli/Dockerfile
+    ports:
+      - "5281:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./BlogService/VideoProcessing.Cli/appsettings.json:/app/appsettings.json
     networks:
       - backend
   videoview-app:

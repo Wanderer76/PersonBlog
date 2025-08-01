@@ -14,7 +14,7 @@ namespace MessageBus
         {
             services.AddSingleton<RabbitMqMessageBus>();
             services.AddSingleton<IMessagePublish, RabbitMqMessageBus>(x => x.GetRequiredService<RabbitMqMessageBus>());
-
+          
             var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
                  .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
                  .ToList();
@@ -23,13 +23,6 @@ namespace MessageBus
             services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
             services.AddHostedService<DefaultHostedService>();
             return new MessageBusBuilder(services);
-        }
-
-        public static IMessageBusBuilder AddConnectionConfig<TConfig>(this IMessageBusBuilder builder, TConfig section)
-            where TConfig : class
-        {
-            builder.Services.AddSingleton<TConfig>(section);
-            return builder;
         }
 
         public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> cfg)

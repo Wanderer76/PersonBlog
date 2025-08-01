@@ -1,6 +1,7 @@
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
+using Blog.Contracts;
 using Blog.Contracts.Events;
 using Blog.Domain.Events;
 using Blog.Persistence;
@@ -26,6 +27,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddBlogContract();
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddVideoConvertSaga()
