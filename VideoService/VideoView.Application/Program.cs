@@ -13,35 +13,36 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddHttpClient("Auth", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5179/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
 });
 
 builder.Services.AddHttpClient("Profile", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:7892/profile/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
 });
 builder.Services.AddHttpClient("Recommendation", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5209/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]);
 });
 builder.Services.AddHttpClient("Reacting", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5153/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Reacting"]);
 });
 builder.Services.AddHttpClient("Search", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5250/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Search"]);
 });
 builder.Services.AddHttpClient("Conference", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5193/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Conference"]);
 });
 builder.Services.AddHttpClient("Comments", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5124/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Comments"]);
 });
 
 
@@ -52,13 +53,14 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 }
 
-app.UseCors(policy => policy.WithOrigins("http://localhost:3000", "http://localhost:5165").AllowAnyHeader().AllowAnyMethod());
+app.UseRouting();
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor |

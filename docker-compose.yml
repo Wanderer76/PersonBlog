@@ -5,6 +5,8 @@ services:
     image: swaggerapi/swagger-ui
     environment:
       URLS: "[ { url: \"/auth/swagger/v1/swagger.json\", name: \"Authorization\" }, { url: \"/profile/swagger/v1/swagger.json\", name: \"Profile\" },{ url: \"/videos/swagger/v1/swagger.json\", name: \"Video\" }]"
+    networks:
+      - backend      
   nginx:
     image: nginx:alpine
     ports:
@@ -12,14 +14,8 @@ services:
     volumes:
       - ./nginx/nginx.local-debug.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/nginx-frontend-dev.conf:/etc/nginx/nginx-frontend.conf:ro
-  # profile-app:
-  #   build:
-  #       context: ./
-  #       dockerfile: ProfileApplication/Dockerfile
-  #   ports:
-  #     - "5069:8080" 
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - backend      
   minio:
     container_name: fileStorage
     image: minio/minio
@@ -32,6 +28,8 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - backend      
   database:
     container_name: postgresDb
     image: postgres:16.6
@@ -43,6 +41,8 @@ services:
       - "5432:5432"
     volumes:
         - ../db:/var/lib/postgresql/data
+    networks:
+      - backend        
   rabbitMq:
     image: rabbitmq:3.13-management
     container_name: rabbitMq
@@ -54,6 +54,8 @@ services:
       RABBITMQ_DEFAULT_PASS: admin
     volumes:
       - ../rabbitMq:/var/lib/rabbitmq
+    networks:
+      - backend      
   redis:
     image: redis:7.4.2
     container_name: redis
@@ -65,6 +67,8 @@ services:
       - REDIS_USER_PASSWORD=admin
     volumes:
     - ../redisdata:/data
+    networks:
+      - backend    
   redis-insight:
     image: redislabs/redisinsight:latest
     container_name: redis_insight_container
@@ -74,6 +78,8 @@ services:
       - ../redis_insight_data:/db
     depends_on:
       - redis
+    networks:
+      - backend      
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
     container_name: elasticsearch
@@ -86,6 +92,8 @@ services:
     ports:
       - "9200:9200"
       - "9300:9300"
+    networks:
+      - backend      
 
   tokenizer-app:
     build:
@@ -97,27 +105,43 @@ services:
       - ENVIRONMENT=development
     volumes:
       - ./TokenizerService:/app
-  # kibana:
-  #   image: docker.elastic.co/kibana/kibana:8.12.0
-  #   container_name: kibana
-  #   depends_on:
-  #     - elasticsearch
-  #   environment:
-  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-  #   ports:
-  #     - "5601:5601"
-  # mongo:
-  #   image: mongo
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: admin
-  #     MONGO_INITDB_ROOT_PASSWORD: admin
-
-  # mongo-express:
-  #   image: mongo-express
-  #   ports:
-  #     - 8081:8081
-  #   environment:
-  #     ME_CONFIG_MONGODB_ADMINUSERNAME: admin
-  #     ME_CONFIG_MONGODB_ADMINPASSWORD: admin
-  #     ME_CONFIG_MONGODB_URL: mongodb://admin:admin@mongo:27017/
-  #     ME_CONFIG_BASICAUTH: false
+    networks:
+      - backend      
+  auth-app:
+    container_name: auth-app
+    build:
+        context: ./
+        dockerfile: ./AuthService/AuthenticationApplication/Dockerfile
+    ports:
+      - "5179:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    networks:
+      - backend      
+  blog-app:
+    container_name: blog-app
+    build:
+        context: ./
+        dockerfile: ./BlogService/Blog.API/Dockerfile
+    ports:
+      - "5069:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    networks:
+      - backend
+  videoview-app:
+    container_name: videoview-app
+    build:
+        context: ./
+        dockerfile: ./VideoService/VideoView.Application/Dockerfile
+    ports:
+      - "5165:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./VideoService/VideoView.Application/appsettings.json:/app/appsettings.json
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge

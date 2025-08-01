@@ -14,13 +14,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors();
 builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthServices();
 builder.Services.AddHttpClient("Blog", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5069/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
 });
 builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
@@ -35,7 +36,7 @@ builder.Services.AddHostedService<EventPublishService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
@@ -50,9 +51,9 @@ if (app.Environment.IsDevelopment())
     }
 }
 
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseRouting();
 app.UseHttpsRedirection();
-app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>
