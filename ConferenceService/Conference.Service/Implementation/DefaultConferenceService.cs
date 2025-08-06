@@ -2,7 +2,6 @@
 using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Conference.Service.Extensions;
-using Infrastructure.Extensions;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -14,11 +13,13 @@ namespace Conference.Service.Implementation
     {
         private readonly IReadWriteRepository<IConferenceEntity> _readWriteRepository;
         private readonly ICacheService _cacheService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DefaultConferenceService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService)
+        public DefaultConferenceService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService, ICurrentUserService currentUserService)
         {
             _readWriteRepository = readWriteRepository;
             _cacheService = cacheService;
+            _currentUserService = currentUserService;
         }
 
         public async Task AddParticipantToConferenceAsync(Guid id, Guid userId)
@@ -31,8 +32,8 @@ namespace Conference.Service.Implementation
 
             if (!conference.Participants.Any(x => x.UserId == userId))
             {
-                var session = (await _cacheService.GetUserSessionCachedAsync(userId))!;
-                conference.AddParticipant(new ConferenceParticipant(GuidService.GetNewGuid(), session.UserId, conference.Id));
+                var session = (await _currentUserService.GetCurrentUserAsync())!;
+                conference.AddParticipant(new ConferenceParticipant(GuidService.GetNewGuid(), session.UserId, session.UserName, conference.Id));
                 await _readWriteRepository.SaveChangesAsync();
                 await _cacheService.UpdateConferenceRoomCacheAsync(conference);
             }
@@ -41,10 +42,10 @@ namespace Conference.Service.Implementation
         public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid userId, Guid postId)
         {
             var roomId = GuidService.GetNewGuid();
-            var creatorUser = (await _cacheService.GetUserSessionCachedAsync(userId))!;
+            var creatorUser = (await _currentUserService.GetCurrentUserAsync())!;
             if (creatorUser.UserId.HasValue)
             {
-                var creator = new ConferenceParticipant(GuidService.GetNewGuid(), creatorUser.UserId!.Value, roomId);
+                var creator = new ConferenceParticipant(GuidService.GetNewGuid(), creatorUser.UserId!.Value, creatorUser.UserName, roomId);
                 var conference = new ConferenceRoom(roomId, postId, creator);
                 _readWriteRepository.Add(conference);
                 await _readWriteRepository.SaveChangesAsync();

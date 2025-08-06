@@ -210,6 +210,19 @@ services:
       - ./CommentService/Comments.API/appsettings.json:/app/appsettings.json
     networks:
       - backend
+  conferenceservice-app:
+    container_name: conferenceservice-app
+    build:
+        context: ./
+        dockerfile: ./ConferenceService/Conference.API/Dockerfile
+    ports:
+      - "5193:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./ConferenceService/Conference.API/appsettings.json:/app/appsettings.json
+    networks:
+      - backend
 networks:
   backend:
     driver: bridge

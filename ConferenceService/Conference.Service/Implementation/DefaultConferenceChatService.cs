@@ -16,11 +16,13 @@ namespace Conference.Service.Implementation
     {
         private readonly IReadWriteRepository<IConferenceEntity> _readWriteRepository;
         private readonly ICacheService _cacheService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DefaultConferenceChatService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService)
+        public DefaultConferenceChatService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService, ICurrentUserService currentUserService)
         {
             _readWriteRepository = readWriteRepository;
             _cacheService = cacheService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<MessageModel> CreateMessageAsync(Guid sessionId, CreateMessageForm messageForm)
@@ -36,7 +38,7 @@ namespace Conference.Service.Implementation
             if (conference == null)
                 throw new ArgumentException("no such conference");
 
-            var user = await _cacheService.GetUserSessionCachedAsync(sessionId);
+            var user = await _currentUserService.GetCurrentUserAsync();
 
             user.AssertFound();
 
