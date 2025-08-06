@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Authentication.Peristence;
 using Authentication.Service;
 using Authentication.Service.Service;
@@ -19,6 +20,7 @@ builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthServices();
+builder.Services.AddAuthenticationContract();
 builder.Services.AddHttpClient("Blog", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);

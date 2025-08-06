@@ -25,7 +25,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     });
 builder.Services.AddHttpClient("Tokenizer", cfg =>
 {
-    cfg.BaseAddress = new Uri("http://127.0.0.1:8000/");
+    cfg.BaseAddress = new Uri(builder.Configuration["AppUrls:Tokenizer"]);
 });
 
 var app = builder.Build();

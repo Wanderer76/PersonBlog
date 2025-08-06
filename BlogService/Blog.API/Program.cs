@@ -2,8 +2,6 @@ using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
 using Blog.Contracts;
-using Blog.Contracts.Events;
-using Blog.Domain.Events;
 using Blog.Persistence;
 using Blog.Service.Extensions;
 using FileStorage.Service;

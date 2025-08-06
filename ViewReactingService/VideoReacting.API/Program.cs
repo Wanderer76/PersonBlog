@@ -41,7 +41,7 @@ builder.Services.AddMessageBus(builder.Configuration)
 
 builder.Services.AddHttpClient("Blog", x =>
 {
-    x.BaseAddress = new Uri("http://localhost:5069/api/");
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
 });
 
 builder.Services.AddHostedService<ReactionOutbox>();

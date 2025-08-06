@@ -158,6 +158,58 @@ services:
       - ./VideoService/VideoView.Application/appsettings.json:/app/appsettings.json
     networks:
       - backend
+  videoreacting-app:
+    container_name: videoreacting-app
+    build:
+        context: ./
+        dockerfile: ./ViewReactingService/VideoReacting.API/Dockerfile
+    ports:
+      - "5153:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./ViewReactingService/VideoReacting.API/appsettings.json:/app/appsettings.json
+    networks:
+      - backend
+  searchservice-app:
+    container_name: searchservice-app
+    build:
+        context: ./
+        dockerfile: ./SearchService/SearchService.Application/Dockerfile
+    ports:
+      - "5250:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./SearchService/SearchService.Application/appsettings.json:/app/appsettings.json
+    networks:
+      - backend      
+  recommendation-app:
+    container_name: recommendation-app
+    build:
+        context: ./
+        dockerfile: ./RecommendationService/Recommendation.Application/Dockerfile
+    ports:
+      - "5209:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./RecommendationService/Recommendation.Application/appsettings.json:/app/appsettings.json
+    networks:
+      - backend
+  commentservice-app:
+    container_name: commentservice-app
+    build:
+        context: ./
+        dockerfile: ./CommentService/Comments.API/Dockerfile
+    ports:
+      - "5124:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Realese
+    volumes:
+      - ./CommentService/Comments.API/appsettings.json:/app/appsettings.json
+    networks:
+      - backend
 networks:
   backend:
     driver: bridge
