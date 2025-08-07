@@ -20,6 +20,8 @@ namespace MessageBus
         private readonly ConcurrentBag<IChannel> _channels;
         private readonly MessageBusSubscriptionInfo _subscriptionInfo;
         private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
+        private static readonly JsonSerializerOptions baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };
+
         public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
         {
             _factory = new ConnectionFactory
@@ -99,15 +101,19 @@ namespace MessageBus
         /// <returns></returns>
         public async Task PublishAsync(BaseEvent message, MessageProperty? cfg = null)
         {
-
             cfg ??= new MessageProperty();
             var type = _subscriptionInfo.EventTypes[message.EventType];
-            var value = type.GetCustomAttribute<EventPublishAttribute>(false);
-            var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+            _cachedValues.TryGetValue(type, out EventPublishAttribute? value);
+            if (value == null)
+            {
+                value = type.GetCustomAttribute<EventPublishAttribute>(false);
+                _cachedValues.TryAdd(type, value);
+            }
+            var current = value == null ? _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type) : null;
             cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
             cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
             using var channel = await _connection.CreateChannelAsync();
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, new JsonSerializerOptions { Converters = { new BaseEventJsonConverter() } }));
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, baseEventSerializerOptions));
             await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
             {
                 CorrelationId = cfg.CorrelationId,
@@ -125,7 +131,7 @@ namespace MessageBus
                 value = type.GetCustomAttribute<EventPublishAttribute>(false);
                 _cachedValues.TryAdd(type, value);
             }
-            var current = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+            var current = value == null ? _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type) : null;
             cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
             cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
         }
