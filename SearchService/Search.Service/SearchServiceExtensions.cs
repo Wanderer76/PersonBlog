@@ -14,7 +14,7 @@ namespace Search.Service
     {
         public static void AddSearchService(this IServiceCollection services, IConfiguration configuration)
         {
-            var client = new ElasticsearchClient(new Uri("http://localhost:9200/"));
+            var client = new ElasticsearchClient(new Uri(configuration["ElasticSearch:Host"]));
             services.AddSingleton(client);
             services.AddScoped<ISearchService,ElasticSearchService>();
         }
