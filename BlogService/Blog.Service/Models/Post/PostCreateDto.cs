@@ -15,5 +15,6 @@ namespace Blog.Service.Models.Post
         public IFormFileCollection Photos { get; set; }
         public bool IsPartial { get; set; }
         public PostVisibility Visibility { get; set; }
+        public List<int> Categories { get; set; }
     }
 }

@@ -107,7 +107,8 @@ namespace Blog.API.Controllers
                 Photos = form.Files,
                 IsPartial = form.IsPartial,
                 Visibility = form.Visibility,
-                Thumbnail = form.Thumbnail
+                Thumbnail = form.Thumbnail,
+                Categories = form.Categories ?? []
             });
             if (result.IsSuccess)
             {
@@ -141,7 +142,8 @@ namespace Blog.API.Controllers
                 userId,
                 form.Description,
                 form.Title,
-                form.PreviewId
+                form.PreviewId,
+                form.Categories ?? []
             ));
             return Ok(result);
         }

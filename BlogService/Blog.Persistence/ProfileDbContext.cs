@@ -1,4 +1,5 @@
 ﻿using Blog.Domain.Entities;
+using Blog.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
@@ -18,6 +19,7 @@ public class ProfileDbContext : BaseDbContext
     public DbSet<PlayListItem> PlayListItems { get; set; }
     public DbSet<VideoProcessingSagaState> VideoProcessingSagaStates { get; set; }
     public DbSet<PostRemoveEvent> PostRemoveEvents { get; set; }
+    public DbSet<Category> Categories { get; set; }
 
     public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
     {
@@ -115,6 +117,10 @@ public class ProfileDbContext : BaseDbContext
                 entity.Property(x => x.ThumbnailId);
                 entity.Property(x => x.CreatedAt);
                 entity.Property(x => x.IsDeleted);
+            }
+            {
+                var entity = modelBuilder.Entity<Category>();
+                entity.HasData(new DataCategorySeedData().GetSeedData());
             }
         }
     }

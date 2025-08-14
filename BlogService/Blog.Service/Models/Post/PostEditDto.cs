@@ -10,14 +10,16 @@ namespace Blog.Service.Models.Post
         public string? Description { get; }
         public string Title { get; }
         public IFormFile? PreviewId { get; }
+        public List<int> Categories { get; }
 
-        public PostEditDto(Guid id, Guid userId, string? description, string title, IFormFile? previewId)
+        public PostEditDto(Guid id, Guid userId, string? description, string title, IFormFile? previewId, List<int> categories)
         {
             Id = id;
             UserId = userId;
             Description = description;
             Title = title;
             PreviewId = previewId;
+            Categories = categories;
         }
     }
 
@@ -29,8 +31,9 @@ namespace Blog.Service.Models.Post
         public string PreviewId { get; }
         public PostVisibility Visibility { get; }
         public Guid? PaymentSubscriptionId { get; }
+        public List<int> Categories { get; }
 
-        public PostEditViewModel(Guid id, string title, string description, string previewId, PostVisibility visibility, Guid? paymentSubscriptionId)
+        public PostEditViewModel(Guid id, string title, string description, string previewId, PostVisibility visibility, Guid? paymentSubscriptionId, List<int> categories)
         {
             Id = id;
             Title = title;
@@ -38,6 +41,7 @@ namespace Blog.Service.Models.Post
             PreviewId = previewId;
             Visibility = visibility;
             PaymentSubscriptionId = paymentSubscriptionId;
+            Categories = categories;
         }
     }
 }

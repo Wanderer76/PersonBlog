@@ -12,7 +12,6 @@ using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
-using System.Text.Json;
 
 namespace Blog.Service.Services.Implementation
 {
@@ -52,7 +51,13 @@ namespace Blog.Service.Services.Implementation
                 return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
             }
 
-            var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility);
+            var categories = postCreateDto.Categories.Count != 0
+                ? await _context.Get<Category>()
+                .Where(x => postCreateDto.Categories.Contains(x.Id))
+                .ToListAsync()
+                : [];
+
+            var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility, categories);
             if (postCreateDto.Thumbnail != null)
             {
                 using var storage = _fileStorageFactory.CreateFileStorage();
@@ -502,6 +507,7 @@ namespace Blog.Service.Services.Implementation
             var currentUser = await _userSession.GetCurrentUserAsync();
 
             var post = await _context.Get<Post>()
+                .Include(x => x.PostCategories)
                 .FirstOrDefaultAsync(x => x.Id == postId);
 
             if (post == null)
@@ -515,13 +521,13 @@ namespace Blog.Service.Services.Implementation
             }
 
             return new PostEditViewModel(
-
                 post.Id,
                 post.Title,
                 post.Description,
                 post.PreviewId,
                 post.Visibility,
-                post.PaymentSubscriptionId
+                post.PaymentSubscriptionId,
+                post.PostCategories.Select(x => x.CategoryId).ToList()
             );
 
         }

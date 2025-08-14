@@ -1,9 +1,8 @@
-using AuthenticationApplication.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
-using System.Net.WebSockets;
+using VideoView.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,11 +14,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 builder.Services.AddFileStorage(builder.Configuration);
+
 builder.Services.AddHttpClient("Auth", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
 });
-
 builder.Services.AddHttpClient("Profile", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
@@ -53,7 +52,7 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
@@ -68,9 +67,9 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCorrelationMiddleware();
 app.UseJwtMiddleware();
 app.MapControllers();
 
