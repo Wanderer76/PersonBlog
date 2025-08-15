@@ -5,9 +5,9 @@ namespace Blog.Persistence
 {
     internal class ProfileDbInitializer : IDbInitializer
     {
-        private readonly ProfileDbContext _context;
+        private readonly BlogDbContext _context;
 
-        public ProfileDbInitializer(ProfileDbContext context)
+        public ProfileDbInitializer(BlogDbContext context)
         {
             _context = context;
         }

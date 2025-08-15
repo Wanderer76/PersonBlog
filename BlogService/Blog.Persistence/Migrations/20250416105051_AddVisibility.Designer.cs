@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Profile.Persistence.Migrations
 {
-    [DbContext(typeof(ProfileDbContext))]
+    [DbContext(typeof(BlogDbContext))]
     [Migration("20250416105051_AddVisibility")]
     partial class AddVisibility
     {

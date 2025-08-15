@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Profile.Persistence.Migrations
 {
-    [DbContext(typeof(ProfileDbContext))]
+    [DbContext(typeof(BlogDbContext))]
     [Migration("20250428063859_AddPlayList")]
     partial class AddPlayList
     {

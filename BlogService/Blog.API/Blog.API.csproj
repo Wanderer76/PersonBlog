@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <UserSecretsId>5a4dc046-4ef2-4178-a0e2-00fff0b42fc9</UserSecretsId>
-        <DockerfileContext>..\..</DockerfileContext>
+        <!--<DockerfileContext>..\..</DockerfileContext>-->
     </PropertyGroup>
 
     <ItemGroup>
@@ -25,7 +25,8 @@
       <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
       <ProjectReference Include="..\..\Common\MessageBus.Shared\MessageBus.Shared.csproj" />
       <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
-      <ProjectReference Include="..\..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />
+      <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
+      <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
       <ProjectReference Include="..\Blog.Contracts\Blog.Contracts.csproj" />
       <ProjectReference Include="..\Blog.Domain\Blog.Domain.csproj" />
       <ProjectReference Include="..\Blog.Service\Blog.Service.csproj" />

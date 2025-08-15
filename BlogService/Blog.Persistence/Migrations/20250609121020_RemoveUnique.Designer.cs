@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Profile.Persistence.Migrations
 {
-    [DbContext(typeof(ProfileDbContext))]
+    [DbContext(typeof(BlogDbContext))]
     [Migration("20250609121020_RemoveUnique")]
     partial class RemoveUnique
     {

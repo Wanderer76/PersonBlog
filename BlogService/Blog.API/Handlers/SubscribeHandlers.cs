@@ -1,9 +1,9 @@
 ﻿using Blog.Domain.Entities;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
+using Profile.Domain.Events;
 using Shared.Persistence;
 using Shared.Services;
-using ViewReacting.Domain.Events;
 
 namespace Blog.API.Handlers
 {

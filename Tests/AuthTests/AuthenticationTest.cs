@@ -104,8 +104,6 @@ namespace AuthTests
                 Login = "newuser",
                 Password = "pass",
                 Name = "N",
-                Surname = "S",
-                Lastname = "L",
                 Birthdate = new DateTimeOffset(1990, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 Email = "test@mail.com"
             };

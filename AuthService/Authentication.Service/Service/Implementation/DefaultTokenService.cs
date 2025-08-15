@@ -38,11 +38,6 @@ internal class DefaultTokenService : ITokenService
     public async Task<AuthResponse> GenerateTokenAsync(AppUser user)
     {
         var (accessToken, refreshToken) = CreateTokenForUser(user);
-        //var blog = await _httpClientFactory.CreateClient("Blog").GetAsync($"Blog/hasBlog/{user.Id}");
-        //Guid? blogId = blog.IsSuccessStatusCode
-        //    ? await JsonSerializer.DeserializeAsync<Guid?>(blog.Content.ReadAsStream())
-        //    : null;
-
         var blogId = await _context.Get<AppProfile>()
             .Where(x => x.UserId == user.Id)
             .Select(x => x.BlogId)

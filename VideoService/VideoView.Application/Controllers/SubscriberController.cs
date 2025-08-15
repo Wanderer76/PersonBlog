@@ -3,8 +3,8 @@ using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Profile.Domain.Models;
 using Shared.Models;
-using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers
 {

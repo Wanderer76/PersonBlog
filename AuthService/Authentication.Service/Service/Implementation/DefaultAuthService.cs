@@ -1,7 +1,5 @@
 ﻿using Authentication.Contract.Events;
-using Authentication.Domain;
 using Authentication.Domain.Entities;
-using Authentication.Domain.Interfaces.Models.Profile;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
@@ -11,7 +9,6 @@ using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
 using System.Runtime.CompilerServices;
-using System.Text.Json;
 [assembly: InternalsVisibleTo("AuthTests")]
 
 namespace Authentication.Service.Service.Implementation;
@@ -70,13 +67,14 @@ internal class DefaultAuthService : IAuthService
         }
 
         var userId = Guid.NewGuid();
+        var createdAt = DateTimeService.Now();
 
         var user = new AppUser
         {
             Id = userId,
             Login = registerModel.Login,
             Password = PasswordHasher.GetHash(registerModel.Password),
-            CreatedAt = DateTimeOffset.UtcNow,
+            CreatedAt = createdAt,
             AppUserRoles = new List<AppUserRole>
             {
                 new AppUserRole
@@ -88,34 +86,26 @@ internal class DefaultAuthService : IAuthService
         };
         _context.Add(user);
 
-        var profileCreateModel = new ProfileCreateModel
-        {
-            FirstName = registerModel.Name,
-            SurName = registerModel.Surname,
-            LastName = registerModel.Lastname,
-            Birthdate = registerModel.Birthdate,
-            UserId = userId,
-            Email = registerModel.Email
-        };
-        var profile = AppProfile.Create(
-                birthdate: profileCreateModel.Birthdate,
-                email: profileCreateModel.Email,
-                firstName: profileCreateModel.FirstName ?? string.Empty,
-                surName: profileCreateModel.SurName ?? string.Empty,
-                lastName: profileCreateModel.LastName ?? string.Empty,
-                userId: profileCreateModel.UserId
-            );
+        _context.Add(AppProfile.Create(registerModel.Email, registerModel.Name, userId));
+
+        var profileCreateModel = new ProfileRegisterEvent
+        (
+            registerModel.Name,
+            registerModel.Birthdate,
+            userId,
+            registerModel.Email,
+            createdAt
+        );
 
         var userCreateEvent = new UserCreateEvent
         {
             UserId = userId,
-            CreatedAt = DateTimeService.Now(),
-            PhotoUrl = profile.PhotoUrl,
+            CreatedAt = createdAt,
             UserName = user.Login
         };
 
         _context.Add(AuthEvent.Create(userCreateEvent));
-        _context.Add(profile);
+        _context.Add(AuthEvent.Create(profileCreateModel));
         await _context.SaveChangesAsync();
 
         return await Authenticate(new LoginPasswordModel(user.Login, registerModel.Password));

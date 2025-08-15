@@ -4,7 +4,7 @@ using Blog.Service.Models.Post;
 using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using ViewReacting.Domain.Models;
+using Profile.Domain.Models;
 
 namespace VideoView.Application.Controllers
 {
