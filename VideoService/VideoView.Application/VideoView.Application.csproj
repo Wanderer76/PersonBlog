@@ -23,7 +23,7 @@
     <ProjectReference Include="..\..\CommentService\Comments.Domain\Comments.Domain.csproj" />
     <ProjectReference Include="..\..\ConferenceService\Conference.Domain\Conference.Domain.csproj" />
     <ProjectReference Include="..\..\RecommendationService\Recommendation.Service\Recommendation.Service.csproj" />
-    <ProjectReference Include="..\..\ViewReactingService\ViewReacting.Domain\ViewReacting.Domain.csproj" />
+    <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
   </ItemGroup>
 
 

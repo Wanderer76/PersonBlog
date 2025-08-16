@@ -1,0 +1,42 @@
+﻿using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Profile.Domain.Entities;
+using ReadContext = Shared.Persistence.IReadRepository<Profile.Domain.Entities.IUserEntity>;
+
+
+namespace Profile.Persistence.Repository
+{
+    public static class ProfileQueryExtensions
+    {
+        public static async Task<IReadOnlyCollection<AppProfile>> GetAllProfilesPagedAsync(this ReadContext context, int offset, int limit)
+        {
+            return await context.Get<AppProfile>()
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync();
+        }
+        public static async Task<AppProfile?> GetProfileByIdAsync(this ReadContext context, long id)
+        {
+            return await context.Get<AppProfile>()
+            .Where(x => x.IsDeleted == false)
+            .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public static async Task<AppProfile?> GetProfileByUserIdAsync(this ReadContext context, ICacheService cache, Guid userId)
+        {
+            var key = new AppProfileCacheKey(userId);
+            var profile = await cache.GetCachedDataAsync<AppProfile>(key);
+            if (profile == null)
+            {
+                profile = await context.Get<AppProfile>()
+                    .Where(x => x.IsDeleted == false)
+                    .Where(x => x.UserId == userId)
+                    .FirstOrDefaultAsync();
+
+                if (profile != null)
+                    await cache.SetCachedDataAsync(key, profile, TimeSpan.FromMinutes(10));
+            }
+            return profile;
+        }
+    }
+}

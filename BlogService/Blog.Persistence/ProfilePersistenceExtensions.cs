@@ -11,12 +11,12 @@ namespace Blog.Persistence
         public static void AddProfilePersistence(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration["ConnectionStrings:ProfileDbContext"]!;
-            services.AddNpgSqlDbContext<ProfileDbContext>(connectionString);
+            services.AddNpgSqlDbContext<BlogDbContext>(connectionString);
             services.AddScoped<IDbInitializer, ProfileDbInitializer>();
             //services.AddDbContextPool<ProfileDbContext>(option =>
             //option.UseInMemoryDatabase("Profile"));
             //services.AddScoped<IReadWriteRepository<IProfileEntity>, DefaultRepository<ProfileDbContext, IProfileEntity>>();
-            services.AddDefaultRepository<ProfileDbContext, IBlogEntity>();
+            services.AddDefaultRepository<BlogDbContext, IBlogEntity>();
         }
     }
 }

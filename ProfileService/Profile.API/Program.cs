@@ -1,0 +1,88 @@
+using Authentication.Contract.Events;
+using Blog.Contracts.Events;
+using Infrastructure.Extensions;
+using Infrastructure.Interface;
+using MessageBus;
+using Profile.API.HostedService;
+using Profile.Domain.Events;
+using Profile.Persistence;
+using Profile.Service;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddViewReactingPersistence(builder.Configuration);
+builder.Services.AddVideoReactingService();
+builder.Services.AddUserSessionServices();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();
+builder.Services.AddCors();
+builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddMessageBus(builder.Configuration)
+    .AddSubscription<VideoViewEvent, VideoViewEventHandler>(x =>
+    {
+        x.QueueName = QueueConstants.QueueName;
+        x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };
+    })
+    .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
+    {
+        cfg.QueueName = "userReaction-post-sync";
+        cfg.Durable = true;
+        cfg.Exchange = new MessageBus.Models.ExchangeParam
+        {
+            Name = "post-update",
+            ExchangeType = "fanout"
+        };
+    })
+    .AddSubscription<ProfileRegisterEvent, ProfileCreateEventHandler>(x =>
+    {
+        x.QueueName = "profile-create";
+        x.Exchange = new MessageBus.Models.ExchangeParam
+        {
+            Name = "user-events",
+            RoutingKey = "profile.register"
+        };
+    })
+    .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(x =>
+    {
+        x.QueueName = "profile-blog";
+    });
+
+builder.Services.AddHttpClient("Blog", x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
+});
+
+builder.Services.AddHostedService<ReactionOutbox>();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+    using (var scope = app.Services.CreateScope())
+    {
+        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+        foreach (var initializer in initializers)
+        {
+            initializer.Initialize();
+        }
+    }
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();

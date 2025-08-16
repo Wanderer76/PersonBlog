@@ -10,7 +10,7 @@ using Infrastructure.Interface;
 using Infrastructure.Middleware;
 using MessageBus;
 using MessageBus.Models;
-using ViewReacting.Domain.Events;
+using Profile.Domain.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 

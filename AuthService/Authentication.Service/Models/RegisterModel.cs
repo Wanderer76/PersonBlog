@@ -12,10 +12,9 @@ public class RegisterModel
     public string PasswordConfirm { get; set; } = null!;
 
     public string? Name { get; set; } 
-    public string? Surname { get; set; }
-    public string? Lastname { get; set; }
+
     public DateTimeOffset? Birthdate { get; set; }
+
     [Required]
     public required string Email { get; set; }
- //   [Required] public IEnumerable<Guid> UserRoleIds { get; set; } = new List<Guid>();
 }

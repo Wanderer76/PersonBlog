@@ -82,17 +82,14 @@ public class AuthenticationDbContext : BaseDbContext
             var entity = modelBuilder.Entity<AppProfile>();
             entity.HasIndex(x => new { x.UserId, x.IsDeleted }).IsUnique();
 
-            entity.HasData(new[]
-            {
-                    AppProfile.Create(
-                    birthdate:null,
-                        userId: Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                        email :"ateplinsky@mail.ru",
-                        firstName :"Артём",
-                        surName:"Теплинский",
-                        lastName:null)
+            //entity.HasData(new[]
+            //{
+            //        AppProfile.Create(
+            //            userId: Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+            //            email :"ateplinsky@mail.ru",
+            //            name :"Артём")
 
-                });
+            //    });
         }
     }
 }

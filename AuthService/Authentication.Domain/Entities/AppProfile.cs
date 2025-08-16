@@ -1,5 +1,4 @@
 ﻿using Shared;
-using Shared.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace Authentication.Domain.Entities;
@@ -7,61 +6,30 @@ namespace Authentication.Domain.Entities;
 public class AppProfile : BaseEntity, IAuthEntity
 {
     [Key]
-    public Guid  Id { get; set; }
-    
-    [Required]
-    public string FirstName { get; set; }
+    public long Id { get; set; }
 
-    [Required]
-    public string SurName { get; set; }
+    public string Name { get; set; }
 
     [Required]
     [EmailAddress]
     public string Email { get; set; }
 
-    public string? LastName { get; set; }
-
-    public DateTimeOffset? Birthdate { get; set; }
-
     public Guid UserId { get; set; }
     public string? PhotoUrl { get; set; }
-    public ProfileState ProfileState { get; set; }
-
     public Guid? BlogId { get; set; }
-
-    //public List<ProfileSubscription> PaymentSubscriptions { get; set; } = [];
 
     public AppProfile() { }
 
-    internal AppProfile(DateTimeOffset? birthdate, string email, string firstName, string surName, string? lastName, Guid userId)
+    internal AppProfile(string email, string name, Guid userId)
     {
-        Id = userId;
-        Birthdate = birthdate;
         Email = email;
-        FirstName = firstName;
-        SurName = surName;
-        LastName = lastName;
         UserId = userId;
+        Name = name;
         IsDeleted = false;
-        ProfileState = ProfileState.Active;
-
     }
 
-    public static AppProfile Create(DateTimeOffset? birthdate, string email, string firstName, string surName, string? lastName, Guid userId)
+    public static AppProfile Create(string email, string name, Guid userId)
     {
-        return new AppProfile(birthdate, email, firstName, surName, lastName, userId);
+        return new AppProfile(email, name, userId);
     }
-}
-
-public class AppProfileCacheKey : ICacheKey
-{
-    private const string Key = nameof(AppProfile);
-    private readonly Guid id;
-
-    public AppProfileCacheKey(Guid id)
-    {
-        this.id = id;
-    }
-
-    public string GetKey() => $"{Key}:{id}";
 }

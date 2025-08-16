@@ -25,12 +25,11 @@ namespace Authentication.Peristence.Migrations
 
             modelBuilder.Entity("Authentication.Domain.Entities.AppProfile", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("bigint");
 
-                    b.Property<DateTimeOffset?>("Birthdate")
-                        .HasColumnType("timestamp with time zone");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<Guid?>("BlogId")
                         .HasColumnType("uuid");
@@ -42,24 +41,14 @@ namespace Authentication.Peristence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("LastName")
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("PhotoUrl")
-                        .HasColumnType("text");
-
-                    b.Property<int>("ProfileState")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("SurName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<Guid>("UserId")
@@ -71,19 +60,6 @@ namespace Authentication.Peristence.Migrations
                         .IsUnique();
 
                     b.ToTable("Profiles", "Authentication");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 7, 22, 13, 37, 56, 790, DateTimeKind.Unspecified).AddTicks(7597), new TimeSpan(0, 0, 0, 0, 0)),
-                            Email = "ateplinsky@mail.ru",
-                            FirstName = "Артём",
-                            IsDeleted = false,
-                            ProfileState = 0,
-                            SurName = "Теплинский",
-                            UserId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e")
-                        });
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.AppUser", b =>
@@ -114,10 +90,10 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 7, 22, 13, 37, 56, 790, DateTimeKind.Unspecified).AddTicks(4584), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 8, 16, 13, 28, 15, 208, DateTimeKind.Unspecified).AddTicks(4508), new TimeSpan(0, 0, 0, 0, 0)),
                             LastAuthenticate = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Login = "admin",
-                            Password = "fjD20nIO6+8=;NGMPtkI7jpL6Z4yAxr+YTYyJI6JzknYjRc1pwP5BnaI="
+                            Password = "wMKV34wg6H4=;vWfQ6RPbuBJPFCiW0saAhMogbm+JB/+dkqQBCNGK0yU="
                         });
                 });
 

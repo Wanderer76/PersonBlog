@@ -5,10 +5,10 @@ using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Profile.Domain.Models;
 using Shared.Services;
 using VideoView.Application.Api;
 using VideoView.Application.Services;
-using ViewReacting.Domain.Models;
 
 namespace VideoView.Application.Controllers;
 
