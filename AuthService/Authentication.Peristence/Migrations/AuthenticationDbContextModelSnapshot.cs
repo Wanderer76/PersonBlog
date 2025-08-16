@@ -90,10 +90,10 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 8, 14, 11, 19, 35, 473, DateTimeKind.Unspecified).AddTicks(9862), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 8, 16, 13, 28, 15, 208, DateTimeKind.Unspecified).AddTicks(4508), new TimeSpan(0, 0, 0, 0, 0)),
                             LastAuthenticate = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Login = "admin",
-                            Password = "fQF9+RcYguA=;0NJCkwv4f80Bvev0SLLT0AEH7BhTNVTXEU8/DOXoGIQ="
+                            Password = "wMKV34wg6H4=;vWfQ6RPbuBJPFCiW0saAhMogbm+JB/+dkqQBCNGK0yU="
                         });
                 });
 

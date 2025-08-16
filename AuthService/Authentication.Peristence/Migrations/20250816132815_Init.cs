@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -30,6 +31,45 @@ namespace Authentication.Peristence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AppUsers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AuthEvents",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    CorrelationId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    State = table.Column<int>(type: "integer", nullable: false),
+                    EventType = table.Column<string>(type: "text", nullable: false),
+                    EventData = table.Column<string>(type: "text", nullable: false),
+                    RetryCount = table.Column<int>(type: "integer", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuthEvents", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Profiles",
+                schema: "Authentication",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PhotoUrl = table.Column<string>(type: "text", nullable: true),
+                    BlogId = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Profiles", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -101,7 +141,7 @@ namespace Authentication.Peristence.Migrations
                 schema: "Authentication",
                 table: "AppUsers",
                 columns: new[] { "Id", "CreatedAt", "LastAuthenticate", "Login", "Password" },
-                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"), new DateTimeOffset(new DateTime(2025, 1, 3, 11, 45, 58, 704, DateTimeKind.Unspecified).AddTicks(6585), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "admin", "bk/QhiCzne0=;zyfj5njzkC02n26/1GjRdDR/3j2IoEofTbE5qONczTI=" });
+                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"), new DateTimeOffset(new DateTime(2025, 8, 16, 13, 28, 15, 208, DateTimeKind.Unspecified).AddTicks(4508), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "admin", "wMKV34wg6H4=;vWfQ6RPbuBJPFCiW0saAhMogbm+JB/+dkqQBCNGK0yU=" });
 
             migrationBuilder.InsertData(
                 schema: "Authentication",
@@ -128,6 +168,13 @@ namespace Authentication.Peristence.Migrations
                 column: "UserRoleId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Profiles_UserId_IsDeleted",
+                schema: "Authentication",
+                table: "Profiles",
+                columns: new[] { "UserId", "IsDeleted" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tokens_AppUserId",
                 schema: "Authentication",
                 table: "Tokens",
@@ -139,6 +186,14 @@ namespace Authentication.Peristence.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AppUserRoles",
+                schema: "Authentication");
+
+            migrationBuilder.DropTable(
+                name: "AuthEvents",
+                schema: "Authentication");
+
+            migrationBuilder.DropTable(
+                name: "Profiles",
                 schema: "Authentication");
 
             migrationBuilder.DropTable(
