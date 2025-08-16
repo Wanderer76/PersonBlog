@@ -47,6 +47,10 @@ builder.Services.AddMessageBus(builder.Configuration)
             Name = "user-events",
             RoutingKey = "profile.register"
         };
+    })
+    .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(x =>
+    {
+        x.QueueName = "profile-blog";
     });
 
 builder.Services.AddHttpClient("Blog", x =>
