@@ -38,13 +38,12 @@ internal class DefaultTokenService : ITokenService
     public async Task<AuthResponse> GenerateTokenAsync(AppUser user)
     {
         var (accessToken, refreshToken) = CreateTokenForUser(user);
-        var blogId = await _context.Get<AppProfile>()
+        var profile = await _context.Get<AppProfile>()
             .Where(x => x.UserId == user.Id)
-            .Select(x => x.BlogId)
             .FirstOrDefaultAsync();
 
-        var accessTokenModel = accessToken.ToTokenModel(blogId);
-        var refreshTokenModel = refreshToken.ToTokenModel(blogId);
+        var accessTokenModel = accessToken.ToTokenModel(profile);
+        var refreshTokenModel = refreshToken.ToTokenModel(profile);
         var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessTokenModel, refreshTokenModel);
         return new AuthResponse
         {
@@ -108,6 +107,7 @@ internal class DefaultTokenService : ITokenService
         var roleId = claims.ContainsKey(AppClaimTypes.RoleId) ? Guid.Parse(claims[AppClaimTypes.RoleId]) : user.AppUserRoles.First().UserRoleId;
         var userId = claims.ContainsKey(AppClaimTypes.UserId) ? Guid.Parse(claims[AppClaimTypes.UserId]) : user.Id;
         var login = claims.ContainsKey(AppClaimTypes.Login) ? claims[AppClaimTypes.Login] : user.Login;
+        var name = claims.ContainsKey(AppClaimTypes.Name) ? claims[AppClaimTypes.Name] : null;
 
         var accessModel = new TokenModel
         {
@@ -119,6 +119,7 @@ internal class DefaultTokenService : ITokenService
             RoleId = roleId,
             UserId = userId,
             Type = TokenTypes.Access,
+            Name = name
         };
 
         var refreshModel = new TokenModel

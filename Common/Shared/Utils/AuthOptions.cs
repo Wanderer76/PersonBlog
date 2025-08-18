@@ -22,5 +22,6 @@ public class AppClaimTypes
     public const string Type = "type";
     public const string BlogId = "blogId";
     public const string ExpiredAt = "expireAt";
+    public const string Name = "name";
     //public const string ProfileId = "profileId";
 }

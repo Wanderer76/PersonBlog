@@ -16,6 +16,6 @@ namespace Blog.API.Models
         public IFormFileCollection? Files { get; set; }
         public PostVisibility Visibility { get; set; }
         public bool IsPartial { get; set; }
-        public List<int> Categories { get; set; }
+        public List<int>? Categories { get; set; }
     }
 }

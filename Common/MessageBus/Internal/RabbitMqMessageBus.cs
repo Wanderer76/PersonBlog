@@ -161,6 +161,7 @@ namespace MessageBus
                             Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
                             ? null
                             : Guid.Parse(ea.BasicProperties.CorrelationId);
+
                             var context = MessageContext.Create(correlationId, handlerBody, this);
                             await handler.Handle(context);
                         }

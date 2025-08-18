@@ -38,6 +38,7 @@ namespace Shared.Services
                 new Claim(AppClaimTypes.Type,access.Type),
                 new Claim(AppClaimTypes.BlogId,access.BlogId.ToString()),
                 new Claim(AppClaimTypes.ExpiredAt,access.ExpiredAt.ToString()),
+                new Claim(AppClaimTypes.Name,access.Name),
             };
             var refreshClaims = new List<Claim>
             {

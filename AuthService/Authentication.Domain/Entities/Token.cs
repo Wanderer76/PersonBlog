@@ -43,4 +43,19 @@ public static class TokenExtensions
             BlogId = blogId ?? Guid.Empty
         };
     }
+    public static TokenModel ToTokenModel(this Token token, AppProfile? profile)
+    {
+        return new TokenModel
+        {
+            Id = token.Id,
+            CreatedAt = token.CreatedAt,
+            ExpiredAt = token.ExpiredAt,
+            Login = token.Login,
+            Name = profile?.Name,
+            RoleId = token.RoleId,
+            UserId = token.AppUserId,
+            Type = token.TokenType,
+            BlogId = profile?.BlogId ?? Guid.Empty
+        };
+    }
 }

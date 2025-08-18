@@ -41,6 +41,8 @@ namespace Blog.Domain.Entities
 
         public List<PostCategory> PostCategories { get; private set; } = [];
 
+        public Guid? BanMessageId { get; private set; }
+        public BanMessage? BanMessage { get; private set; }
         private Post() { }
 
         public Post(Guid id, Guid blogId, PostType type, string? description, string title, Guid? paymentSubscriptionId, PostVisibility visibility, IEnumerable<Category> categories)
@@ -63,6 +65,19 @@ namespace Blog.Domain.Entities
             {
                 PostCategories.Add(new PostCategory(Id, categories.Id));
             }
+        }
+
+
+        public void SetPostBanned(BanMessage message)
+        {
+            BanMessageId = message.Id;
+            BanMessage = message;
+        }
+
+        public void RestorePostFromBan()
+        {
+            BanMessageId = null;
+            BanMessage = null;
         }
     }
 

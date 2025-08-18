@@ -25,13 +25,19 @@ namespace Blog.Persistence.Repository.Quries
             //        .ToListAsync()
             //        : new();
 
-            var totalPostsCount = await context.Get<Post>()
+            var postQuery = context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
-                .Where(x => x.IsDeleted == false)
-                .CountAsync();
+                .Where(x => x.IsDeleted == false);
 
-            var posts = await context.Get<Post>()
-                .Where(x => x.BlogId == blogId && x.IsDeleted == false)
+            if (!canAccessPrivate)
+            {
+                postQuery = postQuery.Where(x => x.BanMessageId == null);
+            }
+
+            var totalPostsCount = await postQuery.CountAsync();
+
+
+            var posts = await postQuery
                 .Where(x => canAccessPrivate || x.Visibility == PostVisibility.Public)
                 .OrderByDescending(x => x.CreatedAt)
                 .Include(x => x.VideoFile)

@@ -14,10 +14,11 @@ namespace Blog.Service.Models.Post
         public string? PreviewId { get; }
         public int ViewCount { get; }
         public ProcessState State { get; }
+        public bool IsBanned { get; }
         public VideoMetadataModel? VideoData { get; }
         public string? ErrorMessage { get; }
 
-        public PostModel(Guid id, PostType type, string title, string? description, DateTimeOffset createdAt, string? previewId, VideoMetadataModel? videoData, ProcessState state, string? errorMessage, int viewCount)
+        public PostModel(Guid id, PostType type, string title, string? description, DateTimeOffset createdAt, string? previewId, VideoMetadataModel? videoData, ProcessState state, string? errorMessage, int viewCount, bool isBanned)
         {
             Id = id;
             Type = type;
@@ -29,6 +30,7 @@ namespace Blog.Service.Models.Post
             State = state;
             ErrorMessage = errorMessage;
             ViewCount = viewCount;
+            IsBanned = isBanned;
         }
     }
 

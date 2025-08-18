@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models.Profile;
 using Profile.Domain.Services;
@@ -12,10 +13,12 @@ namespace Profile.API.Controllers;
 public class ProfileController : ControllerBase
 {
     private readonly IProfileService _profileService;
+    private readonly ICurrentUserService _currentUserService;
 
-    public ProfileController(IProfileService profileService)
+    public ProfileController(IProfileService profileService, ICurrentUserService currentUserService)
     {
         _profileService = profileService;
+        _currentUserService = currentUserService;
     }
 
     [HttpPost("edit")]
@@ -26,21 +29,23 @@ public class ProfileController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("profile")]
+    [HttpGet("profile/my")]
     [Authorize]
     public async Task<ActionResult<ProfileModel>> GetProfile()
     {
-        var userId = HttpContext.GetUserFromContext();
-        var profileModel = await _profileService.GetProfileByUserIdAsync(userId);
-        return Ok(profileModel);
+        var user = await _currentUserService.GetCurrentUserAsync();
+        if (!user.IsAnonymous)
+        {
+            var profileModel = await _profileService.GetProfileByUserIdAsync(user.UserId!.Value);
+            return Ok(profileModel);
+        }
+        return Forbid();
     }
 
-    [HttpGet("profile/{id:guid}")]
-    [Authorize]
-    public async Task<ActionResult<ProfileModel>> GetProfileById(Guid id)
+    [HttpGet("profile/{userId:guid}")]
+    public async Task<ActionResult<ProfileModel>> GetProfileById(Guid userId)
     {
-
-        var result = await _profileService.GetProfileByUserIdAsync(id);
+        var result = await _profileService.GetProfileByUserIdAsync(userId);
         return Ok(result);
     }
 

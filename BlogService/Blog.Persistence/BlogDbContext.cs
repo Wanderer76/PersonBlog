@@ -20,6 +20,7 @@ public class BlogDbContext : BaseDbContext
     public DbSet<VideoProcessingSagaState> VideoProcessingSagaStates { get; set; }
     public DbSet<PostRemoveEvent> PostRemoveEvents { get; set; }
     public DbSet<Category> Categories { get; set; }
+    public DbSet<BanMessage> BanMessages { get; set; }
 
     public BlogDbContext(DbContextOptions<BlogDbContext> options) : base(options)
     {
@@ -50,7 +51,9 @@ public class BlogDbContext : BaseDbContext
             }
             {
                 var entity = modelBuilder.Entity<Post>();
-
+                entity.HasOne(x => x.BanMessage)
+                    .WithOne(x => x.Post)
+                    .HasForeignKey<BanMessage>(x => x.PostId);
                 //entity.HasData(new[]
                 //{
                 //    new Post(Guid.Parse("42c113cc-b4a7-41b5-b0c8-2e059087124f"),Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
@@ -125,6 +128,9 @@ public class BlogDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<PostCategory>();
                 entity.HasKey(x => new { x.PostId, x.CategoryId });
+            }
+            {
+              
             }
         }
     }

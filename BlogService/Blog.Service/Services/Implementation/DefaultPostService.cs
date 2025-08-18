@@ -72,19 +72,26 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<Result<PostFileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
         {
+            var session = await _userSession.GetCurrentUserAsync();
+
             var post = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
-                .Select(x => new { x.Visibility, x.Blog.UserId, x.PreviewId })
+                .Select(x => new { x.Visibility, x.Blog.UserId, x.PreviewId, x.BanMessageId })
                 .FirstAsync();
 
             if (post.Visibility == PostVisibility.Private)
             {
-                var session = await _userSession.GetCurrentUserAsync();
                 if (session.UserId != post.UserId)
                 {
                     return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
                 }
             }
+
+            if(session.UserId != post.UserId && post.BanMessageId.HasValue)
+            {
+                return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
+            }
+
             var key = new VideoMetadataCacheKey(postId);
 
             var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(key);
@@ -164,7 +171,8 @@ namespace Blog.Service.Services.Implementation
                                     ) : null,
                                     isProcessed,
                                     isProcessed == ProcessState.Error ? videoFile?.ErrorMessage : null,
-                                    post.ViewCount
+                                    post.ViewCount,
+                                    post.BanMessageId.HasValue
                                 );
                     posts.Add(postModel);
                     cachedPosts.Add(postModel);
@@ -318,7 +326,8 @@ namespace Blog.Service.Services.Implementation
                             ) : null,
                             isProcessed,
                             isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null,
-                            post.ViewCount
+                            post.ViewCount,
+                            post.BanMessageId.HasValue
                         );
 
             await _cacheService.SetCachedDataAsync(new PostModelCacheKey(result.Id), result, TimeSpan.FromHours(10));
