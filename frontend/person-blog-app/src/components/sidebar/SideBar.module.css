@@ -1,15 +1,13 @@
-
 .sidebar {
     width: 240px;
-    height: 100vh;
+    height: 90svh;
     position: sticky;
-    margin-top: 40px;
-    top: 0;
     background: #fff;
     border-right: 1px solid #e5e5e5;
     padding: 12px 0;
-    border-radius: 10px;
-    overflow-y: auto;
+    /* border-radius: 10px; */
+    overflow-y: none;
+    /* Убрали margin-top — он не нужен при sticky */
 }
 
 .sidebarNav {
@@ -33,7 +31,8 @@
 .sidebarIcon {
     width: 24px;
     height: 24px;
-    margin-right: 16px; /* Уменьшенный отступ */
+    margin-right: 16px;
+    /* Уменьшенный отступ */
     fill: currentColor;
 }
 

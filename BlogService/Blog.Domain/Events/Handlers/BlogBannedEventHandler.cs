@@ -20,7 +20,6 @@ namespace Blog.Domain.Events.Handlers
             var blog = await _repository.Get<PersonBlog>()
                 .FirstAsync(x=>x.Id == @event.Message.BlogId);
             _repository.Attach(blog);
-            
         }
     }
 }

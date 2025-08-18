@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Blog.Contracts.Events
+﻿namespace Blog.Contracts.Events
 {
-    internal class BlogBannedEvent
+    public class BlogBannedEvent
     {
+        public Guid BlogId {  get; set; }
+        public string Message {  get; set; }
+        public DateTimeOffset CreatedAt { get; set; }
     }
 }

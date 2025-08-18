@@ -1,8 +1,8 @@
 /* Общая структура с сайдбаром */
 .page-layout {
-    width: 95%;
+    width: 100%;
     max-width: 100%;
-    margin: 20px auto;
+    margin: 0px auto;
     display: flex;
     background-color: whitesmoke
     ;
