@@ -41,7 +41,7 @@ public class BlogDbContext : BaseDbContext
                         Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
                         Title = "Тест",
                         UserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                        CreatedAt = DateTimeOffset.UtcNow
+                        CreatedAt = new DateTimeOffset(2020,1,1,0,0,0,0,0,TimeSpan.Zero)
                     }
                 });
             }

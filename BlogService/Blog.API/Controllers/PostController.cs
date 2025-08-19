@@ -22,14 +22,16 @@ namespace Blog.API.Controllers
         private readonly IUserPostService _userPostService;
         private readonly IVideoService _videoService;
         private readonly ISubscriptionLevelService _subscriptionLevelService;
+        private readonly ICategoryService _categoryService;
         private readonly ICurrentUserService _currentUserService;
-        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService) : base(logger)
+        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService, ICategoryService categoryService) : base(logger)
         {
             _postService = postService;
             _userPostService = userPostService;
             _videoService = videoService;
             _subscriptionLevelService = subscriptionLevelService;
             _currentUserService = currentUserService;
+            _categoryService = categoryService;
         }
 
         [HttpGet("manifest/{postId:guid}")]
@@ -85,10 +87,13 @@ namespace Blog.API.Controllers
         {
             var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
             var visibilityList = await _postService.GetPostVisibilityListAsync();
+            var categoryList = await _categoryService.GetAllCategoriesAsync();
+
             return Ok(new
             {
                 SubscriptionLevels = subscriptionLevels,
-                Visibility = visibilityList
+                Visibility = visibilityList,
+                CateboryList = categoryList,
             });
         }
 

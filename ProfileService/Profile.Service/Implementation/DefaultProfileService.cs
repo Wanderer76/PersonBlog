@@ -1,4 +1,5 @@
 ﻿using Authentication.Contract.Events;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Models.Profile;
@@ -12,10 +13,11 @@ namespace Profile.Service.Implementation;
 internal class DefaultProfileService : IProfileService
 {
     private readonly IReadWriteRepository<IUserEntity> _context;
-
-    public DefaultProfileService(IReadWriteRepository<IUserEntity> profileRepository)
+    private readonly ICacheService _cacheService;
+    public DefaultProfileService(IReadWriteRepository<IUserEntity> profileRepository, ICacheService cacheService)
     {
         _context = profileRepository;
+        _cacheService = cacheService;
     }
 
     public async Task<ProfileModel> CreateProfileAsync(ProfileRegisterEvent profileCreateModel)
@@ -45,15 +47,18 @@ internal class DefaultProfileService : IProfileService
 
         _context.Attach(profile);
         profile.IsDeleted = true;
+        await _cacheService.RemoveCachedDataAsync(new AppProfileCacheKey(userId));
         await _context.SaveChangesAsync();
     }
 
     public async Task<ProfileModel> GetProfileByUserIdAsync(Guid userId)
     {
-        var profile = await _context.Get<AppProfile>()
+        return await _cacheService.GetOrAddDataAsync(new AppProfileCacheKey(userId), async () =>
+        {
+            var profile = await _context.Get<AppProfile>()
             .FirstAsync(x => x.UserId == userId);
-
-        return profile.ToProfileModel();
+            return profile.ToProfileModel();
+        });
     }
 
     public async Task<Guid?> GetProfileIdByUserIdIfExistsAsync(Guid userId)
@@ -76,7 +81,7 @@ internal class DefaultProfileService : IProfileService
         profile.Email = profileEditModel.Email;
         profile.Name = profileEditModel.Name;
         profile.PhotoUrl = profileEditModel.PhotoUrl;
-
+        await _cacheService.RemoveCachedDataAsync(new AppProfileCacheKey(profile.UserId));
         await _context.SaveChangesAsync();
         return profile.ToProfileModel();
     }

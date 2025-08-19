@@ -5,6 +5,7 @@ using Comments.Service.Extensions;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
+using Profile.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddUserSessionServices();
 builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddProfileHttpClient(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<UserCreateEvent, UserCreateEventHandler>(cfg =>
     {

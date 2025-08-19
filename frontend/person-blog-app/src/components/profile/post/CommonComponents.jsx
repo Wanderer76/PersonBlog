@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import styles from './CreatePostForm.module.css';
+import { useState } from 'react';
 
 // Общий компонент для ввода названия
 export const TitleInput = ({ value, onChange, placeholder }) => (
@@ -155,6 +156,89 @@ export const DescriptionTextarea = ({ value, onChange, placeholder }) => (
         />
     </div>
 );
+
+// Общий компонент для настроек приватности
+export const CategoryMultiSelect = ({ options = [], value = [], onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Приводим value к массиву id (ожидаем, что value — массив id или объектов)
+  const selectedIds = Array.isArray(value)
+    ? value.map(v => (typeof v === 'object' && v !== null ? v.id : v))
+    : [];
+
+  const selectedOptions = Array.isArray(options)
+    ? options.filter(opt => opt && selectedIds.includes(opt.id))
+    : [];
+
+  const toggleOption = (option) => {
+    const isSelected = selectedIds.includes(option.id);
+
+    // Обновляем массив ID
+    const newSelectedIds = isSelected
+      ? selectedIds.filter(id => id !== option.id) // удаляем
+      : [...selectedIds, option.id]; // добавляем
+
+    // Передаём только массив ID
+    onChange({ target: { name: 'categories', value: newSelectedIds } });
+  };
+
+  const toggleDropdown = () => setIsOpen(prev => !prev);
+
+  const handleBlur = (e) => {
+    if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div className={styles.formGroup}>
+      <label>Категории</label>
+      <div
+        className={styles.multiselectContainer}
+        onClick={toggleDropdown}
+        tabIndex="0"
+        onBlur={handleBlur}
+      >
+        {/* Отображение выбранных тегов */}
+        <div className={styles.multiselectSelectedTags}>
+          {selectedOptions.length === 0 ? (
+            <span className={styles.placeholder}>Выберите категории</span>
+          ) : (
+            selectedOptions.map(opt => (
+              <span key={opt.id} className={styles.tag}>
+                {opt.title}
+              </span>
+            ))
+          )}
+        </div>
+
+        {/* Стрелочка */}
+        <div className={styles.dropdownTrigger}>
+          <span className={styles.dropdownArrow}>▼</span>
+        </div>
+
+        {/* Выпадающий список */}
+        {isOpen && (
+          <ul className={styles.multiselectList}>
+            {options.map((option) => (
+              <li
+                key={option.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleOption(option); // ← передаём объект, но в onChange уйдёт только id
+                }}
+                className={selectedIds.includes(option.id) ? styles.selected : ''}
+              >
+                {option.title}
+                {selectedIds.includes(option.id) && <span className={styles.checkmark}>✓</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+};
 
 // Общий компонент для настроек приватности
 export const PrivacySelect = ({ options, value, onChange }) => (

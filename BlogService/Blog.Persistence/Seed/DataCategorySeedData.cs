@@ -1,9 +1,4 @@
 ﻿using Blog.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Blog.Persistence.Seed
 {
@@ -29,7 +24,7 @@ namespace Blog.Persistence.Seed
 
         public IEnumerable<Category> GetSeedData()
         {
-            return _categories.Select((x, index) => new Category(index + 1, x));
+            return _categories.Select((x, index) => new Category(index + 1, x, (CategoryType)(index + 1)));
         }
     }
 }

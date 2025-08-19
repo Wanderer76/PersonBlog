@@ -3,6 +3,7 @@ using Comments.Domain.Models;
 using Comments.Domain.Services;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Profile.Service.HttpClients;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
@@ -14,11 +15,12 @@ internal class DefaultCommentService : ICommentService
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IReadWriteRepository<ICommentEntity> _repository;
-
-    public DefaultCommentService(ICurrentUserService currentUserService, IReadWriteRepository<ICommentEntity> repository)
+    private readonly ProfileHttpClient _profileHttpClient;
+    public DefaultCommentService(ICurrentUserService currentUserService, IReadWriteRepository<ICommentEntity> repository, ProfileHttpClient profileHttpClient)
     {
         _currentUserService = currentUserService;
         _repository = repository;
+        this._profileHttpClient = profileHttpClient;
     }
 
     public async Task<Result<CommentCreateResponse>> CreateCommentAsync(CommentCreateRequest createRequest)
@@ -63,16 +65,24 @@ internal class DefaultCommentService : ICommentService
             .Where(x => x.PostId == postId)
             .CountAsync();
 
-        var userIds = (await _repository.Get<UserProfile>()
-            .Join(_repository.Get<Comment>().Where(x => x.PostId == postId),
-            outer => outer.UserId,
-            inner => inner.UserId,
-            (x, y) => x)
+
+        var userIds = (await Task.WhenAll(comments.Select(x => x.UserId)
             .Distinct()
-            .ToDictionaryAsync(x => x.UserId))!;
+            .Select(x => _profileHttpClient.GetProfileByUserIdAsync(x))))
+            .ToDictionary(x => x.UserId);
+
+        //var userIds = (await _repository.Get<UserProfile>()
+        //    .Join(_repository.Get<Comment>().Where(x => x.PostId == postId),
+        //    outer => outer.UserId,
+        //    inner => inner.UserId,
+        //    (x, y) => x)
+        //    .Distinct()
+        //    .ToDictionaryAsync(x => x.UserId))!;
+
+
 
         var result = comments.ToTree(c => c.Id, c => c.ParentId)
-            .Select(x => MapToCommentListItem(x, (userId) => userIds.TryGetValue(userId, out var user) ? user.Username : null))
+            .Select(x => MapToCommentListItem(x, (userId) => userIds.TryGetValue(userId, out var user) ? user.Name : null))
             .OrderByDescending(x => x.CreatedAt)
             .ToList();
 
@@ -85,7 +95,7 @@ internal class DefaultCommentService : ICommentService
         var comment = await _repository.Get<Comment>()
             .FirstOrDefaultAsync(x => x.Id == commentId);
 
-        if(comment == null)
+        if (comment == null)
         {
             return Result.Failure(new("Комментария не существует"));
         }

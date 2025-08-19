@@ -8,7 +8,8 @@ import {
   ThumbnailUpload,
   DescriptionTextarea,
   PrivacySelect,
-  ActionButtons
+  ActionButtons,
+  CategoryMultiSelect
 } from "./CommonComponents";
 
 const CreatePostForm = function () {
@@ -28,12 +29,22 @@ const CreatePostForm = function () {
   const CHUNK_SIZE = 10 * 1024 * 1024;
 
   function updateForm(event) {
-    const key = event.target.name;
-    const value = (key === 'video' || key === 'thumbnail')
-      ? event.target.files[0]
-      : event.target.value;
 
-    setPostForm(prev => ({ ...prev, [key]: value }));
+    var target = event.target ?? event;
+    var key = target.name;
+
+    var value;
+    if (target.files) {
+      value = target.files[0];
+    } else {
+      value = target.value;
+    }
+    console.log(value)
+
+    // Защита от undefined
+    if (key) {
+      setPostForm(prev => ({ ...prev, [key]: value }));
+    }
   }
 
   useEffect(() => {
@@ -55,9 +66,17 @@ const CreatePostForm = function () {
       const formData = new FormData();
       let postId = null;
 
-      Object.keys(postForm).forEach(key => {
-        if (key !== "video") formData.append(key, postForm[key] ?? '');
+      formData.append('type', postForm.type);
+      formData.append('title', postForm.title);
+      formData.append('description', postForm.description);
+      if (postForm.thumbnail) {
+        formData.append('thumbnail', postForm.thumbnail);
+      }
+      postForm.categories.forEach(id => {
+        formData.append('categories[]', id);
       });
+
+
 
       const response = await API.post(url, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -69,12 +88,12 @@ const CreatePostForm = function () {
           await uploadFile(postId);
         }
       }
+      navigate('/profile');
     } catch (error) {
       console.error("Ошибка создания поста:", error);
       alert("Произошла ошибка при создании поста");
     } finally {
       setIsSubmitting(false);
-      navigate('/profile');
     }
   }
 
@@ -206,8 +225,14 @@ const CreatePostForm = function () {
           placeholder="Добавьте описание к вашему видео"
         />
 
+        <CategoryMultiSelect
+          options={createModel?.cateboryList || []}
+          value={postForm.categories || []}
+          onChange={updateForm}
+        />
+
         <PrivacySelect
-          options={createModel?.visibility}
+          options={createModel?.visibility || []}
           value={postForm.visibility}
           onChange={updateForm}
         />
