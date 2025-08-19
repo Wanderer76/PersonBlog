@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FileStorage.Service.Service
+namespace Infrastructure.Services
 {
     public interface IFileStorageFactory
     {
         IFileStorage CreateFileStorage();
     }
 
-    internal class DefaultFileStorageFactory : IFileStorageFactory
+    public class DefaultFileStorageFactory : IFileStorageFactory
     {
         private readonly IServiceScopeFactory _serviceProvider;
 

@@ -2,7 +2,6 @@
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models;
 using Blog.Domain.Services.Models.Playlist;
-using FileStorage.Service.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;

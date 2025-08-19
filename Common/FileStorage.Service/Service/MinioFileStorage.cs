@@ -1,4 +1,5 @@
 ﻿using FileStorage.Service.Models;
+using Infrastructure.Services;
 using Microsoft.Extensions.Options;
 using Minio;
 

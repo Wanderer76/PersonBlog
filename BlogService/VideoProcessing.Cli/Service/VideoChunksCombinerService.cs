@@ -1,5 +1,5 @@
 ﻿using Blog.Domain.Events;
-using FileStorage.Service.Service;
+using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 

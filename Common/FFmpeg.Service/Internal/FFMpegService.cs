@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace FFmpeg.Service.Internal
 {
-    internal class FFMpegService : IFFMpegService
+    internal class FFMpegService : IVideoConvertService
     {
         private readonly FFMpegOptions fFMpegOptions;
         public FFMpegService(FFMpegOptions configuration)
@@ -15,20 +15,20 @@ namespace FFmpeg.Service.Internal
             fFMpegOptions = configuration;
         }
 
-        public async Task GeneratePreview(string input, string outputFilePath)
+        public async Task GeneratePreviewAsync(string input, string outputFilePath)
         {
             var args = $"-ss {TimeSpan.FromSeconds(1)} -i \"{input}\" -frames:v 1 -q:v 2 \"{outputFilePath}\"";
             await ExecuteCommand(fFMpegOptions.FFMpegPath, args);
         }
 
-        public async Task<FFProbeStream?> GetVideoMediaInfo(string input)
+        public async Task<FFProbeStream?> GetVideoMediaInfoAsync(string input)
         {
             var inputMedia = await GetStreams(input);
             var inputVideo = inputMedia.FirstOrDefault(x => x.CodecType == "video");
             return inputVideo;
         }
 
-        public async Task CreateHls(string input, string output, HlsOptions options, AsyncProgress<double>? callback)
+        public async Task CreateHlsAsync(string input, string output, HlsOptions options, AsyncProgress<double>? callback)
         {
             options.AssertFound("Опции равны null");
             string inputUrl = input;

@@ -2,7 +2,6 @@
 using Blog.Domain.Entities;
 using Blog.Service.Exceptions;
 using Blog.Service.Models.Blog;
-using FileStorage.Service.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;

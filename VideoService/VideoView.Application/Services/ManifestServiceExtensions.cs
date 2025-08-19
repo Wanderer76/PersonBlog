@@ -1,5 +1,4 @@
-﻿using FileStorage.Service.Service;
-using Infrastructure.Services;
+﻿using Infrastructure.Services;
 
 namespace VideoView.Application.Services
 {

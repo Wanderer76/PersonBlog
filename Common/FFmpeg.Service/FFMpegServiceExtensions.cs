@@ -9,7 +9,7 @@ namespace FFmpeg.Service
     {
         public static void AddFFMpeg(this IServiceCollection service, IConfiguration configuration)
         {
-            service.AddSingleton<IFFMpegService, FFMpegService>();
+            service.AddSingleton<IVideoConvertService, FFMpegService>();
             service.AddSingleton<FFMpegOptions>(configuration.GetSection("FFMpegOptions:FFMpeg").Get<FFMpegOptions>()!);
             service.AddSingleton<HlsVideoPresets>(configuration.GetSection("FFMpegOptions:HlsVideoPresets").Get<HlsVideoPresets>()!);
         }

@@ -5,7 +5,6 @@ using Blog.Domain.Services.Models;
 using Blog.Persistence.Repository.Quries;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
-using FileStorage.Service.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;

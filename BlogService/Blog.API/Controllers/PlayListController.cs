@@ -1,7 +1,7 @@
 ﻿using Blog.Domain.Services;
 using Blog.Domain.Services.Models.Playlist;
-using FileStorage.Service.Service;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Services;

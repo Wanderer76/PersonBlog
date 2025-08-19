@@ -2,7 +2,7 @@
 using Blog.Domain.Events;
 using FFmpeg.Service;
 using FFmpeg.Service.Models;
-using FileStorage.Service.Service;
+using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
 using Shared.Services;
@@ -12,12 +12,12 @@ namespace VideoProcessing.Cli.Service;
 
 public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 {
-    private readonly IFFMpegService _ffmpegService;
+    private readonly IVideoConvertService _ffmpegService;
     private readonly IFileStorage _storage;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
 
-    public ProcessVideoToHls(IFFMpegService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+    public ProcessVideoToHls(IVideoConvertService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
     {
         _ffmpegService = ffmpegService;
         _storage = storage.CreateFileStorage();
@@ -47,7 +47,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
             var inputUrl = new Uri(url).AbsoluteUri;
 
-            var videoStream = await _ffmpegService.GetVideoMediaInfo(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
+            var videoStream = await _ffmpegService.GetVideoMediaInfoAsync(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
 
             await ProcessHls(@event.VideoMetadata, dir, fileId, inputUrl, videoStream);
 
@@ -58,7 +58,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
                 try
                 {
-                    await _ffmpegService.GeneratePreview(new Uri(url).AbsoluteUri, snapshotFileName);
+                    await _ffmpegService.GeneratePreviewAsync(new Uri(url).AbsoluteUri, snapshotFileName);
                     using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
                     using var copyStream = new MemoryStream();
                     await fileStream.CopyToAsync(copyStream);
@@ -127,7 +127,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
                 return Task.CompletedTask;
             });
 
-            await _ffmpegService.CreateHls(inputUrl, dir, hlsOptions, progressCallBack);
+            await _ffmpegService.CreateHlsAsync(inputUrl, dir, hlsOptions, progressCallBack);
 
             foreach (var file in Directory.GetFiles(dir))
             {

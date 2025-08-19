@@ -1,5 +1,5 @@
 ﻿using Blog.Domain.Entities;
-using FileStorage.Service.Service;
+using Infrastructure.Services;
 
 namespace Blog.Service.Models.Blog
 {
