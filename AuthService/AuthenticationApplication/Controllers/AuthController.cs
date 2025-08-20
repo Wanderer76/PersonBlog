@@ -1,6 +1,7 @@
 ﻿using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,7 @@ public class AuthController : BaseController
 
     [HttpPost("create")]
     [Produces(typeof(AuthResponse))]
+    [AuthFilter]
     public async Task<IActionResult> CreateUser(RegisterModel registerModel)
     {
         var response = await _authService.Register(registerModel);

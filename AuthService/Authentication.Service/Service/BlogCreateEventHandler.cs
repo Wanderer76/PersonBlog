@@ -1,4 +1,5 @@
-﻿using Authentication.Domain.Entities;
+﻿using Authentication.Contract.Constants;
+using Authentication.Domain.Entities;
 using Blog.Contracts.Events;
 using Infrastructure.Models;
 using Infrastructure.Services;
@@ -23,6 +24,19 @@ namespace Authentication.Service.Service
         {
             var profile = await _repository.Get<AppProfile>()
                 .FirstAsync(x => x.UserId == @event.Message.UserId);
+            
+            var user = await _repository.Get<AppUser>()
+                .Include(x=>x.AppUserRoles)
+                .FirstAsync(x => x.Id == @event.Message.UserId);           
+
+            if(!user.AppUserRoles.Any(x=>x.UserRoleId == Roles.Blogger))
+            {
+                _repository.Add(new AppUserRole
+                {
+                    UserRoleId = Roles.Blogger,
+                    AppUserId = @event.Message.UserId
+                });
+            }
 
             _repository.Attach(profile);
             profile.BlogId = @event.Message.BlogId;

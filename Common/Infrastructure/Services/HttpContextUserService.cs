@@ -9,35 +9,29 @@ namespace Infrastructure.Services
 {
     internal class HttpContextUserService : ICurrentUserService
     {
-        private  UserModel? userModel;
         private readonly IHttpContextAccessor _contextAccessor;
-
-        public HttpContextUserService(IHttpContextAccessor contextAccessor)
+        private readonly ICacheService _cacheService;
+        public HttpContextUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService)
         {
             _contextAccessor = contextAccessor;
+            _cacheService = cacheService;
         }
 
         public async Task<UserModel> GetCurrentUserAsync()
         {
-            if (userModel != null)
-            {
-                return userModel;
-            }
-
             var token = _contextAccessor.HttpContext.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
-
             var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
+            if (tokenRepr == null || tokenRepr.IsFailure)
+                return UserModel.AnonymousUser();
 
-            var sessionData = tokenRepr == null || tokenRepr.IsFailure
-                ? UserModel.AnonymousUser()
-                : new UserModel
-                {
-                    UserId = tokenRepr.Value.UserId,
-                    UserName = tokenRepr.Value.Login,
-                    BlogId = tokenRepr.Value.BlogId,
-                };
-            userModel = sessionData;
-            return userModel;
+            var key = new SessionKey(tokenRepr.Value.UserId);
+
+            var data = await _cacheService.GetCachedDataAsync<UserModel>(key);
+            
+            if (data == null)
+                return UserModel.AnonymousUser();
+
+            return data;
         }
     }
 }

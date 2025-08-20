@@ -2,6 +2,8 @@ using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
 using Blog.Contracts;
+using Blog.Contracts.Events;
+using Blog.Domain.Events.Handlers;
 using Blog.Persistence;
 using Blog.Service.Extensions;
 using FileStorage.Service;
@@ -45,7 +47,25 @@ builder.Services.AddMessageBus(builder.Configuration)
             Name = "user-subscribe",
             RoutingKey = "canceled"
         };
-    });
+    })
+    .AddSubscription<PostBannedEvent, PostBannedEventHandler>(x =>
+    {
+        x.QueueName = "post-to-ban";
+        x.Exchange = new ExchangeParam
+        {
+            Name = "blogs",
+            RoutingKey = "post.banned"
+        };
+    })
+        .AddSubscription<PostUnBannedEvent, PostBannedEventHandler>(x =>
+        {
+            x.QueueName = "post-to-unban";
+            x.Exchange = new ExchangeParam
+            {
+                Name = "blogs",
+                RoutingKey = "post.unbanned"
+            };
+        }); ;
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

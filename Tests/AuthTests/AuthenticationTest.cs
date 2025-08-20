@@ -25,6 +25,7 @@ namespace AuthTests
         private readonly Mock<IReadWriteRepository<IAuthEntity>> _repoMock = new();
         private readonly Mock<ITokenService> _tokenServiceMock = new();
         private readonly Mock<ICurrentUserService> _userSessionMock = new();
+        private readonly Mock<ICacheService> _cacheServiceMock = new();
         private readonly AuthDbSeedMock _dbSeedMock;
         private readonly DefaultAuthService _authService;
         public AuthenticationTest()
@@ -34,7 +35,7 @@ namespace AuthTests
             //_dbSeedMock = dbSeedMock;
             //_context = new DefaultRepository<AuthenticationDbContext, IAuthEntity>(AuthDbSeedMock.Context);
             //_tokenService = new DefaultTokenService(_context);
-            _authService = new DefaultAuthService(_repoMock.Object, _tokenServiceMock.Object, _userSessionMock.Object);
+            _authService = new DefaultAuthService(_repoMock.Object, _tokenServiceMock.Object, _userSessionMock.Object, _cacheServiceMock.Object);
         }
         [Fact]
         public async Task Authenticate_Fails_IfUserNotFound()
@@ -132,7 +133,7 @@ namespace AuthTests
         public async Task Logout_DeletesTokens_IfUserIdPresent()
         {
             var userId = Guid.NewGuid();
-            _userSessionMock.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(new Shared.Models.UserModel { UserId = userId });
+            _userSessionMock.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(new Shared.Models.UserModel(userId, null, null, null, []));
 
             var tokens = new List<Token>().BuildMockDbSet();
             _repoMock.Setup(x => x.Get<Token>()).Returns(tokens.Object);
@@ -146,7 +147,7 @@ namespace AuthTests
         public async Task Logout_DoesNothing_IfNoUserId()
         {
             _userSessionMock.Setup(x => x.GetCurrentUserAsync())
-                            .ReturnsAsync(new UserModel { UserId = null });
+                            .ReturnsAsync(new UserModel(null, null, null, null, []));
 
             await _authService.Logout();
 

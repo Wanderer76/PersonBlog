@@ -10,194 +10,200 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
-namespace MessageBus
+namespace MessageBus.Internal;
+
+internal class RabbitMqMessageBus : IMessagePublish, IAsyncDisposable
 {
-    internal class RabbitMqMessageBus : IMessagePublish, IAsyncDisposable
+    private readonly IConnectionFactory _factory;
+    private readonly IServiceScopeFactory _serviceScope;
+    private readonly IConnection _connection;
+    private readonly ConcurrentBag<IChannel> _channels;
+    private readonly MessageBusSubscriptionInfo _subscriptionInfo;
+    private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
+    private static readonly JsonSerializerOptions baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };
+    private static readonly JsonSerializerOptions deserializeOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+    public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
     {
-        private readonly IConnectionFactory _factory;
-        private readonly IServiceScopeFactory _serviceScope;
-        private readonly IConnection _connection;
-        private readonly ConcurrentBag<IChannel> _channels;
-        private readonly MessageBusSubscriptionInfo _subscriptionInfo;
-        private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
-        private static readonly JsonSerializerOptions baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };
-
-        public RabbitMqMessageBus(RabbitMqConnection config, IServiceScopeFactory serviceScope, IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
+        _factory = new ConnectionFactory
         {
-            _factory = new ConnectionFactory
-            {
-                HostName = config.HostName,
-                Port = config.Port,
-                UserName = config.UserName,
-                Password = config.Password,
-            };
-            _subscriptionInfo = subscriptionInfo.Value;
-            _serviceScope = serviceScope;
-            _connection = _factory.CreateConnectionAsync().GetAwaiter().GetResult();
-            _channels = [];
-            _cachedValues = [];
+            HostName = config.HostName,
+            Port = config.Port,
+            UserName = config.UserName,
+            Password = config.Password,
+        };
+        _subscriptionInfo = subscriptionInfo.Value;
+        _serviceScope = serviceScope;
+        _connection = _factory.CreateConnectionAsync().GetAwaiter().GetResult();
+        _channels = [];
+        _cachedValues = [];
+    }
+
+    public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent
+    {
+
+        using var channel = await _connection.CreateChannelAsync();
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
+        await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
+        {
+            Persistent = true,
+            CorrelationId = message.CorrelationId?.ToString(),
+        }, body: body);
+
+    }
+
+    public async Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null)
+    {
+
+        cfg ??= new MessageProperty();
+        using var channel = await _connection.CreateChannelAsync();
+        var baseEvent = BaseEvent<T>.Create(message);
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
+        await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
+        {
+            CorrelationId = cfg.CorrelationId,
+            Persistent = cfg.Persistence,
+        }, body: body);
+
+    }
+
+    /// <summary>
+    /// если задан конфиг значения аттрибута EventPublishAttribute игнорируются
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="message"></param>
+    /// <param name="cfg"></param>
+    /// <returns></returns>
+    public async Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null)
+    {
+
+        cfg ??= new MessageProperty();
+        ConfigureProperties<T>(cfg);
+
+        using var channel = await _connection.CreateChannelAsync();
+
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
+        await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
+        {
+            CorrelationId = cfg.CorrelationId,
+            Persistent = cfg.Persistence,
+        }, body: body);
+
+
+    }
+
+    /// <summary>
+    /// Для публикации у события должен быть определен аттрибут EventPublishAttribute
+    /// </summary>
+    /// <param name="message"></param>
+    /// <param name="cfg"></param>
+    /// <returns></returns>
+    public async Task PublishAsync(BaseEvent message, MessageProperty? cfg = null)
+    {
+        cfg ??= new MessageProperty();
+        var type = _subscriptionInfo.EventTypes[message.EventType];
+        _cachedValues.TryGetValue(type, out EventPublishAttribute? value);
+        if (value == null)
+        {
+            value = type.GetCustomAttribute<EventPublishAttribute>(false);
+            _cachedValues.TryAdd(type, value);
         }
-
-        public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent
+        var current = value == null ? _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type) : null;
+        cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+        cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
+        using var channel = await _connection.CreateChannelAsync();
+        var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, baseEventSerializerOptions));
+        await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
         {
+            CorrelationId = cfg.CorrelationId,
+            Persistent = cfg.Persistence,
+        }, body: body);
 
-            using var channel = await _connection.CreateChannelAsync();
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+    }
 
-            await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
-            {
-                Persistent = true,
-                CorrelationId = message.CorrelationId?.ToString(),
-            }, body: body);
-
+    private void ConfigureProperties<T>(MessageProperty cfg)
+    {
+        var type = typeof(T);
+        _cachedValues.TryGetValue(type, out EventPublishAttribute? value);
+        if (value == null)
+        {
+            value = type.GetCustomAttribute<EventPublishAttribute>(false);
+            _cachedValues.TryAdd(type, value);
         }
+        var current = value == null ? _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type) : null;
+        cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
+        cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
+    }
 
-        public async Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null)
+    public Task<IConnection> GetConnectionAsync()
+    {
+        return _factory.CreateConnectionAsync();
+    }
+
+    public async Task SubscribeAsync<T>(string queueName)
+    {
+        var channel = await _connection.CreateChannelAsync();
+        await channel.ExchangeDeclareAsync("error", ExchangeType.Fanout, true, false);
+        await channel.QueueDeclareAsync("errors", true, false, false);
+        await channel.QueueBindAsync("errors", "error", "");
+        await channel.BasicQosAsync(0, 10, false);
+        var consumer = new AsyncEventingBasicConsumer(channel);
+        consumer.ReceivedAsync += async (model, ea) =>
         {
-
-            cfg ??= new MessageProperty();
-            using var channel = await _connection.CreateChannelAsync();
-            var baseEvent = BaseEvent<T>.Create(message);
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
-            await channel.BasicPublishAsync(exchange: exchangeName, routingKey: routingKey, true, new BasicProperties
+            var body = JsonSerializer.Deserialize<BaseEvent<T>>(ea.Body.Span, deserializeOptions)!;
+            using var scope = _serviceScope.CreateScope();
+            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(body.EventType);
+            if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType) && handlers.Any())
             {
-                CorrelationId = cfg.CorrelationId,
-                Persistent = cfg.Persistence,
-            }, body: body);
-
-        }
-
-        /// <summary>
-        /// если задан конфиг значения аттрибута EventPublishAttribute игнорируются
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="message"></param>
-        /// <param name="cfg"></param>
-        /// <returns></returns>
-        public async Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null)
-        {
-
-            cfg ??= new MessageProperty();
-            ConfigureProperties<T>(cfg);
-
-            using var channel = await _connection.CreateChannelAsync();
-
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-
-            await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
-            {
-                CorrelationId = cfg.CorrelationId,
-                Persistent = cfg.Persistence,
-            }, body: body);
-
-
-        }
-
-        /// <summary>
-        /// Для публикации у события должен быть определен аттрибут EventPublishAttribute
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="cfg"></param>
-        /// <returns></returns>
-        public async Task PublishAsync(BaseEvent message, MessageProperty? cfg = null)
-        {
-            cfg ??= new MessageProperty();
-            var type = _subscriptionInfo.EventTypes[message.EventType];
-            _cachedValues.TryGetValue(type, out EventPublishAttribute? value);
-            if (value == null)
-            {
-                value = type.GetCustomAttribute<EventPublishAttribute>(false);
-                _cachedValues.TryAdd(type, value);
-            }
-            var current = value == null ? _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type) : null;
-            cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
-            cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
-            using var channel = await _connection.CreateChannelAsync();
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, baseEventSerializerOptions));
-            await channel.BasicPublishAsync(exchange: cfg.Exchange, routingKey: cfg.RoutingKey, true, new BasicProperties
-            {
-                CorrelationId = cfg.CorrelationId,
-                Persistent = cfg.Persistence,
-            }, body: body);
-
-        }
-
-        private void ConfigureProperties<T>(MessageProperty cfg)
-        {
-            var type = typeof(T);
-            _cachedValues.TryGetValue(type, out EventPublishAttribute? value);
-            if (value == null)
-            {
-                value = type.GetCustomAttribute<EventPublishAttribute>(false);
-                _cachedValues.TryAdd(type, value);
-            }
-            var current = value == null ? _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type) : null;
-            cfg.RoutingKey ??= value?.RoutingKey ?? current?.Queue?.Exchange?.RoutingKey;
-            cfg.Exchange ??= value?.Exchange ?? current?.Queue?.Exchange?.Name;
-        }
-
-        public Task<IConnection> GetConnectionAsync()
-        {
-            return _factory.CreateConnectionAsync();
-        }
-
-        public async Task SubscribeAsync<T>(string queueName)
-        {
-            var channel = await _connection.CreateChannelAsync();
-            await channel.BasicQosAsync(0, 10, false);
-            var consumer = new AsyncEventingBasicConsumer(channel);
-            consumer.ReceivedAsync += async (model, ea) =>
-            {
-                var body = JsonSerializer.Deserialize<BaseEvent<T>>(ea.Body.Span)!;
-                using var scope = _serviceScope.CreateScope();
-                var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(body.EventType);
-                if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType) && handlers.Any())
+                foreach (var handler in handlers)
                 {
-                    foreach (var handler in handlers)
+                    try
                     {
-                        try
-                        {
-                            var handlerBody = body.EventData; //JsonSerializer.Deserialize<T>(body.EventData)!;
-                            Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
-                            ? null
-                            : Guid.Parse(ea.BasicProperties.CorrelationId);
+                        var handlerBody = body.EventData;
+                        Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
+                        ? null
+                        : Guid.Parse(ea.BasicProperties.CorrelationId);
 
-                            var context = MessageContext.Create(correlationId, handlerBody, this);
-                            await handler.Handle(context);
-                        }
-                        catch (Exception e)
-                        {
-                            await channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-                            {
-                                Body = body,
-                                Error = e
-                            })));
-                            await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
-                            return;
-                        }
-
+                        var context = MessageContext.Create(correlationId, handlerBody, this);
+                        await handler.Handle(context);
                     }
-                    await channel.BasicAckAsync(ea.DeliveryTag, false);
+                    catch (Exception e)
+                    {
+                        await channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+                        {
+                            Body = body,
+                            Error = e.ToString()
+                        })));
+                        await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                        return;
+                    }
 
                 }
-                else
-                {
-                    await channel.BasicNackAsync(ea.DeliveryTag, false, true);
-                    return;
-                }
-            };
-            await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
-            _channels.Add(channel);
-        }
+                await channel.BasicAckAsync(ea.DeliveryTag, false);
 
-        public async ValueTask DisposeAsync()
-        {
-            foreach (var i in _channels)
+            }
+            else
             {
-                await i?.CloseAsync();
+                await channel.BasicNackAsync(ea.DeliveryTag, false, true);
+                return;
+            }
+        };
+        await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
+        _channels.Add(channel);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        foreach (var i in _channels)
+        {
+            if (i != null)
+            {
+                await i.CloseAsync();
                 i?.Dispose();
             }
-            _connection?.Dispose();
         }
+        _connection?.Dispose();
     }
 }
