@@ -63,7 +63,7 @@ public class VideoController : BaseController
 
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
             var post = _httpClientFactory.GetPostDetailViewAsync(postId);
-            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!,blog.Value?.Id);
+            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.Value?.Id);
 
             await Task.WhenAll(post, userInfo).ConfigureAwait(false);
 
@@ -93,7 +93,7 @@ public class VideoController : BaseController
         foreach (var i in HttpContext.Request.Headers)
         {
             client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
-            
+
         }
         var result = await client.PostAsJsonAsync("Reaction/setView", viewRequest);
         if (!result.IsSuccessStatusCode)

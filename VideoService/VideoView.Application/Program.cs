@@ -13,6 +13,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
+builder.Services.AddUserSessionServices();
 builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddHttpClient("Auth", x =>

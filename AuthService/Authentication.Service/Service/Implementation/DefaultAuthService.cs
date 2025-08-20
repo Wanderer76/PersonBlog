@@ -89,7 +89,7 @@ internal class DefaultAuthService : IAuthService
                 new AppUserRole
                 {
                     AppUserId = userId,
-                    UserRoleId = Roles.User
+                    UserRoleId = Roles.UserRoleId
                 }
             },
         };

@@ -29,11 +29,11 @@ namespace Authentication.Service.Service
                 .Include(x=>x.AppUserRoles)
                 .FirstAsync(x => x.Id == @event.Message.UserId);           
 
-            if(!user.AppUserRoles.Any(x=>x.UserRoleId == Roles.Blogger))
+            if(!user.AppUserRoles.Any(x=>x.UserRoleId == Roles.BloggerRoleId))
             {
                 _repository.Add(new AppUserRole
                 {
-                    UserRoleId = Roles.Blogger,
+                    UserRoleId = Roles.BloggerRoleId,
                     AppUserId = @event.Message.UserId
                 });
             }
