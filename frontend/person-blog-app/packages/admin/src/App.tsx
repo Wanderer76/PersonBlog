@@ -1,11 +1,11 @@
 import './App.css'
-import BanRequestsPage from './pages/banRequests/BanRequestsPage';
+import AdminDashboard from './pages/dashboard/AdminDashboard'
 
 function App() {
    return(
     <div className="App">
 
-      <BanRequestsPage />
+      <AdminDashboard  />
     </div>
    )
 }

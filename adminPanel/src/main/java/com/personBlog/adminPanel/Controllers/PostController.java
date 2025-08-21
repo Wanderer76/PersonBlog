@@ -27,7 +27,7 @@ public class PostController {
     }
 
     @PostMapping("sendToBan")
-    public ResponseEntity<?> sendPostToBan(@ModelAttribute PostBanRequest form) {
+    public ResponseEntity<?> sendPostToBan(@RequestBody PostBanRequest form) {
         try {
             postBanService.sendPostBanedMessage(new PostBannedEvent(
                     form.getMessage(),
@@ -41,7 +41,7 @@ public class PostController {
     }
 
     @PostMapping("restoreFromBan")
-    public ResponseEntity<?> restoreFromBan(@ModelAttribute PostBanRequest form) {
+    public ResponseEntity<?> restoreFromBan(@RequestBody PostBanRequest form) {
         try {
             postBanService.restorePostFromBan(new PostUnBannedEvent(form.getPostId()));
             return ResponseEntity.ok().build();

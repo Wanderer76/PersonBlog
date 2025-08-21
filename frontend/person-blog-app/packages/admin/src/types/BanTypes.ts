@@ -25,3 +25,24 @@ export type PostBanRequestItemModel = {
     createdAt: string,
     title: string
 }
+
+export type GroupedPostComplaint = {
+  postId: string;
+  title: string;
+  complaintsCount: number;
+  lastComplaintAt: string; // ISO
+};
+
+export type GroupedComplaintsResponse = {
+  items: GroupedPostComplaint[];
+  count: number;
+};
+
+export type BanRequest = {
+  id: string;
+  postId: string;
+  title: string;
+  reasonId: string | number;
+  userMessage: string | null;
+  createdAt: string;
+};

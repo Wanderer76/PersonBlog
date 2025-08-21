@@ -57,7 +57,7 @@ builder.Services.AddMessageBus(builder.Configuration)
             RoutingKey = "post.banned"
         };
     })
-        .AddSubscription<PostUnBannedEvent, PostBannedEventHandler>(x =>
+        .AddSubscription<PostUnBannedEvent, PostUnBannedEventHandler>(x =>
         {
             x.QueueName = "post-to-unban";
             x.Exchange = new ExchangeParam

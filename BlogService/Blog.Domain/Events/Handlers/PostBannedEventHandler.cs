@@ -7,7 +7,7 @@ using Shared.Services;
 
 namespace Blog.Domain.Events.Handlers
 {
-    public class PostBannedEventHandler : IEventHandler<PostBannedEvent>, IEventHandler<PostUnBannedEvent>
+    public class PostBannedEventHandler : IEventHandler<PostBannedEvent>
     {
         private readonly IReadWriteRepository<IBlogEntity> _repository;
 
@@ -31,10 +31,22 @@ namespace Blog.Domain.Events.Handlers
             }
         }
 
+     
+    }
+
+    public class PostUnBannedEventHandler : IEventHandler<PostUnBannedEvent>
+    {
+        private readonly IReadWriteRepository<IBlogEntity> _repository;
+
+        public PostUnBannedEventHandler(IReadWriteRepository<IBlogEntity> repository)
+        {
+            _repository = repository;
+        }
+
         public async Task Handle(IMessageContext<PostUnBannedEvent> @event)
         {
             var post = await _repository.Get<Post>()
-                .Include(x=>x.BanMessage)
+                .Include(x => x.BanMessage)
                 .FirstAsync(x => x.Id == @event.Message.PostId);
 
             if (post.BanMessageId.HasValue)
@@ -44,5 +56,6 @@ namespace Blog.Domain.Events.Handlers
                 await _repository.SaveChangesAsync();
             }
         }
+
     }
 }
