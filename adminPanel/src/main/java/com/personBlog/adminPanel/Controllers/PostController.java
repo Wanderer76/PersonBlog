@@ -7,7 +7,6 @@ import com.personBlog.adminPanel.Services.Models.PostUnBannedEvent;
 import com.personBlog.adminPanel.Services.PostBanService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -21,17 +20,33 @@ public class PostController {
     }
 
     @GetMapping("banRequest/list")
-    public ResponseEntity<PostBanRequestsViewModel> getBanPostRequestList(int page, int size) {
+    public ResponseEntity<PostBanRequestsViewModel> getBanPostRequestList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(postBanService.getBanRequestList(page, size));
     }
 
     @PostMapping("sendToBan")
-    public void sendPostToBan(@RequestBody PostBanRequest form) {
-        postBanService.sendPostBanedMessage(new PostBannedEvent(form.getMessage(), form.getPostId(), OffsetDateTime.now(ZoneOffset.UTC)));
+    public ResponseEntity<?> sendPostToBan(@ModelAttribute PostBanRequest form) {
+        try {
+            postBanService.sendPostBanedMessage(new PostBannedEvent(
+                    form.getMessage(),
+                    form.getPostId(),
+                    OffsetDateTime.now(ZoneOffset.UTC)
+            ));
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
+        }
     }
 
     @PostMapping("restoreFromBan")
-    public void restoreFromBan(@RequestBody PostBanRequest form) {
-        postBanService.restorePostFromBan(new PostUnBannedEvent(form.getPostId()));
+    public ResponseEntity<?> restoreFromBan(@ModelAttribute PostBanRequest form) {
+        try {
+            postBanService.restorePostFromBan(new PostUnBannedEvent(form.getPostId()));
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Ошибка: " + e.getMessage());
+        }
     }
 }

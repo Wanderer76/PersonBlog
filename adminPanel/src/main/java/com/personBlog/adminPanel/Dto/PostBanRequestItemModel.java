@@ -15,4 +15,5 @@ public class PostBanRequestItemModel {
     private final UUID reasonId;
     private final String userMessage;
     private final OffsetDateTime createdAt;
+    private final  String title;
 }

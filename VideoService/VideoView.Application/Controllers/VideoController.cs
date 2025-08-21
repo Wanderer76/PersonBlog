@@ -61,8 +61,8 @@ public class VideoController : BaseController
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             var hasUser = HttpContext.TryGetUserFromContext(out var userId);
 
+            var post = _httpClientFactory.GetPostDetailViewAsync(HttpContext, postId);
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
-            var post = _httpClientFactory.GetPostDetailViewAsync(postId);
             var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.Value?.Id);
 
             await Task.WhenAll(post, userInfo).ConfigureAwait(false);

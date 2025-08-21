@@ -36,7 +36,7 @@ public class ViewController : BaseController
 
             var postPreviews = historyItems!
                .DistinctBy(x => x.PostId)
-               .Select(x => _httpClientFactory.GetPostDetailViewAsync(x.PostId))
+               .Select(x => _httpClientFactory.GetPostDetailViewAsync(HttpContext, x.PostId))
                .ToList();
 
             var previews = (await Task.WhenAll(postPreviews))
@@ -74,7 +74,7 @@ public class ViewController : BaseController
 
             var postPreviews = historyItems!
                .DistinctBy(x => x.PostId)
-               .Select(x => _httpClientFactory.GetPostDetailViewAsync(x.PostId))
+               .Select(x => _httpClientFactory.GetPostDetailViewAsync(HttpContext, x.PostId))
                .ToList();
 
             var previews = (await Task.WhenAll(postPreviews))

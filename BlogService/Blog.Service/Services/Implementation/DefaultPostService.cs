@@ -1,4 +1,5 @@
-﻿using Blog.Contracts.Events;
+﻿using Authentication.Contract.Constants;
+using Blog.Contracts.Events;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Domain.Services.Models;
@@ -86,7 +87,7 @@ namespace Blog.Service.Services.Implementation
                 }
             }
 
-            if(session.UserId != post.UserId && post.BanMessageId.HasValue)
+            if (session.UserId != post.UserId && post.BanMessageId.HasValue)
             {
                 return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
             }
@@ -337,6 +338,20 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
         {
+            var isBanned = await _context.Get<Post>()
+                .Where(x => x.Id == postId)
+                .Select(x => new { x.BanMessageId, x.BlogId })
+                .FirstOrDefaultAsync();
+            var currentUser = await _userSession.GetCurrentUserAsync();
+
+            //if((currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
+
+            if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
+                && !(currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))    
+            {
+                return default;
+            }
+
             var cacheData = await _cacheService.GetOrAddDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
             {
                 var post = await _context.Get<Post>()
