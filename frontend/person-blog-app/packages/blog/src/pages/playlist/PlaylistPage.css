@@ -1,0 +1,415 @@
+.page-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+}
+
+.content-container {
+    flex: 1;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.playlist-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.cover-container {
+    position: relative;
+    width: 250px;
+    height: 140px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.playlist-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-color: #eee;
+}
+
+.edit-cover-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.edit-cover-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+}
+
+.playlist-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.title-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.title-display h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #333;
+    flex-grow: 1;
+}
+
+.title-edit {
+    margin-bottom: 15px;
+}
+
+.title-input {
+    width: 100%;
+    padding: 10px 15px;
+    font-size: 28px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.edit-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.add-video-btn {
+    margin-top: 10px;
+}
+
+.playlist-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.updating-order {
+    text-align: center;
+    padding: 10px;
+    color: #666;
+    font-style: italic;
+}
+
+.videos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.playlist-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    border: 1px solid #eee;
+}
+
+.playlist-item.dragging {
+    background: #f0f7ff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border: 1px solid #ff7b00;
+}
+
+.position-badge {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff7b00;
+    color: white;
+    border-radius: 50%;
+    font-size: large;
+    font-weight: bold;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.thumbnail {
+    width: 120px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.thumbnail:hover {
+    transform: scale(1.02);
+}
+
+.details {
+    flex-grow: 1;
+    padding: 0 15px;
+    cursor: pointer;
+}
+
+.title {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.meta {
+    display: flex;
+    align-items: center;
+}
+
+.stats {
+    display: flex;
+    gap: 10px;
+    color: #666;
+    font-size: 14px;
+}
+
+.postActions {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.empty-playlist {
+    text-align: center;
+    padding: 40px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.empty-playlist p {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.add-video-modal {
+    background: white;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 5px;
+}
+
+.modal-content {
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.available-videos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.video-option {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    gap: 10px;
+}
+
+.video-option:hover {
+    border-color: #ff7b00;
+    background: #fff5eb;
+}
+
+.video-option.selected {
+    border-color: #ff7b00;
+    background: #f0f7ff;
+}
+
+.video-option img {
+    width: 80px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.video-info {
+    flex-grow: 1;
+}
+
+.video-info h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.video-info p {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+}
+
+.selection-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ff7b00;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff7b00;
+    font-size: large;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.video-option.selected .selection-checkbox {
+    background: #ff7b00;
+    color: white;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selected-count {
+    font-size: 14px;
+    color: #666;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.btnPrimary {
+    background: #ff7b00;
+    color: white;
+}
+
+.btnPrimary:hover {
+    background: #ff6a00;
+}
+
+.btnPrimary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.btnSecondary {
+    background: #eee;
+    color: #333;
+}
+
+.btnSecondary:hover {
+    background: #ddd;
+}
+
+@media (max-width: 768px) {
+    .playlist-header {
+        flex-direction: column;
+    }
+    
+    .cover-container {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16/9;
+    }
+    
+    .title-display {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .available-videos {
+        grid-template-columns: 1fr;
+    }
+    
+    .playlist-item {
+        flex-wrap: wrap;
+    }
+    
+    .postActions {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 100%;
+    }
+}

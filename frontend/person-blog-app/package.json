@@ -8,7 +8,7 @@
     "packages/shared"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:blog\"",
+    "dev": "concurrently \"npm run dev:blog\" \"npm run dev:admin\"",
     "dev:blog": "npm run dev -w=blog",
     "dev:admin": "npm run dev -w=admin",
     "build": "npm run build -w=blog && npm run build -w=admin",
