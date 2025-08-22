@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../../scripts/apiMethod";
-import type { BanRequest, GroupedComplaintsResponse, GroupedPostComplaint } from "../../types/BanTypes";
+import type { GroupedComplaintsResponse, GroupedPostComplaint } from "../../types/BanTypes";
 
 export default function PostComplaintsPage() {
   const [posts, setPosts] = useState<GroupedPostComplaint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
- async function fetchGroupedPostComplaints(): Promise<GroupedComplaintsResponse> {
-  const res = await API.get(`/api/post/banRequest/grouped`);
-  if (res.status != 200) throw new Error("Ошибка загрузки постов с жалобами");
-  return res.data;
-}
+  async function fetchGroupedPostComplaints(): Promise<GroupedComplaintsResponse> {
+    const res = await API.get(`/api/post/banRequest/grouped`);
+    if (res.status != 200) throw new Error("Ошибка загрузки постов с жалобами");
+    return res.data;
+  }
 
   useEffect(() => {
     (async () => {

@@ -5,18 +5,18 @@ export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 
 export function saveAccessToken(token: string) {
-    sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
 }
 
 export function saveRefreshToken(token: string) {
-    sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
 }
 export function getAccessToken(): string | null {
-    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function getRefreshToken(): string | null {
-    return sessionStorage.getItem(REFRESH_TOKEN_KEY);
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
 export class JwtTokenService {
@@ -48,8 +48,8 @@ export class JwtTokenService {
     }
 
     static cleanAuth() {
-        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-        sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
     }
 
     static isAuth(): boolean {

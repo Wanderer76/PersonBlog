@@ -17,17 +17,15 @@ import java.util.UUID;
 public class PostApiService {
     @Value("${blog.url}")
     private String baseUrl;
-    @Value("${blog.token}")
-    private String token;
 
-    public Optional<PostDetailViewModel> getPostInfoById(UUID id) {
+    public Optional<PostDetailViewModel> getPostInfoById(UUID id, String token) {
 
         var restTemplate = new RestTemplate();
         var url = String.format("%s/video/api/Post/post/%s", baseUrl, id);
 
 
         var headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token);
+        headers.set("Authorization", token);
         headers.set("Content-Type", "application/json");
         headers.set("X-Custom-Header", "custom-value");
 
@@ -40,7 +38,7 @@ public class PostApiService {
             }
             return Optional.empty();
         } catch (RestClientException e) {
-            return  Optional.empty();
+            return Optional.empty();
         }
     }
 

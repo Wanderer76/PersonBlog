@@ -2,13 +2,16 @@ package com.personBlog.adminPanel.Controllers;
 
 import com.personBlog.adminPanel.Dto.PostBanRequest;
 import com.personBlog.adminPanel.Dto.PostBanRequestsViewModel;
+import com.personBlog.adminPanel.Services.Models.BanPostViewModel;
 import com.personBlog.adminPanel.Services.Models.PostBannedEvent;
 import com.personBlog.adminPanel.Services.Models.PostUnBannedEvent;
 import com.personBlog.adminPanel.Services.PostBanService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/post")
@@ -21,9 +24,17 @@ public class PostController {
 
     @GetMapping("banRequest/list")
     public ResponseEntity<PostBanRequestsViewModel> getBanPostRequestList(
+            @RequestParam UUID postId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postBanService.getBanRequestList(page, size));
+        return ResponseEntity.ok(postBanService.getBanRequestList(postId, page, size));
+    }
+
+    @GetMapping("postToBan/list")
+    public ResponseEntity<BanPostViewModel> getBanPostRequestList(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postBanService.getPostsToBan(page, size));
     }
 
     @PostMapping("sendToBan")

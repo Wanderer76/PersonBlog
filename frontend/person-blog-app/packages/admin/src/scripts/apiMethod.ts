@@ -2,6 +2,7 @@ import axios from 'axios';
 import { JwtTokenService } from './TokenStrorage';
 
 export const BaseApUrl: string = 'http://localhost:8080';
+export const AuthUrl: string = 'http://localhost:7892';
 
 const API = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
