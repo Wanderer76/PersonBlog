@@ -8,16 +8,16 @@ namespace Music.Domain.Entities
     {
         public Guid Id { get; private set; }
         public string Name { get; private set; }
-        public Guid UserId {  get; private set; }
-        public string AavatarUrl {  get; private set; }
+        public Guid UserId { get; private set; }
+        public string AavatarUrl { get; private set; }
         public List<ArtistTrackLink> ArtistTrackLinks { get; private set; } = [];
 
         public bool IsDelete { get; private set; }
         public DateTimeOffset? DeleteDateTime { get; private set; }
 
-        public Result AddTrack(Guid trackId)
+        public Result AddTrack(Guid trackId, bool isMain = true)
         {
-            ArtistTrackLinks.Add(new ArtistTrackLink(trackId, Id));
+            ArtistTrackLinks.Add(new ArtistTrackLink(trackId, Id, isMain));
             return Result.Success();
         }
 
