@@ -164,7 +164,7 @@ const ConferencePage = function () {
 
     function getUrl(postId, objectName) {
         if (postId !== null && objectName !== null)
-            return `${BaseApUrl}/video/Video/video/v2/${postId}/chunks/${objectName}`;
+            return `${BaseApUrl}/video/Video/${postId}/${objectName}`;
     }
 
     function videoWindow(connection) {

@@ -29,7 +29,7 @@ public class VideoController : BaseController
     }
 
 
-    [HttpGet("video/v2/{postId}/chunks/{*file}")]
+    [HttpGet("{postId}/{*file}")]
     public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string file)
     {
         if (file.EndsWith("playlist.m3u8"))

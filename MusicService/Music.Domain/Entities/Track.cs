@@ -8,9 +8,8 @@ namespace Music.Domain.Entities
         public Guid Id { get; private set; }
         public string Title { get; private set; }
         public Guid? AlbumId { get; private set; }
+        public Guid? PostId { get; private set; }
         public string ArtistName { get; private set; }
-        public string AudioUrl { get; private set; }
-        public string VideoUrl { get; private set; }
         public string ThumbnailUrl { get; private set; }
 
         public Guid TrackFileId { get; private set; }
@@ -20,9 +19,10 @@ namespace Music.Domain.Entities
 
         public List<ArtistTrackLink> ArtistTrackLinks { get; private set; }
 
-        public Result AddArtist(Guid artistId)
+
+        public Result AddArtist(Guid artistId, bool isMain = true)
         {
-            ArtistTrackLinks.Add(new ArtistTrackLink(Id, artistId));
+            ArtistTrackLinks.Add(new ArtistTrackLink(Id, artistId, isMain));
             return Result.Success();
         }
     }

@@ -8,6 +8,7 @@ namespace Music.Domain.Entities
         public Guid TrackId { get; private set; }
         public Guid ArtistId { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
+        public bool IsMain {  get; private set; }
 
         [ForeignKey(nameof(TrackId))]
         public Track Track { get; private set; }
@@ -15,11 +16,12 @@ namespace Music.Domain.Entities
         [ForeignKey(nameof(ArtistId))]
         public Artist Artist { get; private set; }
 
-        public ArtistTrackLink(Guid trackId, Guid artistId)
+        public ArtistTrackLink(Guid trackId, Guid artistId, bool isMain)
         {
             TrackId = trackId;
             ArtistId = artistId;
             CreatedAt = DateTimeService.Now();
+            IsMain = isMain;
         }
     }
 }
