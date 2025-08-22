@@ -4,7 +4,7 @@ using Shared.Models;
 using Shared.Utils;
 using System.Text.Json;
 
-namespace VideoView.Application.Api
+namespace Gateway.API.Api
 {
     public static class AuthApiService
     {

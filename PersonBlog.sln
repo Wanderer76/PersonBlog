@@ -14,7 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AuthService", "AuthService"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConferenceService", "ConferenceService", "{A34B1921-D692-4A4B-872E-9B21917B0134}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VideoService", "VideoService", "{53B52AA1-42C2-4FA1-A9C0-E47EC0A7E18F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GatewayService", "GatewayService", "{53B52AA1-42C2-4FA1-A9C0-E47EC0A7E18F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RecommendationService", "RecommendationService", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
 EndProject
@@ -64,7 +64,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Persistence", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Service", "ConferenceService\Conference.Service\Conference.Service.csproj", "{38C7ACA8-0784-4355-BC83-13AB88DAE895}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoView.Application", "VideoService\VideoView.Application\VideoView.Application.csproj", "{E4038FF7-57D8-4F48-BEDB-B1D287344CF7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.API", "VideoService\VideoView.Application\Gateway.API.csproj", "{E4038FF7-57D8-4F48-BEDB-B1D287344CF7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Contracts", "BlogService\Blog.Contracts\Blog.Contracts.csproj", "{1DD59E36-CA1B-4B66-A53B-CD95382E1F61}"
 EndProject

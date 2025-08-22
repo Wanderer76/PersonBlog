@@ -4,10 +4,8 @@ using Blog.Service.Models.File;
 using Infrastructure.Extensions;
 using Profile.Domain.Models;
 using Shared.Utils;
-using System.Web;
-using VideoView.Application.Controllers;
 
-namespace VideoView.Application.Api
+namespace Gateway.API.Api
 {
     //TODO сделать обычный сервис, пробрасывать заголовки оригинального запроса
     public static class PostApiService

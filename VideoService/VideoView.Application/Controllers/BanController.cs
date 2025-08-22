@@ -1,5 +1,6 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Service.Models.File;
+using Gateway.API.Api;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
@@ -7,9 +8,8 @@ using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
-using VideoView.Application.Api;
 
-namespace VideoView.Application.Controllers;
+namespace Gateway.API.Controllers;
 
 public class BanController : BaseController
 {

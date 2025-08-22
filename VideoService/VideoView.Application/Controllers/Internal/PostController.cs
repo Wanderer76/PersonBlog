@@ -1,9 +1,9 @@
-﻿using Infrastructure.Models;
+﻿using Gateway.API.Api;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using VideoView.Application.Api;
 
-namespace VideoView.Application.Controllers.Internal
+namespace Gateway.API.Controllers.Internal
 {
     public class PostController : BaseController
     {

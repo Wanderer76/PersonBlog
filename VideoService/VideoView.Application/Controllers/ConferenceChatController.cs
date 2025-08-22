@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     public class ConferenceChatController : BaseController
     {

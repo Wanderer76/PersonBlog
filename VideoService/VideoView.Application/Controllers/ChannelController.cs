@@ -6,7 +6,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     public class ChannelController : BaseController
     {

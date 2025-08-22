@@ -1,6 +1,6 @@
 ﻿using Infrastructure.Services;
 
-namespace VideoView.Application.Services
+namespace Gateway.API.Services
 {
     public static class ManifestServiceExtensions
     {

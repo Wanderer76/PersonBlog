@@ -1,7 +1,7 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     public class HealthController : BaseController
     {

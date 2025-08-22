@@ -1,15 +1,15 @@
 using Blog.Domain.Services.Models;
 using Blog.Service.Models.Blog;
+using Gateway.API.Api;
+using Gateway.API.Services;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Services;
-using VideoView.Application.Api;
-using VideoView.Application.Services;
 
-namespace VideoView.Application.Controllers;
+namespace Gateway.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]

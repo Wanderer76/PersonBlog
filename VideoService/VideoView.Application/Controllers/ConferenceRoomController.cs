@@ -6,7 +6,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     public class ConferenceRoomController : BaseController
     {

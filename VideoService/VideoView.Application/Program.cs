@@ -1,8 +1,8 @@
 using FileStorage.Service;
+using Gateway.API;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
-using VideoView.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 

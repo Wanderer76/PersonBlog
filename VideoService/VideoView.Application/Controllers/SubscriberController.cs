@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Models;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

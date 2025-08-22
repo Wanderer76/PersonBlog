@@ -1,6 +1,6 @@
 ﻿using Shared.Services;
 
-namespace VideoView.Application
+namespace Gateway.API
 {
     internal class CorrelationMiddleware
     {
