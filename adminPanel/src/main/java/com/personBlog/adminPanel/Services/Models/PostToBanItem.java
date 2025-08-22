@@ -2,12 +2,17 @@ package com.personBlog.adminPanel.Services.Models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
 @AllArgsConstructor
 @Getter
+@Setter
+@NoArgsConstructor
 public class PostToBanItem {
-    public final UUID postId;
-    public final int requestCount;
+    private UUID postId;
+    private long requestCount;
+    private String postTitle;
 }

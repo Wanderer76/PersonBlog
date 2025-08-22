@@ -1,7 +1,7 @@
 import { useState } from "react";
 import styles from "./AdminDashboard.module.css";
 
-import PostComplaintsPage from "../banRequests/BanRequestsPage";
+import PostComplaintsPage from "../banRequests/PostComplaintsPage";
 // Подключишь потом аналогичные компоненты
 // import BlogComplaintsPage from "./BlogComplaintsPage";
 // import UserComplaintsPage from "./UserComplaintsPage";

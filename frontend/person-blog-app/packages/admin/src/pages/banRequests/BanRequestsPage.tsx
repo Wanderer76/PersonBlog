@@ -3,7 +3,13 @@ import API, { BaseApUrl } from "../../scripts/apiMethod";
 import type { PostBanRequest, PostBanRequestsViewModel } from "../../types/BanTypes";
 import styles from "./BanRequests.module.css";
 
-export default function BanRequestsPage() {
+
+interface PostDetailsPageProps {
+    postId: string;
+    onBack: () => void;
+}
+
+export default function BanRequestsPage({ postId, onBack }: PostDetailsPageProps) {
     const [page, setPage] = useState(0);
     const size = 10;
     const [loading, setLoading] = useState(false);
@@ -19,6 +25,7 @@ export default function BanRequestsPage() {
     // Функция для получения данных о жалобах
     async function fetchBanRequests(page = 0, size = 10) {
         const url = new URL(`${BaseApUrl}/api/post/banRequest/list`);
+        url.searchParams.set("postId", String(postId));
         url.searchParams.set("page", String(page));
         url.searchParams.set("size", String(size));
 
@@ -168,6 +175,9 @@ export default function BanRequestsPage() {
                 <div className="col-12">
                     {/* Заголовок */}
                     <div className={styles.header}>
+                        <button className="btn btn-outline-secondary btn-sm" onClick={onBack}>
+                            <i className="fas fa-arrow-left me-1"></i> Назад к списку
+                        </button>
                         <h1 className={styles.title}>
                             <i className={`fas fa-ban ${styles.titleIcon}`}></i>
                             Управление жалобами на посты
@@ -193,8 +203,66 @@ export default function BanRequestsPage() {
                                             <h5 className="card-title">Всего жалоб</h5>
                                             <h2 className="display-4">{totalCount}</h2>
                                         </div>
+
                                         <div className="col-md-6 d-flex align-items-center justify-content-end">
                                             <i className={`fas fa-exclamation-triangle ${styles.statsIcon}`}></i>
+                                        </div>
+
+                                    </div>
+                                    <br/>
+                                    <div /*className={styles.requestActions}*/>
+                                        <div className={styles.actionsGroup}>
+                                            <button
+                                                className="btn btn-danger btn-sm"
+                                                onClick={() => toggleBanForm(postId)}
+                                            >
+                                                <i className="fas fa-ban me-1"></i>Забанить
+                                            </button>
+
+                                            <button
+                                                className="btn btn-success btn-sm"
+                                                onClick={() => handleRestorePost(postId)}
+                                            >
+                                                <i className="fas fa-undo me-1"></i>Восстановить
+                                            </button>
+                                        </div>
+
+                                        {/* Форма для бана */}
+                                        <div className={`${styles.banForm} ${expandedForms.has(postId) ? styles.banFormVisible : ''}`}>
+                                            <div className="mb-2">
+                                                <label className={styles.formLabel}>
+                                                    <i className={`fas fa-comment ${styles.commentIcon}`}></i>
+                                                    Причина бана:
+                                                </label>
+                                                <textarea
+                                                    className="form-control"
+                                                    rows={3}
+                                                    placeholder="Введите причину бана..."
+                                                    required
+                                                    value={banMessageDrafts[postId] || ''}
+                                                    onChange={(e) => setBanMessageDrafts(d => ({
+                                                        ...d,
+                                                        [postId]: e.target.value
+                                                    }))}
+                                                ></textarea>
+                                            </div>
+
+                                            <div className={styles.formButtons}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-danger btn-sm"
+                                                    onClick={() => handleConfirmBan(postId, banMessageDrafts[postId] || '')}
+                                                >
+                                                    <i className="fas fa-check me-1"></i>Подтвердить бан
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-secondary btn-sm"
+                                                    onClick={() => toggleBanForm(postId)}
+                                                >
+                                                    <i className="fas fa-times me-1"></i>Отмена
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -268,61 +336,7 @@ export default function BanRequestsPage() {
                                     </div>
                                 </div>
 
-                                <div className={styles.requestActions}>
-                                    <div className={styles.actionsGroup}>
-                                        <button
-                                            className="btn btn-danger btn-sm"
-                                            onClick={() => toggleBanForm(request.postId)}
-                                        >
-                                            <i className="fas fa-ban me-1"></i>Забанить
-                                        </button>
 
-                                        <button
-                                            className="btn btn-success btn-sm"
-                                            onClick={() => handleRestorePost(request.postId)}
-                                        >
-                                            <i className="fas fa-undo me-1"></i>Восстановить
-                                        </button>
-                                    </div>
-
-                                    {/* Форма для бана */}
-                                    <div className={`${styles.banForm} ${expandedForms.has(request.postId) ? styles.banFormVisible : ''}`}>
-                                        <div className="mb-2">
-                                            <label className={styles.formLabel}>
-                                                <i className={`fas fa-comment ${styles.commentIcon}`}></i>
-                                                Причина бана:
-                                            </label>
-                                            <textarea
-                                                className="form-control"
-                                                rows={3}
-                                                placeholder="Введите причину бана..."
-                                                required
-                                                value={banMessageDrafts[request.postId] || ''}
-                                                onChange={(e) => setBanMessageDrafts(d => ({
-                                                    ...d,
-                                                    [request.postId]: e.target.value
-                                                }))}
-                                            ></textarea>
-                                        </div>
-
-                                        <div className={styles.formButtons}>
-                                            <button
-                                                type="button"
-                                                className="btn btn-danger btn-sm"
-                                                onClick={() => handleConfirmBan(request.postId, banMessageDrafts[request.postId] || '')}
-                                            >
-                                                <i className="fas fa-check me-1"></i>Подтвердить бан
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn btn-secondary btn-sm"
-                                                onClick={() => toggleBanForm(request.postId)}
-                                            >
-                                                <i className="fas fa-times me-1"></i>Отмена
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                         ))
                     )}

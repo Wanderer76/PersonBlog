@@ -34,7 +34,7 @@ public class PostController {
     public ResponseEntity<BanPostViewModel> getBanPostRequestList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(postBanService.getPostsToBan(page, size));
+            return ResponseEntity.ok(postBanService.getPostsToBan(page, size));
     }
 
     @PostMapping("sendToBan")
