@@ -12,4 +12,9 @@ namespace Blog.Contracts.Events
         public string Message {  get; set; }
         public DateTimeOffset CreatedAt {  get; set; }
     }
+
+    public class PostUnBannedEvent
+    {
+        public Guid PostId { get; set; }
+    }
 }

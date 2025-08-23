@@ -1,8 +1,8 @@
 using FileStorage.Service;
+using Gateway.API;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
-using VideoView.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +13,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
+builder.Services.AddUserSessionServices();
 builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddHttpClient("Auth", x =>

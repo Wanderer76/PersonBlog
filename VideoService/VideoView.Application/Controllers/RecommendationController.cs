@@ -3,7 +3,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Web;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

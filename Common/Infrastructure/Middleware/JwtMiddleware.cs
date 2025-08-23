@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Shared;
+using Shared.Models;
 using Shared.Services;
 using System.Net;
 
@@ -36,6 +37,14 @@ namespace Infrastructure.Middleware
                 }
                 var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistTokenCacheKey(token.Value.Id));
                 if (token.Value.ExpiredAt <= DateTimeService.Now() || blackList != null)
+                {
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    await context.Response.StartAsync();
+                }
+                var currentUser = await _cacheService.GetCachedDataAsync<UserModel>(new SessionKey(token.Value.UserId));
+
+                if(currentUser == null)
                 {
                     context.Response.ContentType = "application/json";
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;

@@ -1,12 +1,6 @@
 version: '3.4'
 
-services:
-  swagger-ui:
-    image: swaggerapi/swagger-ui
-    environment:
-      URLS: "[ { url: \"/auth/swagger/v1/swagger.json\", name: \"Authorization\" }, { url: \"/profile/swagger/v1/swagger.json\", name: \"Profile\" },{ url: \"/videos/swagger/v1/swagger.json\", name: \"Video\" }]"
-    networks:
-      - backend      
+services: 
   nginx:
     image: nginx:alpine
     ports:

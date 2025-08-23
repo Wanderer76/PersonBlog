@@ -1,0 +1,19 @@
+
+
+/* .App {
+  background: #e2e2e2;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;  
+  justify-content: start;
+   color: white;
+} */
+
+.App {
+  height: 100dvh;     /* вместо min-height */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}

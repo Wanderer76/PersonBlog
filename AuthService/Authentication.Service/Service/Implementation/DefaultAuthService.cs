@@ -1,10 +1,12 @@
-﻿using Authentication.Contract.Events;
+﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Events;
 using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
@@ -18,12 +20,14 @@ internal class DefaultAuthService : IAuthService
     private readonly IReadWriteRepository<IAuthEntity> _context;
     private readonly ITokenService _tokenService;
     private readonly ICurrentUserService _userSession;
+    private readonly ICacheService _cacheService;
 
-    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService, ICurrentUserService userSession)
+    public DefaultAuthService(IReadWriteRepository<IAuthEntity> context, ITokenService tokenService, ICurrentUserService userSession, ICacheService cacheService)
     {
         _context = context;
         _tokenService = tokenService;
         _userSession = userSession;
+        _cacheService = cacheService;
     }
 
     public async Task<Result<AuthResponse, Error>> Authenticate(LoginPasswordModel loginModel)
@@ -43,8 +47,13 @@ internal class DefaultAuthService : IAuthService
                 return new Error("400", "Неверный логин/пароль");
             }
 
-            var response = await _tokenService.GenerateTokenAsync(user);
+            var blogId = await _context.Get<AppProfile>()
+                .Where(x => x.UserId == user.Id)
+                .Select(x => x.BlogId)
+                .FirstOrDefaultAsync();
 
+            var response = await _tokenService.GenerateTokenAsync(user);
+            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
             await _context.SaveChangesAsync();
 
             return Result<AuthResponse, Error>.Success(response);
@@ -80,7 +89,7 @@ internal class DefaultAuthService : IAuthService
                 new AppUserRole
                 {
                     AppUserId = userId,
-                    UserRoleId = Roles.User
+                    UserRoleId = Roles.UserRoleId
                 }
             },
         };
@@ -116,6 +125,8 @@ internal class DefaultAuthService : IAuthService
         var user = await _userSession.GetCurrentUserAsync();
         if (user.UserId.HasValue)
         {
+            await _cacheService.RemoveCachedDataAsync(new SessionKey(user.UserId.Value));
+
             await _context.Get<Token>()
                 .Where(x => x.AppUserId == user.UserId.Value)
                 .ExecuteDeleteAsync();
@@ -140,8 +151,12 @@ internal class DefaultAuthService : IAuthService
             .FirstOrDefaultAsync();
 
         user.AssertFound("Пользователь не найден");
-
+        var blogId = await _context.Get<AppProfile>()
+           .Where(x => x.UserId == user.Id)
+           .Select(x => x.BlogId)
+           .FirstOrDefaultAsync();
         var response = await _tokenService.GenerateTokenAsync(user);
+        await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
         await _context.SaveChangesAsync();
         return response;
     }
@@ -150,6 +165,11 @@ internal class DefaultAuthService : IAuthService
     {
         if (!_tokenService.Validate(token))
         {
+            var repr = JwtUtils.GetTokenRepresentaion(token);
+            if (repr.IsSuccess)
+            {
+                await _cacheService.RemoveCachedDataAsync(new SessionKey(JwtUtils.GetTokenRepresentaion(token).Value.UserId));
+            }
             await _tokenService.ClearUserToken(token);
             return false;
         }

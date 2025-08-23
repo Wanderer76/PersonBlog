@@ -14,7 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AuthService", "AuthService"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ConferenceService", "ConferenceService", "{A34B1921-D692-4A4B-872E-9B21917B0134}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VideoService", "VideoService", "{53B52AA1-42C2-4FA1-A9C0-E47EC0A7E18F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GatewayService", "GatewayService", "{53B52AA1-42C2-4FA1-A9C0-E47EC0A7E18F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "RecommendationService", "RecommendationService", "{36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}"
 EndProject
@@ -64,7 +64,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Persistence", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Service", "ConferenceService\Conference.Service\Conference.Service.csproj", "{38C7ACA8-0784-4355-BC83-13AB88DAE895}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoView.Application", "VideoService\VideoView.Application\VideoView.Application.csproj", "{E4038FF7-57D8-4F48-BEDB-B1D287344CF7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.API", "VideoService\VideoView.Application\Gateway.API.csproj", "{E4038FF7-57D8-4F48-BEDB-B1D287344CF7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Contracts", "BlogService\Blog.Contracts\Blog.Contracts.csproj", "{1DD59E36-CA1B-4B66-A53B-CD95382E1F61}"
 EndProject
@@ -101,6 +101,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Persistence", "ProfileService\Profile.Persistence\Profile.Persistence.csproj", "{00EF57BF-2C6F-7D6B-7F11-74AFDA3F5474}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Service", "ProfileService\Profile.Service\Profile.Service.csproj", "{A75E6A6E-E48E-AF3C-1ED8-C82270556B6B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MusicService", "MusicService", "{25B99BF7-E0F3-4039-8382-091D7E8B17D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music.Domain", "MusicService\Music.Domain\Music.Domain.csproj", "{0E1ECA42-40B9-40F2-A83B-653034B2CB4C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -256,6 +260,10 @@ Global
 		{A75E6A6E-E48E-AF3C-1ED8-C82270556B6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A75E6A6E-E48E-AF3C-1ED8-C82270556B6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A75E6A6E-E48E-AF3C-1ED8-C82270556B6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E1ECA42-40B9-40F2-A83B-653034B2CB4C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E1ECA42-40B9-40F2-A83B-653034B2CB4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E1ECA42-40B9-40F2-A83B-653034B2CB4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E1ECA42-40B9-40F2-A83B-653034B2CB4C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -298,6 +306,7 @@ Global
 		{E9F9234C-B905-F765-8344-539F7C336437} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
 		{00EF57BF-2C6F-7D6B-7F11-74AFDA3F5474} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
 		{A75E6A6E-E48E-AF3C-1ED8-C82270556B6B} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
+		{0E1ECA42-40B9-40F2-A83B-653034B2CB4C} = {25B99BF7-E0F3-4039-8382-091D7E8B17D2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

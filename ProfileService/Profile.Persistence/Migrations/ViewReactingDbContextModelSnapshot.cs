@@ -68,6 +68,35 @@ namespace VideoReacting.Persistence.Migrations
                     b.ToTable("Profiles", "Profile");
                 });
 
+            modelBuilder.Entity("Profile.Domain.Entities.PostBanRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProfileId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("ReasonId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId");
+
+                    b.ToTable("PostBanRequests", "Profile");
+                });
+
             modelBuilder.Entity("Profile.Domain.Entities.PostReaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -188,6 +217,17 @@ namespace VideoReacting.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserPostViews", "Profile");
+                });
+
+            modelBuilder.Entity("Profile.Domain.Entities.PostBanRequest", b =>
+                {
+                    b.HasOne("Profile.Domain.Entities.AppProfile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
                 });
 #pragma warning restore 612, 618
         }

@@ -11,6 +11,7 @@ namespace Profile.Persistence
         public DbSet<PostReaction> PostReactions { get; set; }
         public DbSet<SubscribedChanel> SubscribedChanels { get; set; }
         public DbSet<AppProfile> Profiles { get; set; }
+        public DbSet<PostBanRequest> PostBanRequests { get; set; }
 
         public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
         {

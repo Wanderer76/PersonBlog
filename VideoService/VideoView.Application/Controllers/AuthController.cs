@@ -1,10 +1,10 @@
 ﻿using Authentication.Service.Models;
 using AuthenticationApplication.Models;
+using Gateway.API.Api;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using VideoView.Application.Api;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

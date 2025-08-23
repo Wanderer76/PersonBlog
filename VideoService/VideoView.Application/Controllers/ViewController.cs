@@ -1,13 +1,13 @@
 ﻿using Blog.Domain.Services.Models;
+using Gateway.API.Api;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Services;
-using VideoView.Application.Api;
 
-namespace VideoView.Application.Controllers;
+namespace Gateway.API.Controllers;
 
 public class ViewController : BaseController
 {
@@ -36,7 +36,7 @@ public class ViewController : BaseController
 
             var postPreviews = historyItems!
                .DistinctBy(x => x.PostId)
-               .Select(x => _httpClientFactory.GetPostDetailViewAsync(x.PostId))
+               .Select(x => _httpClientFactory.GetPostDetailViewAsync(HttpContext, x.PostId))
                .ToList();
 
             var previews = (await Task.WhenAll(postPreviews))
@@ -74,7 +74,7 @@ public class ViewController : BaseController
 
             var postPreviews = historyItems!
                .DistinctBy(x => x.PostId)
-               .Select(x => _httpClientFactory.GetPostDetailViewAsync(x.PostId))
+               .Select(x => _httpClientFactory.GetPostDetailViewAsync(HttpContext, x.PostId))
                .ToList();
 
             var previews = (await Task.WhenAll(postPreviews))

@@ -14,6 +14,7 @@ namespace Profile.Service
             services.AddScoped<IReactionService, DefaultReactionService>();
             services.AddScoped<ISubscribeService, DefaultSubscriptionService>();
             services.AddScoped<IProfileService, DefaultProfileService>();
+            services.AddScoped<IBanService, DefaultPostBanService>();
         }
         public static void AddProfileHttpClient(this IServiceCollection services, IConfiguration configuration)
         {

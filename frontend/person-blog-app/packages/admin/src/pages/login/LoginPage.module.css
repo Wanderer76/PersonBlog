@@ -1,0 +1,118 @@
+.container {
+  height: 100%;                  /* тянемся на высоту .App */
+  padding: 0 1.5rem;             /* убираем вертикальный padding, чтобы не раздувать высоту */
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f6f8;
+}
+
+.requestCard {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  /* убрал overflow: hidden, чтобы содержимое не обрезалось */
+  margin: 0;                   /* на всякий случай */
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.titleIcon {
+  margin-right: 0.5rem;
+  color: #0d6efd; /* или #dc3545 — как в твоём сетке стилей */
+}
+
+.requestHeader {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.requestHeaderContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.requestBody {
+  padding: 1rem;
+}
+
+.alert {
+  margin-bottom: 1rem;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  background: #fff;
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+.formLabel {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  background: #fff;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13,110,253,0.15);
+}
+
+.requestActions {
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f2f3;
+  margin-top: 0.5rem;
+}
+
+.actionsGroup {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.buttonPrimary {
+  background-color: #0d6efd;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  background-color: #fff;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .container { padding: 1rem; }
+}

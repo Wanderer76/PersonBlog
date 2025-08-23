@@ -4,7 +4,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Encodings.Web;
 
-namespace VideoView.Application.Controllers
+namespace Gateway.API.Controllers
 {
     public class SearchController : BaseController
     {

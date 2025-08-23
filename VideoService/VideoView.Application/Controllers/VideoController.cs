@@ -1,15 +1,15 @@
 using Blog.Domain.Services.Models;
 using Blog.Service.Models.Blog;
+using Gateway.API.Api;
+using Gateway.API.Services;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Services;
-using VideoView.Application.Api;
-using VideoView.Application.Services;
 
-namespace VideoView.Application.Controllers;
+namespace Gateway.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]
@@ -29,7 +29,7 @@ public class VideoController : BaseController
     }
 
 
-    [HttpGet("video/v2/{postId}/chunks/{*file}")]
+    [HttpGet("{postId}/{*file}")]
     public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string file)
     {
         if (file.EndsWith("playlist.m3u8"))
@@ -61,9 +61,9 @@ public class VideoController : BaseController
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             var hasUser = HttpContext.TryGetUserFromContext(out var userId);
 
+            var post = _httpClientFactory.GetPostDetailViewAsync(HttpContext, postId);
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
-            var post = _httpClientFactory.GetPostDetailViewAsync(postId);
-            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!,blog.Value?.Id);
+            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.Value?.Id);
 
             await Task.WhenAll(post, userInfo).ConfigureAwait(false);
 
@@ -93,7 +93,7 @@ public class VideoController : BaseController
         foreach (var i in HttpContext.Request.Headers)
         {
             client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
-            
+
         }
         var result = await client.PostAsJsonAsync("Reaction/setView", viewRequest);
         if (!result.IsSuccessStatusCode)

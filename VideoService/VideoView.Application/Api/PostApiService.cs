@@ -1,12 +1,11 @@
 ﻿using Blog.Domain.Services.Models;
 using Blog.Service.Models.Blog;
 using Blog.Service.Models.File;
+using Infrastructure.Extensions;
 using Profile.Domain.Models;
 using Shared.Utils;
-using System.Web;
-using VideoView.Application.Controllers;
 
-namespace VideoView.Application.Api
+namespace Gateway.API.Api
 {
     //TODO сделать обычный сервис, пробрасывать заголовки оригинального запроса
     public static class PostApiService
@@ -26,11 +25,12 @@ namespace VideoView.Application.Api
             return Result<PostFileMetadataModel>.Success(result!);
         }
 
-        public static async Task<Result<PostDetailViewModel>> GetPostDetailViewAsync(this IHttpClientFactory httpContextFactory, Guid postId)
+        public static async Task<Result<PostDetailViewModel>> GetPostDetailViewAsync(this IHttpClientFactory httpContextFactory, HttpContext context,Guid postId)
         {
             try
             {
-                var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
+                var result = await httpContextFactory.CreateClientContextHeaders("Profile", context)
+                    .GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
                 if (result == null)
                 {
                     return Result<PostDetailViewModel>.Failure(new("404", "Не удалось найти данные"));
