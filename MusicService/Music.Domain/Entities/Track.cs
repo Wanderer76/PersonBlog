@@ -1,17 +1,19 @@
 ﻿using Shared.Services;
 using Shared.Utils;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Music.Domain.Entities
 {
     public class Track : IMusicEntity
     {
+        [Key]
         public Guid Id { get; private set; }
         public string Title { get; private set; }
         public Guid? AlbumId { get; private set; }
         public Guid? PostId { get; private set; }
-        public string ArtistName { get; private set; }
-        public string ThumbnailUrl { get; private set; }
+        public Guid UploadedByUserId { get; private set; }
+        public Guid? ThumbnailId { get; private set; }
         public Guid TrackFileId { get; private set; }
 
         public DateTimeOffset CreatedAt { get; private set; }
@@ -19,24 +21,33 @@ namespace Music.Domain.Entities
         [ForeignKey(nameof(TrackFileId))]
         public TrackMetadata Metadata { get; private set; }
 
+        [ForeignKey(nameof(ThumbnailId))]
+        public ThumbnailMetadata? ThumbnailMetadata { get; private set; }
+
         public List<ArtistTrackLink> ArtistTrackLinks { get; private set; }
 
-        public Track(string title, Guid? albumId, Guid? postId, string artistName, string thumbnailUrl, Guid trackFileId, List<ArtistTrackLink> artistTrackLinks)
+        private Track()
+        {
+            ArtistTrackLinks = new List<ArtistTrackLink>();
+        }
+
+        public Track(string title, Guid uploadedByUserId, Guid? albumId, Guid? postId, Guid? thumbnailId, Guid trackFileId)
         {
             Id = GuidService.GetNewGuid();
             Title = title;
             AlbumId = albumId;
             PostId = postId;
-            ArtistName = artistName;
-            ThumbnailUrl = thumbnailUrl;
+            ThumbnailId = thumbnailId;
             TrackFileId = trackFileId;
-            ArtistTrackLinks = artistTrackLinks;
+            ArtistTrackLinks = [];
             CreatedAt = DateTimeService.Now();
+            UploadedByUserId = uploadedByUserId;
         }
 
         public Result AddArtist(Guid artistId, bool isMain = true)
         {
-            ArtistTrackLinks.Add(new ArtistTrackLink(Id, artistId, isMain));
+            if (!ArtistTrackLinks.Any(x => x.ArtistId == artistId))
+                ArtistTrackLinks.Add(new ArtistTrackLink(Id, artistId, isMain));
             return Result.Success();
         }
 
@@ -47,16 +58,6 @@ namespace Music.Domain.Entities
                 return Result.Failure(new("title is empty"));
             }
             Title = title.Trim();
-            return Result.Success();
-        }
-
-        public Result UpdateArtistName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                return Result.Failure(new("name is empty"));
-            }
-            Title = ArtistName.Trim();
             return Result.Success();
         }
     }

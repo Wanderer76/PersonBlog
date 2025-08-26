@@ -8,7 +8,7 @@ namespace Music.Domain.Entities
         public Guid TrackId { get; private set; }
         public Guid ArtistId { get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
-        public bool IsMain {  get; private set; }
+        public bool IsMain { get; private set; }
 
         [ForeignKey(nameof(TrackId))]
         public Track Track { get; private set; }
