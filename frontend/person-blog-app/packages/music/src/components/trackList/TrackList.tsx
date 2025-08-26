@@ -9,6 +9,7 @@ import styles from './TrackList.module.css';
 interface TrackListProps {
   tracks: TrackViewItem[];
   currentPlayingTrack?: TrackViewItem;
+  isPlaying?: boolean;
   onPlay: (track: TrackViewItem) => void;
   onPause: () => void;
   title?: string;
@@ -16,6 +17,7 @@ interface TrackListProps {
 
 const TrackList: React.FC<TrackListProps> = ({
   tracks,
+  isPlaying,
   currentPlayingTrack,
   onPlay,
   onPause,
@@ -53,7 +55,8 @@ const TrackList: React.FC<TrackListProps> = ({
           <div key={track.id} className={styles.cardWrapper}>
             <TrackCard
               track={track}
-              isPlaying={currentPlayingTrack?.id === track.id}
+              isPlaying={isPlaying}
+              currentPlayingTrack={currentPlayingTrack}
               onPlay={onPlay}
               onPause={onPause}
             />

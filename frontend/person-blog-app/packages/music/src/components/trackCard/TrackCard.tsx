@@ -1,6 +1,6 @@
 // components/trackCard/TrackCard.tsx
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import type { TrackViewItem } from '../../types/music';
@@ -9,6 +9,7 @@ import styles from './TrackCard.module.css';
 interface TrackCardProps {
   track: TrackViewItem;
   isPlaying?: boolean;
+  currentPlayingTrack?: TrackViewItem;
   onPlay: (track: TrackViewItem) => void;
   onPause: () => void;
 }
@@ -16,17 +17,18 @@ interface TrackCardProps {
 const formatDuration = (seconds: number): string => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toFixed(0)}`;
 };
 
 const TrackCard: React.FC<TrackCardProps> = ({
   track,
   isPlaying = false,
+  currentPlayingTrack = null,
   onPlay,
   onPause,
 }) => {
   const handlePlayPause = () => {
-    if (isPlaying) {
+    if (isPlaying && track.id == currentPlayingTrack?.id) {
       onPause();
     } else {
       onPlay(track);
@@ -39,29 +41,33 @@ const TrackCard: React.FC<TrackCardProps> = ({
       role="article"
       aria-label={`Трек: ${track.name}, исполнитель: ${track.artists.map(a => a.name).join(', ')}`}
     >
-      {/* Обложка */}
-      <div className={styles.mediaContainer}>
+      {/* Обложка с фиксированным соотношением сторон */}
+      <div className={styles.imageContainer}>
         <img
           src={track.thumbnailUrl || '/images/default-thumbnail.jpg'}
           alt={track.name}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            borderRadius: '12px 12px 0 0',
-          }}
+          className={styles.image}
         />
         <button
-          className={styles.playButton}
+          className={`${styles.playButton} ${isPlaying ? styles.playing : ''}`}
           onClick={handlePlayPause}
           aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
         >
-          {isPlaying ? (
-            <PauseIcon fontSize="small" sx={{ fontSize: 20 }} />
+          {isPlaying && currentPlayingTrack?.id == track.id ? (
+            <PauseIcon className={styles.playIcon} />
           ) : (
-            <PlayArrowIcon fontSize="small" sx={{ fontSize: 20 }} />
+            <PlayArrowIcon className={styles.playIcon} />
           )}
         </button>
+
+        {/* Индикатор воспроизведения */}
+        {isPlaying && currentPlayingTrack?.id == track.id && (
+          <div className={styles.playingIndicator}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className={styles.bar} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Информация */}
@@ -75,7 +81,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
         </Typography>
         <Typography
           component="p"
-          className={styles.artistNames}
+          className={styles.artists}
           title={track.artists.map((a) => a.name).join(', ')}
         >
           {track.artists.map((a) => a.name).join(', ')}

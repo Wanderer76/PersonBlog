@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Search, MusicNote } from '@mui/icons-material';
 import TrackList from '../components/trackList/TrackList';
-import PlayerControls from '../components/PlayerControls';
+import PlayerControls from '../components/playerControls/PlayerControls';
 import type { TrackViewItem, PagedListViewModel } from '../types/music';
 import { musicApi } from '../services/api';
 
@@ -45,8 +45,8 @@ const HomePage: React.FC = () => {
     if (currentTrack?.id === track.id) {
       setIsPlaying(true);
     } else {
-      setCurrentTrack(track);
       setIsPlaying(true);
+      setCurrentTrack(track);
       setCurrentTime(0);
     }
   };
@@ -72,9 +72,9 @@ const HomePage: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1, pb: 10 }}>
-      <AppBar 
-        position="static" 
-        sx={{ 
+      <AppBar
+        position="static"
+        sx={{
           backgroundColor: 'background.paper',
           color: 'text.primary',
           boxShadow: 1,
@@ -86,15 +86,15 @@ const HomePage: React.FC = () => {
             variant="h6"
             noWrap
             component="div"
-            sx={{ 
-              flexGrow: 1, 
+            sx={{
+              flexGrow: 1,
               display: { xs: 'none', sm: 'block' },
               fontWeight: 'bold',
             }}
           >
             MusicStream
           </Typography>
-          
+
           <TextField
             placeholder="Поиск треков и исполнителей..."
             variant="outlined"
@@ -128,6 +128,7 @@ const HomePage: React.FC = () => {
             <TrackList
               tracks={filteredTracks}
               currentPlayingTrack={currentTrack}
+              isPlaying={isPlaying}
               onPlay={handlePlay}
               onPause={handlePause}
               title={searchQuery ? `Результаты поиска: "${searchQuery}"` : 'Популярные треки'}
@@ -142,10 +143,10 @@ const HomePage: React.FC = () => {
         currentTime={currentTime}
         duration={currentTrack?.trackInfo.duration || 0}
         volume={volume}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => { setIsPlaying(true); }}
         onPause={handlePause}
-        onNext={() => {/* Implement next track logic */}}
-        onPrevious={() => {/* Implement previous track logic */}}
+        onNext={() => {/* Implement next track logic */ }}
+        onPrevious={() => {/* Implement previous track logic */ }}
         onSeek={handleSeek}
         onVolumeChange={handleVolumeChange}
       />

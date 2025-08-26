@@ -42,10 +42,11 @@ namespace Music.Service.Services
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
-            var items = new List<TrackViewItem>(query.Count);
-            foreach (var item in query)
-            {
-                var data = new TrackViewItem(
+            var items = await query
+                .ToAsyncEnumerable()
+                .SelectAwait(async item =>
+                {
+                    var data = new TrackViewItem(
                     item.Id,
                     item.Title,
                     item.ThumbnailMetadata == null ? null : await fileStorage.GetFileUrlAsync(item.ThumbnailMetadata.Id, item.ThumbnailMetadata.ObjectName),
@@ -53,8 +54,10 @@ namespace Music.Service.Services
                     new TrackFileInfo(await fileStorage.GetFileUrlAsync(item.Metadata.Id, item.Metadata.ObjectName), item.Metadata.Duration),
                     item.Artists.Select(x => new ArtistInfo(x.ArtistId, x.Name)).ToList()
                     );
-                items.Add(data);
-            }
+                    return data;
+                })
+                .ToListAsync();
+
             return new PagedListViewModel<TrackViewItem>((int)Math.Ceiling((double)count / size), size, items);
         }
     }
