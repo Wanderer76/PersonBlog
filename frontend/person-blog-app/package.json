@@ -20,6 +20,7 @@
     "install:all": "npm install"
   },
   "dependencies": {
+    "@types/react-select": "^5.0.1",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "cra-template": "1.2.0",
@@ -31,6 +32,7 @@
     "react-player": "^2.16.0",
     "react-router-dom": "^7.1.1",
     "react-scripts": "5.0.1",
+    "react-select": "^5.10.2",
     "react-signalr": "^0.2.24",
     "video.js": "^8.17.3",
     "videojs-quality-selector-hls": "^1.1.1",

@@ -9,12 +9,16 @@ import {
   TextField,
   InputAdornment,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import { Search, MusicNote } from '@mui/icons-material';
 import TrackList from '../components/trackList/TrackList';
 import PlayerControls from '../components/playerControls/PlayerControls';
 import type { TrackViewItem, PagedListViewModel } from '../types/music';
 import { musicApi } from '../services/api';
+import { AuthPageUrl } from '../scripts/apiMethod';
+import { JwtTokenService } from '../scripts/TokenStrorage';
+
 
 const HomePage: React.FC = () => {
   const [tracks, setTracks] = useState<TrackViewItem[]>([]);
@@ -72,52 +76,7 @@ const HomePage: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1, pb: 10 }}>
-      <AppBar
-        position="static"
-        sx={{
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
-          boxShadow: 1,
-        }}
-      >
-        <Toolbar>
-          <MusicNote sx={{ color: '#ff7b00', mr: 2 }} />
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{
-              flexGrow: 1,
-              display: { xs: 'none', sm: 'block' },
-              fontWeight: 'bold',
-            }}
-          >
-            MusicStream
-          </Typography>
-
-          <TextField
-            placeholder="Поиск треков и исполнителей..."
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              width: 300,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Toolbar>
-      </AppBar>
-
+    
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

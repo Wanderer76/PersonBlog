@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
+    <ProjectReference Include="..\..\Common\FFmpeg.Service\FFmpeg.Service.csproj" />
     <ProjectReference Include="..\..\Common\FileStorage.Service\FileStorage.Service.csproj" />
     <ProjectReference Include="..\Music.Persistence\Music.Persistence.csproj" />
     <ProjectReference Include="..\Music.Service\Music.Service.csproj" />

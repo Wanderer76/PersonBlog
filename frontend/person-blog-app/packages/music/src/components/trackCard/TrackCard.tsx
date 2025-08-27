@@ -14,10 +14,11 @@ interface TrackCardProps {
   onPause: () => void;
 }
 
-const formatDuration = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toFixed(0)}`;
+const formatDuration = (millisecods: number): string => {
+  var seconds = millisecods / 1000;
+  var mins = Math.floor(seconds / 60);
+  var secs = millisecods % 60;
+  return `${mins}:${secs}`;
 };
 
 const TrackCard: React.FC<TrackCardProps> = ({

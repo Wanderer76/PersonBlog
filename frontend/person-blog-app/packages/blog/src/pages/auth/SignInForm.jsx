@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import API, { BaseApUrl } from "../../scripts/apiMethod";
-import { useNavigate } from "react-router-dom";
+import { redirect, useNavigate, useSearchParams } from "react-router-dom";
 import { saveAccessToken, saveRefreshToken } from "../../scripts/TokenStrorage";
 
 const SignInForm = ({ onSwitchToSignUp }) => {
 
+    const [searchParams] = useSearchParams();
     const [authForm, setAuthForm] = useState({
         login: "",
-        password: ""
+        password: "",
+        redirectUrl: searchParams.get("redirect")
     });
 
     const navigate = useNavigate()
@@ -28,20 +30,25 @@ const SignInForm = ({ onSwitchToSignUp }) => {
             return
         }
         try {
-            const resonse = await API.post('video/api/Auth/login', JSON.stringify(body),{
-                 
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                
+            const resonse = await API.post('video/api/Auth/login', JSON.stringify(body), {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
 
             if (resonse.status === 200) {
                 const data = await resonse.data;
+
                 saveAccessToken(data.accessToken);
                 saveRefreshToken(data.refreshToken);
-                navigate("/");
-                window.location.reload();
+                if (data.authCode != null && authForm.redirectUrl != null) {
+                    const loginUrl = new URL(authForm.redirectUrl);
+                    loginUrl.searchParams.append('authCode', data.refreshToken);
+                    window.location.href = loginUrl.toString()
+                }
+                else {
+                    navigate("/");
+                }
             }
             else {
                 console.log("error")

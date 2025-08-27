@@ -1,6 +1,8 @@
 ﻿using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 using Music.Domain.Entities;
 using Music.Domain.Repositories;
+using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
 
@@ -9,10 +11,11 @@ namespace Music.Persistence.Repositories
     internal class DefaultTempTrackMetadataRepository : ITempFileMetadataRepository
     {
         private readonly ICacheService _cacheService;
-
-        public DefaultTempTrackMetadataRepository(ICacheService cacheService)
+        private IReadWriteRepository<IMusicEntity> _repository;
+        public DefaultTempTrackMetadataRepository(ICacheService cacheService, IReadWriteRepository<IMusicEntity> repository)
         {
             _cacheService = cacheService;
+            _repository = repository;
         }
 
         public async Task<Result> ClearTempMetadataAsync(Guid id)
@@ -29,6 +32,8 @@ namespace Music.Persistence.Repositories
             {
                 return new Error("Duplicate entity");
             }
+            _repository.Add(trackMetadata);
+            await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, trackMetadata, TimeSpan.FromMinutes(ttlInMinutes));
             return trackMetadata;
         }
@@ -42,6 +47,8 @@ namespace Music.Persistence.Repositories
             {
                 return new Error("Duplicate entity");
             }
+            _repository.Add(thumbnailMetadata);
+            await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, thumbnailMetadata, TimeSpan.FromMinutes(ttlInMinutes));
             return thumbnailMetadata;
         }
@@ -77,6 +84,18 @@ namespace Music.Persistence.Repositories
             {
                 return Result.Failure(new Error("Not found"));
             }
+            var forUpdate = await _repository.Get<TrackMetadata>()
+                .Where(x => x.Id == trackMetadata.Id)
+                .FirstAsync();
+            _repository.Attach(forUpdate);
+            forUpdate.Duration = trackMetadata.Duration;
+            forUpdate.ContentType= trackMetadata.ContentType;
+            forUpdate.FileExtension = trackMetadata.FileExtension;
+            forUpdate.Length = trackMetadata.Length;
+            forUpdate.Name = trackMetadata.Name;
+            forUpdate.ObjectName = trackMetadata.ObjectName;
+            forUpdate.TrackId = trackMetadata.TrackId;
+            await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, trackMetadata, TimeSpan.FromMinutes(ttlInMinutes));
             return Result.Success();
         }
@@ -89,6 +108,18 @@ namespace Music.Persistence.Repositories
             {
                 return Result.Failure(new Error("Not found"));
             }
+
+            var forUpdate = await _repository.Get<ThumbnailMetadata>()
+                .Where(x => x.Id == trackMetadata.Id)
+                .FirstAsync();
+            _repository.Attach(forUpdate);
+            forUpdate.ContentType = trackMetadata.ContentType;
+            forUpdate.FileExtension = trackMetadata.FileExtension;
+            forUpdate.Length = trackMetadata.Length;
+            forUpdate.Name = trackMetadata.Name;
+            forUpdate.ObjectName = trackMetadata.ObjectName;
+            forUpdate.TrackId = trackMetadata.TrackId;
+            await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, trackMetadata, TimeSpan.FromMinutes(ttlInMinutes));
             return Result.Success();
         }

@@ -18,7 +18,7 @@ namespace Music.Contract.Models
     public class UploadTrackFile
     {
         public Stream Stream { get; set; }
-        public double Duration { get; set; }
+        public long Duration { get; set; }
         public string Name { get; set; }
         public string FileExtension { get; set; }
         public long Length { get; set; }

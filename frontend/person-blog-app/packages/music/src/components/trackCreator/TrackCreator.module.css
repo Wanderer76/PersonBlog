@@ -1,0 +1,215 @@
+.trackCreator {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.uploadSection {
+  text-align: center;
+  padding: 40px;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.uploadSection h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.progressBar {
+  margin-top: 20px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  height: 20px;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 4px;
+  background-color: #ff7a00;
+  transition: width 0.3s ease;
+}
+
+.progressBar span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #333;
+  font-weight: bold;
+}
+
+.trackForm {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.restoreNotice {
+  background: #fff3cd;
+  color: #856404;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #ffeaa7;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.formSection {
+  background: #fff;
+  padding: 25px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.formSection h2 {
+  color: #333;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ff7a00;
+  padding-bottom: 10px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #333;
+}
+
+.formInput {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #ff7a00;
+}
+
+.genresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.genreCheckbox {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.genreCheckbox:hover {
+  border-color: #ff7a00;
+}
+
+.genreCheckbox input {
+  margin-right: 8px;
+}
+
+.coverPreview {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.noCover {
+  padding: 40px;
+  text-align: center;
+  background: #f8f9fa;
+  border-radius: 4px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.fileInput {
+  margin-top: 10px;
+}
+
+.trackInfo {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid #ff7a00;
+}
+
+.trackInfo h3 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.trackInfo p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  align-self: flex-start;
+}
+
+.changeTrackButton {
+  background: #6c757d;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.changeTrackButton:hover {
+  background: #5a6268;
+}
+
+.submitButton {
+  background: #ff7a00;
+  color: white;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.submitButton:hover {
+  background: #e66a00;
+}
+
+.submitButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .trackCreator {
+    padding: 10px;
+  }
+
+  .genresGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .formSection {
+    padding: 15px;
+  }
+}

@@ -8,14 +8,14 @@ namespace Music.Domain.Entities
     {
         public FileProcessState ProcessState { get; set; }
         public Guid TrackId { get;  set; }
-        public double Duration { get;  set; }
+        public long Duration { get;  set; }
 
         public TrackMetadata()
         {
             
         }
 
-        public TrackMetadata(Guid id, string name, string extension, long length, string contentType, string objectName, Guid trackId, double duration)
+        public TrackMetadata(Guid id, string name, string extension, long length, string contentType, string objectName, Guid trackId, long duration)
 
         {
             Id = id;

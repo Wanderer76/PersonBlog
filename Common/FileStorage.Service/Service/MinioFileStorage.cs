@@ -2,6 +2,8 @@
 using Infrastructure.Services;
 using Microsoft.Extensions.Options;
 using Minio;
+using Minio.DataModel.Args;
+using Minio.DataModel.ILM;
 
 namespace FileStorage.Service.Service
 {
@@ -171,6 +173,43 @@ namespace FileStorage.Service.Service
         public async Task RemoveBucketAsync(string bucketId)
         {
             await _client.RemoveBucketAsync(new Minio.DataModel.Args.RemoveBucketArgs().WithBucket(bucketId));
+        }
+
+        public async Task<string> PutTempFileAsync(Guid bucketId, string objectName, Stream input)
+        {
+            if (!await _client.BucketExistsAsync(new Minio.DataModel.Args.BucketExistsArgs().WithBucket(bucketId.ToString())))
+            {
+                await _client.MakeBucketAsync(new Minio.DataModel.Args.MakeBucketArgs()
+                    .WithBucket(bucketId.ToString()));
+            }
+            await SetBucketLifecycleAsync(bucketId.ToString(), 1);
+            return await PutFileAsync(bucketId, objectName, input);
+        }
+
+        private async Task SetBucketLifecycleAsync(string bucketName, int expirationDays)
+        {
+            try
+            {
+                var lifecycleConfig = new LifecycleConfiguration(
+                [
+                    new LifecycleRule
+                    {
+                        ID = "AutoDeleteAfterExpiration",
+                        Status = "Enabled",
+                        Filter = new RuleFilter(),
+                        Expiration = new Expiration(DateTime.Now.AddDays(expirationDays))
+                    }
+                ]
+                );
+
+                await _client.SetBucketLifecycleAsync(
+                    new SetBucketLifecycleArgs()
+                        .WithBucket(bucketName)
+                        .WithLifecycleConfiguration(lifecycleConfig));
+            }
+            catch (Exception ex)
+            {
+            }
         }
     }
 }

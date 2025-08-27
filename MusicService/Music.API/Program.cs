@@ -1,3 +1,4 @@
+using FFmpeg.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
@@ -18,6 +19,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddUserSessionServices();
+builder.Services.AddFFMpegAudioExtractorService(builder.Configuration);
 
 var app = builder.Build();
 

@@ -5,26 +5,25 @@ export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 
 export function saveAccessToken(token) {
-    
-    sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
-console.log('store seestion tokjen')
+
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
     if (navigator.serviceWorker?.controller && token) {
         navigator.serviceWorker.controller.postMessage({
-        type: 'SET_AUTH_TOKEN',
-        payload: token
-    });
-}
+            type: 'SET_AUTH_TOKEN',
+            payload: token
+        });
+    }
 }
 
 export function saveRefreshToken(token) {
-    sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
 }
 export function getAccessToken() {
-    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function getRefreshToken() {
-    return sessionStorage.getItem(REFRESH_TOKEN_KEY);
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
 }
 
 export class JwtTokenService {

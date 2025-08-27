@@ -1,15 +1,17 @@
-import axios from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { JwtTokenService } from './TokenStrorage';
 
 export const BaseApUrl: string = 'http://localhost:5053/api';
 export const AuthUrl: string = 'http://localhost:7892';
+export const AuthPageUrl: string = 'http://localhost:3000/auth';
+export const BlogPageUrl: string = 'http://localhost:3000';
 
-const API = axios.create({
+const API: AxiosInstance = axios.create({
     baseURL: BaseApUrl, // Ваш базовый URL
     withCredentials: false,
 });
 
-let refreshTokenPromise: any = null;
+let refreshTokenPromise: Promise<void | Number> | null = null;
 
 API.interceptors.request.use(config => {
     config.headers.Authorization = JwtTokenService.getFormatedTokenForHeader();

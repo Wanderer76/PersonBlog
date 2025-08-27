@@ -7,6 +7,7 @@
         [Obsolete]
         Task<string> PutFileInBucketAsync(Guid bucketId, Guid id, Stream input);
         Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input);
+        Task<string> PutTempFileAsync(Guid bucketId, string objectName, Stream input);
         Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options);
         Task<string> GetFileUrlAsync(Guid bucketId, string objectName);
 

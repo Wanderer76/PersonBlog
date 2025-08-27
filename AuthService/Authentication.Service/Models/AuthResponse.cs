@@ -14,5 +14,8 @@ namespace Authentication.Service.Models
 
         [JsonPropertyName("refreshToken")]
         public string RefreshToken { get; set; }
+        
+        [JsonPropertyName("authCode")]
+        public string AuthCode { get; set; }
     }
 }

@@ -1,15 +1,47 @@
 // App.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme';
+import { BrowserRouter, Route, Routes, useNavigate, useSearchParams } from "react-router-dom";
 import HomePage from './pages/HomePage';
+import { JwtTokenService, saveRefreshToken } from './scripts/TokenStrorage';
+import Header from './components/header/Header';
+import TrackCreator from './components/trackCreator/TrackCreator';
+
+const Session = function ({ children }: any) {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const authCode = searchParams.get("authCode");
+    if (!JwtTokenService.isAuth() && authCode != null) {
+      saveRefreshToken(authCode);
+      JwtTokenService.refreshToken()
+        .then(x => {
+          if (x == 200) {
+            searchParams.delete("authCode")
+            navigate({ search: searchParams.toString() }, { replace: true });
+          }
+        })
+    }
+  }, [searchParams, navigate]);
+  return children;
+}
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <HomePage />
-    </ThemeProvider>
+    <BrowserRouter>
+      <Session>
+        <Header />
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Routes>
+            <Route path='/' element={<HomePage />} />
+            <Route path='create' element={<TrackCreator/>} />
+          </Routes>
+        </ThemeProvider>
+      </Session>
+    </BrowserRouter>
   );
 }
 

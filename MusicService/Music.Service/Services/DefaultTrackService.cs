@@ -1,4 +1,5 @@
-﻿using Infrastructure.Services;
+﻿using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Music.Contract.Models;
 using Music.Domain.Entities;
@@ -77,13 +78,13 @@ namespace Music.Service.Services
             var track = new Track(createRequest.Name, currentUser.UserId.Value, createRequest.AlbumId, createRequest.PostId, createRequest.ThumbnailId, createRequest.TrackFileId);
             track.AddArtist(artist.Id);
             var file = tempTrackFile.Value;
+            _repository.Attach(file);
             file.TrackId = track.Id;
             if (thumbnailMetadata != null)
             {
                 thumbnailMetadata.TrackId = track.Id;
-                _repository.Add(thumbnailMetadata);
+                _repository.Attach(thumbnailMetadata);
             }
-            _repository.Add(file);
             _repository.Add(track);
 
             await _repository.SaveChangesAsync();
@@ -149,27 +150,49 @@ namespace Music.Service.Services
 
             await _tempTrackMetadataRepository.CreateTempMetadataAsync(trackMetadata);
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            await fileStorage.PutFileAsync(trackMetadata.Id, trackMetadata.ObjectName, createRequest.Stream);
+            await fileStorage.PutTempFileAsync(trackMetadata.Id, trackMetadata.ObjectName, createRequest.Stream);
             return trackMetadata.Id;
         }
 
-        public async Task<Result<Guid>> UploadTrackFileAsync(UploadTrackFile createRequest)
+        public async Task<Result<TrackFileMetadata>> UploadTrackFileAsync(UploadTrackFile createRequest, AudioFileMetadata audioFileMetadata)
         {
-
             var trackMetadata = new TrackMetadata(
                 GuidService.GetNewGuid(),
-                createRequest.Name,
-                createRequest.Name,
+                audioFileMetadata.OriginalFileName,
+                Path.GetExtension(audioFileMetadata.OriginalFileName),
                 createRequest.Length,
                 createRequest.ContentType,
                 createRequest.ObjectName,
                 Guid.Empty,
-                createRequest.Duration);
+                audioFileMetadata.Duration);
+
+            var artistId = audioFileMetadata.Artist == null
+                ? null
+                : await _repository.Get<Artist>()
+                .Where(x => x.Name == audioFileMetadata.Artist)
+                .FirstOrDefaultAsync();
+
 
             await _tempTrackMetadataRepository.CreateTempMetadataAsync(trackMetadata);
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
             await fileStorage.PutFileAsync(trackMetadata.Id, trackMetadata.ObjectName, createRequest.Stream);
-            return trackMetadata.Id;
+            return new TrackFileMetadata
+            {
+                TrackFileId = trackMetadata.Id,
+                OriginalFileName = audioFileMetadata.OriginalFileName,
+                Album=audioFileMetadata.Album,
+                Artist = audioFileMetadata.Artist,
+                Bitrate = audioFileMetadata.Bitrate,
+                CoverBase64 = audioFileMetadata.CoverBase64,
+                CoverMimeType = audioFileMetadata.CoverMimeType,
+                Duration = audioFileMetadata.Duration,
+                FileSize = audioFileMetadata.FileSize,
+                Genre = audioFileMetadata.Genre,
+                HasCover = audioFileMetadata.HasCover,
+                Title = audioFileMetadata.Title,
+                Year = audioFileMetadata.Year,
+                ArtistId = artistId?.Id
+            };
         }
     }
 }

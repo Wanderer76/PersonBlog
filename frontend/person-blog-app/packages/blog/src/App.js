@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useSearchParams } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import './App.css';
 import { getAccessToken, JwtTokenService } from './scripts/TokenStrorage';
@@ -29,7 +29,9 @@ const PrivateRoute = ({ redirectPath = '/auth' }) => {
 // Публичный маршрут (если нужно ограничить доступ к auth)
 const PublicRoute = ({ children }) => {
   const isAuthenticated = JwtTokenService.isAuth();
-  return !isAuthenticated ? children : <Navigate to="/" />;
+  const [searchParams] = useSearchParams();
+  var isRedirect = searchParams.get("redirect");
+  return !isAuthenticated || isRedirect != null ? children : <Navigate to="/" />;
 };
 
 // Компонент проверки сессии
@@ -87,7 +89,7 @@ function App() {
                 <Route path="/profile" >
                   <Route index element={<ProfilePage />} />
                   <Route path="post/create" element={<CreatePostForm />} />
-                  <Route path="post/edit/:id" element={<EditPostForm/>} />
+                  <Route path="post/edit/:id" element={<EditPostForm />} />
                   <Route path="blog/create" element={<CreateBlogForm />} />
                   <Route path="history" element={<HistoryPage />} />
                   <Route path="playList/create" element={<CreatePlaylistForm />} />
