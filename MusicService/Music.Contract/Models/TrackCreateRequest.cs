@@ -11,6 +11,7 @@ namespace Music.Contract.Models
         public Guid? AlbumId { get; set; }
         public Guid TrackFileId { get; set; }
         public Guid? ThumbnailId { get; set; }
+        public short Year { get; set; }
         public List<Guid> Genres { get; set; }
     }
 

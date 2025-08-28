@@ -1,53 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import styles from './TrackCreator.module.css';
 import API from '../../scripts/apiMethod';
-
-// --- Интерфейсы ---
-export interface Genre {
-    id: string;
-    name: string;
-}
+import type { MultiValue, ActionMeta } from 'react-select';
+import CreatableSelect from 'react-select/creatable';
+import AsyncSelect from 'react-select/async';
+import type { AxiosResponse } from 'axios';
+import type { Artist, ArtistOption, CreateView, Genre, GenreOption, TrackCreateRequest, TrackFileMetadata } from '../../types/trackCreate';
 
 const LOCAL_STORAGE_TRACK_KEY = 'uploadedTrackMetadata';
 
-export interface TrackFileMetadata {
-    trackFileId: string;
-    artistId?: string;
-    title: string;
-    artist: string;
-    album: string;
-    year: string;
-    genre: string;
-    duration: number;
-    bitrate: string;
-    hasCover: boolean;
-    coverBase64?: string;
-    coverMimeType?: string;
-    originalFileName: string;
-    fileSize: number;
-    thumbnailId?: string;
-}
-
-export interface TrackCreateRequest {
-    name: string;
-    artistId?: string;
-    postId?: string;
-    artistName: string;
-    albumId?: string;
-    trackFileId: string;
-    thumbnailId?: string;
-    genres: string[];
-}
-
-// --- Типы для react-select ---
-// --- Типы для react-select ---
-import type { MultiValue, ActionMeta } from 'react-select';
-import CreatableSelect from 'react-select/creatable';
-
-interface GenreOption {
-    value: string;
-    label: string;
-}
 
 // --- Вспомогательная функция: base64 → File ---
 const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
@@ -89,7 +50,7 @@ const TrackCreator: React.FC = () => {
 
         const fetchGenres = async () => {
             try {
-                const response = await API.get('/track/create');
+                const response = await API.get<CreateView>('/track/create');
                 setGenres(response.data.genres || []);
             } catch (error) {
                 console.error('Ошибка загрузки жанров:', error);
@@ -293,6 +254,27 @@ const TrackCreator: React.FC = () => {
     );
 };
 
+
+const debounce = <T extends (...args: any[]) => Promise<any>>(
+    func: T,
+    delay: number
+) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: Parameters<T>): ReturnType<T> => {
+        clearTimeout(timeoutId);
+        return new Promise((resolve, reject) => {
+            timeoutId = setTimeout(async () => {
+                try {
+                    const result = await func(...args);
+                    resolve(result);
+                } catch (error) {
+                    reject(error);
+                }
+            }, delay);
+        }) as ReturnType<T>;
+    };
+};
+
 // --- Форма редактирования ---
 interface TrackFormProps {
     metadata: TrackFileMetadata;
@@ -300,7 +282,7 @@ interface TrackFormProps {
     selectedGenres: string[];
     onGenreChange: (genres: string[]) => void;
     onThumbnailUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-    onSubmit: (event: TrackCreateRequest) => void;
+    onSubmit: (request: TrackCreateRequest) => void;
     onReset: () => void;
 }
 
@@ -315,15 +297,15 @@ const TrackForm: React.FC<TrackFormProps> = ({
 }) => {
     const [formData, setFormData] = useState({
         name: metadata.title,
-        artistName: metadata.artist,
         year: metadata.year,
-        description: '',
     });
 
-    const handleInputChange = (field: keyof typeof formData, value: string) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
-    };
+    const [debouncedLoadOptions, setDebouncedLoadOptions] = useState<
+        (inputValue: string) => Promise<ArtistOption[]>
+    >(() => () => Promise.resolve([]));
 
+    const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(metadata?.artistId == null ? null : { label: metadata.artist, value: metadata.artistId });
+    const [inputArtist, setInputArtist] = useState(metadata.artist ?? '');
     // Преобразуем жанры в опции
     const genreOptions: GenreOption[] = genres.map((g) => ({
         value: g.id,
@@ -334,6 +316,44 @@ const TrackForm: React.FC<TrackFormProps> = ({
         selectedGenres.includes(opt.value)
     );
 
+    useEffect(() => {
+        const loadOptions = async (inputValue: string): Promise<ArtistOption[]> => {
+            if (!inputValue.trim()) return [];
+            try {
+                const response: AxiosResponse<Artist[]> = await API.get('/Artist/search', {
+                    params: { name: inputValue },
+                });
+                return response.data.map((artist) => ({
+                    value: artist.id,
+                    label: artist.name,
+                }));
+            } catch (error) {
+                console.error('Ошибка при поиске артистов:', error);
+                return [];
+            }
+        };
+
+        // Применяем дебаунс: 500 мс
+        setDebouncedLoadOptions(() => debounce(loadOptions, 500));
+    }, []);
+
+    // Загрузка артистов
+    const loadArtistOptions = async (inputValue: string): Promise<ArtistOption[]> => {
+        if (!inputValue.trim()) return [];
+        try {
+            const response: AxiosResponse<Artist[]> = await API.get('/Artist/search', {
+                params: { name: inputValue },
+            });
+            return response.data.map((artist) => ({
+                value: artist.id,
+                label: artist.name,
+            }));
+        } catch (error) {
+            console.error('Ошибка при поиске артистов:', error);
+            return [];
+        }
+    };
+
     const handleGenreSelectChange = (
         newValue: MultiValue<GenreOption>,
         actionMeta: ActionMeta<GenreOption>
@@ -342,7 +362,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
         onGenreChange(selectedIds);
     };
 
-    // Создание нового жанра (временно)
     const handleCreateGenre = (inputValue: string) => {
         const newId = `temp-${Date.now()}`;
         const newOption: GenreOption = { value: newId, label: inputValue };
@@ -355,20 +374,22 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
         const request: TrackCreateRequest = {
             name: formData.name,
-            artistName: formData.artistName,
+            artistName: selectedArtist?.label || metadata.artist,
             trackFileId: metadata.trackFileId,
             genres: selectedGenres,
-            artistId: metadata.artistId || undefined,
+            artistId: selectedArtist?.value || undefined,
             thumbnailId: metadata.thumbnailId || undefined,
+            year: formData.year,
         };
 
         onSubmit(request);
     };
 
-    const formatDuration = (seconds: number): string => {
+    const formatDuration = (millisecond: number): string => {
+        const seconds = millisecond / 1000;
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+        return `${mins}:${secs}`;
     };
 
     return (
@@ -386,7 +407,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                     <input
                         type="text"
                         value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         className={styles.formInput}
                         required
                     />
@@ -394,26 +415,56 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
                 <div className={styles.formGroup}>
                     <label>Исполнитель</label>
-                    <input
-                        type="text"
-                        value={formData.artistName}
-                        onChange={(e) => handleInputChange('artistName', e.target.value)}
-                        className={styles.formInput}
-                        required
+                    <AsyncSelect<ArtistOption>
+                        cacheOptions={false}
+                        defaultOptions={false}
+                        value={selectedArtist}
+                        onInputChange={(newValue, actionMeta) => {
+
+                            if (actionMeta.action === 'input-change') {
+                                setInputArtist(newValue);
+                            }
+                            return newValue;
+                        }}
+                        onChange={(option) => {
+                            setSelectedArtist(option);
+                            // При выборе варианта обновляем inputValue
+                            if (option) {
+                                setInputArtist(option.label);
+                            } else {
+                                setInputArtist("");
+                            }
+                        }}
+                        loadOptions={debouncedLoadOptions}
+                        placeholder="Начните вводить имя исполнителя..."
+                        noOptionsMessage={() => 'Нет совпадений'}
+                        isClearable
+                        styles={{
+                            control: (base, state) => ({
+                                ...base,
+                                borderColor: state.isFocused ? '#ff7a00' : '#ddd',
+                                boxShadow: state.isFocused ? '0 0 0 1px #ff7a00' : 'none',
+                                minHeight: '40px',
+                                borderRadius: '4px',
+                            }),
+                            // ... остальные стили
+                        }}
                     />
                 </div>
 
                 <div className={styles.formGroup}>
                     <label>Год</label>
                     <input
-                        type="text"
+                        type="number"
                         value={formData.year}
-                        onChange={(e) => handleInputChange('year', e.target.value)}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, year: Number(e.target.value) }))}
                         className={styles.formInput}
+                        min="1900"
+                        max="2099"
                     />
                 </div>
 
-                {/* --- Мультиселект с вводом --- */}
+                {/* Жанры */}
                 <div className={styles.formGroup}>
                     <label>Жанры</label>
                     <CreatableSelect
@@ -460,7 +511,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 </div>
             </div>
 
-            {/* --- Обложка --- */}
+            {/* Обложка */}
             <div className={styles.formSection}>
                 <h2>Обложка</h2>
                 {metadata.hasCover && metadata.coverBase64 ? (
@@ -482,7 +533,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 <small>Вы можете загрузить свою обложку</small>
             </div>
 
-            {/* --- Информация о файле --- */}
+            {/* Информация о файле */}
             <div className={styles.trackInfo}>
                 <h3>Информация о файле</h3>
                 <p>Длительность: {formatDuration(metadata.duration)}</p>
@@ -491,7 +542,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 <p>Формат: MP3</p>
             </div>
 
-            {/* --- Кнопки --- */}
+            {/* Кнопки */}
             <div className={styles.formActions}>
                 <button type="button" onClick={onReset} className={styles.changeTrackButton}>
                     Загрузить другой трек

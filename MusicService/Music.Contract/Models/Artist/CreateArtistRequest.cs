@@ -1,8 +1,8 @@
-﻿namespace Music.Contract.Models
+﻿namespace Music.Contract.Models.Artist
 {
     public class CreateArtistRequest
     {
         public required string ArtistName { get; set; }
-        public string ThumbnailUrl { get; set; }
+        public Guid ThumbnailId { get; set; }
     }
 }

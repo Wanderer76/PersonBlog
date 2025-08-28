@@ -1,4 +1,6 @@
-﻿namespace Music.Contract.Models;
+﻿using Music.Contract.Models.Artist;
+
+namespace Music.Contract.Models;
 
 public class TrackViewItem
 {

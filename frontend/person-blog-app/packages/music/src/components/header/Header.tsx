@@ -2,9 +2,11 @@ import { MusicNote } from "@mui/icons-material";
 import { AppBar, Button, TextField, Toolbar, Typography } from "@mui/material";
 import { JwtTokenService } from "../../scripts/TokenStrorage";
 import { AuthPageUrl, BlogPageUrl } from "../../scripts/apiMethod";
+import { useNavigate } from "react-router-dom";
 
 
 const Header: React.FC = function () {
+    const navigate = useNavigate();
     return (
         <>
             <AppBar
@@ -26,6 +28,7 @@ const Header: React.FC = function () {
                             display: { xs: 'none', sm: 'block' },
                             fontWeight: 'bold',
                         }}
+                        onClick={() => navigate('/')}
                     >
                         MusicStream
                     </Typography>
@@ -42,10 +45,9 @@ const Header: React.FC = function () {
                     }
                     {JwtTokenService.isAuth() &&
                         <Button onClick={() => {
-                            const loginUrl = new URL(BlogPageUrl);
-                            window.location.href = loginUrl.toString()
+                           navigate("/profile")
                         }}>
-                            Перейти в блог
+                            Профиль
                         </Button>
                     }
 

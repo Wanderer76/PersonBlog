@@ -2,6 +2,7 @@
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Music.Contract.Models;
+using Music.Contract.Models.Artist;
 using Music.Domain.Entities;
 using Music.Domain.Repositories;
 using Music.Domain.Services;
@@ -75,7 +76,15 @@ namespace Music.Service.Services
                 thumbnailMetadata = thumbnail.Value;
             }
 
-            var track = new Track(createRequest.Name, currentUser.UserId.Value, createRequest.AlbumId, createRequest.PostId, createRequest.ThumbnailId, createRequest.TrackFileId);
+            var track = new Track(
+                createRequest.Name, 
+                currentUser.UserId.Value, 
+                createRequest.AlbumId, 
+                createRequest.PostId, 
+                createRequest.ThumbnailId, 
+                createRequest.TrackFileId, 
+                createRequest.Year);
+
             track.AddArtist(artist.Id);
             var file = tempTrackFile.Value;
             _repository.Attach(file);

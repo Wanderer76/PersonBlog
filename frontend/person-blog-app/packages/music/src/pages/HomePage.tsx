@@ -2,22 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container,
-  AppBar,
-  Toolbar,
-  Typography,
   Box,
-  TextField,
-  InputAdornment,
   CircularProgress,
-  Button,
 } from '@mui/material';
-import { Search, MusicNote } from '@mui/icons-material';
 import TrackList from '../components/trackList/TrackList';
 import PlayerControls from '../components/playerControls/PlayerControls';
-import type { TrackViewItem, PagedListViewModel } from '../types/music';
+import type { TrackViewItem} from '../types/music';
 import { musicApi } from '../services/api';
-import { AuthPageUrl } from '../scripts/apiMethod';
-import { JwtTokenService } from '../scripts/TokenStrorage';
 
 
 const HomePage: React.FC = () => {

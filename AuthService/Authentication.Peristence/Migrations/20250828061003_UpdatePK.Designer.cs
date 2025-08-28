@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Authentication.Peristence.Migrations
 {
     [DbContext(typeof(AuthenticationDbContext))]
-    [Migration("20250816132815_Init")]
-    partial class Init
+    [Migration("20250828061003_UpdatePK")]
+    partial class UpdatePK
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -93,10 +93,10 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 8, 16, 13, 28, 15, 208, DateTimeKind.Unspecified).AddTicks(4508), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 8, 28, 6, 10, 3, 466, DateTimeKind.Unspecified).AddTicks(8242), new TimeSpan(0, 0, 0, 0, 0)),
                             LastAuthenticate = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Login = "admin",
-                            Password = "wMKV34wg6H4=;vWfQ6RPbuBJPFCiW0saAhMogbm+JB/+dkqQBCNGK0yU="
+                            Password = "39pgitWENkw=;vfwIBcvuNOIXDC4MgCw5ZkS89KILemL97F0SjbQ8tsU="
                         });
                 });
 
@@ -108,7 +108,7 @@ namespace Authentication.Peristence.Migrations
                     b.Property<Guid>("UserRoleId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("AppUserId");
+                    b.HasKey("AppUserId", "UserRoleId");
 
                     b.HasIndex("UserRoleId");
 

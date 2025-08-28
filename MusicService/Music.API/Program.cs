@@ -2,6 +2,7 @@ using FFmpeg.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using Infrastructure.Middleware;
 using Music.Persistence;
 using Music.Service;
 
@@ -39,7 +40,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseRouting();
 app.UseAuthentication();
-
+app.UseJwtMiddleware();
 app.UseAuthorization();
 
 app.MapControllers();

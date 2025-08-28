@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Music.Contract.Models;
+using Music.Contract.Models.Artist;
 using Music.Contract.Models.Search;
 using Music.Domain.Entities;
 using Music.Domain.Services;

@@ -11,15 +11,16 @@ namespace Music.Domain.Entities
         public Guid Id { get; private set; }
         public string Name { get; private set; }
         public Guid? UserId { get; private set; }
-
         public bool IsExternal { get; private set; }
-        public string? AvatarUrl { get; private set; }
+        public Guid? AvatarId { get; private set; }
         public List<ArtistTrackLink> ArtistTrackLinks { get; private set; } = [];
 
         public bool IsDelete { get; private set; }
         public DateTimeOffset? DeleteDateTime { get; private set; }
 
-        public static Artist CreateForUser(string name, Guid userId, string avatarUrl)
+        public AvatarMetadata AvatarMetadata { get; private set; }
+
+        public static Artist CreateForUser(string name, Guid userId, Guid? avatarUrl)
         {
             return new Artist
             {
@@ -27,12 +28,12 @@ namespace Music.Domain.Entities
                 Name = name.Trim(),
                 UserId = userId,
                 IsExternal = false,
-                AvatarUrl = avatarUrl,
+                AvatarId = avatarUrl,
                 ArtistTrackLinks = new List<ArtistTrackLink>()
             };
         }
 
-        public static Artist CreateExternal(string name, string avatarUrl)
+        public static Artist CreateExternal(string name, Guid? avatarUrl)
         {
             return new Artist
             {
@@ -40,7 +41,7 @@ namespace Music.Domain.Entities
                 Name = name.Trim(),
                 UserId = null,
                 IsExternal = true,
-                AvatarUrl = avatarUrl,
+                AvatarId = avatarUrl,
                 ArtistTrackLinks = new List<ArtistTrackLink>()
             };
         }

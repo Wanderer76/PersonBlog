@@ -12,6 +12,7 @@ namespace Music.Persistence
         public DbSet<TrackGenre> TrackGenres { get; set; }
         public DbSet<TrackMetadata> TrackMetadata { get; set; }
         public DbSet<ThumbnailMetadata> ThumbnailMetadata { get; set; }
+        public DbSet<AvatarMetadata> AvatarMetadata { get; set; }
 
         public MusicDbContext(DbContextOptions<MusicDbContext> options)
             : base(options)
@@ -41,6 +42,12 @@ namespace Music.Persistence
             {
                 var entity = modelBuilder.Entity<Genre>();
                 entity.HasData(new GenreList().GetGenres());
+            }
+            {
+                var entity = modelBuilder.Entity<Artist>();
+                entity.HasOne(x => x.AvatarMetadata)
+                    .WithOne()
+                    .HasForeignKey<AvatarMetadata>(x => x.Id);
             }
         }
     }

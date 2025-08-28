@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import { JwtTokenService, saveRefreshToken } from './scripts/TokenStrorage';
 import Header from './components/header/Header';
 import TrackCreator from './components/trackCreator/TrackCreator';
+import ProfilePage from './pages/profile/ProfilePage';
 
 const Session = function ({ children }: any) {
   const [searchParams] = useSearchParams();
@@ -37,7 +38,8 @@ function App() {
           <CssBaseline />
           <Routes>
             <Route path='/' element={<HomePage />} />
-            <Route path='create' element={<TrackCreator/>} />
+            <Route path='/profile' element={<ProfilePage/>} />
+            <Route path='/track/create' element={<TrackCreator/>} />
           </Routes>
         </ThemeProvider>
       </Session>

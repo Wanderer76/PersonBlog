@@ -16,6 +16,7 @@ namespace Music.Domain.Entities
         public Guid? ThumbnailId { get; private set; }
         public Guid TrackFileId { get; private set; }
 
+        public short Year {  get; private set; }
         public DateTimeOffset CreatedAt { get; private set; }
 
         [ForeignKey(nameof(TrackFileId))]
@@ -31,7 +32,7 @@ namespace Music.Domain.Entities
             ArtistTrackLinks = new List<ArtistTrackLink>();
         }
 
-        public Track(string title, Guid uploadedByUserId, Guid? albumId, Guid? postId, Guid? thumbnailId, Guid trackFileId)
+        public Track(string title, Guid uploadedByUserId, Guid? albumId, Guid? postId, Guid? thumbnailId, Guid trackFileId, short year)
         {
             Id = GuidService.GetNewGuid();
             Title = title;
@@ -42,6 +43,7 @@ namespace Music.Domain.Entities
             ArtistTrackLinks = [];
             CreatedAt = DateTimeService.Now();
             UploadedByUserId = uploadedByUserId;
+            Year = year;
         }
 
         public Result AddArtist(Guid artistId, bool isMain = true)
