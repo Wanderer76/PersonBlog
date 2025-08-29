@@ -8,6 +8,7 @@ import { JwtTokenService, saveRefreshToken } from './scripts/TokenStrorage';
 import Header from './components/header/Header';
 import TrackCreator from './components/trackCreator/TrackCreator';
 import ProfilePage from './pages/profile/ProfilePage';
+import Sidebar from './components/sidebar/Sidebar';
 
 const Session = function ({ children }: any) {
   const [searchParams] = useSearchParams();
@@ -36,14 +37,19 @@ function App() {
         <Header />
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Routes>
-            <Route path='/' element={<HomePage />} />
-            <Route path='/profile' element={<ProfilePage/>} />
-            <Route path='/track/create' element={<TrackCreator/>} />
-          </Routes>
+          <div style={{ display: 'flex' }}>
+            <Sidebar />
+            <main style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+              <Routes>
+                <Route path='/' element={<HomePage />} />
+                <Route path='/profile' element={<ProfilePage />} />
+                <Route path='/track/create' element={<TrackCreator />} />
+              </Routes>
+            </main>
+          </div>
         </ThemeProvider>
-      </Session>
-    </BrowserRouter>
+      </Session >
+    </BrowserRouter >
   );
 }
 

@@ -14,11 +14,15 @@ interface TrackCardProps {
   onPause: () => void;
 }
 
-const formatDuration = (millisecods: number): string => {
-  var seconds = millisecods / 1000;
-  var mins = Math.floor(seconds / 60);
-  var secs = millisecods % 60;
-  return `${mins}:${secs}`;
+const formatDuration = (milliseconds: number): string => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  
+  // Pad seconds with leading zero if needed
+  const paddedSecs = secs.toString().padStart(2, '0');
+  
+  return `${mins}:${paddedSecs}`;
 };
 
 const TrackCard: React.FC<TrackCardProps> = ({
@@ -35,6 +39,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
       onPlay(track);
     }
   };
+  console.log(track.thumbnailUrl)
 
   return (
     <div
@@ -45,7 +50,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
       {/* Обложка с фиксированным соотношением сторон */}
       <div className={styles.imageContainer}>
         <img
-          src={track.thumbnailUrl || '/images/default-thumbnail.jpg'}
+          src={track.thumbnailUrl}
           alt={track.name}
           className={styles.image}
         />
