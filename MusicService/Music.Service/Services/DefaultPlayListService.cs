@@ -107,6 +107,24 @@ namespace Music.Service.Services
             return Result<IReadOnlyList<PlayListViewModel>>.Failure(new Error("Somethig went wrong"));
         }
 
+
+        public async Task<Result<PlayListViewModel>> GetPlayListInfoAsync(Guid id)
+        {
+            var result = await _repository.Get<PlayList>()
+                       .Where(x => x.Id ==  id)
+                       .Select(x => new
+                       {
+                           x.Id,
+                           x.Name,
+                           TracksCount = x.Tracks.Count,
+                           x.Type
+                       })
+                       .AsAsyncEnumerable()
+                       .Select(x => new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString()))
+                       .FirstAsync();
+            return result;
+        }
+
         public async Task<Result<IReadOnlyList<TrackViewItem>>> GetPlayListTrackListAsync(Guid id, int page, int size)
         {
             using var fileStorage = _fileStorageFactory.CreateFileStorage();

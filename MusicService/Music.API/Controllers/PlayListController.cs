@@ -2,6 +2,7 @@
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Music.Contract.Models;
 using Music.Domain.Services;
 
 namespace Music.API.Controllers
@@ -31,7 +32,19 @@ namespace Music.API.Controllers
                 BadRequest(result.Error);
         }
 
+        [HttpGet("{id}")]
+        [Produces<IReadOnlyList<TrackViewItem>>]
+        public async Task<IActionResult> GetPlayListTracks(Guid id)
+        {
+            var result = await _musicPlayListService.GetPlayListInfoAsync(id);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return
+                BadRequest(result.Error);
+        }
+
         [HttpGet("{id}/tracks")]
+        [Produces<IReadOnlyList<TrackViewItem>>]
         public async Task<IActionResult> GetPlayListTracks(Guid id, int? page, int? size)
         {
             var result = await _musicPlayListService.GetPlayListTrackListAsync(id, page ?? 1, size ?? 10);

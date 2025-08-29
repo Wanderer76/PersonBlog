@@ -96,8 +96,8 @@ const ProfilePage: React.FC = () => {
         navigate("/artist/create"); // Переход на создание артиста
     };
 
-    const handlePlaylistClick = (name: string) => {
-        alert(`Открывается плейлист: ${name}`);
+    const handlePlaylistClick = (id: string) => {
+       navigate(`/playlist/${id}`)
     };
 
     const actionItems = [
@@ -111,22 +111,6 @@ const ProfilePage: React.FC = () => {
     const playlistsTypes = {
         'Liked': { icon: 'fa-heart', coverClass: styles.likedCover },
         'Upload': { icon: 'fa-cloud-upload-alt', coverClass: styles.uploadedCover },
-        // {
-        //     name: 'Мне нравится',
-        //     tracks: '124 трека',
-        //     badge: 'Приватный',
-        //     coverClass: styles.likedCover,
-        //     icon: 'fa-heart',
-        //     img: null
-        // },
-        // {
-        //     name: 'Загруженные',
-        //     tracks: '87 треков',
-        //     badge: 'Только я',
-        //     coverClass: styles.uploadedCover,
-        //     icon: 'fa-cloud-upload-alt',
-        //     img: null
-        // },
     };
 
     if (loading) {
@@ -216,7 +200,7 @@ const ProfilePage: React.FC = () => {
                                 <div
                                     key={index}
                                     className={styles.playlistCard}
-                                    onClick={() => handlePlaylistClick(playlist.title)}>
+                                    onClick={() => handlePlaylistClick(playlist.id)}>
                                     <div
                                         className={`${styles.playlistCover} ${playlistsTypes[playlist.type].coverClass || ''}`}>
                                         {playlistsTypes[playlist.type].icon && <i className={`fas ${playlistsTypes[playlist.type].icon}`}></i>}

@@ -9,6 +9,7 @@ import Header from './components/header/Header';
 import TrackCreator from './components/trackCreator/TrackCreator';
 import ProfilePage from './pages/profile/ProfilePage';
 import Sidebar from './components/sidebar/Sidebar';
+import PlaylistPage from './pages/playlist/PlaylistPage';
 
 const Session = function ({ children }: any) {
   const [searchParams] = useSearchParams();
@@ -44,6 +45,7 @@ function App() {
                 <Route path='/' element={<HomePage />} />
                 <Route path='/profile' element={<ProfilePage />} />
                 <Route path='/track/create' element={<TrackCreator />} />
+                <Route path='/playlist/:id' element={<PlaylistPage />} />
               </Routes>
             </main>
           </div>

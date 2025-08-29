@@ -11,5 +11,6 @@ namespace Music.Domain.Services
         Task<Result<IReadOnlyList<PlayListViewModel>>> CreateDefaultUserPlayListsAsync(Guid userId);
         Task<Result<PlayListViewModel>> CreatePlayListsAsync(CreatePlayListRequest createPlayList);
         Task<Result<IReadOnlyList<TrackViewItem>>> GetPlayListTrackListAsync(Guid id, int page, int size);
+        Task<Result<PlayListViewModel>> GetPlayListInfoAsync(Guid id);
     }
 }
