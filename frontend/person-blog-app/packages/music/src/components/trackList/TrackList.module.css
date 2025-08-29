@@ -10,7 +10,6 @@
   background: linear-gradient(90deg, #ffffff, #ff7b00);
   background-clip: text;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   padding-bottom: 8px;
 }
 

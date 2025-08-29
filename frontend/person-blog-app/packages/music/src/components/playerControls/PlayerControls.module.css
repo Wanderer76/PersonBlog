@@ -61,7 +61,7 @@
 
 .playButton {
   background-color: #ff7b00;
-  color: white !important;
+  color: #333;
   transition: background-color 0.2s ease;
 }
 

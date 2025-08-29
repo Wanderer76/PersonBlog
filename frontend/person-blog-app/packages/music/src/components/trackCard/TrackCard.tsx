@@ -5,6 +5,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import type { TrackViewItem } from '../../types/music';
 import styles from './TrackCard.module.css';
+import { formatDuration } from '../../scripts/helper';
 
 interface TrackCardProps {
   track: TrackViewItem;
@@ -14,16 +15,6 @@ interface TrackCardProps {
   onPause: () => void;
 }
 
-const formatDuration = (milliseconds: number): string => {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  
-  // Pad seconds with leading zero if needed
-  const paddedSecs = secs.toString().padStart(2, '0');
-  
-  return `${mins}:${paddedSecs}`;
-};
 
 const TrackCard: React.FC<TrackCardProps> = ({
   track,
