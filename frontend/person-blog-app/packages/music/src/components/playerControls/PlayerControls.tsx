@@ -1,6 +1,14 @@
 // components/PlayerControls.tsx
 import React from 'react';
-import { Box, Slider, Typography, IconButton, Paper } from '@mui/material';
+import { 
+  Box, 
+  Slider, 
+  Typography, 
+  IconButton, 
+  Paper,
+  CircularProgress,
+  Tooltip
+} from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
@@ -15,6 +23,7 @@ interface PlayerControlsProps {
   currentTime: number;
   duration: number;
   volume: number;
+  isLoading?: boolean;
   onPlay: () => void;
   onPause: () => void;
   onNext: () => void;
@@ -24,9 +33,10 @@ interface PlayerControlsProps {
 }
 
 const formatTime = (seconds: number): string => {
+  if (isNaN(seconds)) return '0:00';
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toFixed(0)}`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
 const PlayerControls: React.FC<PlayerControlsProps> = ({
@@ -35,6 +45,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   currentTime,
   duration,
   volume,
+  isLoading = false,
   onPlay,
   onPause,
   onNext,
@@ -43,6 +54,14 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   onVolumeChange,
 }) => {
   if (!currentTrack) return null;
+
+  const handleSeek = (event: Event, value: number | number[]) => {
+    onSeek(value as number);
+  };
+
+  const handleVolumeChange = (event: Event, value: number | number[]) => {
+    onVolumeChange(value as number);
+  };
 
   return (
     <Paper
@@ -54,31 +73,66 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
       <Box className={styles.controlsContainer}>
         {/* Информация о треке */}
         <div className={styles.trackInfo}>
-          <Typography component="h3" className={styles.trackName} title={currentTrack.name}>
-            {currentTrack.name}
-          </Typography>
-          <Typography component="p" className={styles.artistName} title={currentTrack.artists.map(a => a.name).join(', ')}>
-            {currentTrack.artists.map((a) => a.name).join(', ')}
-          </Typography>
+          <Tooltip title={currentTrack.name} placement="top">
+            <Typography 
+              component="h3" 
+              className={`${styles.trackName} ${isLoading ? styles.loading : ''}`}
+            >
+              {currentTrack.name}
+            </Typography>
+          </Tooltip>
+          <Tooltip title={currentTrack.artists.map(a => a.name).join(', ')} placement="top">
+            <Typography 
+              component="p" 
+              className={styles.artistName}
+            >
+              {currentTrack.artists.map((a) => a.name).join(', ')}
+            </Typography>
+          </Tooltip>
         </div>
 
         {/* Основные кнопки и прогресс */}
         <div className={styles.playbackControls}>
           <div className={styles.playbackButtons}>
-            <IconButton onClick={onPrevious} size="large" aria-label="Предыдущий трек">
-              <SkipPreviousIcon />
-            </IconButton>
-            <IconButton
-              onClick={isPlaying ? onPause : onPlay}
-              size="large"
-              className={styles.playButton}
-              aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-            >
-              {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-            </IconButton>
-            <IconButton onClick={onNext} size="large" aria-label="Следующий трек">
-              <SkipNextIcon />
-            </IconButton>
+            <Tooltip title="Предыдущий трек">
+              <IconButton 
+                onClick={onPrevious} 
+                size="large" 
+                aria-label="Предыдущий трек"
+                disabled={isLoading}
+              >
+                <SkipPreviousIcon />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title={isPlaying ? 'Пауза' : 'Воспроизвести'}>
+              <IconButton
+                onClick={isPlaying ? onPause : onPlay}
+                size="large"
+                className={styles.playButton}
+                aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <CircularProgress size={24} sx={{ color: 'white' }} />
+                ) : isPlaying ? (
+                  <PauseIcon />
+                ) : (
+                  <PlayArrowIcon />
+                )}
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Следующий трек">
+              <IconButton 
+                onClick={onNext} 
+                size="large" 
+                aria-label="Следующий трек"
+                disabled={isLoading}
+              >
+                <SkipNextIcon />
+              </IconButton>
+            </Tooltip>
           </div>
 
           {/* Прогресс-бар времени */}
@@ -88,9 +142,10 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
             </Typography>
             <Slider
               value={currentTime}
-              max={duration || 100}
-              onChange={(_, value) => onSeek(value as number)}
-              className="progress-slider"
+              max={duration > 0 ? duration : 100}
+              onChange={handleSeek}
+              disabled={isLoading}
+              className={styles.progressSlider}
               sx={{
                 color: '#ff7b00',
                 '& .MuiSlider-thumb': {
@@ -98,6 +153,9 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                   '&:hover, &.Mui-focusVisible': {
                     boxShadow: '0px 0px 0px 8px rgba(255, 123, 0, 0.16)',
                   },
+                },
+                '& .MuiSlider-rail': {
+                  backgroundColor: '#e0e0e0',
                 },
               }}
             />
@@ -109,12 +167,12 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
 
         {/* Регулятор громкости */}
         <div className={styles.volumeContainer}>
-          <VolumeUpIcon fontSize="small" />
+          <VolumeUpIcon fontSize="small" sx={{ color: '#666' }} />
           <Slider
             value={volume}
             max={100}
-            onChange={(_, value) => onVolumeChange(value as number)}
-            className="volume-slider"
+            onChange={handleVolumeChange}
+            className={styles.volumeSlider}
             sx={{
               color: '#ff7b00',
               '& .MuiSlider-thumb': {

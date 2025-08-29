@@ -6,6 +6,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Music.Domain.Entities
 {
+    public class PlayListConstants
+    {
+        public const string UploadPlaylistName = "Загруженные";
+        public const string LikedTracksPlayList = "Мне нравится";
+
+    }
+
+
     public class PlayList : IMusicEntity
     {
         public Guid Id { get; private set; }
@@ -20,13 +28,13 @@ namespace Music.Domain.Entities
 
         }
 
-        public PlayList(string name, Guid userId, ConstPlayListType type, DateTimeOffset createdAt, List<PlayListTrack> tracks)
+        public PlayList(string name, Guid userId, ConstPlayListType type, List<PlayListTrack> tracks)
         {
             Id = GuidService.GetNewGuid();
             Name = name;
             UserId = userId;
             Type = type;
-            CreatedAt = createdAt;
+            CreatedAt = DateTimeService.Now();
             Tracks = tracks;
         }
 
@@ -76,9 +84,9 @@ namespace Music.Domain.Entities
 
     public enum ConstPlayListType
     {
-        My,
+        Upload,
         Liked,
-        Favourite,
-        Created
+        FavouritePlayLists,
+        Created,
     }
 }

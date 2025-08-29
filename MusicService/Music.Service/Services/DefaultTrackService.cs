@@ -76,16 +76,22 @@ namespace Music.Service.Services
                 thumbnailMetadata = thumbnail.Value;
             }
 
+            var userUploadPlayList = await _repository.Get<PlayList>()
+                .Where(x => x.Type == ConstPlayListType.Upload)
+                .Where(x => x.UserId == currentUser.UserId.Value)
+                .FirstOrDefaultAsync();
+
             var track = new Track(
-                createRequest.Name, 
-                currentUser.UserId.Value, 
-                createRequest.AlbumId, 
-                createRequest.PostId, 
-                createRequest.ThumbnailId, 
-                createRequest.TrackFileId, 
+                createRequest.Name,
+                currentUser.UserId.Value,
+                createRequest.AlbumId,
+                createRequest.PostId,
+                createRequest.ThumbnailId,
+                createRequest.TrackFileId,
                 createRequest.Year);
 
             track.AddArtist(artist.Id);
+
             var file = tempTrackFile.Value;
             _repository.Attach(file);
             file.TrackId = track.Id;
@@ -95,7 +101,11 @@ namespace Music.Service.Services
                 _repository.Attach(thumbnailMetadata);
             }
             _repository.Add(track);
-
+            if (userUploadPlayList != null)
+            {
+                _repository.Attach(userUploadPlayList);
+                userUploadPlayList.AddTrack(track);
+            }
             await _repository.SaveChangesAsync();
             await _tempTrackMetadataRepository.ClearTempMetadataAsync(createRequest.TrackFileId);
             if (createRequest.ThumbnailId.HasValue)
@@ -189,7 +199,7 @@ namespace Music.Service.Services
             {
                 TrackFileId = trackMetadata.Id,
                 OriginalFileName = audioFileMetadata.OriginalFileName,
-                Album=audioFileMetadata.Album,
+                Album = audioFileMetadata.Album,
                 Artist = audioFileMetadata.Artist,
                 Bitrate = audioFileMetadata.Bitrate,
                 CoverBase64 = audioFileMetadata.CoverBase64,

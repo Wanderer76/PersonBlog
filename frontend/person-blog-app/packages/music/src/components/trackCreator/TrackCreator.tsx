@@ -6,6 +6,7 @@ import CreatableSelect from 'react-select/creatable';
 import AsyncSelect from 'react-select/async';
 import type { AxiosResponse } from 'axios';
 import type { Artist, ArtistOption, CreateView, Genre, GenreOption, TrackCreateRequest, TrackFileMetadata } from '../../types/trackCreate';
+import { useNavigate } from 'react-router-dom';
 
 const LOCAL_STORAGE_TRACK_KEY = 'uploadedTrackMetadata';
 
@@ -22,8 +23,13 @@ const base64ToFile = (base64: string, filename: string, mimeType: string): File 
     return new File([u8arr], filename, { type: mime });
 };
 
+interface TrackCreatorProps {
+    onSuccessRedirect?: string; // Новый опциональный проп
+}
+
+
 // --- Компонент создания трека ---
-const TrackCreator: React.FC = () => {
+const TrackCreator: React.FC<TrackCreatorProps> = ({ onSuccessRedirect = '/profile' }) => {
     const [genres, setGenres] = useState<Genre[]>([]);
     const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
     const [trackFile, setTrackFile] = useState<File | null>(null);
@@ -31,7 +37,7 @@ const TrackCreator: React.FC = () => {
     const [trackMetadata, setTrackMetadata] = useState<TrackFileMetadata | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-
+    const navigate = useNavigate();
     // --- Восстановление из localStorage ---
     useEffect(() => {
         const saved = localStorage.getItem(LOCAL_STORAGE_TRACK_KEY);
@@ -193,6 +199,7 @@ const TrackCreator: React.FC = () => {
             setTrackFile(null);
             setThumbnail(null);
             setSelectedGenres([]);
+            navigate(onSuccessRedirect)
         } catch (error) {
             console.error('Ошибка создания трека:', error);
             alert('Ошибка создания трека');

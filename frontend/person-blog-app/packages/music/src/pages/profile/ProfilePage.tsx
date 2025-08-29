@@ -21,10 +21,24 @@ interface ProfilView {
     profileState?: string;
 }
 
+enum PlayListType {
+    Liked = "Liked",
+    Upload = "Upload",
+}
+
+interface PlayListItem {
+    id: string;
+    title: string;
+    trackCount: number;
+    thumbnailUrl: string;
+    type: PlayListType;
+}
+
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
     const [artist, setArtist] = useState<ArtistDetailView | null>(null); // null = артист не создан
     const [profile, setProfile] = useState<ProfilView | null>(null); // null = артист не создан
+    const [playlists, setPlayLists] = useState<PlayListItem[]>([]); // null = артист не создан
     const [loading, setLoading] = useState(true);
 
     const getArtistInfo = async () => {
@@ -48,6 +62,19 @@ const ProfilePage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const getPlayListInfo = async () => {
+        const response = await API.get<PlayListItem[]>("ProfilePlayList/list");
+        if (response.status === 200) {
+            setPlayLists(response.data);
+        }
+    };
+
+
+    useEffect(() => {
+        if (profile)
+            getPlayListInfo();
+    }, [profile])
 
     useEffect(() => {
         getArtistInfo();
@@ -81,24 +108,26 @@ const ProfilePage: React.FC = () => {
         { icon: 'fa-cog', label: 'Настройки' },
     ];
 
-    const playlists = [
-        {
-            name: 'Мне нравится',
-            tracks: '124 трека',
-            badge: 'Приватный',
-            coverClass: styles.likedCover,
-            icon: 'fa-heart',
-            img: null
-        },
-        {
-            name: 'Загруженные',
-            tracks: '87 треков',
-            badge: 'Только я',
-            coverClass: styles.uploadedCover,
-            icon: 'fa-cloud-upload-alt',
-            img: null
-        },
-    ];
+    const playlistsTypes = {
+        'Liked': { icon: 'fa-heart', coverClass: styles.likedCover },
+        'Upload': { icon: 'fa-cloud-upload-alt', coverClass: styles.uploadedCover },
+        // {
+        //     name: 'Мне нравится',
+        //     tracks: '124 трека',
+        //     badge: 'Приватный',
+        //     coverClass: styles.likedCover,
+        //     icon: 'fa-heart',
+        //     img: null
+        // },
+        // {
+        //     name: 'Загруженные',
+        //     tracks: '87 треков',
+        //     badge: 'Только я',
+        //     coverClass: styles.uploadedCover,
+        //     icon: 'fa-cloud-upload-alt',
+        //     img: null
+        // },
+    };
 
     if (loading) {
         return (
@@ -182,33 +211,32 @@ const ProfilePage: React.FC = () => {
                     </div>
 
                     <div className={styles.playlistsGrid}>
-                        {playlists.map((playlist, index) => (
-                            <div
-                                key={index}
-                                className={styles.playlistCard}
-                                onClick={() => handlePlaylistClick(playlist.name)}
-                            >
+                        {playlists.map((playlist, index) => {
+                            return (
                                 <div
-                                    className={`${styles.playlistCover} ${playlist.coverClass || ''}`}
-                                >
-                                    {playlist.icon && <i className={`fas ${playlist.icon}`}></i>}
-                                    {playlist.img && (
-                                        <img
-                                            src={playlist.img}
-                                            alt={playlist.name}
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
-                                    )}
+                                    key={index}
+                                    className={styles.playlistCard}
+                                    onClick={() => handlePlaylistClick(playlist.title)}>
+                                    <div
+                                        className={`${styles.playlistCover} ${playlistsTypes[playlist.type].coverClass || ''}`}>
+                                        {playlistsTypes[playlist.type].icon && <i className={`fas ${playlistsTypes[playlist.type].icon}`}></i>}
+                                        {playlist.thumbnailUrl && (
+                                            <img
+                                                src={playlist.thumbnailUrl}
+                                                alt={playlist.title}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        )}
+                                    </div>
+                                    <h3 className={styles.playlistName}>{playlist.title}</h3>
+                                    <p className={styles.playlistInfo}>
+                                        {playlist.trackCount} треков
+                                        {/* {playlist.badge && (
+                                            <span className={styles.badge}>{playlist.badge}</span>
+                                        )} */}
+                                    </p>
                                 </div>
-                                <h3 className={styles.playlistName}>{playlist.name}</h3>
-                                <p className={styles.playlistInfo}>
-                                    {playlist.tracks}
-                                    {playlist.badge && (
-                                        <span className={styles.badge}>{playlist.badge}</span>
-                                    )}
-                                </p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </section>
             </div>

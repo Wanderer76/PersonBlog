@@ -13,6 +13,8 @@ namespace Music.Persistence
         public DbSet<TrackMetadata> TrackMetadata { get; set; }
         public DbSet<ThumbnailMetadata> ThumbnailMetadata { get; set; }
         public DbSet<AvatarMetadata> AvatarMetadata { get; set; }
+        public DbSet<PlayList> PlayLists { get; set; }
+        public DbSet<PlayListTrack> PlayListTracks { get; set; }
 
         public MusicDbContext(DbContextOptions<MusicDbContext> options)
             : base(options)
@@ -48,6 +50,10 @@ namespace Music.Persistence
                 entity.HasOne(x => x.AvatarMetadata)
                     .WithOne()
                     .HasForeignKey<AvatarMetadata>(x => x.Id);
+            }
+            {
+                var entity = modelBuilder.Entity<PlayListTrack>();
+                entity.HasKey(x => new { x.TrackId, x.PlayListId });
             }
         }
     }

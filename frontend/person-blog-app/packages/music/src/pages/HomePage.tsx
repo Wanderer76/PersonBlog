@@ -7,18 +7,16 @@ import {
 } from '@mui/material';
 import TrackList from '../components/trackList/TrackList';
 import PlayerControls from '../components/playerControls/PlayerControls';
-import type { TrackViewItem} from '../types/music';
+import type { TrackViewItem } from '../types/music';
 import { musicApi } from '../services/api';
-
+import { useAudioPlayer } from '../hooks/useAudioPlayer';
 
 const HomePage: React.FC = () => {
   const [tracks, setTracks] = useState<TrackViewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentTrack, setCurrentTrack] = useState<TrackViewItem>();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(50);
+
+  const audioPlayer = useAudioPlayer();
 
   useEffect(() => {
     fetchTracks();
@@ -37,25 +35,15 @@ const HomePage: React.FC = () => {
   };
 
   const handlePlay = (track: TrackViewItem) => {
-    if (currentTrack?.id === track.id) {
-      setIsPlaying(true);
+    if (audioPlayer.currentTrack?.id === track.id) {
+      audioPlayer.play();
     } else {
-      setIsPlaying(true);
-      setCurrentTrack(track);
-      setCurrentTime(0);
+      audioPlayer.loadAndPlayTrack(track);
     }
   };
 
   const handlePause = () => {
-    setIsPlaying(false);
-  };
-
-  const handleSeek = (time: number) => {
-    setCurrentTime(time);
-  };
-
-  const handleVolumeChange = (newVolume: number) => {
-    setVolume(newVolume);
+    audioPlayer.pause();
   };
 
   const filteredTracks = tracks.filter(track =>
@@ -67,7 +55,6 @@ const HomePage: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1, pb: 10 }}>
-    
       <Container maxWidth="xl" sx={{ mt: 4 }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -77,8 +64,8 @@ const HomePage: React.FC = () => {
           <>
             <TrackList
               tracks={filteredTracks}
-              currentPlayingTrack={currentTrack}
-              isPlaying={isPlaying}
+              currentPlayingTrack={audioPlayer.currentTrack}
+              isPlaying={audioPlayer.isPlaying}
               onPlay={handlePlay}
               onPause={handlePause}
               title={searchQuery ? `Результаты поиска: "${searchQuery}"` : 'Популярные треки'}
@@ -88,17 +75,18 @@ const HomePage: React.FC = () => {
       </Container>
 
       <PlayerControls
-        currentTrack={currentTrack}
-        isPlaying={isPlaying}
-        currentTime={currentTime}
-        duration={currentTrack?.trackInfo.duration || 0}
-        volume={volume}
-        onPlay={() => { setIsPlaying(true); }}
-        onPause={handlePause}
-        onNext={() => {/* Implement next track logic */ }}
-        onPrevious={() => {/* Implement previous track logic */ }}
-        onSeek={handleSeek}
-        onVolumeChange={handleVolumeChange}
+        currentTrack={audioPlayer.currentTrack}
+        isPlaying={audioPlayer.isPlaying}
+        currentTime={audioPlayer.currentTime}
+        duration={audioPlayer.duration}
+        volume={audioPlayer.volume}
+        isLoading={audioPlayer.isLoading}
+        onPlay={audioPlayer.play}
+        onPause={audioPlayer.pause}
+        onNext={() => {/* Implement next track logic */}}
+        onPrevious={() => {/* Implement previous track logic */}}
+        onSeek={audioPlayer.seek}
+        onVolumeChange={audioPlayer.setVolume}
       />
     </Box>
   );

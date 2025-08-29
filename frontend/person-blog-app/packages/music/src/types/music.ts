@@ -24,3 +24,12 @@ export interface PagedListViewModel<T> {
   pageSize: number;
   items: T[];
 }
+
+export interface AudioPlayerState {
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  isLoading: boolean;
+  error?: string;
+}

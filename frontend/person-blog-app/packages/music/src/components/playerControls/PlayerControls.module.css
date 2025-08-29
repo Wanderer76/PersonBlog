@@ -1,104 +1,140 @@
-/* components/PlayerControls.module.css */
-
 .player {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 16px 16px;
-  background-color: #1e1e1e;
-  border-top: 1px solid #333;
-  box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.2);
-  color: white;
   z-index: 1000;
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
 }
 
 .controlsContainer {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  padding: 12px 24px;
+  gap: 24px;
+  min-height: 80px;
 }
 
+/* Информация о треке - фиксированная ширина */
 .trackInfo {
-  min-width: 200px;
+  flex: 0 0 250px; /* Фиксированная ширина */
+  min-width: 0; /* Важно для обрезки текста */
+  overflow: hidden;
 }
 
 .trackName {
-  font-size: 1rem;
   font-weight: 600;
+  font-size: 14px;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #000;
+  color: #333;
 }
 
 .artistName {
-  font-size: 0.85rem;
-  color: #000;
+  font-size: 12px;
+  margin: 0;
+  color: #666;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Основные контролы - занимают оставшееся пространство */
 .playbackControls {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 8px;
 }
 
 .playbackButtons {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
+  gap: 8px;
 }
 
-/* Исправленные стили для кнопок */
 .playButton {
-  background-color: #ff7b00 !important;
+  background-color: #ff7b00;
   color: white !important;
-  width: 56px !important;
-  height: 56px !important;
-  border-radius: 50% !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 4px 12px rgba(255, 123, 0, 0.3) !important;
+  transition: background-color 0.2s ease;
 }
 
 .playButton:hover {
-  background-color: #ff7b00 !important;
-  transform: scale(1.05) !important;
-  opacity: 0.9 !important;
+  background-color: #e66a00;
 }
 
-/* Стили для обычных кнопок (предыдущий/следующий) */
-.playbackButtons .MuiIconButton-root {
-  color: #ff7b00 !important;
+.playButton:disabled {
+  background-color: #ccc;
 }
 
-.playbackButtons .MuiIconButton-root:hover {
-  background-color: rgba(255, 123, 0, 0.1) !important;
-}
-
+/* Контейнер для слайдера прогресса */
 .sliderContainer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
 }
 
 .timeLabel {
-  min-width: 40px;
-  font-size: 0.75rem;
-  color: #aaa;
+  flex: 0 0 40px;
+  text-align: center;
+  font-size: 11px;
+  color: #666;
 }
 
+/* Регулятор громкости - фиксированная ширина */
 .volumeContainer {
+  flex: 0 0 120px;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
 }
 
-.volumeContainer .MuiSvgIcon-root {
-  color: #ff7b00;
+/* Стили для слайдеров */
+.progress-slider,
+.volume-slider {
+  flex: 1;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .controlsContainer {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .trackInfo {
+    flex: 0 0 auto;
+    width: 100%;
+    text-align: center;
+  }
+
+  .playbackControls {
+    width: 100%;
+  }
+
+  .volumeContainer {
+    flex: 0 0 auto;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Анимация загрузки */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
 }

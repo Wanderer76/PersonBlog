@@ -1,12 +1,17 @@
-﻿using Infrastructure.Models;
+﻿using Authentication.Contract.Constants;
+using Infrastructure.Middleware;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Music.Domain.Services;
 
 namespace Music.API.Controllers
 {
     public class ProfilePlayListController : BaseController
     {
-        public ProfilePlayListController(ILogger<BaseController> logger) : base(logger)
+        private readonly IMusicPlayListService _musicPlayListService;
+        public ProfilePlayListController(ILogger<BaseController> logger, IMusicPlayListService musicPlayListService) : base(logger)
         {
+            _musicPlayListService = musicPlayListService;
         }
 
         /// <summary>
@@ -16,9 +21,14 @@ namespace Music.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet("list")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> GetAllPlayList(int page, int size)
         {
-            return Ok();
+            var result = await _musicPlayListService.GetCurrentUserPlayListsAsync();
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return 
+                BadRequest(result.Error);
         }
 
         /// <summary>

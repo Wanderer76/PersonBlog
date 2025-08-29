@@ -14,5 +14,6 @@ public static class MusicServiceExtensions
         services.AddScoped<IAvatarService, DefaultAvatarService>();
         services.AddScoped<IArtistService, DefaultArtistService>();
         services.AddScoped<IArtistSearchService, DefaultArtistSearchService>();
+        services.AddScoped<IMusicPlayListService, DefaultPlayListService>();
     }
 }
