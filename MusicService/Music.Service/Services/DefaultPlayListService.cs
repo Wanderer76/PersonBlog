@@ -1,5 +1,6 @@
 ﻿using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Music.Contract.Models;
 using Music.Contract.Models.PlayList;
 using Music.Domain.Entities;
 using Music.Domain.Services;
@@ -17,11 +18,13 @@ namespace Music.Service.Services
     {
         private readonly IReadWriteRepository<IMusicEntity> _repository;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileStorageFactory _fileStorageFactory;
 
-        public DefaultPlayListService(IReadWriteRepository<IMusicEntity> repository, ICurrentUserService currentUserService)
+        public DefaultPlayListService(IReadWriteRepository<IMusicEntity> repository, ICurrentUserService currentUserService, IFileStorageFactory fileStorageFactory)
         {
             _repository = repository;
             _currentUserService = currentUserService;
+            _fileStorageFactory = fileStorageFactory;
         }
 
         public async Task<Result<IReadOnlyList<PlayListViewModel>>> CreateDefaultUserPlayListsAsync()
@@ -96,12 +99,43 @@ namespace Music.Service.Services
                          .ToListAsync();
             if (result.Count > 0)
                 return result;
-            if(result.Count == 0)
+            if (result.Count == 0)
             {
                 var playLists = await CreateDefaultUserPlayListsAsync(user.UserId.Value);
-                    return playLists;
+                return playLists;
             }
             return Result<IReadOnlyList<PlayListViewModel>>.Failure(new Error("Somethig went wrong"));
+        }
+
+        public async Task<Result<IReadOnlyList<TrackViewItem>>> GetPlayListTrackListAsync(Guid id, int page, int size)
+        {
+            using var fileStorage = _fileStorageFactory.CreateFileStorage();
+
+            var playlistTracks = await _repository.Get<PlayListTrack>()
+                .Where(x => x.PlayListId == id)
+                .Select(x => new
+                {
+                    x.Track,
+                    x.Track.Metadata,
+                    x.Track.ThumbnailMetadata,
+                    Artists = x.Track.ArtistTrackLinks.Select(artist => new { artist.Artist.Name, artist.ArtistId })
+                })
+                .Skip((page - 1) * size)
+                .Take(size)
+                .ToListAsync();
+
+            return await playlistTracks
+                .ToAsyncEnumerable()
+                .SelectAwait(async x =>
+                new TrackViewItem(
+                    x.Track.Id,
+                    x.Track.Title,
+                    await fileStorage.GetFileUrlAsync(x.Track.ThumbnailMetadata.Id, x.Track.ThumbnailMetadata.ObjectName),
+                    x.Track.AlbumId,
+                    new TrackFileInfo(await fileStorage.GetFileUrlAsync(x.Track.Metadata.Id, x.Track.Metadata.ObjectName), x.Track.Metadata.Duration),
+                    [.. x.Artists.Select(artist => new Contract.Models.Artist.ArtistInfo(artist.ArtistId, artist.Name))]
+                    ))
+                .ToListAsync();
         }
     }
 }

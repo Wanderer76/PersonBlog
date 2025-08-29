@@ -27,9 +27,20 @@ namespace Music.API.Controllers
             var result = await _musicPlayListService.GetCurrentUserPlayListsAsync();
             if (result.IsSuccess)
                 return Ok(result.Value);
-            return 
+            return
                 BadRequest(result.Error);
         }
+
+        [HttpGet("{id}/tracks")]
+        public async Task<IActionResult> GetPlayListTracks(Guid id, int? page, int? size)
+        {
+            var result = await _musicPlayListService.GetPlayListTrackListAsync(id, page ?? 1, size ?? 10);
+            if (result.IsSuccess)
+                return Ok(result.Value);
+            return
+                BadRequest(result.Error);
+        }
+
 
         /// <summary>
         /// плейлист с создаными пользователем треками

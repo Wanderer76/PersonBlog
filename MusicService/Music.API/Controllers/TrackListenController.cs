@@ -2,7 +2,6 @@
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Minio.DataModel.Args;
 using Music.Domain.Entities;
 using Shared.Persistence;
 
