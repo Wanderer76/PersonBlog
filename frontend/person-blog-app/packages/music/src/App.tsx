@@ -10,6 +10,8 @@ import TrackCreator from './components/trackCreator/TrackCreator';
 import ProfilePage from './pages/profile/ProfilePage';
 import Sidebar from './components/sidebar/Sidebar';
 import PlaylistPage from './pages/playlist/PlaylistPage';
+import Layout from './components/layout/Layout';
+import { AudioPlayerProvider } from './context/AudioPlayerContext';
 
 const Session = function ({ children }: any) {
   const [searchParams] = useSearchParams();
@@ -35,23 +37,27 @@ function App() {
   return (
     <BrowserRouter>
       <Session>
-        <Header />
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <div style={{ display: 'flex' }}>
-            <Sidebar />
-            <main style={{ flex: 1, padding: '10px' }}>
-              <Routes>
-                <Route path='/' element={<HomePage />} />
-                <Route path='/profile' element={<ProfilePage />} />
-                <Route path='/track/create' element={<TrackCreator />} />
-                <Route path='/playlist/:id' element={<PlaylistPage />} />
-              </Routes>
-            </main>
-          </div>
+          <AudioPlayerProvider>
+            <Layout>
+              <div style={{ display: 'flex' }}>
+                <Sidebar />
+                <main style={{ flex: 1, padding: '10px' }}>
+                  <Header />
+                  <Routes>
+                    <Route path='/' element={<HomePage />} />
+                    <Route path='/profile' element={<ProfilePage />} />
+                    <Route path='/track/create' element={<TrackCreator />} />
+                    <Route path='/playlist/:id' element={<PlaylistPage />} />
+                  </Routes>
+                </main>
+              </div>
+            </Layout>
+          </AudioPlayerProvider>
         </ThemeProvider>
-      </Session >
-    </BrowserRouter >
+      </Session>
+    </BrowserRouter>
   );
 }
 

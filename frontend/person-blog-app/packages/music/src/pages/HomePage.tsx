@@ -10,13 +10,14 @@ import PlayerControls from '../components/playerControls/PlayerControls';
 import type { TrackViewItem } from '../types/music';
 import { musicApi } from '../services/api';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
+import { useAudioPlayerContext } from '../context/AudioPlayerContext';
 
 const HomePage: React.FC = () => {
   const [tracks, setTracks] = useState<TrackViewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const audioPlayer = useAudioPlayer();
+  const audioPlayer = useAudioPlayerContext();
 
   useEffect(() => {
     fetchTracks();
@@ -74,20 +75,7 @@ const HomePage: React.FC = () => {
         )}
       </Container>
 
-      <PlayerControls
-        currentTrack={audioPlayer.currentTrack}
-        isPlaying={audioPlayer.isPlaying}
-        currentTime={audioPlayer.currentTime}
-        duration={audioPlayer.duration}
-        volume={audioPlayer.volume}
-        isLoading={audioPlayer.isLoading}
-        onPlay={audioPlayer.play}
-        onPause={audioPlayer.pause}
-        onNext={() => {/* Implement next track logic */}}
-        onPrevious={() => {/* Implement previous track logic */}}
-        onSeek={audioPlayer.seek}
-        onVolumeChange={audioPlayer.setVolume}
-      />
+      
     </Box>
   );
 };
