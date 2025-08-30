@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import styles from './ProfilePage.module.css';
 import { useNavigate } from 'react-router-dom';
 import API, { AuthUrl } from '../../scripts/apiMethod';
+import { JwtTokenService } from '../../scripts/TokenStrorage';
 
 interface ArtistDetailView {
     avatarUrl: string | null;
@@ -49,7 +50,7 @@ const ProfilePage: React.FC = () => {
             }
         } catch (error: any) {
             // Если артист не найден (например, 404), считаем, что он не создан
-            if (error.response?.status === 400 || error.response?.status === 401) {
+            if (error.response?.status === 400 || error.response?.status === 403) {
                 setArtist(null);
                 var profileResp = await API.get<ProfilView>(`${AuthUrl}/video/api/Profile/my`);
                 if (profileResp.status == 200) {
@@ -160,7 +161,7 @@ const ProfilePage: React.FC = () => {
                         )}
 
                         <div className={styles.buttonGroup}>
-                            {artist ? (
+                            {/* {artist ? (
                                 <button className={styles.editBtn} onClick={handleEditProfile}>
                                     <i className="fas fa-edit"></i> Редактировать профиль
                                 </button>
@@ -168,7 +169,14 @@ const ProfilePage: React.FC = () => {
                                 <button className={styles.changeTrackButton} onClick={handleBecomeArtist}>
                                     Стать артистом
                                 </button>
-                            )}
+                            )} */}
+                            <br/>
+                            <button className={styles.changeTrackButton} onClick={(e)=>{
+                                JwtTokenService.cleanAuth();
+                                navigate("/")
+                            }}>
+                                    <i className="fas fa-edit"></i> Выйти
+                                </button>
                         </div>
                     </div>
                 </header>

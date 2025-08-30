@@ -32,6 +32,11 @@ const SideBar = function () {
                     <ClockIcon />
                     <span>Смотреть позже</span>
                 </NavLink>
+                <div className={styles.sidebarSectionDivider}></div>
+                <NavLink to="http://localhost:5173/" className={styles.sidebarItem}>
+                    <MusicIcon />
+                    <span>Melodia </span>
+                </NavLink>
             </nav>
         </div>)
 }
@@ -65,5 +70,10 @@ const LikeIcon = () => (
 const ClockIcon = () => (
     <svg viewBox="0 0 24 24" className={styles.sidebarIcon}>
         <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z" />
+    </svg>
+);
+const MusicIcon = () => (
+    <svg viewBox="0 0 24 24" className={styles.sidebarIcon}>
+        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
     </svg>
 );

@@ -459,10 +459,16 @@ const TrackForm: React.FC<TrackFormProps> = ({
                     <input
                         type="number"
                         value={formData.year}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, year: Number(e.target.value) }))}
+                        onChange={(e) => {
+                            var value = Number(e.target.value);
+                            var currentYear = new Date().getFullYear();
+                            if(value>currentYear)
+                                value = currentYear
+                            return setFormData((prev) => ({ ...prev, year: value }));
+                        }}
                         className={styles.formInput}
-                        min="1900"
-                        max="2099"
+                        min='1900'
+                        max={new Date().getFullYear()}
                     />
                 </div>
 

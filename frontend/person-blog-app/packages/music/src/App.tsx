@@ -40,7 +40,7 @@ function App() {
           <CssBaseline />
           <div style={{ display: 'flex' }}>
             <Sidebar />
-            <main style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+            <main style={{ flex: 1, padding: '10px' }}>
               <Routes>
                 <Route path='/' element={<HomePage />} />
                 <Route path='/profile' element={<ProfilePage />} />

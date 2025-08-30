@@ -30,7 +30,7 @@ const Header: React.FC = function () {
                         }}
                         onClick={() => navigate('/')}
                     >
-                        MusicStream
+                        Melodia
                     </Typography>
 
                     {!JwtTokenService.isAuth() &&

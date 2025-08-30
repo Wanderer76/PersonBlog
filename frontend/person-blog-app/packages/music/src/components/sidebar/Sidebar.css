@@ -6,7 +6,6 @@
     border-right: 1px solid #eee;
     position: sticky;
     margin-top: 10px;
-    height: 90vh;
     /* Занимает всё пространство ниже хедера */
     overflow-y: auto;
     z-index: 10;

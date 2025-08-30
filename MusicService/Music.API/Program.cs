@@ -18,6 +18,7 @@ builder.Services.AddMusicPersistence(builder.Configuration);
 builder.Services.AddMusicServices();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddAuthorization();
+builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddUserSessionServices();
 builder.Services.AddFFMpegAudioExtractorService(builder.Configuration);
