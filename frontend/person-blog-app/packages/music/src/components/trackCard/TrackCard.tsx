@@ -74,7 +74,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
           className={styles.trackName}
           title={track.name}
         >
-          {track.name}
+          {track.name.length > 20 ? `${track.name.substring(0, 20)}...` : track.name}
         </Typography>
         <Typography
           component="p"

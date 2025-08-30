@@ -18,7 +18,7 @@ const Sidebar: React.FC = () => {
     { icon: '🔔', label: 'Уведомления', path: '/notifications' },
     { icon: '❤️', label: 'Понравившееся', path: '/liked' },
     { icon: '📁', label: 'Мои загрузки', path: '/downloads' },
-    { icon: '📄', label: 'PlayView', path: 'http://localhost:3000/' },
+    { icon: '📷', label: 'PlayView', path: 'http://localhost:3000/' },
   ];
 
   return (
