@@ -48,6 +48,6 @@ export interface GenreOption {
 }
 
 export interface ArtistOption {
-    value: string;
+    value: string | null;
     label: string;
 }

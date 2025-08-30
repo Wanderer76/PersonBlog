@@ -49,7 +49,7 @@ const ProfilePage: React.FC = () => {
             }
         } catch (error: any) {
             // Если артист не найден (например, 404), считаем, что он не создан
-            if (error.response?.status === 400) {
+            if (error.response?.status === 400 || error.response?.status === 401) {
                 setArtist(null);
                 var profileResp = await API.get<ProfilView>(`${AuthUrl}/video/api/Profile/my`);
                 if (profileResp.status == 200) {
@@ -97,7 +97,7 @@ const ProfilePage: React.FC = () => {
     };
 
     const handlePlaylistClick = (id: string) => {
-       navigate(`/playlist/${id}`)
+        navigate(`/playlist/${id}`)
     };
 
     const actionItems = [
