@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './TrackCreator.module.css';
 import API from '../../scripts/apiMethod';
-import type { MultiValue, ActionMeta } from 'react-select';
+import type { MultiValue, ActionMeta, InputActionMeta } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import AsyncSelect from 'react-select/async';
 import type { AxiosResponse } from 'axios';
@@ -36,7 +36,7 @@ const TrackCreator: React.FC<TrackCreatorProps> = ({ onSuccessRedirect = '/profi
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const navigate = useNavigate();
-    
+
     // --- Восстановление из localStorage ---
     useEffect(() => {
         const saved = localStorage.getItem(LOCAL_STORAGE_TRACK_KEY);
@@ -292,7 +292,7 @@ interface TrackFormProps {
 }
 
 interface CustomArtistOption extends ArtistOption {
-    isCreateOption?: boolean;
+    isCreateOption: boolean | null;
 }
 
 const TrackForm: React.FC<TrackFormProps> = ({
@@ -311,7 +311,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
     const [inputArtist, setInputArtist] = useState(metadata.artist ?? '');
     const [selectedArtist, setSelectedArtist] = useState<CustomArtistOption | null>(
-        metadata?.artistId == null ? null : { label: metadata.artist, value: metadata.artistId }
+        metadata?.artistId == null ? null : { label: metadata.artist, value: metadata.artistId, isCreateOption: false }
     );
     const [debouncedLoadOptions, setDebouncedLoadOptions] = useState<
         (inputValue: string) => Promise<CustomArtistOption[]>
@@ -334,7 +334,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 const response: AxiosResponse<Artist[]> = await API.get('/Artist/search', {
                     params: { name: inputValue },
                 });
-                
+
                 // Если ничего не найдено, добавляем опцию для создания нового артиста
                 if (response.data.length === 0 && inputValue.trim()) {
                     return [{
@@ -343,10 +343,11 @@ const TrackForm: React.FC<TrackFormProps> = ({
                         isCreateOption: true
                     }];
                 }
-                
+
                 return response.data.map((artist) => ({
                     value: artist.id,
                     label: artist.name,
+                    isCreateOption: false
                 }));
             } catch (error) {
                 console.error('Ошибка при поиске артистов:', error);
@@ -374,7 +375,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
     };
 
     // Обработчик изменения ввода артиста
-    const handleArtistInputChange = (inputValue: string, actionMeta: ActionMeta<string>) => {
+    const handleArtistInputChange = (inputValue: string, actionMeta: InputActionMeta) => {
         if (actionMeta.action === 'input-change') {
             setInputArtist(inputValue);
         }
@@ -405,7 +406,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
             artistName: inputArtist || metadata.artist, // Используем inputArtist если нет выбранного артиста
             trackFileId: metadata.trackFileId,
             genres: selectedGenres,
-            artistId: selectedArtist?.isCreateOption ? undefined : selectedArtist?.value, // ID только если артист выбран из списка (не опция создания)
+            artistId: selectedArtist?.isCreateOption ? null : selectedArtist?.value ?? null, // ID только если артист выбран из списка (не опция создания)
             thumbnailId: metadata.thumbnailId || undefined,
             year: formData.year,
         };

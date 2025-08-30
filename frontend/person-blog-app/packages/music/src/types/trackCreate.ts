@@ -32,7 +32,7 @@ export interface TrackFileMetadata {
 
 export interface TrackCreateRequest {
     name: string;
-    artistId?: string;
+    artistId: string | null;
     postId?: string;
     artistName: string;
     albumId?: string;
