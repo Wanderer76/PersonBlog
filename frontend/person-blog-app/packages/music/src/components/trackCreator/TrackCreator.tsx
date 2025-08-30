@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './TrackCreator.module.css';
 import API from '../../scripts/apiMethod';
 import type { MultiValue, ActionMeta, InputActionMeta } from 'react-select';
@@ -7,20 +7,9 @@ import AsyncSelect from 'react-select/async';
 import type { AxiosResponse } from 'axios';
 import type { Artist, ArtistOption, CreateView, Genre, GenreOption, TrackCreateRequest, TrackFileMetadata } from '../../types/trackCreate';
 import { useNavigate } from 'react-router-dom';
+import { base64ToFile } from '../../scripts/helper';
 
 const LOCAL_STORAGE_TRACK_KEY = 'uploadedTrackMetadata';
-
-// --- Вспомогательная функция: base64 → File ---
-const base64ToFile = (base64: string, filename: string, mimeType: string): File => {
-    const arr = base64.split(',');
-    const mimeMatch = mimeType.match(/image\/.*(?=;)/);
-    const mime = mimeMatch ? mimeMatch[0] : 'image/jpeg';
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8arr = new Uint8Array(n);
-    while (n--) u8arr[n] = bstr.charCodeAt(n);
-    return new File([u8arr], filename, { type: mime });
-};
 
 interface TrackCreatorProps {
     onSuccessRedirect?: string;
@@ -291,10 +280,6 @@ interface TrackFormProps {
     onReset: () => void;
 }
 
-interface CustomArtistOption extends ArtistOption {
-    isCreateOption: boolean | null;
-}
-
 const TrackForm: React.FC<TrackFormProps> = ({
     metadata,
     genres,
@@ -308,13 +293,14 @@ const TrackForm: React.FC<TrackFormProps> = ({
         name: metadata.title,
         year: metadata.year,
     });
+    const selectRef = useRef<any>(null);
 
-    const [inputArtist, setInputArtist] = useState(metadata.artist ?? '');
-    const [selectedArtist, setSelectedArtist] = useState<CustomArtistOption | null>(
-        metadata?.artistId == null ? null : { label: metadata.artist, value: metadata.artistId, isCreateOption: false }
+    const [inputArtist, setInputArtist] = useState(metadata.artist);
+    const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(
+        metadata?.artistId == null ? null : { label: metadata.artist, value: metadata.artistId }
     );
     const [debouncedLoadOptions, setDebouncedLoadOptions] = useState<
-        (inputValue: string) => Promise<CustomArtistOption[]>
+        (inputValue: string) => Promise<ArtistOption[]>
     >(() => () => Promise.resolve([]));
 
     // Преобразуем жанры в опции
@@ -328,27 +314,19 @@ const TrackForm: React.FC<TrackFormProps> = ({
     );
 
     useEffect(() => {
-        const loadOptions = async (inputValue: string): Promise<CustomArtistOption[]> => {
+        const loadOptions = async (inputValue: string): Promise<ArtistOption[]> => {
             if (!inputValue.trim()) return [];
             try {
                 const response: AxiosResponse<Artist[]> = await API.get('/Artist/search', {
                     params: { name: inputValue },
                 });
-
-                // Если ничего не найдено, добавляем опцию для создания нового артиста
-                if (response.data.length === 0 && inputValue.trim()) {
-                    return [{
-                        value: 'create-new',
-                        label: `Создать "${inputValue}"`,
-                        isCreateOption: true
-                    }];
+                if (response.data.length > 0) {
+                    return response.data.map((artist) => ({
+                        value: artist.id,
+                        label: artist.name,
+                    }));
                 }
-
-                return response.data.map((artist) => ({
-                    value: artist.id,
-                    label: artist.name,
-                    isCreateOption: false
-                }));
+                return [{ label: inputValue.trim(), value: null }]
             } catch (error) {
                 console.error('Ошибка при поиске артистов:', error);
                 return [];
@@ -376,25 +354,25 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
     // Обработчик изменения ввода артиста
     const handleArtistInputChange = (inputValue: string, actionMeta: InputActionMeta) => {
-        if (actionMeta.action === 'input-change') {
-            setInputArtist(inputValue);
-        }
+        console.log(inputArtist);
+        console.log(selectedArtist);
+
+        setInputArtist(inputValue)
+
+        return inputValue;
     };
 
     // Обработчик изменения выбора артиста
-    const handleArtistChange = (option: CustomArtistOption | null) => {
+    const handleArtistChange = (option: ArtistOption | null) => {
         setSelectedArtist(option);
         if (option) {
-            if (option.isCreateOption) {
-                // Если выбрана опция создания, используем текст из inputValue
-                const artistName = option.label.replace('Создать "', '').replace('"', '');
-                setInputArtist(artistName);
-                setSelectedArtist(null); // Сбрасываем выбранный вариант
-            } else {
-                setInputArtist(option.label);
-            }
+            setInputArtist(option?.label ?? '');
         } else {
+            setSelectedArtist(null);
             setInputArtist('');
+        }
+        if (selectRef.current) {
+            selectRef.current.blur();
         }
     };
 
@@ -403,12 +381,14 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
         const request: TrackCreateRequest = {
             name: formData.name,
-            artistName: inputArtist || metadata.artist, // Используем inputArtist если нет выбранного артиста
+            artistName: inputArtist || metadata.artist,
             trackFileId: metadata.trackFileId,
             genres: selectedGenres,
-            artistId: selectedArtist?.isCreateOption ? null : selectedArtist?.value ?? null, // ID только если артист выбран из списка (не опция создания)
-            thumbnailId: metadata.thumbnailId || undefined,
+            artistId: selectedArtist?.value || null,
+            thumbnailId: metadata.thumbnailId || null,
             year: formData.year,
+            postId: null,
+            albumId: null
         };
 
         onSubmit(request);
@@ -420,22 +400,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
-
-    // Кастомный компонент для отображения опций
-    const CustomOption = ({ innerRef, innerProps, data }: any) => (
-        <div
-            ref={innerRef}
-            {...innerProps}
-            style={{
-                padding: '8px 12px',
-                backgroundColor: data.isCreateOption ? '#f0f0f0' : 'transparent',
-                fontStyle: data.isCreateOption ? 'italic' : 'normal',
-                cursor: 'pointer'
-            }}
-        >
-            {data.label}
-        </div>
-    );
 
     return (
         <form className={styles.trackForm} onSubmit={handleSubmit}>
@@ -460,19 +424,24 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
                 <div className={styles.formGroup}>
                     <label>Исполнитель</label>
-                    <AsyncSelect<CustomArtistOption>
+                    <AsyncSelect<ArtistOption>
+                        ref={selectRef}
                         cacheOptions={false}
                         defaultOptions={false}
                         value={selectedArtist}
-                        inputValue={inputArtist}
+                        // inputValue={inputArtist}
                         onInputChange={handleArtistInputChange}
                         onChange={handleArtistChange}
                         loadOptions={debouncedLoadOptions}
+                        onMenuClose={() => {
+                            // Также убираем фокус при закрытии меню без выбора
+                            if (selectRef.current) {
+                                selectRef.current.blur();
+                            }
+                        }}
                         placeholder="Начните вводить имя исполнителя..."
-                        noOptionsMessage={() => 'Нет совпадений. Введите имя нового артиста'}
+                        noOptionsMessage={() => 'Нет совпадений. Введенное имя будет использовано'}
                         isClearable
-                        filterOption={null}
-                        components={{ Option: CustomOption }}
                         styles={{
                             control: (base, state) => ({
                                 ...base,

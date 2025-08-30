@@ -33,12 +33,12 @@ export interface TrackFileMetadata {
 export interface TrackCreateRequest {
     name: string;
     artistId: string | null;
-    postId?: string;
+    postId: string | null;
     artistName: string;
-    albumId?: string;
+    albumId: string | null;
     year: number;
     trackFileId: string;
-    thumbnailId?: string;
+    thumbnailId: string | null;
     genres: string[];
 }
 
