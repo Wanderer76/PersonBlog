@@ -122,7 +122,7 @@ internal class DefaultAuthService : IAuthService
         _context.Add(AuthEvent.Create(profileCreateModel));
         await _context.SaveChangesAsync();
 
-        return await Authenticate(new LoginPasswordModel(user.Login, registerModel.Password));
+        return await Authenticate(new LoginPasswordModel(user.Login, registerModel.Password) { RedirectUrl = registerModel.RedirectUrl });
     }
 
     public async ValueTask Logout()
