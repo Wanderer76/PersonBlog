@@ -17,7 +17,7 @@ namespace Music.API.Controllers
             _fileStorageFactory = fileStorageFactory;
         }
 
-        [HttpGet("redirect/{trackId}")]
+        [HttpGet("track/{trackId}")]
         public async Task<IActionResult> RedirectToPresignedUrl(Guid trackId)
         {
             var trackFile = await _read.Get<TrackMetadata>()

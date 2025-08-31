@@ -8,10 +8,11 @@ public class TrackViewItem
     public string Name { get; }
     public string? ThumbnailUrl { get; }
     public Guid? AlbumId { get; }
+    public bool IsLiked { get; }
     public TrackFileInfo TrackInfo { get; }
     public IReadOnlyList<ArtistInfo> Artists { get; }
 
-    public TrackViewItem(Guid id, string name, string? thumbnailUrl, Guid? albumId, TrackFileInfo trackInfo, IReadOnlyList<ArtistInfo> artists)
+    public TrackViewItem(Guid id, string name, string? thumbnailUrl, Guid? albumId, TrackFileInfo trackInfo, IReadOnlyList<ArtistInfo> artists, bool isLiked)
     {
         Id = id;
         Name = name;
@@ -19,6 +20,7 @@ public class TrackViewItem
         AlbumId = albumId;
         TrackInfo = trackInfo;
         Artists = artists;
+        IsLiked = isLiked;
     }
 
 }

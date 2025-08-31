@@ -19,12 +19,26 @@ namespace Music.Service.Services
         private readonly IReadWriteRepository<IMusicEntity> _repository;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileStorageFactory _fileStorageFactory;
+        private readonly ITrackService _trackService;
 
-        public DefaultPlayListService(IReadWriteRepository<IMusicEntity> repository, ICurrentUserService currentUserService, IFileStorageFactory fileStorageFactory)
+        public DefaultPlayListService(IReadWriteRepository<IMusicEntity> repository, ICurrentUserService currentUserService, IFileStorageFactory fileStorageFactory, ITrackService trackService)
         {
             _repository = repository;
             _currentUserService = currentUserService;
             _fileStorageFactory = fileStorageFactory;
+            _trackService = trackService;
+        }
+
+        public async Task<Result> AddTrackToPlayList(Guid trackId, ConstPlayListType liked)
+        {
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var playList = await _repository.Get<PlayList>()
+                .Where(x => x.UserId == user.UserId.Value && x.Type == liked)
+                .FirstAsync();
+            _repository.Attach(playList);
+            await playList.AddTrackAsync(_repository, trackId);
+            await _repository.SaveChangesAsync();
+            return Result.Success();
         }
 
         public async Task<Result<IReadOnlyList<PlayListViewModel>>> CreateDefaultUserPlayListsAsync()
@@ -111,7 +125,7 @@ namespace Music.Service.Services
         public async Task<Result<PlayListViewModel>> GetPlayListInfoAsync(Guid id)
         {
             var result = await _repository.Get<PlayList>()
-                       .Where(x => x.Id ==  id)
+                       .Where(x => x.Id == id)
                        .Select(x => new
                        {
                            x.Id,
@@ -129,18 +143,39 @@ namespace Music.Service.Services
         {
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
-            var playlistTracks = await _repository.Get<PlayListTrack>()
+            var user = await _currentUserService.GetCurrentUserAsync();
+
+            var playlistTracks = _repository.Get<PlayListTrack>()
                 .Where(x => x.PlayListId == id)
                 .Select(x => new
                 {
                     x.Track,
                     x.Track.Metadata,
                     x.Track.ThumbnailMetadata,
-                    Artists = x.Track.ArtistTrackLinks.Select(artist => new { artist.Artist.Name, artist.ArtistId })
+                    x.PlayList.Type,
+                    IsLike = x.PlayList.Type == ConstPlayListType.Liked || _repository.Get<PlayListTrack>()
+                    .Where(x => x.PlayList.UserId == user.UserId && x.PlayList.Type == ConstPlayListType.Liked)
+                    .Where(a => a.TrackId == x.TrackId).Any(),
+                    Artists = x.Track.ArtistTrackLinks.Select(artist => new { artist.Artist.Name, artist.ArtistId }).ToList()
                 })
                 .Skip((page - 1) * size)
                 .Take(size)
-                .ToListAsync();
+                .ToList();
+
+            //var playlistTracks = await _repository.Get<PlayListTrack>()
+            //    .Where(x => x.PlayListId == id)
+            //    .Select(x => new
+            //    {
+            //        x.Track,
+            //        x.Track.Metadata,
+            //        x.Track.ThumbnailMetadata,
+            //        x.PlayList.Type,
+            //        IsLike = x.PlayList.Type == ConstPlayListType.Liked,
+            //        Artists = x.Track.ArtistTrackLinks.Select(artist => new { artist.Artist.Name, artist.ArtistId })
+            //    })
+            //    .Skip((page - 1) * size)
+            //    .Take(size)
+            //    .ToListAsync();
 
             return await playlistTracks
                 .ToAsyncEnumerable()
@@ -151,9 +186,31 @@ namespace Music.Service.Services
                     await fileStorage.GetFileUrlAsync(x.Track.ThumbnailMetadata.Id, x.Track.ThumbnailMetadata.ObjectName),
                     x.Track.AlbumId,
                     new TrackFileInfo(await fileStorage.GetFileUrlAsync(x.Track.Metadata.Id, x.Track.Metadata.ObjectName), x.Track.Metadata.Duration),
-                    [.. x.Artists.Select(artist => new Contract.Models.Artist.ArtistInfo(artist.ArtistId, artist.Name))]
+                    [.. x.Artists.Select(artist => new Contract.Models.Artist.ArtistInfo(artist.ArtistId, artist.Name))],
+                    x.IsLike
                     ))
                 .ToListAsync();
+        }
+
+        public async Task<Result> RemoveTrackFromPlayListAsync(Guid id, Guid trackId)
+        {
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var playList = await _repository.Get<PlayList>()
+                .FirstAsync(x => x.Id == id);
+            if (user.UserId.Value != playList.UserId)
+            {
+                return Result.Failure(new Error("Вы не можете удалять треки не из своего плейлиста"));
+            }
+            using var transaction = await _repository.BeginTransactionAsync();
+
+            playList.RemoveTrack(_repository, trackId);
+            await _repository.SaveChangesAsync();
+            if (playList.Type == ConstPlayListType.Upload)
+            {
+                await _trackService.RemoveTrackAsync(trackId);
+            }
+            await transaction.CommitAsync();
+            return Result.Success();
         }
     }
 }

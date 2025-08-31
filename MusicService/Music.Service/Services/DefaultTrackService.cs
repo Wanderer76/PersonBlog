@@ -150,10 +150,25 @@ namespace Music.Service.Services
                 var song = await fileStorage.GetFileUrlAsync(track.Metadata.Id, track.Metadata.ObjectName);
                 var trackFileInfo = new TrackFileInfo(song, track.Metadata.Duration);
                 var artists = track.Aritsts.Select(x => new ArtistInfo(x.ArtistId, x.Name)).ToList();
-                return new TrackViewItem(track.Id, track.Title, thumbnail, track.AlbumId, trackFileInfo, artists);
+                return new TrackViewItem(track.Id, track.Title, thumbnail, track.AlbumId, trackFileInfo, artists, false);
             }).ToListAsync();
 
             return new PagedListViewModel<TrackViewItem>(totalCount / size, size, result);
+        }
+
+        public async Task<Result> RemoveTrackAsync(Guid id)
+        {
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var track = await _repository.Get<Track>()
+                .FirstAsync(x => x.Id == id);
+
+            if (track.UploadedByUserId != user.UserId.Value)
+            {
+                return Result.Failure(new Error("Вы не можете удалить не свой трек"));
+            }
+            _repository.Remove(track);
+            await _repository.SaveChangesAsync();
+            return Result.Success();
         }
 
         public async Task<Result<Guid>> UploadThumbnailFileAsync(UploadThumbnailFile createRequest)
@@ -169,7 +184,7 @@ namespace Music.Service.Services
 
             await _tempTrackMetadataRepository.CreateTempMetadataAsync(trackMetadata);
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            await fileStorage.PutTempFileAsync(trackMetadata.Id, trackMetadata.ObjectName, createRequest.Stream);
+            await fileStorage.PutFileAsync(trackMetadata.Id, trackMetadata.ObjectName, createRequest.Stream);
             return trackMetadata.Id;
         }
 

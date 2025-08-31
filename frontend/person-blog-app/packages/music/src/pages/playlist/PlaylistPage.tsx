@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './PlaylistPage.module.css';
 import API from '../../scripts/apiMethod';
-import { formatDuration } from '../../scripts/helper';
+import TrackTable, { type TrackViewItem } from '../../components/trackTable/TrackTable';
 
 interface ArtistInfo {
     id: string;
@@ -15,14 +15,6 @@ interface TrackFileInfo {
     format: string;
 }
 
-interface TrackViewItem {
-    id: string;
-    name: string;
-    thumbnailUrl: string | null;
-    albumId: string | null;
-    trackInfo: TrackFileInfo;
-    artists: ArtistInfo[];
-}
 enum PlayListType {
     Liked = "Liked",
     Upload = "Upload",
@@ -48,10 +40,10 @@ const PlaylistPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
+    const [deletingTrackId, setDeletingTrackId] = useState<string | null>(null);
 
     const fetchPlaylistInfo = async () => {
         try {
-            // Предположим, что у нас есть endpoint для получения информации о плейлисте
             const response = await API.get<PlaylistInfo>(`ProfilePlayList/${id}`);
             if (response.status === 200) {
                 setPlaylist(response.data);
@@ -69,8 +61,6 @@ const PlaylistPage: React.FC = () => {
 
             if (response.status === 200) {
                 setTracks(response.data);
-                // Предположим, что API возвращает информацию о пагинации в заголовках
-                // В реальности вам может потребоваться адаптировать это под ваш API
                 setTotalPages(Math.ceil((playlist?.trackCount || 0) / pageSize));
             }
         } catch (err: any) {
@@ -78,6 +68,90 @@ const PlaylistPage: React.FC = () => {
             setError(err.response?.data?.message || "Не удалось загрузить треки");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDeleteTrack = async (trackId: string) => {
+        var removeFromUploadTitle = playlist?.type == PlayListType.Upload ? '\nУдаляя трек из плейлиста "Загруженные" вы удаляете его из системы' : '';
+        if (!window.confirm(`Вы уверены, что хотите удалить этот трек из плейлиста?${removeFromUploadTitle}`)) {
+            return;
+        }
+
+        try {
+            setDeletingTrackId(trackId);
+            const response = await API.post(`ProfilePlayList/${id}/tracks/${trackId}/delete`);
+
+            if (response.status === 200 || response.status === 204) {
+                setTracks(prevTracks => prevTracks.filter(track => track.id !== trackId));
+
+                if (playlist) {
+                    setPlaylist(prev => prev ? {
+                        ...prev,
+                        trackCount: prev.trackCount - 1
+                    } : null);
+                }
+
+                if (tracks.length === 1 && currentPage > 1) {
+                    setCurrentPage(prev => prev - 1);
+                } else {
+                    fetchTracks(currentPage);
+                }
+            }
+        } catch (err: any) {
+            console.error("Ошибка при удалении трека:", err);
+            alert(err.response?.data?.message || "Не удалось удалить трек");
+        } finally {
+            setDeletingTrackId(null);
+        }
+    };
+
+    const handleUnlikeTrack = async (trackId: string) => {
+        try {
+            const response = await API.post(`ProfilePlayList/unliked?trackId=${trackId}`);
+            if (response.status === 200 || response.status === 204) {
+                setTracks(prevTracks => prevTracks.filter(track => track.id !== trackId));
+
+                if (playlist) {
+                    setPlaylist(prev => prev ? {
+                        ...prev,
+                        trackCount: prev.trackCount - 1
+                    } : null);
+                }
+
+                if (tracks.length === 1 && currentPage > 1) {
+                    setCurrentPage(prev => prev - 1);
+                } else {
+                    fetchTracks(currentPage);
+                }
+            }
+        } catch (err: any) {
+            console.error("Ошибка при удалении трека:", err);
+            alert(err.response?.data?.message || "Не удалось удалить трек");
+        }
+    };
+
+    const handleLikeTrack = async (trackId: string) => {
+        try {
+            const response = await API.post(`ProfilePlayList/liked?trackId=${trackId}`);
+            if (response.status === 200 || response.status === 204) {
+                setTracks(prevTracks => prevTracks.filter(track => track.id !== trackId));
+
+                if (playlist) {
+                    setPlaylist(prev => prev ? {
+                        ...prev,
+                        trackCount: prev.trackCount - 1
+                    } : null);
+                }
+
+                if (tracks.length === 1 && currentPage > 1) {
+                    setCurrentPage(prev => prev - 1);
+                } else {
+                    fetchTracks(currentPage);
+                }
+            }
+        } catch (err: any) {
+            console.error("Ошибка при удалении трека:", err);
+            alert(err.response?.data?.message || "Не удалось удалить трек");
         }
     };
 
@@ -94,14 +168,11 @@ const PlaylistPage: React.FC = () => {
     }, [id, currentPage, playlist]);
 
     const handlePlayTrack = (trackId: string) => {
-        // Реализация воспроизведения трека
         console.log("Воспроизведение трека:", trackId);
     };
 
     const handlePageChange = (newPage: number) => {
-        if (newPage >= 1 && newPage <= totalPages) {
-            setCurrentPage(newPage);
-        }
+        setCurrentPage(newPage);
     };
 
     if (loading && !playlist) {
@@ -137,10 +208,6 @@ const PlaylistPage: React.FC = () => {
             </div>
         );
     }
-    const playlistsTypes = {
-        'Liked': { icon: 'fa-heart', coverClass: styles.likedCover },
-        'Upload': { icon: 'fa-cloud-upload-alt', coverClass: styles.uploadedCover },
-    };
 
     return (
         <div className={styles.container}>
@@ -182,99 +249,21 @@ const PlaylistPage: React.FC = () => {
                         <h2 className={styles.sectionTitle}>Треки</h2>
                     </div>
 
-                    {loading ? (
-                        <div className={styles.loading}>Загрузка треков...</div>
-                    ) : error ? (
-                        <div className={styles.error}>
-                            <p>{error}</p>
-                            <button className={styles.retryButton} onClick={() => fetchTracks(currentPage)}>
-                                Попробовать снова
-                            </button>
-                        </div>
-                    ) : (
-                        <>
-                            <table className={styles.trackList}>
-                                <thead>
-                                    <tr>
-                                        <th className={styles.trackHeader}>#</th>
-                                        <th className={styles.trackHeader}>Название</th>
-                                        <th className={styles.trackHeader}>Альбом</th>
-                                        <th className={styles.trackHeader}>Длительность</th>
-                                        <th className={styles.trackHeader}></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {tracks.map((track, index) => (
-                                        <tr key={track.id} className={styles.trackRow}>
-                                            <td className={`${styles.trackCell} ${styles.trackIndex}`}>
-                                                {(currentPage - 1) * pageSize + index + 1}
-                                            </td>
-                                            <td className={styles.trackCell}>
-                                                <div className={styles.trackInfo}>
-                                                    <img
-                                                        src={track.thumbnailUrl || '/default-track.png'}
-                                                        alt={track.name}
-                                                        className={styles.trackThumbnail}
-                                                    />
-                                                    <div className={styles.trackDetails}>
-                                                        <div className={styles.trackName}>{track.name}</div>
-                                                        <div className={styles.trackArtists}>
-                                                            {track.artists.map(artist => artist.name).join(', ')}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className={styles.trackCell}>-</td>
-                                            <td className={styles.trackCell}>
-                                                <span className={styles.trackDuration}>
-                                                    {formatDuration(track.trackInfo.duration)}
-                                                </span>
-                                            </td>
-                                            <td className={styles.trackCell}>
-                                                <div className={styles.trackActions}>
-                                                    <button
-                                                        className={styles.actionButton}
-                                                        onClick={() => handlePlayTrack(track.id)}
-                                                    >
-                                                        <i className="fas fa-play"></i>
-                                                    </button>
-                                                    <button className={styles.actionButton}>
-                                                        <i className="fas fa-heart"></i>
-                                                    </button>
-                                                    <button className={styles.actionButton}>
-                                                        <i className="fas fa-ellipsis-h"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                            {/* Пагинация */}
-                            {totalPages > 1 && (
-                                <div className={styles.pagination}>
-                                    <button
-                                        className={styles.paginationButton}
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                    >
-                                        <i className="fas fa-chevron-left"></i> Назад
-                                    </button>
-                                    <span className={styles.paginationInfo}>
-                                        Страница {currentPage} из {totalPages}
-                                    </span>
-                                    <button
-                                        className={styles.paginationButton}
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === totalPages}
-                                    >
-                                        Вперед <i className="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
+                    <TrackTable
+                        tracks={tracks}
+                        currentPage={currentPage}
+                        pageSize={pageSize}
+                        loading={loading}
+                        error={error}
+                        totalPages={totalPages}
+                        deletingTrackId={deletingTrackId}
+                        onPlayTrack={handlePlayTrack}
+                        onDeleteTrack={handleDeleteTrack}
+                        onUnlikeTrack={handleUnlikeTrack}
+                        onLikeTrack={handleLikeTrack}
+                        onPageChange={handlePageChange}
+                        showPagination={true}
+                    />
                 </section>
             </div>
         </div>

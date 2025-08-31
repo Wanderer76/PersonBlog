@@ -4,6 +4,7 @@ import { Box } from '@mui/material';
 import PlayerControls from '../playerControls/PlayerControls';
 import { useAudioPlayer } from '../../hooks/useAudioPlayer';
 import { useAudioPlayerContext } from '../../context/AudioPlayerContext';
+import API from '../../scripts/apiMethod';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -41,10 +42,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           isLoading={audioPlayer.isLoading}
           onPlay={audioPlayer.play}
           onPause={audioPlayer.pause}
-          onNext={() => {/* Implement next track logic */}}
-          onPrevious={() => {/* Implement previous track logic */}}
+          onNext={() => {/* Implement next track logic */ }}
+          onPrevious={() => {/* Implement previous track logic */ }}
           onSeek={audioPlayer.seek}
           onVolumeChange={audioPlayer.setVolume}
+          onToggleLike={(track) => {
+            (track.isLiked ? API.post(`ProfilePlayList/unliked?trackId=${track.id}`) :
+              API.post(`ProfilePlayList/liked?trackId=${track.id}`))
+              .then(x => {
+                if (x.status == 200) {
+                  track.isLiked = true;
+                }
+              })
+          }}
         />
       </Box>
     </Box>

@@ -19,7 +19,7 @@ export const musicApi = {
   },
 
   getTrackPresignedUrl: async (trackId: string): Promise<string> => {
-    const response = await API.get(`TrackListen/redirect/${trackId}`);
+    const response = await API.get(`TrackListen/track/${trackId}`);
     if (response.status !== 200) throw new Error('Failed to get presigned URL');
     const data = await response.data;
     return data;

@@ -5,11 +5,9 @@ import {
   Box,
   CircularProgress,
 } from '@mui/material';
-import TrackList from '../components/trackList/TrackList';
-import PlayerControls from '../components/playerControls/PlayerControls';
+import TrackCardList from '../components/trackCardList/TrackCardList';
 import type { TrackViewItem } from '../types/music';
 import { musicApi } from '../services/api';
-import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import { useAudioPlayerContext } from '../context/AudioPlayerContext';
 
 const HomePage: React.FC = () => {
@@ -63,7 +61,7 @@ const HomePage: React.FC = () => {
           </Box>
         ) : (
           <>
-            <TrackList
+            <TrackCardList
               tracks={filteredTracks}
               currentPlayingTrack={audioPlayer.currentTrack}
               isPlaying={audioPlayer.isPlaying}

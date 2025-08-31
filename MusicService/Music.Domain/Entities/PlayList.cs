@@ -13,7 +13,6 @@ namespace Music.Domain.Entities
 
     }
 
-
     public class PlayList : IMusicEntity
     {
         public Guid Id { get; private set; }
@@ -48,13 +47,19 @@ namespace Music.Domain.Entities
             return Result.Success();
         }
 
-        public async Task<Result> AddTrackAsync(IReadRepository<IMusicEntity> read, Guid trackId)
+        public async Task<Result> AddTrackAsync(IReadWriteRepository<IMusicEntity> read, Guid trackId)
         {
             if (await read.Get<PlayListTrack>().AnyAsync(x => x.TrackId == trackId && x.PlayListId == Id))
             {
                 return Result.Failure(new Error("Duplicate element"));
             }
-            Tracks.Add(new PlayListTrack(Id, trackId));
+            read.Add(new PlayListTrack(Id, trackId));
+            return Result.Success();
+        }
+
+        public Result RemoveTrack(IWriteRepository<IMusicEntity> read, Guid trackId)
+        {
+            read.Remove(new PlayListTrack(Id, trackId));
             return Result.Success();
         }
     }

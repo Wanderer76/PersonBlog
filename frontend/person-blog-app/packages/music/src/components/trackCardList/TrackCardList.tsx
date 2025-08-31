@@ -4,7 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TrackCard from '../trackCard/TrackCard';
 import type { TrackViewItem } from '../../types/music';
-import styles from './TrackList.module.css';
+import styles from './TrackCardList.module.css';
 
 interface TrackListProps {
   tracks: TrackViewItem[];
@@ -15,7 +15,7 @@ interface TrackListProps {
   title?: string;
 }
 
-const TrackList: React.FC<TrackListProps> = ({
+const TrackCardList: React.FC<TrackListProps> = ({
   tracks,
   isPlaying,
   currentPlayingTrack,
@@ -67,4 +67,4 @@ const TrackList: React.FC<TrackListProps> = ({
   );
 };
 
-export default TrackList;
+export default TrackCardList;

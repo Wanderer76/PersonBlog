@@ -1,10 +1,10 @@
 // components/PlayerControls.tsx
 import React from 'react';
-import { 
-  Box, 
-  Slider, 
-  Typography, 
-  IconButton, 
+import {
+  Box,
+  Slider,
+  Typography,
+  IconButton,
   Paper,
   CircularProgress,
   Tooltip
@@ -30,6 +30,7 @@ interface PlayerControlsProps {
   onPrevious: () => void;
   onSeek: (time: number) => void;
   onVolumeChange: (volume: number) => void;
+  onToggleLike: (track: TrackViewItem) => void; // Добавлено
 }
 
 const formatTime = (seconds: number): string => {
@@ -52,6 +53,7 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   onPrevious,
   onSeek,
   onVolumeChange,
+  onToggleLike
 }) => {
   if (!currentTrack) return null;
 
@@ -73,17 +75,41 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
       <Box className={styles.controlsContainer}>
         {/* Информация о треке */}
         <div className={styles.trackInfo}>
-          <Tooltip title={currentTrack.name} placement="top">
-            <Typography 
-              component="h3" 
-              className={`${styles.trackName} ${isLoading ? styles.loading : ''}`}
-            >
-              {currentTrack.name}
-            </Typography>
-          </Tooltip>
+          <div className={styles.trackTitleContainer}>
+            <Tooltip title={currentTrack.name} placement="top">
+              <Typography
+                component="h3"
+                className={`${styles.trackName} ${isLoading ? styles.loading : ''}`}
+              >
+                {currentTrack.name}
+              </Typography>
+            </Tooltip>
+
+            {/* Кнопка "Добавить в избранное" */}
+            <Tooltip title={currentTrack.isLiked ? 'Удалить из избранного' : 'Добавить в избранное'}>
+              <IconButton
+                onClick={() => onToggleLike(currentTrack)}
+                size="small"
+                disabled={isLoading}
+                aria-label={currentTrack.isLiked ? 'Удалить из избранного' : 'Добавить в избранное'}
+                sx={{
+                  color: currentTrack.isLiked ? '#ff7b00' : '#999',
+                  '&:hover': {
+                    color: '#ff7b00',
+                  },
+                }}
+              >
+                <i
+                  className={currentTrack.isLiked ? 'fas fa-heart' : 'far fa-heart'}
+                  style={{ fontSize: '16px' }}
+                />
+              </IconButton>
+            </Tooltip>
+          </div>
+
           <Tooltip title={currentTrack.artists.map(a => a.name).join(', ')} placement="top">
-            <Typography 
-              component="p" 
+            <Typography
+              component="p"
               className={styles.artistName}
             >
               {currentTrack.artists.map((a) => a.name).join(', ')}
@@ -95,16 +121,16 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
         <div className={styles.playbackControls}>
           <div className={styles.playbackButtons}>
             <Tooltip title="Предыдущий трек">
-              <IconButton 
-                onClick={onPrevious} 
-                size="large" 
+              <IconButton
+                onClick={onPrevious}
+                size="large"
                 aria-label="Предыдущий трек"
                 disabled={isLoading}
               >
                 <SkipPreviousIcon />
               </IconButton>
             </Tooltip>
-            
+
             <Tooltip title={isPlaying ? 'Пауза' : 'Воспроизвести'}>
               <IconButton
                 onClick={isPlaying ? onPause : onPlay}
@@ -122,11 +148,11 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
                 )}
               </IconButton>
             </Tooltip>
-            
+
             <Tooltip title="Следующий трек">
-              <IconButton 
-                onClick={onNext} 
-                size="large" 
+              <IconButton
+                onClick={onNext}
+                size="large"
                 aria-label="Следующий трек"
                 disabled={isLoading}
               >

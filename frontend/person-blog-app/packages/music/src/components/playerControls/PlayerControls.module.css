@@ -138,3 +138,9 @@
 .loading {
   animation: pulse 1.5s ease-in-out infinite;
 }
+
+.trackTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

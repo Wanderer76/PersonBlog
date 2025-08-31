@@ -12,6 +12,7 @@ export const useAudioPlayer = () => {
         isLoading: false,
     });
     const [currentTrack, setCurrentTrack] = useState<TrackViewItem>();
+    const [nextTrack, setNextTrack] = useState<TrackViewItem>();
 
     // Инициализация аудио элемента
     useEffect(() => {
@@ -62,7 +63,7 @@ export const useAudioPlayer = () => {
     }, []);
 
     // Загрузка и воспроизведение трека
-     const loadAndPlayTrack = useCallback(async (track: TrackViewItem) => {
+    const loadAndPlayTrack = useCallback(async (track: TrackViewItem) => {
         if (!audioRef.current) return;
 
         setState(prev => ({ ...prev, isLoading: true, currentTime: 0 }));
@@ -78,7 +79,7 @@ export const useAudioPlayer = () => {
 
             // Сбрасываем предыдущие обработчики
             audioRef.current.oncanplaythrough = null;
-            
+
             audioRef.current.src = presignedUrl;
             audioRef.current.load();
 
@@ -95,7 +96,7 @@ export const useAudioPlayer = () => {
 
             // Начинаем воспроизведение
             await audioRef.current.play();
-            
+
         } catch (error) {
             console.error('Error loading track:', error);
             setState(prev => ({

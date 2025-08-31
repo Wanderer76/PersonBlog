@@ -15,15 +15,18 @@ namespace Music.Service.Services
     {
         private readonly IReadRepository<IMusicEntity> _repository;
         private readonly IFileStorageFactory _fileStorageFactory;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DefaultTrackSearchService(IReadRepository<IMusicEntity> repository, IFileStorageFactory fileStorageFactory)
+        public DefaultTrackSearchService(IReadRepository<IMusicEntity> repository, IFileStorageFactory fileStorageFactory, ICurrentUserService currentUserService)
         {
             _repository = repository;
             _fileStorageFactory = fileStorageFactory;
+            _currentUserService = currentUserService;
         }
 
         public async Task<PagedListViewModel<TrackViewItem>> GetTrackByFilterAsync(SearchFilter filter, int page, int size)
         {
+            var user = await _currentUserService.GetCurrentUserAsync();
             var count = await _repository.Get<Track>().CountAsync();
             var query = await _repository.Get<Track>()
                 .Select(x => new
@@ -33,6 +36,9 @@ namespace Music.Service.Services
                     x.ThumbnailMetadata,
                     x.Metadata,
                     x.AlbumId,
+                    IsLike = _repository.Get<PlayListTrack>()
+                    .Where(x => x.PlayList.UserId == user.UserId && x.PlayList.Type == ConstPlayListType.Liked)
+                    .Where(a => a.TrackId == x.Id).Any(),
                     Artists = x.ArtistTrackLinks.Select(artist => new { artist.ArtistId, artist.Artist.Name }).ToList(),
                     x.CreatedAt
                 })
@@ -53,7 +59,8 @@ namespace Music.Service.Services
                     item.ThumbnailMetadata == null ? null : await fileStorage.GetFileUrlAsync(item.ThumbnailMetadata.Id, item.ThumbnailMetadata.ObjectName),
                     item.AlbumId,
                     new TrackFileInfo(await fileStorage.GetFileUrlAsync(item.Metadata.Id, item.Metadata.ObjectName), item.Metadata.Duration),
-                    item.Artists.Select(x => new ArtistInfo(x.ArtistId, x.Name)).ToList()
+                    item.Artists.Select(x => new ArtistInfo(x.ArtistId, x.Name)).ToList(),
+                    item.IsLike
                     );
                     return data;
                 })

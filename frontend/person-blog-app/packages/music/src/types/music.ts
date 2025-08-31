@@ -15,6 +15,7 @@ export interface TrackViewItem {
   name: string;
   thumbnailUrl?: string;
   albumId?: string;
+  isLiked: boolean;
   trackInfo: TrackFileInfo;
   artists: ArtistInfo[];
 }

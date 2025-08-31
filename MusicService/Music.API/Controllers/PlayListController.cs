@@ -3,6 +3,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Music.Contract.Models;
+using Music.Domain.Entities;
 using Music.Domain.Services;
 
 namespace Music.API.Controllers
@@ -54,6 +55,16 @@ namespace Music.API.Controllers
                 BadRequest(result.Error);
         }
 
+        [HttpPost("{id}/tracks/{trackId}/delete")]
+        public async Task<IActionResult> RemoveTrackFromPlayList(Guid id, Guid trackId)
+        {
+            var result = await _musicPlayListService.RemoveTrackFromPlayListAsync(id, trackId);
+            if (result.IsSuccess)
+                return Ok();
+            return
+                BadRequest(result.Error);
+        }
+
 
         /// <summary>
         /// плейлист с создаными пользователем треками
@@ -73,9 +84,19 @@ namespace Music.API.Controllers
         /// <param name="page"></param>
         /// <param name="size"></param>
         /// <returns></returns>
-        [HttpGet("liked")]
-        public async Task<IActionResult> GetLikedTracksPlayList()
+        [HttpPost("liked")]
+        public async Task<IActionResult> AddTrackToLikedPlayList(Guid trackId)
         {
+            var result = await _musicPlayListService.AddTrackToPlayList(trackId, ConstPlayListType.Liked);
+            return Ok();
+        }     
+        [HttpPost("unliked")]
+        public async Task<IActionResult> RemoveTrackToLikedPlayList(Guid trackId)
+        {
+            var playlists = await _musicPlayListService.GetCurrentUserPlayListsAsync();
+            var result = await _musicPlayListService.RemoveTrackFromPlayListAsync(
+                playlists.Value.First(x=>x.Type == ConstPlayListType.Liked.ToString()).Id,
+                trackId);
             return Ok();
         }
 
