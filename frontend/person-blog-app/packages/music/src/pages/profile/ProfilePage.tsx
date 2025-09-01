@@ -25,6 +25,7 @@ interface ProfilView {
 enum PlayListType {
     Liked = "Liked",
     Upload = "Upload",
+    Created = "Created",
 }
 
 interface PlayListItem {
@@ -35,12 +36,19 @@ interface PlayListItem {
     type: PlayListType;
 }
 
+interface CreatePlaylistRequest {
+    title: string;
+}
+
 const ProfilePage: React.FC = () => {
     const navigate = useNavigate();
-    const [artist, setArtist] = useState<ArtistDetailView | null>(null); // null = артист не создан
-    const [profile, setProfile] = useState<ProfilView | null>(null); // null = артист не создан
-    const [playlists, setPlayLists] = useState<PlayListItem[]>([]); // null = артист не создан
+    const [artist, setArtist] = useState<ArtistDetailView | null>(null);
+    const [profile, setProfile] = useState<ProfilView | null>(null);
+    const [playlists, setPlayLists] = useState<PlayListItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showCreatePlaylistModal, setShowCreatePlaylistModal] = useState(false);
+    const [newPlaylistTitle, setNewPlaylistTitle] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
 
     const getArtistInfo = async () => {
         try {
@@ -49,7 +57,6 @@ const ProfilePage: React.FC = () => {
                 setArtist(response.data);
             }
         } catch (error: any) {
-            // Если артист не найден (например, 404), считаем, что он не создан
             if (error.response?.status === 400 || error.response?.status === 403) {
                 setArtist(null);
                 var profileResp = await API.get<ProfilView>(`${AuthUrl}/video/api/Profile/my`);
@@ -71,6 +78,32 @@ const ProfilePage: React.FC = () => {
         }
     };
 
+    const createPlaylist = async () => {
+        if (!newPlaylistTitle.trim()) {
+            alert('Введите название плейлиста');
+            return;
+        }
+
+        setIsCreating(true);
+        try {
+            const request: CreatePlaylistRequest = {
+                title: newPlaylistTitle.trim()
+            };
+
+            const response = await API.post<PlayListItem>("ProfilePlayList/create", request);
+            if (response.status === 200 || response.status === 201) {
+                // Обновляем список плейлистов
+                await getPlayListInfo();
+                setShowCreatePlaylistModal(false);
+                setNewPlaylistTitle('');
+            }
+        } catch (error: any) {
+            console.error("Ошибка при создании плейлиста:", error);
+            alert('Не удалось создать плейлист');
+        } finally {
+            setIsCreating(false);
+        }
+    };
 
     useEffect(() => {
         if (profile)
@@ -85,16 +118,25 @@ const ProfilePage: React.FC = () => {
         navigate("/track/create");
     };
 
+    const handleCreatePlaylist = () => {
+        setShowCreatePlaylistModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowCreatePlaylistModal(false);
+        setNewPlaylistTitle('');
+    };
+
     const handleEditProfile = () => {
         if (artist) {
-            navigate("/artist/edit"); // Переход на редактирование артиста
+            navigate("/artist/edit");
         } else {
             alert('Сначала станьте артистом!');
         }
     };
 
     const handleBecomeArtist = () => {
-        navigate("/artist/create"); // Переход на создание артиста
+        navigate("/artist/create");
     };
 
     const handlePlaylistClick = (id: string) => {
@@ -112,6 +154,7 @@ const ProfilePage: React.FC = () => {
     const playlistsTypes = {
         'Liked': { icon: 'fa-heart', coverClass: styles.likedCover },
         'Upload': { icon: 'fa-cloud-upload-alt', coverClass: styles.uploadedCover },
+        'Created': { icon: 'fa-cloud-upload-alt', coverClass: styles.uploadedCover },
     };
 
     if (loading) {
@@ -130,7 +173,7 @@ const ProfilePage: React.FC = () => {
                 {/* Заголовок профиля */}
                 <header className={styles.profileHeader}>
                     <img
-                        src={artist?.avatarUrl ?? profile?.photoUrl ?? '/no-image.png'} // Заглушка
+                        src={artist?.avatarUrl ?? profile?.photoUrl ?? '/no-image.png'}
                         alt="Аватар"
                         className={styles.avatar}
                     />
@@ -161,22 +204,13 @@ const ProfilePage: React.FC = () => {
                         )}
 
                         <div className={styles.buttonGroup}>
-                            {/* {artist ? (
-                                <button className={styles.editBtn} onClick={handleEditProfile}>
-                                    <i className="fas fa-edit"></i> Редактировать профиль
-                                </button>
-                            ) : (
-                                <button className={styles.changeTrackButton} onClick={handleBecomeArtist}>
-                                    Стать артистом
-                                </button>
-                            )} */}
-                            <br/>
-                            <button className={styles.changeTrackButton} onClick={(e)=>{
+                            <br />
+                            <button className={styles.changeTrackButton} onClick={(e) => {
                                 JwtTokenService.cleanAuth();
                                 navigate("/")
                             }}>
-                                    <i className="fas fa-edit"></i> Выйти
-                                </button>
+                                <i className="fas fa-edit"></i> Выйти
+                            </button>
                         </div>
                     </div>
                 </header>
@@ -200,6 +234,9 @@ const ProfilePage: React.FC = () => {
                         <button className={styles.createTrackBtn} onClick={handleCreateTrack}>
                             <i className="fas fa-plus"></i> Создать трек
                         </button>
+                        <button className={styles.createTrackBtn} onClick={handleCreatePlaylist}>
+                            <i className="fas fa-plus"></i> Создать плейлист
+                        </button>
                     </div>
 
                     <div className={styles.playlistsGrid}>
@@ -222,9 +259,6 @@ const ProfilePage: React.FC = () => {
                                     <h3 className={styles.playlistName}>{playlist.title}</h3>
                                     <p className={styles.playlistInfo}>
                                         {playlist.trackCount} треков
-                                        {/* {playlist.badge && (
-                                            <span className={styles.badge}>{playlist.badge}</span>
-                                        )} */}
                                     </p>
                                 </div>
                             );
@@ -232,6 +266,50 @@ const ProfilePage: React.FC = () => {
                     </div>
                 </section>
             </div>
+
+            {/* Модальное окно создания плейлиста */}
+            {showCreatePlaylistModal && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <div className={styles.modalHeader}>
+                            <h3>Создать плейлист</h3>
+                            <button className={styles.closeButton} onClick={handleCloseModal}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <input
+                                type="text"
+                                placeholder="Название плейлиста"
+                                value={newPlaylistTitle}
+                                onChange={(e) => setNewPlaylistTitle(e.target.value)}
+                                className={styles.playlistInput}
+                                onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                        createPlaylist();
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button
+                                className={styles.cancelButton}
+                                onClick={handleCloseModal}
+                                disabled={isCreating}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                className={styles.createButton}
+                                onClick={createPlaylist}
+                                disabled={isCreating}
+                            >
+                                {isCreating ? 'Создание...' : 'Создать'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

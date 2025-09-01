@@ -53,6 +53,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   audioPlayer.playlist.map(t =>
                     t.id === track.id ? { ...t, isLiked: !t.isLiked } : t
                   );
+
+                  audioPlayer.updateCurrentTrack(track);
                 }
               })
           }}

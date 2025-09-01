@@ -35,6 +35,7 @@ namespace Music.API.Controllers
             ));
         }
 
+
         [HttpPost("create")]
         [AuthFilter(Roles.Artist, Roles.User)]
         public async Task<IActionResult> CreateTrack([FromBody] TrackCreateRequest trackCreate)

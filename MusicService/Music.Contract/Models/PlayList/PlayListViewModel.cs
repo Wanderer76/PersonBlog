@@ -13,18 +13,22 @@ namespace Music.Contract.Models.PlayList
         public int TrackCount { get; }
         public string? ThumbnailUrl { get; }
         public string Type { get; }
+        public bool CanEdit { get; }
+        public bool CanDelete { get; }
 
         public PlayListViewModel()
         {
 
         }
-        public PlayListViewModel(Guid id, string title, int trackCount, string? thumbnailUrl, string type)
+        public PlayListViewModel(Guid id, string title, int trackCount, string? thumbnailUrl, string type, bool canEdit, bool canDelete)
         {
             Id = id;
             Title = title;
             TrackCount = trackCount;
             ThumbnailUrl = thumbnailUrl;
             Type = type;
+            CanEdit = canEdit;
+            CanDelete = canDelete;
         }
     }
 }

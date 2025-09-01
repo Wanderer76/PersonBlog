@@ -30,6 +30,8 @@ interface PlaylistInfo {
     trackCount: number;
     ownerName: string;
     type: PlayListType;
+    canEdit: boolean;
+    canDelete: boolean;
 }
 
 const PlaylistPage: React.FC = () => {
@@ -63,8 +65,15 @@ const PlaylistPage: React.FC = () => {
             const response = await API.get<TrackViewItem[]>(`ProfilePlayList/${id}/tracks?page=${page}&size=${pageSize}`);
 
             if (response.status === 200) {
-                setTracks(response.data);
+                const fetchedTracks = response.data;
+                setTracks(fetchedTracks);
                 setTotalPages(Math.ceil((playlist?.trackCount || 0) / pageSize));
+
+                // Если это текущий плейлист в плеере, обновляем его
+                if (audioPlayer.playlist.length > 0 &&
+                    audioPlayer.playlist[0]?.id === id) {
+                    audioPlayer.loadPlaylist(fetchedTracks, 0);
+                }
             }
         } catch (err: any) {
             console.error("Ошибка при загрузке треков плейлиста:", err);
@@ -94,6 +103,13 @@ const PlaylistPage: React.FC = () => {
                     } : null);
                 }
 
+                // Обновляем плейлист в плеере если он активен
+                if (audioPlayer.playlist.length > 0 &&
+                    audioPlayer.playlist[0]?.id === id) {
+                    const updatedPlaylist = tracks.filter(track => track.id !== trackId);
+                    audioPlayer.loadPlaylist(updatedPlaylist, audioPlayer.currentIndex);
+                }
+
                 if (tracks.length === 1 && currentPage > 1) {
                     setCurrentPage(prev => prev - 1);
                 } else {
@@ -112,19 +128,26 @@ const PlaylistPage: React.FC = () => {
         try {
             const response = await API.post(`ProfilePlayList/unliked?trackId=${trackId}`);
             if (response.status === 200 || response.status === 204) {
-                setTracks(prevTracks => prevTracks.filter(track => track.id !== trackId));
+                // Обновляем локальное состояние
+                setTracks(prevTracks =>
+                    prevTracks.map(track =>
+                        track.id === trackId
+                            ? { ...track, isLiked: false }
+                            : track
+                    )
+                );
 
-                if (playlist) {
+
+                if (playlist && playlist.type == 'Liked') {
                     setPlaylist(prev => prev ? {
                         ...prev,
                         trackCount: prev.trackCount - 1
                     } : null);
                 }
-
-                if (tracks.length === 1 && currentPage > 1) {
-                    setCurrentPage(prev => prev - 1);
-                } else {
-                    fetchTracks(currentPage);
+                // Синхронизируем с плеером, если этот плейлист сейчас играет
+                if (audioPlayer.currentTrack &&
+                    audioPlayer.currentTrack?.id == trackId) {
+                    audioPlayer.currentTrack!.isLiked = false;
                 }
             }
         } catch (err: any) {
@@ -137,24 +160,24 @@ const PlaylistPage: React.FC = () => {
         try {
             const response = await API.post(`ProfilePlayList/liked?trackId=${trackId}`);
             if (response.status === 200 || response.status === 204) {
-                setTracks(prevTracks => prevTracks.filter(track => track.id !== trackId));
+                // Обновляем локальное состояние
+                setTracks(prevTracks =>
+                    prevTracks.map(track =>
+                        track.id === trackId
+                            ? { ...track, isLiked: true }
+                            : track
+                    )
+                );
 
-                if (playlist) {
-                    setPlaylist(prev => prev ? {
-                        ...prev,
-                        trackCount: prev.trackCount - 1
-                    } : null);
-                }
-
-                if (tracks.length === 1 && currentPage > 1) {
-                    setCurrentPage(prev => prev - 1);
-                } else {
-                    fetchTracks(currentPage);
+                // Синхронизируем с плеером, если этот плейлист сейчас играет
+                if (audioPlayer.currentTrack &&
+                    audioPlayer.currentTrack?.id == trackId) {
+                    audioPlayer.currentTrack!.isLiked = true;
                 }
             }
         } catch (err: any) {
-            console.error("Ошибка при удалении трека:", err);
-            alert(err.response?.data?.message || "Не удалось удалить трек");
+            console.error("Ошибка при лайке трека:", err);
+            alert(err.response?.data?.message || "Не удалось добавить в избранное");
         }
     };
 
@@ -170,14 +193,49 @@ const PlaylistPage: React.FC = () => {
         }
     }, [id, currentPage, playlist]);
 
+    // Воспроизведение конкретного трека
     const handlePlayTrack = (trackId: string) => {
-        audioPlayer.loadPlaylist(tracks, tracks.findIndex(x => x.id == trackId));
-        console.log("Воспроизведение трека:", trackId);
+        if (audioPlayer.currentTrack?.id === trackId) {
+            if (!audioPlayer.isPlaying)
+                audioPlayer.play();
+            else
+                audioPlayer.pause();
+
+        } else {
+            audioPlayer.loadPlaylist(tracks, tracks.findIndex(x => x.id == trackId));
+        }
+    };
+
+    // Воспроизведение всего плейлиста с начала
+    const handlePlayAll = () => {
+        if (tracks.length > 0) {
+            const tracksWithPlaylistInfo = tracks.map(track => ({
+                ...track,
+                playlistId: id
+            }));
+            audioPlayer.loadPlaylist(tracksWithPlaylistInfo, 0);
+        }
+    };
+
+    // Воспроизведение в случайном порядке
+    const handleShufflePlay = () => {
+        if (tracks.length > 0) {
+            const tracksWithPlaylistInfo = tracks.map(track => ({
+                ...track,
+                playlistId: id
+            }));
+            audioPlayer.loadPlaylist(tracksWithPlaylistInfo, 0);
+            audioPlayer.toggleShuffle(); // Включаем shuffle
+        }
     };
 
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
     };
+
+    // Проверяем, является ли этот плейлист текущим в плеере
+    const isCurrentPlaylist = audioPlayer.playlist.length > 0 &&
+        audioPlayer.playlist[0]?.id === id;
 
     if (loading && !playlist) {
         return (
@@ -232,17 +290,34 @@ const PlaylistPage: React.FC = () => {
                             <span className={styles.playlistOwner}>{playlist.ownerName}</span>
                             <span>•</span>
                             <span>{playlist.trackCount} треков</span>
+                            {isCurrentPlaylist && (
+                                <span className={styles.currentPlayingBadge}>
+                                    • Сейчас играет
+                                </span>
+                            )}
                         </div>
                         <div className={styles.playlistActions}>
-                            <button className={styles.playButton}>
+                            <button
+                                className={styles.playButton}
+                                onClick={handlePlayAll}
+                                disabled={tracks.length === 0}
+                            >
                                 <i className="fas fa-play"></i> Слушать
+                            </button>
+                            <button
+                                className={styles.secondaryButton}
+                                onClick={handleShufflePlay}
+                                disabled={tracks.length === 0}
+                            >
+                                <i className="fas fa-random"></i> Перемешать
                             </button>
                             <button className={styles.secondaryButton}>
                                 <i className="fas fa-heart"></i> Нравится
                             </button>
-                            <button className={styles.secondaryButton}>
-                                <i className="fas fa-ellipsis-h"></i> Ещё
-                            </button>
+                            {playlist.canDelete &&
+                                <button className={styles.secondaryButton}>
+                                    <i className="fas fa-trash"></i> Удалить
+                                </button>}
                         </div>
                     </div>
                 </header>
@@ -251,6 +326,13 @@ const PlaylistPage: React.FC = () => {
                 <section className={styles.tracksSection}>
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>Треки</h2>
+                        {tracks.length > 0 && (
+                            <div className={styles.sectionActions}>
+                                <span className={styles.totalDuration}>
+                                    Общая продолжительность: {calculateTotalDuration(tracks)}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     <TrackTable
@@ -267,11 +349,26 @@ const PlaylistPage: React.FC = () => {
                         onLikeTrack={handleLikeTrack}
                         onPageChange={handlePageChange}
                         showPagination={true}
+                        isPlaying={audioPlayer.isPlaying}
+                        currentPlayingTrackId={audioPlayer.currentTrack?.id}
                     />
                 </section>
             </div>
         </div>
     );
+};
+
+// Вспомогательная функция для расчета общей продолжительности
+const calculateTotalDuration = (tracks: TrackViewItem[]): string => {
+    const totalMilliseconds = tracks.reduce((total, track) => total + (track.trackInfo.duration || 0), 0);
+    const totalSeconds = totalMilliseconds / 1000;
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (hours > 0) {
+        return `${hours} ч ${minutes} мин`;
+    }
+    return `${minutes} мин`;
 };
 
 export default PlaylistPage;

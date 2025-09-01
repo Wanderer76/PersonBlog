@@ -28,6 +28,9 @@ interface TrackTableProps {
     onLikeTrack: (trackId: string) => Promise<void>;
     onPageChange?: (newPage: number) => void;
     showPagination?: boolean;
+    currentPlayingTrackId?: string;
+    isPlaying: boolean;
+
 }
 
 const TrackTable: React.FC<TrackTableProps> = ({
@@ -43,7 +46,9 @@ const TrackTable: React.FC<TrackTableProps> = ({
     onUnlikeTrack,
     onLikeTrack,
     onPageChange,
-    showPagination = false
+    showPagination = false,
+    currentPlayingTrackId,
+    isPlaying = false
 }) => {
     const handlePageChange = (newPage: number) => {
         if (onPageChange && newPage >= 1 && newPage <= totalPages) {
@@ -82,7 +87,8 @@ const TrackTable: React.FC<TrackTableProps> = ({
                 </thead>
                 <tbody>
                     {tracks.map((track, index) => (
-                        <tr key={track.id} className={styles.trackRow}>
+                        <tr key={track.id} className={`${styles.trackRow} ${track.id === currentPlayingTrackId ? styles.playing : ''
+                            }`}>
                             <td className={`${styles.trackCell} ${styles.trackIndex}`}>
                                 {(currentPage - 1) * pageSize + index + 1}
                             </td>
@@ -114,10 +120,12 @@ const TrackTable: React.FC<TrackTableProps> = ({
                                         onClick={() => onPlayTrack(track.id)}
                                         title="Воспроизвести"
                                     >
-                                        <i className="fas fa-play"></i>
+                                        {(currentPlayingTrackId == track.id && isPlaying) && <i className="fas fa-pause"></i>}
+                                        {(currentPlayingTrackId == track.id && !isPlaying) && <i className="fas fa-play"></i>}
+                                        {currentPlayingTrackId != track.id && <i className="fas fa-play"></i>}
                                     </button>
-                                    <button 
-                                        className={styles.actionButton} 
+                                    <button
+                                        className={styles.actionButton}
                                         title="Добавить в избранное"
                                         onClick={() => track.isLiked ? onUnlikeTrack(track.id) : onLikeTrack(track.id)}
                                     >

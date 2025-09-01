@@ -73,6 +73,13 @@ export const useAudioPlayer = () => {
         };
     }, []);
 
+
+    const updateCurrentTrack = useCallback((track: TrackViewItem) => {
+
+        if(currentTrack?.id!= track.id) return;
+        setCurrentTrack(track);
+    }, []);
+
     // Загрузка и воспроизведение трека
     const loadAndPlayTrack = useCallback(async (track: TrackViewItem) => {
         if (!audioRef.current) return;
@@ -244,9 +251,9 @@ export const useAudioPlayer = () => {
         shuffle,
         repeat,
 
-
         // Методы
         loadAndPlayTrack,
+        updateCurrentTrack,
         play,
         pause,
         seek,

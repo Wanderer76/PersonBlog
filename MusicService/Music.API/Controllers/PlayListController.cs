@@ -3,6 +3,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Music.Contract.Models;
+using Music.Contract.Models.PlayList;
 using Music.Domain.Entities;
 using Music.Domain.Services;
 
@@ -112,7 +113,15 @@ namespace Music.API.Controllers
             return Ok();
         }
 
-
-
+        [HttpPost("create")]
+        public async Task<IActionResult> CreatePlayList(CreatePlayListRequest createPlayList)
+        {
+            var result = await _musicPlayListService.CreatePlayListsAsync(createPlayList);
+            if (result.IsSuccess)
+            {
+                return Ok(result.Value);
+            }
+            return BadRequest(result.Error);
+        }
     }
 }

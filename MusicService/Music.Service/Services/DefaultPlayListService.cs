@@ -63,7 +63,7 @@ namespace Music.Service.Services
                 .ToListAsync();
 
             var result = defaultPlayList
-                    .Select(x => new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString()))
+                    .Select(x => new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString(), true, false))
                     .ToList();
 
             if (result.Count == 2)
@@ -75,7 +75,7 @@ namespace Music.Service.Services
             {
                 var liked = new PlayList(PlayListConstants.LikedTracksPlayList, userId, ConstPlayListType.Liked, []);
                 _repository.Add(liked);
-                result.Add(new PlayListViewModel(liked.Id, liked.Name, 0, null, liked.Type.ToString()));
+                result.Add(new PlayListViewModel(liked.Id, liked.Name, 0, null, liked.Type.ToString(), true, false));
             }
             if (!defaultPlayList.Any(x => x.Type == ConstPlayListType.Upload))
             {
@@ -83,16 +83,28 @@ namespace Music.Service.Services
                 var upload = new PlayList(PlayListConstants.UploadPlaylistName, userId, ConstPlayListType.Upload, []);
                 _repository.Add(upload);
 
-                result.Add(new PlayListViewModel(upload.Id, upload.Name, 0, null, upload.Type.ToString()));
+                result.Add(new PlayListViewModel(upload.Id, upload.Name, 0, null, upload.Type.ToString(), true, false));
             }
             await _repository.SaveChangesAsync();
 
             return result;
         }
 
-        public Task<Result<PlayListViewModel>> CreatePlayListsAsync(CreatePlayListRequest createPlayList)
+        public async Task<Result<PlayListViewModel>> CreatePlayListsAsync(CreatePlayListRequest createPlayList)
         {
-            throw new NotImplementedException();
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var isPlaylistExists = await _repository.Get<PlayList>()
+                .Where(x => x.UserId == user.UserId)
+                .Where(x => EF.Functions.ILike(x.Name, createPlayList.Title))
+                .AnyAsync();
+            if (isPlaylistExists)
+            {
+                return Result<PlayListViewModel>.Failure(new Error("Плейлист с таким названием уже существует"));
+            }
+            var playList = new PlayList(createPlayList.Title, user.UserId.Value, ConstPlayListType.Created, []);
+            _repository.Add(playList);
+            await _repository.SaveChangesAsync();
+            return new PlayListViewModel(playList.Id, playList.Name, 0, null, playList.Type.ToString(), true, true);
         }
 
         public async Task<Result<IReadOnlyList<PlayListViewModel>>> GetCurrentUserPlayListsAsync()
@@ -100,7 +112,6 @@ namespace Music.Service.Services
             var user = await _currentUserService.GetCurrentUserAsync();
             var result = await _repository.Get<PlayList>()
                          .Where(x => x.UserId == user.UserId.Value)
-                         .Where(x => x.Type == ConstPlayListType.Liked || x.Type == ConstPlayListType.Upload)
                          .Select(x => new
                          {
                              x.Id,
@@ -109,7 +120,11 @@ namespace Music.Service.Services
                              x.Type
                          })
                          .AsAsyncEnumerable()
-                         .Select(x => new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString()))
+                         .Select(x =>
+                         {
+                             var canDelete = !(x.Type == ConstPlayListType.Liked || x.Type == ConstPlayListType.Upload);
+                             return new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString(), true, canDelete);
+                         })
                          .ToListAsync();
             if (result.Count > 0)
                 return result;
@@ -124,6 +139,7 @@ namespace Music.Service.Services
 
         public async Task<Result<PlayListViewModel>> GetPlayListInfoAsync(Guid id)
         {
+            var user = await _currentUserService.GetCurrentUserAsync();
             var result = await _repository.Get<PlayList>()
                        .Where(x => x.Id == id)
                        .Select(x => new
@@ -131,10 +147,16 @@ namespace Music.Service.Services
                            x.Id,
                            x.Name,
                            TracksCount = x.Tracks.Count,
-                           x.Type
+                           x.Type,
+                           x.UserId
                        })
                        .AsAsyncEnumerable()
-                       .Select(x => new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString()))
+                       .Select(x =>
+                       {
+                           var canEdit = user.UserId == x.UserId;
+                           var canDelete = user.UserId == x.UserId && !(x.Type == ConstPlayListType.Upload || x.Type == ConstPlayListType.Liked);
+                           return new PlayListViewModel(x.Id, x.Name, x.TracksCount, null, x.Type.ToString(), canEdit, canDelete);
+                       })
                        .FirstAsync();
             return result;
         }
