@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './TrackTable.module.css';
 import { formatDuration } from '../../scripts/helper';
+import type { TrackViewItem } from '../../types/music';
 
 interface ArtistInfo {
     id: string;
@@ -11,16 +12,6 @@ interface TrackFileInfo {
     duration: number;
     size: number;
     format: string;
-}
-
-export interface TrackViewItem {
-    id: string;
-    name: string;
-    isLiked: boolean;
-    thumbnailUrl: string | null;
-    albumId: string | null;
-    trackInfo: TrackFileInfo;
-    artists: ArtistInfo[];
 }
 
 interface TrackTableProps {

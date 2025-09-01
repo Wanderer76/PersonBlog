@@ -13,8 +13,8 @@ export interface TrackFileInfo {
 export interface TrackViewItem {
   id: string;
   name: string;
-  thumbnailUrl?: string;
-  albumId?: string;
+  thumbnailUrl: string | null;
+  albumId: string | null;
   isLiked: boolean;
   trackInfo: TrackFileInfo;
   artists: ArtistInfo[];

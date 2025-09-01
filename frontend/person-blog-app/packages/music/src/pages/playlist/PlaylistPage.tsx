@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './PlaylistPage.module.css';
 import API from '../../scripts/apiMethod';
-import TrackTable, { type TrackViewItem } from '../../components/trackTable/TrackTable';
+import TrackTable from '../../components/trackTable/TrackTable';
+import { useAudioPlayerContext } from '../../context/AudioPlayerContext';
+import type { TrackViewItem } from '../../types/music';
 
 interface ArtistInfo {
     id: string;
@@ -41,6 +43,7 @@ const PlaylistPage: React.FC = () => {
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
     const [deletingTrackId, setDeletingTrackId] = useState<string | null>(null);
+    const audioPlayer = useAudioPlayerContext();
 
     const fetchPlaylistInfo = async () => {
         try {
@@ -168,6 +171,9 @@ const PlaylistPage: React.FC = () => {
     }, [id, currentPage, playlist]);
 
     const handlePlayTrack = (trackId: string) => {
+        var index = tracks.find(x => x.id == trackId);
+        if (index)
+            audioPlayer.loadAndPlayTrack(index!);
         console.log("Воспроизведение трека:", trackId);
     };
 
