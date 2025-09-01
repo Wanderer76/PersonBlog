@@ -30,8 +30,6 @@ const TrackCard: React.FC<TrackCardProps> = ({
       onPlay(track);
     }
   };
-  console.log(track.thumbnailUrl)
-
   return (
     <div
       className={styles.card}
@@ -41,7 +39,7 @@ const TrackCard: React.FC<TrackCardProps> = ({
       {/* Обложка с фиксированным соотношением сторон */}
       <div className={styles.imageContainer}>
         <img
-          src={track.thumbnailUrl}
+          src={track.thumbnailUrl ?? undefined}
           alt={track.name}
           className={styles.image}
         />

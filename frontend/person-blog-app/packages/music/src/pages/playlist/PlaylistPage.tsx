@@ -171,9 +171,7 @@ const PlaylistPage: React.FC = () => {
     }, [id, currentPage, playlist]);
 
     const handlePlayTrack = (trackId: string) => {
-        var index = tracks.find(x => x.id == trackId);
-        if (index)
-            audioPlayer.loadAndPlayTrack(index!);
+        audioPlayer.loadPlaylist(tracks, tracks.findIndex(x => x.id == trackId));
         console.log("Воспроизведение трека:", trackId);
     };
 

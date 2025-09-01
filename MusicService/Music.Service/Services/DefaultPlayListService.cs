@@ -153,11 +153,13 @@ namespace Music.Service.Services
                     x.Track.Metadata,
                     x.Track.ThumbnailMetadata,
                     x.PlayList.Type,
+                    x.CreatedAt,
                     IsLike = x.PlayList.Type == ConstPlayListType.Liked || _repository.Get<PlayListTrack>()
                     .Where(x => x.PlayList.UserId == user.UserId && x.PlayList.Type == ConstPlayListType.Liked)
                     .Where(a => a.TrackId == x.TrackId).Any(),
                     Artists = x.Track.ArtistTrackLinks.Select(artist => new { artist.Artist.Name, artist.ArtistId }).ToList()
                 })
+                .OrderByDescending(x => x.CreatedAt)
                 .Skip((page - 1) * size)
                 .Take(size)
                 .ToList();

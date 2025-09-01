@@ -42,8 +42,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           isLoading={audioPlayer.isLoading}
           onPlay={audioPlayer.play}
           onPause={audioPlayer.pause}
-          onNext={() => {/* Implement next track logic */ }}
-          onPrevious={() => {/* Implement previous track logic */ }}
           onSeek={audioPlayer.seek}
           onVolumeChange={audioPlayer.setVolume}
           onToggleLike={(track) => {
@@ -51,10 +49,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               API.post(`ProfilePlayList/liked?trackId=${track.id}`))
               .then(x => {
                 if (x.status == 200) {
-                  track.isLiked = true;
+                  track.isLiked = !track.isLiked;
+                  audioPlayer.playlist.map(t =>
+                    t.id === track.id ? { ...t, isLiked: !t.isLiked } : t
+                  );
                 }
               })
           }}
+          shuffle={audioPlayer.shuffle}
+          repeat={audioPlayer.repeat}
+          onNext={audioPlayer.nextTrack}
+          onPrevious={audioPlayer.previousTrack}
+          onToggleShuffle={audioPlayer.toggleShuffle}
+          onToggleRepeat={audioPlayer.toggleRepeat}
         />
       </Box>
     </Box>

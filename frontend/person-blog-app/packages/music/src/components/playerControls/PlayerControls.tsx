@@ -16,6 +16,7 @@ import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import type { TrackViewItem } from '../../types/music';
 import styles from './PlayerControls.module.css';
+import type { Repeat } from '../../hooks/useAudioPlayer';
 
 interface PlayerControlsProps {
   currentTrack?: TrackViewItem;
@@ -26,11 +27,16 @@ interface PlayerControlsProps {
   isLoading?: boolean;
   onPlay: () => void;
   onPause: () => void;
-  onNext: () => void;
-  onPrevious: () => void;
   onSeek: (time: number) => void;
   onVolumeChange: (volume: number) => void;
   onToggleLike: (track: TrackViewItem) => void; // Добавлено
+
+  shuffle: boolean;
+  repeat: Repeat;
+  onNext: () => void;
+  onPrevious: () => void;
+  onToggleShuffle: () => void;
+  onToggleRepeat: () => void;
 }
 
 const formatTime = (seconds: number): string => {
@@ -49,11 +55,15 @@ const PlayerControls: React.FC<PlayerControlsProps> = ({
   isLoading = false,
   onPlay,
   onPause,
-  onNext,
-  onPrevious,
   onSeek,
   onVolumeChange,
-  onToggleLike
+  onToggleLike,
+  shuffle,
+  repeat,
+  onNext,
+  onPrevious,
+  onToggleShuffle,
+  onToggleRepeat,
 }) => {
   if (!currentTrack) return null;
 
