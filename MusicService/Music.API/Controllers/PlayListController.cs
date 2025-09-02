@@ -66,6 +66,16 @@ namespace Music.API.Controllers
                 BadRequest(result.Error);
         }
 
+        [HttpPost("{id}/tracks/{trackId}/add")]
+        public async Task<IActionResult> AddTrackToPlayList(Guid id, Guid trackId)
+        {
+            var result = await _musicPlayListService.AddTrackToPlayListAsync(id, trackId);
+            if (result.IsSuccess)
+                return Ok();
+            return
+                BadRequest(result.Error);
+        }
+
 
         /// <summary>
         /// плейлист с создаными пользователем треками
@@ -88,7 +98,7 @@ namespace Music.API.Controllers
         [HttpPost("liked")]
         public async Task<IActionResult> AddTrackToLikedPlayList(Guid trackId)
         {
-            var result = await _musicPlayListService.AddTrackToPlayList(trackId, ConstPlayListType.Liked);
+            var result = await _musicPlayListService.AddTrackToPlayListAsync(trackId, ConstPlayListType.Liked);
             return Ok();
         }
         [HttpPost("unliked")]

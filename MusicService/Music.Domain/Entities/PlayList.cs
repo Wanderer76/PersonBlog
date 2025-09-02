@@ -51,7 +51,7 @@ namespace Music.Domain.Entities
         {
             if (await read.Get<PlayListTrack>().AnyAsync(x => x.TrackId == trackId && x.PlayListId == Id))
             {
-                return Result.Failure(new Error("Duplicate element"));
+                return Result.Failure(new Error("Трек уже есть в плейлисте"));
             }
             read.Add(new PlayListTrack(Id, trackId));
             return Result.Success();

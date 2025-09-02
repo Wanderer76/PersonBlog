@@ -5,6 +5,7 @@ import API from '../../scripts/apiMethod';
 import TrackTable from '../../components/trackTable/TrackTable';
 import { useAudioPlayerContext } from '../../context/AudioPlayerContext';
 import type { TrackViewItem } from '../../types/music';
+import AddTracksModal from '../../components/addTrackModal/AddTracksModal';
 
 interface ArtistInfo {
     id: string;
@@ -46,6 +47,7 @@ const PlaylistPage: React.FC = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [deletingTrackId, setDeletingTrackId] = useState<string | null>(null);
     const audioPlayer = useAudioPlayerContext();
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const fetchPlaylistInfo = async () => {
         try {
@@ -233,6 +235,32 @@ const PlaylistPage: React.FC = () => {
         setCurrentPage(newPage);
     };
 
+
+    const handleAddTracks = async (trackId: string) => {
+        try {
+            const response = await API.post(`ProfilePlayList/${id}/tracks/${trackId}/add`);
+
+            if (response.status === 200) {
+                // Обновляем список треков
+                fetchTracks(currentPage);
+
+                // Обновляем количество треков в плейлисте
+                if (playlist) {
+                    setPlaylist(prev => prev ? {
+                        ...prev,
+                        trackCount: prev.trackCount + 1
+                    } : null);
+                }
+
+                alert(`Добавлено ${1} треков в плейлист`);
+            }
+        } catch (err: any) {
+            console.error('Ошибка при добавлении треков:', err);
+            alert(err.response?.data?.message || 'Не удалось добавить треки');
+            throw err;
+        }
+    };
+
     // Проверяем, является ли этот плейлист текущим в плеере
     const isCurrentPlaylist = audioPlayer.playlist.length > 0 &&
         audioPlayer.playlist[0]?.id === id;
@@ -276,6 +304,15 @@ const PlaylistPage: React.FC = () => {
             <button className={styles.retryButton} onClick={() => navigate(-1)}>
                 Назад
             </button>
+            {playlist.canDelete &&
+                <AddTracksModal
+                    isOpen={isAddModalOpen}
+                    onClose={() => setIsAddModalOpen(false)}
+                    onAddTrack={handleAddTracks}
+                    playlistId={id!}
+                    existingTrackIds={tracks.map(track => track.id)}
+                />
+            }
             <div className={styles.playlistContainer}>
                 {/* Шапка плейлиста */}
 
@@ -338,10 +375,12 @@ const PlaylistPage: React.FC = () => {
                 <section className={styles.tracksSection}>
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>Треки</h2>
-                        <button className={styles.playButton}>
-                            <i className="fas fa-plus"></i>
-                            Добавить трек
-                        </button>
+                        {playlist.canDelete &&
+                            <button className={styles.playButton} onClick={() => setIsAddModalOpen(true)} >
+                                <i className="fas fa-plus"></i>
+                                Добавить трек
+                            </button>
+                        }
                         {tracks.length == 0 && (
                             <div className={styles.sectionActions}>
                                 <span className={styles.totalDuration}>

@@ -29,7 +29,7 @@ namespace Music.Service.Services
             _trackService = trackService;
         }
 
-        public async Task<Result> AddTrackToPlayList(Guid trackId, ConstPlayListType liked)
+        public async Task<Result> AddTrackToPlayListAsync(Guid trackId, ConstPlayListType liked)
         {
             var user = await _currentUserService.GetCurrentUserAsync();
             var playList = await _repository.Get<PlayList>()
@@ -37,6 +37,30 @@ namespace Music.Service.Services
                 .FirstAsync();
             _repository.Attach(playList);
             await playList.AddTrackAsync(_repository, trackId);
+            await _repository.SaveChangesAsync();
+            return Result.Success();
+        }
+
+        public async Task<Result> AddTrackToPlayListAsync(Guid id, Guid trackId)
+        {
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var playList = await _repository.Get<PlayList>()
+                .Where(x => x.UserId == user.UserId.Value && x.Id == id)
+                .FirstOrDefaultAsync();
+            if(playList == null)
+            {
+                return Result.Failure(new Error("Плейлист не найден"));
+            }
+            if(playList.Type == ConstPlayListType.Liked || playList.Type == ConstPlayListType.Upload)
+            {
+                return Result.Failure(new Error("Нельзя добавить трек в плейлист"));
+            }
+
+            _repository.Attach(playList);
+            var result = await playList.AddTrackAsync(_repository, trackId);
+            if (result.IsFailure)
+                return Result.Failure(result.Error);
+
             await _repository.SaveChangesAsync();
             return Result.Success();
         }

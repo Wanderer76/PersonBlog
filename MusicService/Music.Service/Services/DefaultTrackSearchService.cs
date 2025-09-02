@@ -27,8 +27,16 @@ namespace Music.Service.Services
         public async Task<PagedListViewModel<TrackViewItem>> GetTrackByFilterAsync(SearchFilter filter, int page, int size)
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-            var count = await _repository.Get<Track>().CountAsync();
-            var query = await _repository.Get<Track>()
+
+            var query = _repository.Get<Track>();
+
+            if (!string.IsNullOrWhiteSpace(filter.Title))
+            {
+                query = query.Where(x => EF.Functions.ILike(x.Title, $"%{filter.Title}%"));
+            }
+
+            var count = await query.CountAsync();
+            var tracks = await query
                 .Select(x => new
                 {
                     x.Id,
@@ -49,7 +57,7 @@ namespace Music.Service.Services
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
-            var items = await query
+            var items = await tracks
                 .ToAsyncEnumerable()
                 .SelectAwait(async item =>
                 {
