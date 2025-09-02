@@ -216,6 +216,29 @@ namespace Music.Service.Services
                 .ToListAsync();
         }
 
+        public async Task<Result> RemovePlayListAsync(Guid id)
+        {
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var playlist = await _repository.Get<PlayList>()
+                .FirstOrDefaultAsync(x => x.Id == id);
+            if (playlist == null)
+            {
+                return Result.Failure(new Error("Плейлист не найден"));
+            }
+            if (playlist.UserId != user.UserId.Value)
+            {
+                return Result.Failure(new Error("Вы не можете удалить чужой плейлист"));
+            }
+            if (playlist.Type == ConstPlayListType.Liked || playlist.Type == ConstPlayListType.Upload)
+            {
+                return Result.Failure(new Error("Вы не можете удалить стандартный плейлист"));
+            }
+
+            _repository.Remove(playlist);
+            await _repository.SaveChangesAsync();
+            return Result.Success();
+        }
+
         public async Task<Result> RemoveTrackFromPlayListAsync(Guid id, Guid trackId)
         {
             var user = await _currentUserService.GetCurrentUserAsync();

@@ -90,13 +90,13 @@ namespace Music.API.Controllers
         {
             var result = await _musicPlayListService.AddTrackToPlayList(trackId, ConstPlayListType.Liked);
             return Ok();
-        }     
+        }
         [HttpPost("unliked")]
         public async Task<IActionResult> RemoveTrackToLikedPlayList(Guid trackId)
         {
             var playlists = await _musicPlayListService.GetCurrentUserPlayListsAsync();
             var result = await _musicPlayListService.RemoveTrackFromPlayListAsync(
-                playlists.Value.First(x=>x.Type == ConstPlayListType.Liked.ToString()).Id,
+                playlists.Value.First(x => x.Type == ConstPlayListType.Liked.ToString()).Id,
                 trackId);
             return Ok();
         }
@@ -120,6 +120,17 @@ namespace Music.API.Controllers
             if (result.IsSuccess)
             {
                 return Ok(result.Value);
+            }
+            return BadRequest(result.Error);
+        }
+
+        [HttpPost("remove/{id}")]
+        public async Task<IActionResult> RemovePlayList(Guid id)
+        {
+            var result = await _musicPlayListService.RemovePlayListAsync(id);
+            if (result.IsSuccess)
+            {
+                return Ok();
             }
             return BadRequest(result.Error);
         }

@@ -15,5 +15,6 @@ namespace Music.Domain.Services
         Task<Result<PlayListViewModel>> GetPlayListInfoAsync(Guid id);
         Task<Result> RemoveTrackFromPlayListAsync(Guid id, Guid trackId);
         Task<Result> AddTrackToPlayList(Guid trackId, ConstPlayListType liked);
+        Task<Result> RemovePlayListAsync(Guid id);
     }
 }

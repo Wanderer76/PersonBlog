@@ -1,18 +1,7 @@
 import React from 'react';
 import styles from './TrackTable.module.css';
-import { formatDuration } from '../../scripts/helper';
+import TrackRow from './TrackRow';
 import type { TrackViewItem } from '../../types/music';
-
-interface ArtistInfo {
-    id: string;
-    name: string;
-}
-
-interface TrackFileInfo {
-    duration: number;
-    size: number;
-    format: string;
-}
 
 interface TrackTableProps {
     tracks: TrackViewItem[];
@@ -30,7 +19,6 @@ interface TrackTableProps {
     showPagination?: boolean;
     currentPlayingTrackId?: string;
     isPlaying: boolean;
-
 }
 
 const TrackTable: React.FC<TrackTableProps> = ({
@@ -75,81 +63,36 @@ const TrackTable: React.FC<TrackTableProps> = ({
 
     return (
         <>
-            <table className={styles.trackList}>
-                <thead>
-                    <tr>
-                        <th className={styles.trackHeader}>#</th>
-                        <th className={styles.trackHeader}>Название</th>
-                        <th className={styles.trackHeader}>Альбом</th>
-                        <th className={styles.trackHeader}>Длительность</th>
-                        <th className={styles.trackHeader}>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
+            {/* Заголовки как div */}
+            <div className={styles.trackList}>
+                <div className={styles.trackHeaderRow}>
+                    <div className={styles.trackHeader}>#</div>
+                    <div className={styles.trackHeader}>Название</div>
+                    <div className={styles.trackHeader}>Альбом</div>
+                    <div className={styles.trackHeader}>Длительность</div>
+                    <div className={styles.trackHeader}>Действия</div>
+                </div>
+                
+                {/* Строки с треками */}
+                <div className={styles.trackRows}>
                     {tracks.map((track, index) => (
-                        <tr key={track.id} className={`${styles.trackRow} ${track.id === currentPlayingTrackId ? styles.playing : ''
-                            }`}>
-                            <td className={`${styles.trackCell} ${styles.trackIndex}`}>
-                                {(currentPage - 1) * pageSize + index + 1}
-                            </td>
-                            <td className={styles.trackCell}>
-                                <div className={styles.trackInfo}>
-                                    <img
-                                        src={track.thumbnailUrl || '/default-track.png'}
-                                        alt={track.name}
-                                        className={styles.trackThumbnail}
-                                    />
-                                    <div className={styles.trackDetails}>
-                                        <div className={styles.trackName}>{track.name}</div>
-                                        <div className={styles.trackArtists}>
-                                            {track.artists.map(artist => artist.name).join(', ')}
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td className={styles.trackCell}>-</td>
-                            <td className={styles.trackCell}>
-                                <span className={styles.trackDuration}>
-                                    {formatDuration(track.trackInfo.duration)}
-                                </span>
-                            </td>
-                            <td className={styles.trackCell}>
-                                <div className={styles.trackActions}>
-                                    <button
-                                        className={styles.actionButton}
-                                        onClick={() => onPlayTrack(track.id)}
-                                        title="Воспроизвести"
-                                    >
-                                        {(currentPlayingTrackId == track.id && isPlaying) && <i className="fas fa-pause"></i>}
-                                        {(currentPlayingTrackId == track.id && !isPlaying) && <i className="fas fa-play"></i>}
-                                        {currentPlayingTrackId != track.id && <i className="fas fa-play"></i>}
-                                    </button>
-                                    <button
-                                        className={styles.actionButton}
-                                        title="Добавить в избранное"
-                                        onClick={() => track.isLiked ? onUnlikeTrack(track.id) : onLikeTrack(track.id)}
-                                    >
-                                        {!track.isLiked && <i className="far fa-heart"></i>}
-                                        {track.isLiked && <i className="fas fa-heart"></i>}
-                                    </button>
-                                    <button
-                                        className={styles.actionButton}
-                                        onClick={() => onDeleteTrack(track.id)}
-                                        disabled={deletingTrackId === track.id}
-                                        title="Удалить из плейлиста"
-                                    >
-                                        {deletingTrackId === track.id ? (
-                                            <i className="fas fa-spinner fa-spin"></i>
-                                        ) : (
-                                            <i className="fas fa-trash"></i>
-                                        )}
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                        <TrackRow
+                            key={track.id}
+                            track={track}
+                            index={index}
+                            currentPage={currentPage}
+                            pageSize={pageSize}
+                            currentPlayingTrackId={currentPlayingTrackId}
+                            isPlaying={isPlaying}
+                            deletingTrackId={deletingTrackId}
+                            onPlayTrack={onPlayTrack}
+                            onDeleteTrack={onDeleteTrack}
+                            onUnlikeTrack={onUnlikeTrack}
+                            onLikeTrack={onLikeTrack}
+                        />
                     ))}
-                </tbody>
-            </table>
+                </div>
+            </div>
 
             {/* Пагинация */}
             {showPagination && totalPages > 1 && (

@@ -273,8 +273,12 @@ const PlaylistPage: React.FC = () => {
 
     return (
         <div className={styles.container}>
+            <button className={styles.retryButton} onClick={() => navigate(-1)}>
+                Назад
+            </button>
             <div className={styles.playlistContainer}>
                 {/* Шапка плейлиста */}
+
                 <header className={styles.playlistHeader}>
                     <img
                         src={playlist.thumbnailUrl || '/default-playlist.png'}
@@ -315,7 +319,15 @@ const PlaylistPage: React.FC = () => {
                                 <i className="fas fa-heart"></i> Нравится
                             </button>
                             {playlist.canDelete &&
-                                <button className={styles.secondaryButton}>
+                                <button className={styles.secondaryButton} onClick={() => {
+                                    API.post(`ProfilePlayList/remove/${playlist.id}`)
+                                        .then(repsonse => {
+                                            if (repsonse.status == 200) { navigate(-1); }
+                                            else {
+                                                alert(repsonse.data)
+                                            }
+                                        })
+                                }}>
                                     <i className="fas fa-trash"></i> Удалить
                                 </button>}
                         </div>
@@ -326,7 +338,11 @@ const PlaylistPage: React.FC = () => {
                 <section className={styles.tracksSection}>
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>Треки</h2>
-                        {tracks.length > 0 && (
+                        <button className={styles.playButton}>
+                            <i className="fas fa-plus"></i>
+                            Добавить трек
+                        </button>
+                        {tracks.length == 0 && (
                             <div className={styles.sectionActions}>
                                 <span className={styles.totalDuration}>
                                     Общая продолжительность: {calculateTotalDuration(tracks)}
