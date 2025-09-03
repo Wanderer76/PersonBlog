@@ -1,7 +1,7 @@
 import axios, { type AxiosInstance } from 'axios';
 import { JwtTokenService } from './TokenStrorage';
 
-export const BaseApUrl: string = 'http://localhost:5053/api';
+export const BaseApUrl: string = 'http://localhost:7892/music/api';
 export const AuthUrl: string = 'http://localhost:7892';
 export const AuthPageUrl: string = 'http://localhost:3000/auth';
 export const BlogPageUrl: string = 'http://localhost:3000';
