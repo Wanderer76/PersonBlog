@@ -24,4 +24,8 @@ export const musicApi = {
     const data = await response.data;
     return data;
   },
+
+  sendUserTrackPlay: async (trackId: string): Promise<void> => {
+    await API.post(`TrackListen/track/${trackId}/listen`);
+  },
 };

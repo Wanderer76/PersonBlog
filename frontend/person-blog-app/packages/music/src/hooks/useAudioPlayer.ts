@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { type TrackViewItem, type AudioPlayerState } from '../types/music';
 import { musicApi } from '../services/api';
+import API from '../scripts/apiMethod';
+import { JwtTokenService } from '../scripts/TokenStrorage';
 
 export enum Repeat {
     off,
@@ -18,7 +20,7 @@ export const useAudioPlayer = () => {
         isLoading: false,
     });
     const [currentTrack, setCurrentTrack] = useState<TrackViewItem>();
-
+    const [isHistorySend, setIsHistorySend] = useState(false);
     const [playlist, setPlaylist] = useState<TrackViewItem[]>([]);
     const [currentIndex, setCurrentIndex] = useState<number>(-1);
     const [shuffle, setShuffle] = useState<boolean>(false);
@@ -74,6 +76,16 @@ export const useAudioPlayer = () => {
     }, []);
 
 
+    useEffect(() => {
+        if (state.currentTime > 5 && !isHistorySend) {
+            if (currentTrack && JwtTokenService.isAuth()) {
+                musicApi.sendUserTrackPlay(currentTrack.id);
+                setIsHistorySend(true)
+            }
+        }
+
+    }, [state.currentTime, isHistorySend])
+
     const updateCurrentTrack = useCallback((track: TrackViewItem) => {
 
         if (currentTrack?.id != track.id) return;
@@ -91,10 +103,9 @@ export const useAudioPlayer = () => {
             audioRef.current.pause();
             audioRef.current.currentTime = 0;
 
-            // Получаем presigned URL с бэкенда
-            const presignedUrl = await musicApi.getTrackPresignedUrl(track.id);
 
-
+            const presignedUrl = track.trackInfo.url;
+            console.log(track)
             // Сбрасываем предыдущие обработчики
             audioRef.current.oncanplaythrough = null;
 

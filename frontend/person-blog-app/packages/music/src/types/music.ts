@@ -7,7 +7,7 @@ export interface ArtistInfo {
 export interface TrackFileInfo {
   duration: number;
   fileSize: number;
-  fileUrl: string;
+  url: string;
 }
 
 export interface TrackViewItem {

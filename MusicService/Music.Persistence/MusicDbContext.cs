@@ -15,6 +15,7 @@ namespace Music.Persistence
         public DbSet<AvatarMetadata> AvatarMetadata { get; set; }
         public DbSet<PlayList> PlayLists { get; set; }
         public DbSet<PlayListTrack> PlayListTracks { get; set; }
+        public DbSet<MusicEvents> MusicEvents { get; set; }
 
         public MusicDbContext(DbContextOptions<MusicDbContext> options)
             : base(options)
