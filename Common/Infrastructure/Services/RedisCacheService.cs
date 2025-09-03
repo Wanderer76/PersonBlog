@@ -27,6 +27,10 @@ namespace Infrastructure.Services
             {
                 return default;
             }
+            if (typeof(T) == typeof(string))
+            {
+                return (T)(object)result.ToString();
+            }
             return JsonSerializer.Deserialize<T>(result!, _serializerOptions);
         }
 

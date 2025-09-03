@@ -297,7 +297,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
     const [inputArtist, setInputArtist] = useState(metadata.artist);
     const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(
-        metadata?.artistId == null ? null : { label: metadata.artist, value: metadata.artistId }
+        metadata?.artistId == null ? { label: metadata.artist, value: null } : { label: metadata.artist, value: metadata.artistId }
     );
     const [debouncedLoadOptions, setDebouncedLoadOptions] = useState<
         (inputValue: string) => Promise<ArtistOption[]>
@@ -462,7 +462,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                         onChange={(e) => {
                             var value = Number(e.target.value);
                             var currentYear = new Date().getFullYear();
-                            if(value>currentYear)
+                            if (value > currentYear)
                                 value = currentYear
                             return setFormData((prev) => ({ ...prev, year: value }));
                         }}

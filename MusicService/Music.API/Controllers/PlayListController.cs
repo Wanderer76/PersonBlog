@@ -57,6 +57,7 @@ namespace Music.API.Controllers
         }
 
         [HttpPost("{id}/tracks/{trackId}/delete")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> RemoveTrackFromPlayList(Guid id, Guid trackId)
         {
             var result = await _musicPlayListService.RemoveTrackFromPlayListAsync(id, trackId);
@@ -67,6 +68,7 @@ namespace Music.API.Controllers
         }
 
         [HttpPost("{id}/tracks/{trackId}/add")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> AddTrackToPlayList(Guid id, Guid trackId)
         {
             var result = await _musicPlayListService.AddTrackToPlayListAsync(id, trackId);
@@ -96,12 +98,14 @@ namespace Music.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpPost("liked")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> AddTrackToLikedPlayList(Guid trackId)
         {
             var result = await _musicPlayListService.AddTrackToPlayListAsync(trackId, ConstPlayListType.Liked);
             return Ok();
         }
         [HttpPost("unliked")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> RemoveTrackToLikedPlayList(Guid trackId)
         {
             var playlists = await _musicPlayListService.GetCurrentUserPlayListsAsync();
@@ -118,12 +122,14 @@ namespace Music.API.Controllers
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpGet("favourite")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> GetFavouritePlayLists(int page, int size)
         {
             return Ok();
         }
 
         [HttpPost("create")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> CreatePlayList(CreatePlayListRequest createPlayList)
         {
             var result = await _musicPlayListService.CreatePlayListsAsync(createPlayList);
@@ -135,6 +141,7 @@ namespace Music.API.Controllers
         }
 
         [HttpPost("remove/{id}")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> RemovePlayList(Guid id)
         {
             var result = await _musicPlayListService.RemovePlayListAsync(id);

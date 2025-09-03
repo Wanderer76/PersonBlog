@@ -4,9 +4,9 @@ import type { PagedListViewModel, TrackViewItem } from '../types/music';
 
 
 export const musicApi = {
-  getTracks: async (page: number = 1, pageSize: number = 20): Promise<PagedListViewModel<TrackViewItem>> => {
+  getTracks: async (page: number = 1, size: number = 20): Promise<PagedListViewModel<TrackViewItem>> => {
     const response = await API.get(`TrackSearch/filtered`, {
-      params: { page, pageSize }
+      params: { page, size: size }
     });
     return response.data;
   },
