@@ -76,7 +76,7 @@ export const useAudioPlayer = () => {
 
     const updateCurrentTrack = useCallback((track: TrackViewItem) => {
 
-        if(currentTrack?.id!= track.id) return;
+        if (currentTrack?.id != track.id) return;
         setCurrentTrack(track);
     }, []);
 
@@ -126,11 +126,14 @@ export const useAudioPlayer = () => {
     }, []);
 
 
-    const loadPlaylist = useCallback((tracks: TrackViewItem[], startIndex: number = 0) => {
+    const loadPlaylist = useCallback((tracks: TrackViewItem[], startIndex: number | null) => {
         setPlaylist(tracks);
-        setCurrentIndex(startIndex);
-        if (tracks.length > 0) {
-            loadAndPlayTrack(tracks[startIndex]);
+        if (startIndex != null) {
+            console.log(startIndex)
+            setCurrentIndex(startIndex);
+            if (tracks.length > 0) {
+                loadAndPlayTrack(tracks[startIndex]);
+            }
         }
     }, [loadAndPlayTrack]);
 

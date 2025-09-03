@@ -74,7 +74,7 @@ const PlaylistPage: React.FC = () => {
                 // Если это текущий плейлист в плеере, обновляем его
                 if (audioPlayer.playlist.length > 0 &&
                     audioPlayer.playlist[0]?.id === id) {
-                    audioPlayer.loadPlaylist(fetchedTracks, 0);
+                    audioPlayer.loadPlaylist(fetchedTracks, null);
                 }
             }
         } catch (err: any) {

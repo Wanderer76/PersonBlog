@@ -31,6 +31,7 @@ const HomePage: React.FC = () => {
     if (initialLoad) {
       fetchTracks(1);
       setInitialLoad(false);
+
     }
   }, [initialLoad]);
 
@@ -70,13 +71,18 @@ const HomePage: React.FC = () => {
       }
 
       const response = await musicApi.getTracks(page, 5);
-      
+
       if (page === 1) {
         setTracks(response.items);
-      } else {
-        setTracks(prev => [...prev, ...response.items]);
-      }
+        audioPlayer.loadPlaylist(response.items, null)
 
+      } else {
+        setTracks(prev => {
+          var result = [...prev, ...response.items];
+          audioPlayer.loadPlaylist(result, null)
+          return result;
+        });
+      }
       setCurrentPage(page);
       setHasMore(page < response.totalPageCount);
     } catch (error) {
@@ -97,7 +103,7 @@ const HomePage: React.FC = () => {
     if (audioPlayer.currentTrack?.id === track.id) {
       audioPlayer.play();
     } else {
-      audioPlayer.loadAndPlayTrack(track);
+      audioPlayer.loadPlaylist(tracks, tracks.findIndex(x => x.id == track.id));
     }
   };
 
@@ -118,11 +124,11 @@ const HomePage: React.FC = () => {
 
   const filteredTracks = searchQuery
     ? tracks.filter(track =>
-        track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        track.artists.some(artist =>
-          artist.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+      track.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      track.artists.some(artist =>
+        artist.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
+    )
     : tracks;
 
   return (
@@ -169,8 +175,8 @@ const HomePage: React.FC = () => {
               isPlaying={audioPlayer.isPlaying}
               onPlay={handlePlay}
               onPause={handlePause}
-              title={searchQuery 
-                ? `Результаты поиска: "${searchQuery}" (${filteredTracks.length} найдено)` 
+              title={searchQuery
+                ? `Результаты поиска: "${searchQuery}" (${filteredTracks.length} найдено)`
                 : 'Популярные треки'
               }
             />
