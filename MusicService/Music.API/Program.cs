@@ -3,8 +3,13 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Infrastructure.Middleware;
+using MessageBus;
+using Music.API.HostedServices;
+using Music.Contract.Events;
+using Music.Domain.EventHandlers;
 using Music.Persistence;
 using Music.Service;
+using MusicRecommendation.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +27,13 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddUserSessionServices();
 builder.Services.AddFFMpegAudioExtractorService(builder.Configuration);
+builder.Services.AddHostedService<OutboxPublisherService>();
+builder.Services.AddMusicRecommendationServices(builder.Configuration);
+builder.Services.AddMessageBus(builder.Configuration);
+//.AddSubscription<ListenHistoryEvent, ListenHistoryEventHandler>(cfg =>
+//{
+//    cfg.QueueName = "track-listened";
+//});
 
 var app = builder.Build();
 

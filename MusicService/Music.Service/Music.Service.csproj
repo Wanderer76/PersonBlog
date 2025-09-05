@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\MusicRecommendationService\MusicRecommendation.Services\MusicRecommendation.Services.csproj" />
     <ProjectReference Include="..\Music.Domain\Music.Domain.csproj" />
   </ItemGroup>
 

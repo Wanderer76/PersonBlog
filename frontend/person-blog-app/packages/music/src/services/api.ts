@@ -10,6 +10,12 @@ export const musicApi = {
     });
     return response.data;
   },
+  getRecommendations: async (page: number = 1, size: number = 20): Promise<PagedListViewModel<TrackViewItem>> => {
+    const response = await API.get(`TrackSearch/recommendations`, {
+      params: { page, size: size }
+    });
+    return response.data;
+  },
 
   searchTracks: async (query: string, page: number = 1, pageSize: number = 20): Promise<PagedListViewModel<TrackViewItem>> => {
     const response = await API.get(`TrackSearch/filtered`, {

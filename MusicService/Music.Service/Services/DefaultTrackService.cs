@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Music.Contract.Events;
 using Music.Contract.Models;
 using Music.Contract.Models.Artist;
 using Music.Domain.Entities;
@@ -106,6 +107,10 @@ namespace Music.Service.Services
                 _repository.Attach(userUploadPlayList);
                 userUploadPlayList.AddTrack(track);
             }
+
+            _repository.Add(MusicEvents.Create(new TrackCreateEvent(
+                track.Id, track.Title, track.AlbumId, track.PostId, track.ArtistTrackLinks[0].ArtistId, track.UploadedByUserId, createRequest.Genres ?? [], track.CreatedAt)));
+
             await _repository.SaveChangesAsync();
             await _tempTrackMetadataRepository.ClearTempMetadataAsync(createRequest.TrackFileId);
             if (createRequest.ThumbnailId.HasValue)

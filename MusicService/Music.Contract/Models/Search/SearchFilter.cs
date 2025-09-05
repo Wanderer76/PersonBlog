@@ -5,9 +5,11 @@
         public SortOrder? Order { get; set; }
         public string? Title { get; set; }
         public List<Guid>? Genres { get; set; }
+        public List<Guid>? Ids { get; set; }
         public SearchFilter()
         {
             Genres = [];
+            Ids = [];
         }
     }
 

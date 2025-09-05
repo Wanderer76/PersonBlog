@@ -15,6 +15,7 @@ import { useAudioPlayerContext } from '../context/AudioPlayerContext';
 
 const HomePage: React.FC = () => {
   const [tracks, setTracks] = useState<TrackViewItem[]>([]);
+  const [recommendationTracks, setRecommendationTracks] = useState<TrackViewItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +32,12 @@ const HomePage: React.FC = () => {
     if (initialLoad) {
       fetchTracks(1);
       setInitialLoad(false);
+      musicApi.getRecommendations(1, 10)
+        .then(response => {
+          setRecommendationTracks(response.items);
+          audioPlayer.loadPlaylist(response.items, null)
+        });
+
 
     }
   }, [initialLoad]);
@@ -194,7 +201,14 @@ const HomePage: React.FC = () => {
                 Вы просмотрели все треки
               </Box>
             )}
-
+            <TrackCardList
+              tracks={recommendationTracks}
+              currentPlayingTrack={audioPlayer.currentTrack}
+              isPlaying={audioPlayer.isPlaying}
+              onPlay={handlePlay}
+              onPause={handlePause}
+              title={'Рекоммендации'}
+            />
             {/* Кнопка для ручной загрузки, если IntersectionObserver не сработал */}
             {!searchQuery && hasMore && !loadingMore && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>

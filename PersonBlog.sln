@@ -114,6 +114,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music.API", "MusicService\M
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Music.Service", "MusicService\Music.Service\Music.Service.csproj", "{58CE1052-52CB-4395-8CF2-310643978236}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MusicRecommendationService", "MusicRecommendationService", "{B7468130-CFB4-4659-9964-82B2A3873D1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicRecommendation.Domain", "MusicRecommendationService\MusicRecommendation.Domain\MusicRecommendation.Domain.csproj", "{43864957-5B21-46D0-908D-B844052B6072}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicRecommendation.Persistence", "MusicRecommendationService\MusicRecommendation.Persistence\MusicRecommendation.Persistence.csproj", "{46783B52-0B25-468A-A70B-392B4BC1168D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicRecommendation.API", "MusicRecommendationService\MusicRecommendation.API\MusicRecommendation.API.csproj", "{9E9B4409-58EE-4667-8284-4349505067FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MusicRecommendation.Services", "MusicRecommendationService\MusicRecommendation.Services\MusicRecommendation.Services.csproj", "{6C52B954-7BAF-493D-85B6-EC0B66AA32B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -288,6 +298,22 @@ Global
 		{58CE1052-52CB-4395-8CF2-310643978236}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58CE1052-52CB-4395-8CF2-310643978236}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58CE1052-52CB-4395-8CF2-310643978236}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43864957-5B21-46D0-908D-B844052B6072}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43864957-5B21-46D0-908D-B844052B6072}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43864957-5B21-46D0-908D-B844052B6072}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43864957-5B21-46D0-908D-B844052B6072}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46783B52-0B25-468A-A70B-392B4BC1168D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46783B52-0B25-468A-A70B-392B4BC1168D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46783B52-0B25-468A-A70B-392B4BC1168D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46783B52-0B25-468A-A70B-392B4BC1168D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E9B4409-58EE-4667-8284-4349505067FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E9B4409-58EE-4667-8284-4349505067FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E9B4409-58EE-4667-8284-4349505067FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E9B4409-58EE-4667-8284-4349505067FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C52B954-7BAF-493D-85B6-EC0B66AA32B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C52B954-7BAF-493D-85B6-EC0B66AA32B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C52B954-7BAF-493D-85B6-EC0B66AA32B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C52B954-7BAF-493D-85B6-EC0B66AA32B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -335,6 +361,10 @@ Global
 		{00688DBD-3C45-41CC-9C93-FA82E821583F} = {25B99BF7-E0F3-4039-8382-091D7E8B17D2}
 		{6E7FE47C-A2AB-4AB2-84A3-A05F1B2BC017} = {25B99BF7-E0F3-4039-8382-091D7E8B17D2}
 		{58CE1052-52CB-4395-8CF2-310643978236} = {25B99BF7-E0F3-4039-8382-091D7E8B17D2}
+		{43864957-5B21-46D0-908D-B844052B6072} = {B7468130-CFB4-4659-9964-82B2A3873D1F}
+		{46783B52-0B25-468A-A70B-392B4BC1168D} = {B7468130-CFB4-4659-9964-82B2A3873D1F}
+		{9E9B4409-58EE-4667-8284-4349505067FC} = {B7468130-CFB4-4659-9964-82B2A3873D1F}
+		{6C52B954-7BAF-493D-85B6-EC0B66AA32B9} = {B7468130-CFB4-4659-9964-82B2A3873D1F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

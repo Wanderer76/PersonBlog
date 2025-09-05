@@ -6,6 +6,7 @@ namespace Music.Domain.Services
 {
     public interface ITrackSearchService
     {
+        Task<PagedListViewModel<TrackViewItem>> GetRecommendationTracksAsync(int page, int size);
         Task<PagedListViewModel<TrackViewItem>> GetTrackByFilterAsync(SearchFilter filter, int page, int size);
     }
 }

@@ -5,6 +5,7 @@ using Music.Contract.Models.Artist;
 using Music.Contract.Models.Search;
 using Music.Domain.Entities;
 using Music.Domain.Services;
+using MusicRecommendation.Services;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
@@ -16,12 +17,24 @@ namespace Music.Service.Services
         private readonly IReadRepository<IMusicEntity> _repository;
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly ICurrentUserService _currentUserService;
+        private readonly MusicRecommendationHttpClient _musicRecommendations;
 
-        public DefaultTrackSearchService(IReadRepository<IMusicEntity> repository, IFileStorageFactory fileStorageFactory, ICurrentUserService currentUserService)
+        public DefaultTrackSearchService(IReadRepository<IMusicEntity> repository, IFileStorageFactory fileStorageFactory, ICurrentUserService currentUserService, MusicRecommendationHttpClient musicRecommendations)
         {
             _repository = repository;
             _fileStorageFactory = fileStorageFactory;
             _currentUserService = currentUserService;
+            _musicRecommendations = musicRecommendations;
+        }
+
+        public async Task<PagedListViewModel<TrackViewItem>> GetRecommendationTracksAsync(int page, int size)
+        {
+            var recommendations = await _musicRecommendations.GetRecommendationFotUser(page, size);
+            if (recommendations.IsSuccess)
+            {
+                return await GetTrackByFilterAsync(new SearchFilter { Ids = recommendations.Value }, page, size);
+            }
+            return new(0, 0, []);
         }
 
         public async Task<PagedListViewModel<TrackViewItem>> GetTrackByFilterAsync(SearchFilter filter, int page, int size)
@@ -33,6 +46,11 @@ namespace Music.Service.Services
             if (!string.IsNullOrWhiteSpace(filter.Title))
             {
                 query = query.Where(x => EF.Functions.ILike(x.Title, $"%{filter.Title}%"));
+            }
+
+            if (filter.Ids != null && filter.Ids.Any())
+            {
+                query = query.Where(x => filter.Ids.Contains(x.Id));
             }
 
             var count = await query.CountAsync();
