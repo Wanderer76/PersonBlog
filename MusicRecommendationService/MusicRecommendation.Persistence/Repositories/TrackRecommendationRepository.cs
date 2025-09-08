@@ -30,49 +30,51 @@ internal class TrackRecommendationRepository : ITrackRecommendationRepository
 
     public async Task<List<Guid>> GetContentBasedRecommendations(Guid userId, int page = 1, int count = 10)
     {
-        // Сначала получим все необходимые данные отдельными запросами
-        var userListenedTracks = await _context.UserListenHistory
-            .Where(e => e.UserId == userId)
-            .Select(e => e.TrackId)
-            .Distinct()
-            .ToListAsync();
+        var skip = (page - 1) * count;
 
-        var userGenres = await _context.TrackGenres
-            .Where(t => userListenedTracks.Contains(t.TrackId))
-            .ToListAsync();
-
-        var userArtists = await _context.Tracks
-            .Where(t => userListenedTracks.Contains(t.Id))
-            .Select(t => t.ArtistId)
-            .Distinct()
-            .ToListAsync();
-
-        var trackListenCounts = await _context.UserListenHistory
-            .GroupBy(e => e.TrackId)
-            .Select(g => new { TrackId = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.TrackId, x => x.Count);
-
-        // Теперь получим все треки для рекомендаций
-        var allTracks = await _context.Tracks
-            .Where(t => !userListenedTracks.Contains(t.Id))
-            .Select(t => new { t.Id, t.Genres, t.ArtistId })
-            .ToListAsync();
-
-        // Вычисляем score в памяти
-        var recommendations = allTracks
+        var recommendations = await _context.Tracks
+            .AsNoTracking()
+            .Where(t => !_context.UserListenHistory
+                .Where(h => h.UserId == userId)
+                .Select(h => h.TrackId)
+                .Contains(t.Id)) // Не слушал этот трек
             .Select(t => new
             {
                 TrackId = t.Id,
-                Score = (t.Genres.Intersect(userGenres).Count() * 2) +
-                       (userArtists.Contains(t.ArtistId) ? 1 : 0),
-                ListenCount = trackListenCounts.TryGetValue(t.Id, out var count) ? count : 0
+                ArtistMatch = _context.Tracks
+                    .Where(tr => _context.UserListenHistory
+                        .Where(h => h.UserId == userId)
+                        .Select(h => h.TrackId)
+                        .Contains(tr.Id))
+                    .Select(tr => tr.ArtistId)
+                    .Distinct()
+                    .Contains(t.ArtistId) ? 1 : 0,
+
+                GenreMatchCount = _context.TrackGenres
+                    .Where(tg => _context.UserListenHistory
+                        .Where(h => h.UserId == userId)
+                        .Select(h => h.TrackId)
+                        .Contains(tg.TrackId))
+                    .Select(tg => tg.Id)
+                    .Intersect(_context.TrackGenres
+                        .Where(tg2 => tg2.TrackId == t.Id)
+                        .Select(tg2 => tg2.Id))
+                    .Count()
+            })
+            .Select(t => new
+            {
+                t.TrackId,
+                Score = (t.GenreMatchCount * 2) + t.ArtistMatch,
+                ListenCount = _context.UserListenHistory
+                    .Where(h => h.TrackId == t.TrackId)
+                    .Count()
             })
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.ListenCount)
-            .Skip((page - 1) * count)
+            .Skip(skip)
             .Take(count)
             .Select(x => x.TrackId)
-            .ToList();
+            .ToListAsync();
 
         return recommendations;
     }
