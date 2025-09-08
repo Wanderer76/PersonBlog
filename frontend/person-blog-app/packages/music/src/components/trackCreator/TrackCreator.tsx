@@ -294,16 +294,18 @@ const TrackForm: React.FC<TrackFormProps> = ({
         year: metadata.year,
     });
     const selectRef = useRef<any>(null);
+    const preventNextOnChange = useRef(false);
+    const [inputArtist, setInputArtist] = useState('');
+    // Инициализация: если есть артист из метаданных — добавляем его
+    const initialArtist = metadata.artist
+        ? [{ label: metadata.artist, value: metadata.artistId || null }]
+        : [];
 
-    const [inputArtist, setInputArtist] = useState(metadata.artist);
-    const [selectedArtist, setSelectedArtist] = useState<ArtistOption | null>(
-        metadata?.artistId == null ? { label: metadata.artist, value: null } : { label: metadata.artist, value: metadata.artistId }
-    );
+    const [selectedArtists, setSelectedArtists] = useState<MultiValue<ArtistOption>>(initialArtist);
     const [debouncedLoadOptions, setDebouncedLoadOptions] = useState<
         (inputValue: string) => Promise<ArtistOption[]>
     >(() => () => Promise.resolve([]));
 
-    // Преобразуем жанры в опции
     const genreOptions: GenreOption[] = genres.map((g) => ({
         value: g.id,
         label: g.name,
@@ -326,14 +328,13 @@ const TrackForm: React.FC<TrackFormProps> = ({
                         label: artist.name,
                     }));
                 }
-                return [{ label: inputValue.trim(), value: null }]
+                return [];
             } catch (error) {
                 console.error('Ошибка при поиске артистов:', error);
                 return [];
             }
         };
 
-        // Применяем дебаунс: 500 мс
         setDebouncedLoadOptions(() => debounce(loadOptions, 500));
     }, []);
 
@@ -352,39 +353,22 @@ const TrackForm: React.FC<TrackFormProps> = ({
         onGenreChange(updatedSelected.map((opt) => opt.value));
     };
 
-    // Обработчик изменения ввода артиста
-    const handleArtistInputChange = (inputValue: string, actionMeta: InputActionMeta) => {
-        console.log(inputArtist);
-        console.log(selectedArtist);
-
-        setInputArtist(inputValue)
-
-        return inputValue;
-    };
-
-    // Обработчик изменения выбора артиста
-    const handleArtistChange = (option: ArtistOption | null) => {
-        setSelectedArtist(option);
-        if (option) {
-            setInputArtist(option?.label ?? '');
-        } else {
-            setSelectedArtist(null);
-            setInputArtist('');
-        }
-        if (selectRef.current) {
-            selectRef.current.blur();
-        }
+    const handleArtistChange = (options: MultiValue<ArtistOption>) => {
+        setSelectedArtists(options);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
+        const artistNames = selectedArtists.filter(x => x.value == null).map(opt => opt.label);
+        const artistIds = selectedArtists.filter(x => x.value != null).map(opt => opt.value); // null = новый артист
+
         const request: TrackCreateRequest = {
             name: formData.name,
-            artistName: inputArtist || metadata.artist,
+            artistNames,
+            artistIds,
             trackFileId: metadata.trackFileId,
             genres: selectedGenres,
-            artistId: selectedArtist?.value || null,
             thumbnailId: metadata.thumbnailId || null,
             year: formData.year,
             postId: null,
@@ -403,7 +387,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
 
     return (
         <form className={styles.trackForm} onSubmit={handleSubmit}>
-            {/* Уведомление о восстановлении */}
             <div className={styles.restoreNotice}>
                 Трек восстановлен. Вы можете изменить данные или загрузить другой.
             </div>
@@ -423,24 +406,70 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 </div>
 
                 <div className={styles.formGroup}>
-                    <label>Исполнитель</label>
-                    <AsyncSelect<ArtistOption>
+                    <label>Исполнители</label>
+                    <AsyncSelect<ArtistOption, true>
                         ref={selectRef}
                         cacheOptions={false}
                         defaultOptions={false}
-                        value={selectedArtist}
-                        // inputValue={inputArtist}
-                        onInputChange={handleArtistInputChange}
-                        onChange={handleArtistChange}
-                        loadOptions={debouncedLoadOptions}
-                        onMenuClose={() => {
-                            // Также убираем фокус при закрытии меню без выбора
-                            if (selectRef.current) {
-                                selectRef.current.blur();
+                        isMulti
+                        value={selectedArtists}
+                        inputValue={inputArtist}
+                        onInputChange={(newValue, actionMeta) => {
+                            if (actionMeta.action === 'input-change') {
+                                setInputArtist(newValue);
+                            }
+                            if (actionMeta.action === 'set-value' || actionMeta.action === 'menu-close') {
+                                return inputArtist;
+                            }
+                            return newValue;
+                        }}
+                        onChange={(options) => {
+                            if (preventNextOnChange.current) {
+                                preventNextOnChange.current = false;
+                                return;
+                            }
+                            setSelectedArtists(options);
+                            setInputArtist('');
+                        }}
+                        onBlur={() => {
+                            if (preventNextOnChange.current) {
+                                return;
+                            }
+                            if (inputArtist.trim() && !selectedArtists.some(opt => opt.label === inputArtist.trim())) {
+                                const newOption: ArtistOption = {
+                                    label: inputArtist.trim(),
+                                    value: null,
+                                };
+                                setSelectedArtists(prev => [...prev, newOption]);
+                            }
+                            setInputArtist('');
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && inputArtist.trim()) {
+                                e.preventDefault();
+                                e.stopPropagation();
+
+                                if (!selectedArtists.some(opt => opt.label === inputArtist.trim())) {
+                                    const newOption: ArtistOption = {
+                                        label: inputArtist.trim(),
+                                        value: null,
+                                    };
+                                    preventNextOnChange.current = true;
+                                    setSelectedArtists(prev => [...prev, newOption]);
+                                }
+                                setInputArtist('');
+                                if (selectRef.current) {
+                                    selectRef.current.blur();
+                                }
                             }
                         }}
+                        loadOptions={debouncedLoadOptions}
+                        onMenuClose={() => { }}
+                        onMenuOpen={() => {
+                            preventNextOnChange.current = false; // сброс при открытии меню
+                        }}
                         placeholder="Начните вводить имя исполнителя..."
-                        noOptionsMessage={() => 'Нет совпадений. Введенное имя будет использовано'}
+                        noOptionsMessage={() => 'Нет совпадений — введённое имя будет добавлено автоматически'}
                         isClearable
                         styles={{
                             control: (base, state) => ({
@@ -452,6 +481,7 @@ const TrackForm: React.FC<TrackFormProps> = ({
                             }),
                         }}
                     />
+                    <small>Нажмите Enter или кликните вне поля, чтобы добавить нового исполнителя.</small>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -472,7 +502,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
                     />
                 </div>
 
-                {/* Жанры */}
                 <div className={styles.formGroup}>
                     <label>Жанры</label>
                     <CreatableSelect
@@ -519,7 +548,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 </div>
             </div>
 
-            {/* Обложка */}
             <div className={styles.formSection}>
                 <h2>Обложка</h2>
                 {metadata.hasCover && metadata.coverBase64 ? (
@@ -541,7 +569,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 <small>Вы можете загрузить свою обложку</small>
             </div>
 
-            {/* Информация о файле */}
             <div className={styles.trackInfo}>
                 <h3>Информация о файле</h3>
                 <p>Длительность: {formatDuration(metadata.duration)}</p>
@@ -550,7 +577,6 @@ const TrackForm: React.FC<TrackFormProps> = ({
                 <p>Формат: MP3</p>
             </div>
 
-            {/* Кнопки */}
             <div className={styles.formActions}>
                 <button type="button" onClick={onReset} className={styles.changeTrackButton}>
                     Загрузить другой трек

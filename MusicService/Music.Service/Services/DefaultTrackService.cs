@@ -31,31 +31,39 @@ namespace Music.Service.Services
 
         public async Task<Result> CreateTrackAsync(TrackCreateRequest createRequest)
         {
-            if (createRequest.ArtistId == null && createRequest.ArtistName == null)
+            if (createRequest.ArtistIds == null && createRequest.ArtistNames == null)
+            {
+                return Result.Failure(new Error("Artist not found"));
+            }
+            if (createRequest.ArtistIds.Count == 0 && createRequest.ArtistNames.Count == 0)
             {
                 return Result.Failure(new Error("Artist not found"));
             }
 
             var currentUser = await _currentUserService.GetCurrentUserAsync();
             var artistQuery = _repository.Get<Artist>();
-            if (createRequest.ArtistId.HasValue)
+            var expectedArtistsCount = createRequest.ArtistIds.Count + createRequest.ArtistNames.Count;
+            if (createRequest.ArtistIds.Any())
             {
-                artistQuery = artistQuery.Where(x => x.Id == createRequest.ArtistId.Value);
+                artistQuery = artistQuery.Where(x => createRequest.ArtistIds.Contains(x.Id));
             }
             else
             {
-                artistQuery = artistQuery.Where(x => x.Name == createRequest.ArtistName);
+                artistQuery = artistQuery.Where(x => createRequest.ArtistNames.Contains(x.Name));
             }
-            var artist = await artistQuery.FirstOrDefaultAsync();
-
-            if (artist == null && !string.IsNullOrWhiteSpace(createRequest.ArtistName))
-            {
-                artist = Artist.CreateExternal(createRequest.ArtistName, null);
-                _repository.Add(artist);
-            }
-            if ((artist == null && string.IsNullOrWhiteSpace(createRequest.ArtistName)))
+            var artistList = await artistQuery.ToListAsync();
+            if (artistList.Count == 0 && createRequest.ArtistNames.Count == 0)
             {
                 return Result.Failure(new Error("Artist not found"));
+            }
+            if (artistList.Count != expectedArtistsCount)
+            {
+                foreach (var newArtist in createRequest.ArtistNames.Where(x => !artistList.Any(a => a.Name == x)))
+                {
+                    var artist = Artist.CreateExternal(newArtist, null);
+                    _repository.Add(artist);
+                    artistList.Add(artist);
+                }
             }
 
             var tempTrackFile = await _tempTrackMetadataRepository.GetTempTrackMetadataAsync(createRequest.TrackFileId);
@@ -91,7 +99,10 @@ namespace Music.Service.Services
                 createRequest.TrackFileId,
                 createRequest.Year);
 
-            track.AddArtist(artist.Id);
+            artistList.ForEach(artist =>
+            {
+                track.AddArtist(artist.Id);
+            });
 
             var file = tempTrackFile.Value;
             _repository.Attach(file);

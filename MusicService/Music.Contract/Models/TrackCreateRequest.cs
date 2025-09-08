@@ -5,9 +5,11 @@ namespace Music.Contract.Models
     public class TrackCreateRequest
     {
         public string Name { get; set; }
-        public Guid? ArtistId { get; set; }
+        //public Guid? ArtistId { get; set; }
+        public List<Guid> ArtistIds { get; set; }
         public Guid? PostId { get; set; }
-        public string ArtistName { get; set; }
+        //public string ArtistName { get; set; }
+        public List<string> ArtistNames { get; set; }
         public Guid? AlbumId { get; set; }
         public Guid TrackFileId { get; set; }
         public Guid? ThumbnailId { get; set; }
