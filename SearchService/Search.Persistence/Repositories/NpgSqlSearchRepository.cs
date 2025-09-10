@@ -1,19 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Search.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Shared.Persistence;
 
 namespace Search.Persistence.Repositories
 {
-    public class NpgSqlSearchRepository
+    public class NpgSqlSearchRepository : DefaultRepository<SearchDbContext, ISearch>
     {
         private readonly SearchDbContext _context;
 
-        public NpgSqlSearchRepository(SearchDbContext context)
+        public NpgSqlSearchRepository(SearchDbContext context, IReadRepository<ISearch> readRepository, IWriteRepository<ISearch> writeRepository) 
+            : base(readRepository, writeRepository)
         {
             _context = context;
         }
@@ -36,6 +33,7 @@ namespace Search.Persistence.Repositories
             parameters.Add(new NpgsqlParameter("limit_param", safeSize));
 
             var sql = $@"
+SET search_path TO ""Search"", public;
 WITH search_words AS (
     SELECT unnest(ARRAY[{wordParams}]::text[]) AS word
 ),
@@ -48,7 +46,7 @@ title_matches AS (
         p.""Description"",
         p.""ViewCount"",
         5.0 * MAX(similarity(p.""Title"", sw.word)) AS score
-    FROM posts p
+    FROM ""Search"".""PostIndices"" p
     JOIN search_words sw ON p.""Title"" % sw.word
     GROUP BY p.""Id"", p.""BlogId"", p.""CreatedAt"", p.""Title"", p.""Description"", p.""ViewCount""
 ),
@@ -60,10 +58,10 @@ keyword_matches AS (
         p.""Title"",
         p.""Description"",
         p.""ViewCount"",
-        SUM(similarity(pk.word, sw.word) * pk.score) AS score
-    FROM posts p
-    JOIN post_keywords pk ON p.""Id"" = pk.post_id
-    JOIN search_words sw ON pk.word % sw.word
+        SUM(similarity(pk.""Word"", sw.word) * pk.""Score"") AS score
+    FROM ""Search"".""PostIndices"" p
+    JOIN ""Search"".""WordScores"" pk ON p.""Id"" = pk.""PostIndexId""
+    JOIN search_words sw ON pk.""Word"" % sw.word
     GROUP BY p.""Id"", p.""BlogId"", p.""CreatedAt"", p.""Title"", p.""Description"", p.""ViewCount""
 ),
 combined AS (
@@ -91,6 +89,7 @@ paginated AS (
         ""Title"",
         ""Description"",
         ""ViewCount"",
+        total_score,
         ROW_NUMBER() OVER (
             ORDER BY total_score DESC, ""ViewCount"" DESC, ""CreatedAt"" DESC
         ) AS row_num

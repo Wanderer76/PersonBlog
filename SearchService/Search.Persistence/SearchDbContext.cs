@@ -16,8 +16,8 @@ namespace Search.Persistence
         {
             modelBuilder.HasDefaultSchema("Search");
             base.OnModelCreating(modelBuilder);
-            modelBuilder.HasPostgresExtension("public","pg_trgm");
-            modelBuilder.HasPostgresExtension("public","btree_gin");
+            modelBuilder.HasPostgresExtension("Search", "pg_trgm");
+            modelBuilder.HasPostgresExtension("Search", "btree_gin");
 
             {
                 var entity = modelBuilder.Entity<PostIndex>();

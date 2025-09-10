@@ -2,7 +2,7 @@
 
 namespace Search.Domain.Entities
 {
-    public class PostIndex
+    public class PostIndex : ISearch
     {
         public Guid Id { get; set; }
         public Guid BlogId { get; set; }

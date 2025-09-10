@@ -24,7 +24,7 @@ namespace Search.Service.Implementation
         public async Task<Result<IEnumerable<PostModel>>> SearchAsync(SearchOptions query)
         {
             query.Title = query.Title.Trim();
-           
+
             var words = query.Title?
                 .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Where(w => w.Length > 0)
@@ -122,7 +122,7 @@ namespace Search.Service.Implementation
                 Title = postModel.Title,
                 Description = postModel.Description,
                 ViewCount = postModel.ViewCount,
-                Keywords = keywords?.Tokens ?? []
+                Keywords = keywords?.Tokens.Select(x => new WordScore(x.Word, x.Score)).ToList() ?? []
             };
             var response = await _client.IndexAsync(index, x => x.Index(Index));
             if (response.IsValidResponse)
@@ -151,7 +151,7 @@ namespace Search.Service.Implementation
                 Title = postModel.Title,
                 Description = postModel.Description,
                 ViewCount = postModel.ViewCount,
-                Keywords = keywords?.Tokens ?? []
+                Keywords = keywords?.Tokens.Select(x => new WordScore(x.Word, x.Score)).ToList() ?? []
             };
 
             var response = await _client.UpdateAsync<PostIndex, PostIndex>(postModel.Id, x => x
@@ -177,5 +177,5 @@ namespace Search.Service.Implementation
         }
     }
 
- 
+
 }

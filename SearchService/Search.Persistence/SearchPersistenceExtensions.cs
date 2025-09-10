@@ -2,6 +2,8 @@
 using Infrastructure.Interface;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Search.Domain.Entities;
+using Search.Persistence.Repositories;
 
 namespace Search.Persistence
 {
@@ -13,6 +15,8 @@ namespace Search.Persistence
             services.AddNpgSqlDbContext<SearchDbContext>(connectionString);
             services.AddRedisCache(configuration);
             services.AddScoped<IDbInitializer, SearchDbInitializer>();
+            services.AddScoped<NpgSqlSearchRepository>();
+            services.AddDefaultRepository<SearchDbContext, ISearch>();
         }
     }
 }
