@@ -34,6 +34,7 @@ internal class TrackRecommendationRepository : ITrackRecommendationRepository
 
         var recommendations = await _context.Tracks
             .AsNoTracking()
+            .AsSplitQuery()
             .Where(t => !_context.UserListenHistory
                 .Where(h => h.UserId == userId)
                 .Select(h => h.TrackId)
@@ -51,7 +52,7 @@ internal class TrackRecommendationRepository : ITrackRecommendationRepository
                     .Contains(t.ArtistId) ? 1 : 0,
 
                 GenreMatchCount = _context.TrackGenres
-                    .Where(tg => _context.UserListenHistory
+                        .Where(tg => _context.UserListenHistory
                         .Where(h => h.UserId == userId)
                         .Select(h => h.TrackId)
                         .Contains(tg.TrackId))

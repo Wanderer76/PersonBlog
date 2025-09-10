@@ -1,5 +1,6 @@
 ﻿using Blog.Contracts.Events;
 using MessageBus.EventHandler;
+using Search.Domain.Models;
 using Search.Domain.Services;
 
 namespace SearchService.Application.Consumers
@@ -17,7 +18,7 @@ namespace SearchService.Application.Consumers
         {
             if (@event.Message.UpdateType == UpdateType.Create)
             {
-                await _searchService.AddPostAsync(new Search.Domain.PostModel
+                await _searchService.AddPostAsync(new PostModel
                 {
                     BlogId = @event.Message.BlogId,
                     CreatedAt = @event.Message.CreatedAt,
@@ -29,7 +30,7 @@ namespace SearchService.Application.Consumers
             }
             if (@event.Message.UpdateType == UpdateType.Update)
             {
-                await _searchService.UpdatePostAsync(new Search.Domain.PostModel
+                await _searchService.UpdatePostAsync(new PostModel
                 {
                     BlogId = @event.Message.BlogId,
                     CreatedAt = @event.Message.CreatedAt,

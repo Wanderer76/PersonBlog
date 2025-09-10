@@ -1,15 +1,7 @@
-﻿namespace Search.Domain
-{
-    public class PostModel
-    {
-        public Guid Id { get; set; }
-        public Guid BlogId { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public int ViewCount { get; set; }
-    }
+﻿using Search.Domain.Models;
 
+namespace Search.Domain.Entities
+{
     public class PostIndex
     {
         public Guid Id { get; set; }
@@ -32,10 +24,5 @@
                 ViewCount = ViewCount,
             };
         }
-    }
-    public class WordScore
-    {
-        public string Word { get; set; }
-        public double Score { get; set; }
     }
 }

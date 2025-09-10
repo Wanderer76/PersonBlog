@@ -1,6 +1,7 @@
 ﻿using Elastic.Clients.Elasticsearch;
 using Elastic.Clients.Elasticsearch.QueryDsl;
-using Search.Domain;
+using Search.Domain.Entities;
+using Search.Domain.Models;
 using Search.Domain.Services;
 using Shared.Utils;
 using System.Net.Http.Json;
@@ -92,62 +93,6 @@ namespace Search.Service.Implementation
                 }
             };
 
-
-            //    var searchRequest = new SearchRequest<PostIndex>("post-search")
-            //    {
-            //        Size = 10,
-            //        Query = new BoolQuery
-            //        {
-            //            Should = new List<Query>
-            //{
-            //    // Title с boost
-            //    new MatchQuery("title")
-            //    {
-            //        Query = $"{query.Title}",
-            //        Boost = 5,
-            //        Fuzziness = new Fuzziness("AUTO")
-            //    },
-
-            //    // Nested поиск по keywords.word + script_score
-            //    new NestedQuery
-            //    {
-            //        Path = "keywords",
-            //        Query = new ScriptScoreQuery
-            //        {
-            //            Query = new MatchQuery("keywords.word")
-            //            {
-            //                Query = query.Title,
-            //                Fuzziness = new Fuzziness("AUTO")
-            //            },
-            //            Script = new Script
-            //            {
-            //                Source = """
-            //                    if (doc['keywords.score'].size() == 0 || doc['keywords.score'].value == 0) {
-            //                        return _score;
-            //                    } else {
-            //                        return _score * doc['keywords.score'].value;
-            //                    }
-            //                """
-            //            }
-            //        }
-            //    }
-            //},
-            //            MinimumShouldMatch = 1
-            //        },
-            //        Sort = new List<SortOptions>
-            //        {
-            //            SortOptions.Field(new Field("viewCount"),new FieldSort
-            //            {
-            //                Order = SortOrder.Desc,
-            //                NumericType = FieldSortNumericType.Long
-            //            }),
-            //            SortOptions.Field("createdAt",new FieldSort
-            //            {
-            //                Order = SortOrder.Desc,
-            //                NumericType= FieldSortNumericType.Date
-            //            })
-            //        }
-            //    };
             var response = await _client.SearchAsync<PostIndex>(searchRequest);
 
             if (response.IsValidResponse)
@@ -232,13 +177,5 @@ namespace Search.Service.Implementation
         }
     }
 
-    internal class TokenizerRequest
-    {
-        public string Text { get; set; }
-    }
-
-    internal class TokenizerResponse
-    {
-        public List<WordScore> Tokens { get; set; }
-    }
+ 
 }

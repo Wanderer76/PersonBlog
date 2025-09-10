@@ -3,7 +3,6 @@ import os
 import torch
 import torchaudio
 from torch import nn
-import numpy as np
 from torchvision.models import efficientnet_b0
 
 SAMPLE_RATE = 22050
@@ -46,7 +45,6 @@ class GenreNet(nn.Module):
         return self.backbone(x)
 
 def predict_genre_tta(model : GenreNet, classes, audio_path: bytes, n_segments=5, global_mean=None, global_std=None):
-    print('fgdef')
     model.eval()
     with torch.no_grad():
         wav_full = load_wav(audio_path)
@@ -130,3 +128,19 @@ def predict_genre_tta_from_bytes(model, classes, audio_bytes, n_segments=5, glob
             }
         }
         return result
+
+def load_model(checkpoint_path: str):
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(f"Чекпоинт не найден: {checkpoint_path}")
+
+    checkpoint = torch.load(checkpoint_path, map_location=DEVICE, weights_only=True)
+    model = GenreNet(n_classes=len(checkpoint["classes"])).to(DEVICE)
+    model.load_state_dict(checkpoint["model"])
+    model.eval()
+
+    classes = checkpoint["classes"]
+    cfg = checkpoint["cfg"]
+    global_mean = cfg.get("GLOBAL_MEAN", None)
+    global_std = cfg.get("GLOBAL_STD", None)
+
+    return model, classes, global_mean, global_std

@@ -1,4 +1,5 @@
-﻿using Shared.Utils;
+﻿using Search.Domain.Models;
+using Shared.Utils;
 
 namespace Search.Domain.Services;
 
