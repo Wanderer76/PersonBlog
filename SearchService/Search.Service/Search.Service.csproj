@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\Search.Domain\Search.Domain.csproj" />
+    <ProjectReference Include="..\Search.Persistence\Search.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

@@ -19,7 +19,7 @@ const Header = function () {
             {/* Логотип YouTube */}
             <div className="left-section">
                 <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="logo">
-                    НеРутуб
+                    PlayView
                 </a>
             </div>
 

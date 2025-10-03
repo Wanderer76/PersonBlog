@@ -1,6 +1,6 @@
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Search.Domain;
+using Search.Domain.Models;
 using Search.Domain.Services;
 using Shared.Utils;
 

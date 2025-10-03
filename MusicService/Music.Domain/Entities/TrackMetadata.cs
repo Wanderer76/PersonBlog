@@ -7,13 +7,15 @@ namespace Music.Domain.Entities
     public class TrackMetadata : FileMetadata, IMusicEntity
     {
         public FileProcessState ProcessState { get; set; }
-        public Guid TrackId { get; private set; }
-        public double Duration { get; private set; }
+        public Guid TrackId { get;  set; }
+        public long Duration { get;  set; }
 
-        [ForeignKey(nameof(TrackId))]
-        public Track Track { get; private set; }
+        public TrackMetadata()
+        {
+            
+        }
 
-        public TrackMetadata(Guid id, string name, string extension, long length, string contentType, string objectName, Guid trackId, double duration)
+        public TrackMetadata(Guid id, string name, string extension, long length, string contentType, string objectName, Guid trackId, long duration)
 
         {
             Id = id;

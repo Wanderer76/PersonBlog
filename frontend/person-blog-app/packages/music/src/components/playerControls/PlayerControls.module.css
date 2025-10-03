@@ -1,0 +1,146 @@
+.player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #fff;
+  border-top: 1px solid #e0e0e0;
+}
+
+.controlsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  gap: 24px;
+  min-height: 80px;
+}
+
+/* Информация о треке - фиксированная ширина */
+.trackInfo {
+  flex: 0 0 250px; /* Фиксированная ширина */
+  min-width: 0; /* Важно для обрезки текста */
+  overflow: hidden;
+}
+
+.trackName {
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #333;
+}
+
+.artistName {
+  font-size: 12px;
+  margin: 0;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Основные контролы - занимают оставшееся пространство */
+.playbackControls {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.playbackButtons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.playButton {
+  background-color: #ff7b00;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.playButton:hover {
+  background-color: #e66a00;
+}
+
+.playButton:disabled {
+  background-color: #ccc;
+}
+
+/* Контейнер для слайдера прогресса */
+.sliderContainer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.timeLabel {
+  flex: 0 0 40px;
+  text-align: center;
+  font-size: 11px;
+  color: #666;
+}
+
+/* Регулятор громкости - фиксированная ширина */
+.volumeContainer {
+  flex: 0 0 120px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Стили для слайдеров */
+.progress-slider,
+.volume-slider {
+  flex: 1;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .controlsContainer {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .trackInfo {
+    flex: 0 0 auto;
+    width: 100%;
+    text-align: center;
+  }
+
+  .playbackControls {
+    width: 100%;
+  }
+
+  .volumeContainer {
+    flex: 0 0 auto;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Анимация загрузки */
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.trackTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

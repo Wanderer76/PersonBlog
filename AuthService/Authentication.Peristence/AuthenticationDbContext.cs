@@ -45,7 +45,6 @@ public class AuthenticationDbContext : BaseDbContext
                     Id = Guid.Parse("c2ff298c-dd14-436c-a28b-e2036866ef41"),
                     Name = "bloger"
                 },
-
                 //new UserRole
                 //{
                 //    Id = Guid.Parse("c2ff298c-dd14-436c-a28b-e2036866ef42"),
@@ -69,6 +68,7 @@ public class AuthenticationDbContext : BaseDbContext
         }
         {
             var entity = modelBuilder.Entity<AppUserRole>();
+            entity.HasKey(x => new { x.AppUserId, x.UserRoleId });
             entity.HasData(new[]
             {
                  new AppUserRole

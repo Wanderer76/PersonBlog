@@ -11,6 +11,22 @@ namespace Profile.Domain.Models.Profile
         public Guid UserId { get; set; }
         public string? PhotoUrl { get; set; }
         public ProfileState ProfileState { get; set; }
+
+        public ProfileModel()
+        {
+            
+        }
+
+        public ProfileModel(long id, string name, string email, DateTimeOffset? birthdate, Guid userId, string? photoUrl, ProfileState profileState)
+        {
+            Id = id;
+            Name = name;
+            Email = email;
+            Birthdate = birthdate;
+            UserId = userId;
+            PhotoUrl = photoUrl;
+            ProfileState = profileState;
+        }
     }
 
     public static class ProfileModelExtensions

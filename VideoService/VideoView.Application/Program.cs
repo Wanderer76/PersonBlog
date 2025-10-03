@@ -1,8 +1,10 @@
+using Blog.Service.Extensions;
 using FileStorage.Service;
 using Gateway.API;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
+using Profile.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +51,7 @@ builder.Services.AddHttpClient("Comments", x =>
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddProfileHttpClient(builder.Configuration);
 
 var app = builder.Build();
 

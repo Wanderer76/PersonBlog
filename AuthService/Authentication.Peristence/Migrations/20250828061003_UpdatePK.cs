@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Authentication.Peristence.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class UpdatePK : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -120,7 +120,7 @@ namespace Authentication.Peristence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AppUserRoles", x => x.AppUserId);
+                    table.PrimaryKey("PK_AppUserRoles", x => new { x.AppUserId, x.UserRoleId });
                     table.ForeignKey(
                         name: "FK_AppUserRoles_AppUsers_AppUserId",
                         column: x => x.AppUserId,
@@ -141,7 +141,7 @@ namespace Authentication.Peristence.Migrations
                 schema: "Authentication",
                 table: "AppUsers",
                 columns: new[] { "Id", "CreatedAt", "LastAuthenticate", "Login", "Password" },
-                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"), new DateTimeOffset(new DateTime(2025, 8, 16, 13, 28, 15, 208, DateTimeKind.Unspecified).AddTicks(4508), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "admin", "wMKV34wg6H4=;vWfQ6RPbuBJPFCiW0saAhMogbm+JB/+dkqQBCNGK0yU=" });
+                values: new object[] { new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"), new DateTimeOffset(new DateTime(2025, 8, 28, 6, 10, 3, 466, DateTimeKind.Unspecified).AddTicks(8242), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "admin", "39pgitWENkw=;vfwIBcvuNOIXDC4MgCw5ZkS89KILemL97F0SjbQ8tsU=" });
 
             migrationBuilder.InsertData(
                 schema: "Authentication",

@@ -1,0 +1,44 @@
+/* src/components/Sidebar/Sidebar.css */
+
+.sidebar {
+    width: 240px;
+    background: white;
+    border-right: 1px solid #eee;
+    position: sticky;
+    margin-top: 10px;
+    /* Занимает всё пространство ниже хедера */
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.sidebar-content {
+    padding-top: 8px;
+    padding-bottom: 16px;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 0 24px 24px 0;
+    margin-right: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    transition: 0.3s;
+    text-decoration: none;
+    color: inherit;
+}
+
+.sidebar-item:hover,
+.sidebar-item.active {
+    background: #f0f0f0;
+    color: #ff7b00;
+}
+
+.sidebar-item i {
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+}

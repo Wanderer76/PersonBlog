@@ -1,5 +1,7 @@
 using Blog.Contracts.Events;
+using Infrastructure.Interface;
 using MessageBus;
+using Search.Persistence;
 using Search.Service;
 using SearchService.Application.Consumers;
 
@@ -12,6 +14,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSearchService(builder.Configuration);
+builder.Services.AddSearchPersistence(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
     {
@@ -35,6 +38,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    using var scope = app.Services.CreateScope();
+    var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+    foreach (var initializer in initializers)
+    {
+        initializer.Initialize();
+    }
 }
 
 app.UseAuthorization();

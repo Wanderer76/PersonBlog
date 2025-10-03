@@ -10,6 +10,8 @@ public class LoginPasswordModel
     [Required]
     public string Password { get; set; }
 
+    public string? RedirectUrl { get; set; }
+
     public LoginPasswordModel()
     {
         

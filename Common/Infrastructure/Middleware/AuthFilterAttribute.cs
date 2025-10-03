@@ -26,13 +26,13 @@ namespace Infrastructure.Middleware
             var currentUser = await context.HttpContext.RequestServices.GetRequiredService<ICurrentUserService>().GetCurrentUserAsync();
             if (currentUser.IsAnonymous)
             {
-                context.Result = new UnauthorizedResult();
+                context.Result = new ForbidResult();
                 return;
             }
             var roles = currentUser.Roles;
             if (!roles.Intersect(_roles).Any())
             {
-                context.Result = new UnauthorizedResult();
+                context.Result = new ForbidResult();
                 return;
             }
         }

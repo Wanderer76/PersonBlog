@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
     <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
     <ProjectReference Include="..\..\Common\Shared\Shared.csproj" />
+    <ProjectReference Include="..\Music.Contract\Music.Contract.csproj" />
   </ItemGroup>
 
 </Project>

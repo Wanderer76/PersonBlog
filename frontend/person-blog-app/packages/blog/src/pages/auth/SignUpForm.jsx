@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import { BaseApUrl } from "../../scripts/apiMethod";
 import { saveAccessToken, saveRefreshToken } from "../../scripts/TokenStrorage";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const SignUpForm = ({ onSwitchToSignIn }) => {
+
+  const [searchParams] = useSearchParams();
 
   const [registerForm, setRegisterForm] = useState({
     login: "",
     password: "",
     passwordConfirm: "",
     name: null,
-    surname: null,
-    lastName: null,
-    birthdate: null,
-    email: null
+    // surname: null,
+    // lastName: null,
+    // birthdate: null,
+    email: null,
+    redirectUrl: searchParams.get("redirect")
+
   });
 
   const navigate = useNavigate();
@@ -54,8 +58,15 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         const data = await resonse.json();
         saveAccessToken(data.accessToken);
         saveRefreshToken(data.refreshToken);
-        navigate("/");
-        window.location.reload();
+        if (data.authCode != null && registerForm.redirectUrl != null) {
+          const loginUrl = new URL(registerForm.redirectUrl);
+          loginUrl.searchParams.append('authCode', data.refreshToken);
+          window.location.href = loginUrl.toString()
+        }
+        else {
+          navigate("/");
+          window.location.reload();
+        }
       }
       else {
         console.log("error")
@@ -102,12 +113,12 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
       />
       <input className="auth-input"
         type="text"
-        placeholder="Имя (необязательно)"
+        placeholder="Имя"
         value={registerForm.name}
         name="name"
         onChange={updateRegisterForm}
       />
-      <input className="auth-input"
+      {/* <input className="auth-input"
         type="text"
         placeholder="Фамилия (необязательно)"
         value={registerForm.surname}
@@ -120,14 +131,14 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
         value={registerForm.lastName}
         name="lastname"
         onChange={updateRegisterForm}
-      />
-      <input className="auth-input"
+      /> */}
+      {/* <input className="auth-input"
         type="date"
         placeholder="Дата рождения (необязательно)"
         value={registerForm.birthdate}
         name="birthdate"
         onChange={updateRegisterForm}
-      />
+      /> */}
       <button className="auth-authButton" type="submit">Зарегистрироваться</button>
     </form>
   );

@@ -17,5 +17,6 @@ namespace Shared.Models
     {
         public const string Video = "video";
         public const string Photo = "image";
+        public const string Track = "track";
     }
 }

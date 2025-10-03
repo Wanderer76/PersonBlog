@@ -14,21 +14,21 @@ namespace Search.Service
     {
         public static void AddSearchService(this IServiceCollection services, IConfiguration configuration)
         {
-            var client = new ElasticsearchClient(new Uri(configuration["ElasticSearch:Host"]));
-            services.AddSingleton(client);
-            services.AddScoped<ISearchService,ElasticSearchService>();
+            //var client = new ElasticsearchClient(new Uri(configuration["ElasticSearch:Host"]));
+            //services.AddSingleton(client);
+            services.AddScoped<ISearchService, NpgsqlSearchService>();
         }
 
         public static void UseSearchService(this IApplicationBuilder builder, IConfiguration configuration)
         {
-            using var scope = builder.ApplicationServices.CreateScope();
-            var client = scope.ServiceProvider.GetRequiredService<ElasticsearchClient>();
-            var section = configuration.GetSection("PostSearchIndex")["IndexSettingsJson"];
+            //using var scope = builder.ApplicationServices.CreateScope();
+            //var client = scope.ServiceProvider.GetRequiredService<ElasticsearchClient>();
+            //var section = configuration.GetSection("PostSearchIndex")["IndexSettingsJson"];
 
-            client.Transport.Request<StringResponse>(
-               Elastic.Transport.HttpMethod.PUT,
-               "/post-search",
-               PostData.String(section));
+            //client.Transport.Request<StringResponse>(
+            //   Elastic.Transport.HttpMethod.PUT,
+            //   "/post-search",
+            //   PostData.String(section));
         }
     }
 }
