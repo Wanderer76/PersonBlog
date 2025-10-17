@@ -5,11 +5,13 @@ using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
 using Profile.Service;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -47,13 +49,13 @@ builder.Services.AddHttpClient("Comments", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Comments"]);
 });
 
-
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddProfileHttpClient(builder.Configuration);
 
 var app = builder.Build();
+app.UseSerilogRequestLogger();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
