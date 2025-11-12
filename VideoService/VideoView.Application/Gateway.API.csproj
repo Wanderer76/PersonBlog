@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\ProfileService\Profile.Service\Profile.Service.csproj" />
     <ProjectReference Include="..\..\RecommendationService\Recommendation.Service\Recommendation.Service.csproj" />
     <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
+    <ProjectReference Include="..\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
   </ItemGroup>
 
 

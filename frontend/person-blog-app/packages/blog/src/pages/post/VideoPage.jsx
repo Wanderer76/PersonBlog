@@ -50,9 +50,9 @@ const VideoPage = function (props) {
     const [blog, setBlog] = useState({
     });
 
-    function getUrl(postId, objectName) {
+    function getUrl(blogId,postId, objectName) {
         if (postId !== null && objectName !== null)
-            return `${BaseApUrl}/video/Video/${postId}/${objectName}`;
+            return `${BaseApUrl}/video/Video/test/${blogId}/${postId}/${objectName}`;
     }
 
     useEffect(() => {
@@ -313,9 +313,10 @@ const VideoPage = function (props) {
             <VideoPlayer key={post.id} className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
-                    url: getUrl(post.id, post.videoData.objectName),
+                    url: getUrl(blog.id,post.id, post.videoData.objectName),
                     label: '',
                     postId: post.id,
+                    blogId: blog.id,
                     autoplay: false,
                     objectName: post.videoData.objectName
                 }}

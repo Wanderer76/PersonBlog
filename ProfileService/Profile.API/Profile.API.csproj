@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\VideoService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />
     <ProjectReference Include="..\Profile.Service\Profile.Service.csproj" />
     <ProjectReference Include="..\Profile.Domain\Profile.Domain.csproj" />

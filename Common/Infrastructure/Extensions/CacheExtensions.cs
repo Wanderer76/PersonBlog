@@ -20,7 +20,6 @@ namespace Infrastructure.Extensions
                 var connectionString = configuration["Redis:ConnectionString"]!;
                 return ConnectionMultiplexer.Connect(connectionString);
             });
-
         }
     }
 }

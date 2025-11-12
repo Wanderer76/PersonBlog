@@ -22,6 +22,7 @@ namespace Blog.Service.Services.Implementation
         private readonly ICacheService _cacheService;
         private readonly ICurrentUserService _userSession;
         private readonly IVideoService _videoService;
+
         public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userSession, IVideoService videoService)
         {
             _context = context;
@@ -61,7 +62,7 @@ namespace Blog.Service.Services.Implementation
             if (postCreateDto.Thumbnail != null)
             {
                 using var storage = _fileStorageFactory.CreateFileStorage();
-                var previewUrl = await storage.PutFileAsync(post.Id, GuidService.GetNewGuid(), postCreateDto.Thumbnail.OpenReadStream());
+                var previewUrl = await storage.PutFileAsync(blog.Id, $"{post.Id}/{GuidService.GetNewGuid()}", postCreateDto.Thumbnail.OpenReadStream());
                 post.PreviewId = previewUrl;
             }
             _context.Add(post);
@@ -126,11 +127,6 @@ namespace Blog.Service.Services.Implementation
             return fileMetadataId;
         }
 
-        public Task GetVideoStream(Guid postId, Stream output)
-        {
-            throw new NotImplementedException();
-        }
-
         public async ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId)
         {
             var hasVideo = await _context.Get<VideoMetadata>()
@@ -151,7 +147,7 @@ namespace Blog.Service.Services.Implementation
             {
                 foreach (var post in pagedPosts.Posts.ExceptBy(cachedPosts.Select(x => x.Id), x => x.Id))
                 {
-                    var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+                    var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
                     var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
                     var videoFile = post.VideoFile;
                     var postModel = new PostModel(
@@ -347,7 +343,7 @@ namespace Blog.Service.Services.Implementation
             //if((currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
 
             if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
-                && !(currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))    
+                && !(currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
             {
                 return default;
             }
@@ -371,7 +367,7 @@ namespace Blog.Service.Services.Implementation
 
                 var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
                     ? null
-                    : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+                    : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
 
                 var videoMetadata = post.VideoFile;
                 var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
@@ -398,43 +394,6 @@ namespace Blog.Service.Services.Implementation
                 );
             });
             return cacheData;
-        }
-
-        [Obsolete]
-        public Task SetVideoViewed(ViewedVideoModel value)
-        {
-            throw new NotImplementedException();
-            //var dateFromNow = DateTimeOffset.UtcNow.AddMonths(-2);
-            //var hasView = await _context.Get<PostViewers>()
-            //    .Where(x => x.PostId == value.PostId)
-            //    .Where(x => x.UserId == value.UserId)
-            //    .Where(x => x.UserIpAddress == value.RemoteIp)
-            //    .Where(x => x.CreatedAt < dateFromNow)
-            //    .AnyAsync();
-
-            //if (hasView)
-            //{
-            //    return;
-            //}
-
-            //var videoViewEvent = new VideoViewEvent
-            //{
-            //    EventId = GuidService.GetNewGuid(),
-            //    PostId = value.PostId,
-            //    CreatedAt = DateTimeOffset.UtcNow,
-            //    RemoteIp = value.RemoteIp,
-            //    UserId = value.UserId,
-            //};
-
-            //var videoEvent = new ProfileEventMessages
-            //{
-            //    Id = videoViewEvent.EventId,
-            //    EventData = JsonSerializer.Serialize(videoViewEvent),
-            //    EventType = nameof(VideoViewEvent),
-            //    State = EventState.Pending,
-            //};
-            //_context.Add(videoEvent);
-            //await _context.SaveChangesAsync();
         }
 
         public async Task SetReactionToPost(ReactionCreateModel @event)
@@ -509,7 +468,8 @@ namespace Blog.Service.Services.Implementation
 
             await _context.SaveChangesAsync();
         }
-        public async Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
+
+        public async ValueTask<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
         {
             if (userId == null && ipAddress == null)
             {
@@ -553,6 +513,48 @@ namespace Blog.Service.Services.Implementation
                 post.PostCategories.Select(x => x.CategoryId).ToList()
             );
 
+        }
+
+        public async IAsyncEnumerable<PostDetailViewModel> GetDetailPostByIdsAsync(IEnumerable<Guid> postIds)
+        {
+            var currentUser = await _userSession.GetCurrentUserAsync();
+            var postList = await _context.Get<Post>()
+            .Include(x => x.VideoFile)
+            .Include(x => x.Blog)
+            .Where(x => postIds.Contains(x.Id))
+            .ToListAsync();
+
+            var fileStorage = _fileStorageFactory.CreateFileStorage();
+            foreach (var post in postList)
+            {
+                var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
+                    ? null
+                    : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+
+                var videoMetadata = post.VideoFile;
+                var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+
+                if (post.BanMessageId.HasValue && post.BlogId != currentUser.BlogId)
+                {
+                    continue;
+                }
+
+                yield return new PostDetailViewModel(
+                    post.Id,
+                    previewUrl,
+                    post.CreatedAt,
+                    post.ViewCount,
+                    post.Description,
+                    post.Title,
+                    post.Type,
+                    post.LikeCount,
+                    post.DislikeCount,
+                    post.VideoFile?.ProcessState == ProcessState.Complete
+                    ? new VideoMetadataModel(videoMetadata.Id, videoMetadata.Length, videoMetadata.Duration, videoMetadata.ContentType, videoMetadata.ObjectName)
+                    : null,
+                    isProcessed
+                );
+            }
         }
     }
 }

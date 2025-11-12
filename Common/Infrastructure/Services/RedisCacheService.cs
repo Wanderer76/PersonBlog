@@ -9,12 +9,13 @@ namespace Infrastructure.Services
     internal class RedisCacheService : ICacheService
     {
         private readonly IConnectionMultiplexer _redis;
-        private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
+        private readonly JsonSerializerOptions _serializerOptions = new()
         {
             ReferenceHandler = ReferenceHandler.IgnoreCycles,
             IgnoreReadOnlyProperties = false,
             WriteIndented = true,
         };
+
         public RedisCacheService(IConnectionMultiplexer redis)
         {
             _redis = redis;

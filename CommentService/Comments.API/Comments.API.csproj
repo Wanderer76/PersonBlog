@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\..\Common\Shared\Shared.csproj" />
+    <ProjectReference Include="..\..\VideoService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Comments.Domain\Comments.Domain.csproj" />
     <ProjectReference Include="..\Comments.Persistence\Comments.Persistence.csproj" />
     <ProjectReference Include="..\Comments.Service\Comments.Service.csproj" />

@@ -1,12 +1,14 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Services;
 using Blog.API.Models;
 using Blog.Domain.Services.Models;
 using Blog.Domain.Services;
 using Blog.Service.Models.Blog;
 using Blog.Service.Services;
+using Infrastructure.Middleware;
+using Authentication.Contract.Constants;
+using Infrastructure.Services;
 
 namespace Blog.API.Controllers
 {
@@ -16,30 +18,32 @@ namespace Blog.API.Controllers
     {
         private readonly IBlogService _blogService;
         private readonly ISubscriptionLevelService _subscriptionLevelService;
-        public BlogController(ILogger<BaseController> logger, IBlogService blogService, ISubscriptionLevelService subscriptionLevelService) : base(logger)
+        private readonly ICurrentUserService _currentUserService;
+        public BlogController(ILogger<BaseController> logger, IBlogService blogService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService) : base(logger)
         {
             _blogService = blogService;
             _subscriptionLevelService = subscriptionLevelService;
+            _currentUserService = currentUserService;
         }
 
-        [Authorize]
         [HttpPost("create")]
+        [AuthFilter(Roles.User)]
         public async Task<IActionResult> CreateBlog([FromForm] BlogCreateForm form)
         {
-            var userId = HttpContext.GetUserFromContext();
-            try
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var result = await _blogService.CreateBlogAsync(new BlogCreateDto(user.UserId!.Value, form.Title, form.Description, form.PhotoUrl));
+            if (result.IsSuccess)
             {
-                var result = await _blogService.CreateBlogAsync(new BlogCreateDto(userId, form.Title, form.Description, form.PhotoUrl));
                 return Ok(result);
             }
-            catch (Exception e)
+            else
             {
-                return BadRequest(e.Message);
+                return BadRequest(result.Error);
             }
         }
 
         [HttpGet("hasBlog/{userId:guid}")]
-        [Authorize]
+        [AuthFilter(Roles.Blogger)]
         public async Task<IActionResult> GetBlogDetail(Guid userId)
         {
             var result = await _blogService.HasUserBlogAsync(userId);
@@ -50,33 +54,22 @@ namespace Blog.API.Controllers
         [Authorize]
         public async Task<IActionResult> HasUserBlog()
         {
-            var userId = HttpContext.GetUserFromContext();
-            var result = await _blogService.HasUserBlogAsync(userId);
-            return Ok(new HasBlogResponse { HasBlog = result});
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var result = await _blogService.HasUserBlogAsync(user.UserId!.Value);
+            return Ok(new HasBlogResponse { HasBlog = result });
         }
 
         [HttpGet("detail")]
-        [Authorize]
+        [AuthFilter(Roles.Blogger)]
         public async Task<IActionResult> GetBlogDetail()
         {
-            var userId = HttpContext.GetUserFromContext();
-            var result = await _blogService.GetBlogByUserIdAsync(userId);
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var result = await _blogService.GetBlogByUserIdAsync(user.UserId!.Value);
             return Ok(result);
         }
 
-        //public async Task<IActionResult> DeleteVideo(Guid id)
-        //{
-        //    return Ok();
-        //}
-
-        ////Получение контента своего блога
-        //public async Task<IActionResult> GetPagedContent(int page, int limit)
-        //{
-        //    return Ok();
-        //}
-
         [HttpGet("subscriptionLevelCreate")]
-        [Authorize]
+        [AuthFilter(Roles.Blogger)]
         public async Task<IActionResult> CreateSubscriptionLevel()
         {
             var result = await _subscriptionLevelService.GetAllSubscriptionsAsync();
@@ -87,7 +80,7 @@ namespace Blog.API.Controllers
         }
 
         [HttpPost("subscriptionLevelCreate")]
-        [Authorize]
+        [AuthFilter(Roles.Blogger)]
         public async Task<IActionResult> CreateSubscriptionLevel([FromBody] SubscriptionCreateDto form)
         {
             var result = await _subscriptionLevelService.CreateSubscriptionAsync(form);
@@ -104,11 +97,11 @@ namespace Blog.API.Controllers
 
 
         [HttpGet("blogViewerInfoByPost/{postId:guid}")]
-        [Produces(typeof(BlogModel))]
+        [AuthFilter()]
         public async Task<IActionResult> GetBlogViewerInfoByPostId(Guid postId)
         {
-            HttpContext.TryGetUserFromContext(out var userId);
-            var result = await _blogService.GetBlogByPostIdAsync(postId, userId);
+            var user = await _currentUserService.GetCurrentUserAsync();
+            var result = await _blogService.GetBlogByPostIdAsync(postId, user.UserId);
             return Ok(result);
         }
 

@@ -6,6 +6,7 @@ using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
+using Shared.Utils;
 using System.Text.Json;
 
 namespace Blog.Service.Services.Implementation
@@ -23,15 +24,14 @@ namespace Blog.Service.Services.Implementation
             _fileStorageFactory = fileStorageFactory;
         }
 
-        public async Task<BlogModel> CreateBlogAsync(BlogCreateDto model)
+        public async Task<Result<BlogModel>> CreateBlogAsync(BlogCreateDto model)
         {
-
             var isBlogAlreadyExists = await _context.Get<PersonBlog>()
                 .AnyAsync(x => x.UserId == model.UserId);
 
             if (isBlogAlreadyExists)
             {
-                throw new BlogAlreadyExistsException("У данного пользователя уже существует блог");
+                return Result<BlogModel>.Failure(new Error("У данного пользователя уже существует блог"));
             }
 
             using var storage = _fileStorageFactory.CreateFileStorage();

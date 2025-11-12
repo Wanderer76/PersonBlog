@@ -1,10 +1,11 @@
 ﻿using Blog.Service.Models.Blog;
+using Shared.Utils;
 
 namespace Blog.Service.Services
 {
     public interface IBlogService
     {
-        Task<BlogModel> CreateBlogAsync(BlogCreateDto model);
+        Task<Result<BlogModel>> CreateBlogAsync(BlogCreateDto model);
         Task<BlogModel> UpdateBlogAsync(BlogEditDto model);
         Task DeleteBlogAsync(Guid id);
         Task<BlogModel> GetBlogByIdAsync(Guid id);

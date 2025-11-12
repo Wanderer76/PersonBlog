@@ -23,7 +23,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     networks:
-      - backend      
+      - backend
   database:
     container_name: postgresDb
     image: postgres:16.6
@@ -101,122 +101,122 @@ services:
       - ./TokenizerService:/app
     networks:
       - backend      
-  auth-app:
-    container_name: auth-app
-    depends_on: [rabbitMq]
-    build:
-        context: ./
-        dockerfile: ./AuthService/AuthenticationApplication/Dockerfile
-    ports:
-      - "5179:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    networks:
-      - backend      
-  blog-app:
-    container_name: blog-app
-    depends_on: [rabbitMq]
-    build:
-        context: ./
-        dockerfile: ./BlogService/Blog.API/Dockerfile
-    ports:
-      - "5069:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    networks:
-      - backend
-  videoprocess-app:
-    depends_on: [blog-app]
-    container_name: videoprocess-app
-    build:
-        context: ./
-        dockerfile: ./BlogService/VideoProcessing.Cli/Dockerfile
-    ports:
-      - "5281:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./BlogService/VideoProcessing.Cli/appsettings.json:/app/appsettings.json
-    networks:
-      - backend
-  videoview-app:
-    container_name: videoview-app
-    build:
-        context: ./
-        dockerfile: ./VideoService/VideoView.Application/Dockerfile
-    ports:
-      - "5165:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./VideoService/VideoView.Application/appsettings.json:/app/appsettings.json
-    networks:
-      - backend
-  videoreacting-app:
-    container_name: videoreacting-app
-    build:
-        context: ./
-        dockerfile: ./ViewReactingService/VideoReacting.API/Dockerfile
-    ports:
-      - "5153:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./ViewReactingService/VideoReacting.API/appsettings.json:/app/appsettings.json
-    networks:
-      - backend
-  searchservice-app:
-    container_name: searchservice-app
-    build:
-        context: ./
-        dockerfile: ./SearchService/SearchService.Application/Dockerfile
-    ports:
-      - "5250:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./SearchService/SearchService.Application/appsettings.json:/app/appsettings.json
-    networks:
-      - backend      
-  recommendation-app:
-    container_name: recommendation-app
-    build:
-        context: ./
-        dockerfile: ./RecommendationService/Recommendation.Application/Dockerfile
-    ports:
-      - "5209:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./RecommendationService/Recommendation.Application/appsettings.json:/app/appsettings.json
-    networks:
-      - backend
-  commentservice-app:
-    container_name: commentservice-app
-    build:
-        context: ./
-        dockerfile: ./CommentService/Comments.API/Dockerfile
-    ports:
-      - "5124:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./CommentService/Comments.API/appsettings.json:/app/appsettings.json
-    networks:
-      - backend
-  conferenceservice-app:
-    container_name: conferenceservice-app
-    build:
-        context: ./
-        dockerfile: ./ConferenceService/Conference.API/Dockerfile
-    ports:
-      - "5193:8080" 
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Realese
-    volumes:
-      - ./ConferenceService/Conference.API/appsettings.json:/app/appsettings.json
-    networks:
-      - backend
+  #auth-app:
+  #  container_name: auth-app
+  #  depends_on: [rabbitMq]
+  #  build:
+  #      context: ./
+  #      dockerfile: ./AuthService/AuthenticationApplication/Dockerfile
+  #  ports:
+  #    - "5179:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  networks:
+  #    - backend      
+  #blog-app:
+  #  container_name: blog-app
+  #  depends_on: [rabbitMq]
+  #  build:
+  #      context: ./
+  #      dockerfile: ./BlogService/Blog.API/Dockerfile
+  #  ports:
+  #    - "5069:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  networks:
+  #    - backend
+  #videoprocess-app:
+  #  depends_on: [blog-app]
+  #  container_name: videoprocess-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./BlogService/VideoProcessing.Cli/Dockerfile
+  #  ports:
+  #    - "5281:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./BlogService/VideoProcessing.Cli/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend
+  #videoview-app:
+  #  container_name: videoview-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./VideoService/VideoView.Application/Dockerfile
+  #  ports:
+  #    - "5165:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./VideoService/VideoView.Application/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend
+  #videoreacting-app:
+  #  container_name: videoreacting-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./ViewReactingService/VideoReacting.API/Dockerfile
+  #  ports:
+  #    - "5153:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./ViewReactingService/VideoReacting.API/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend
+  #searchservice-app:
+  #  container_name: searchservice-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./SearchService/SearchService.Application/Dockerfile
+  #  ports:
+  #    - "5250:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./SearchService/SearchService.Application/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend      
+  #recommendation-app:
+  #  container_name: recommendation-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./RecommendationService/Recommendation.Application/Dockerfile
+  #  ports:
+  #    - "5209:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./RecommendationService/Recommendation.Application/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend
+  #commentservice-app:
+  #  container_name: commentservice-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./CommentService/Comments.API/Dockerfile
+  #  ports:
+  #    - "5124:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./CommentService/Comments.API/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend
+  #conferenceservice-app:
+  #  container_name: conferenceservice-app
+  #  build:
+  #      context: ./
+  #      dockerfile: ./ConferenceService/Conference.API/Dockerfile
+  #  ports:
+  #    - "5193:8080" 
+  #  environment:
+  #    - ASPNETCORE_ENVIRONMENT=Realese
+  #  volumes:
+  #    - ./ConferenceService/Conference.API/appsettings.json:/app/appsettings.json
+  #  networks:
+  #    - backend
 networks:
   backend:
     driver: bridge

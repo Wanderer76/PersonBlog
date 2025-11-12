@@ -29,8 +29,8 @@ public class VideoController : BaseController
     }
 
 
-    [HttpGet("{postId}/{*file}")]
-    public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid postId, string file)
+    [HttpGet("{blogId}/{postId}/{*file}")]
+    public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid blogId, Guid postId, string file)
     {
         if (file.EndsWith("playlist.m3u8"))
         {
@@ -38,7 +38,7 @@ public class VideoController : BaseController
             var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
             if (playlistParsed == null)
             {
-                playlistParsed = await storage.ProcessManifestAsync(postId, file);
+                playlistParsed = await storage.ProcessManifestAsync(blogId, postId, file);
                 await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
             }
 
@@ -47,7 +47,7 @@ public class VideoController : BaseController
         else
         {
             var result = new MemoryStream();
-            await storage.ReadFileAsync(postId, file!, result);
+            await storage.ReadFileAsync(blogId, $"{postId}/{file!}", result);
             result.Position = 0;
             return File(result, HLSType);
         }
@@ -127,5 +127,5 @@ file class FileCacheKey : ICacheKey
         this.file = file;
     }
 
-    public string GetKey() => file;
+    public string GetKey() => $"{nameof(FileCacheKey)}:{file}";
 }

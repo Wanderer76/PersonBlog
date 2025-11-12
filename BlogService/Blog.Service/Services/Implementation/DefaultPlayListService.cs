@@ -218,13 +218,17 @@ namespace Blog.Service.Services.Implementation
                 .FirstAsync();
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var result = await playlists.ToAsyncEnumerable().SelectAwait(async x => new PlayListViewModel
+            var result = new List<PlayListViewModel>(playlists.Count);
+            foreach (var x in playlists)
             {
-                Id = x.Id,
-                ThumbnailUrl = x.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(userId, x.ThumbnailId),
-                Title = x.Title,
-                Posts = await x.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync()
-            }).ToListAsync();
+                result.Add(new PlayListViewModel
+                {
+                    Id = x.Id,
+                    ThumbnailUrl = x.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(userId, x.ThumbnailId),
+                    Title = x.Title,
+                    Posts = await _postService.GetDetailPostByIdsAsync(x.PlayListItems.Select(x => x.PostId)).ToListAsync()
+                });
+            }
 
             return result;
         }

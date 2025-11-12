@@ -129,16 +129,17 @@ namespace Blog.API.Handlers
 
             var hasPreviewId = await _repository.Get<Post>()
             .Where(x => x.Id == message.PostId)
-            .Select(x => x.PreviewId)
+            .Select(x => new { x.PreviewId,x.BlogId })
             .FirstAsync();
 
             await @event.PublishAsync("video-event", "video.convert", new ConvertVideoCommand
             {
                 VideoMetadataId = saga.VideoMetadataId,
+                BlogId = hasPreviewId.BlogId,
                 ObjectName = saga.ObjectName!,
                 PostId = saga.PostId,
                 VideoMetadata = video,
-                HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId)
+                HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId.PreviewId)
             }, new MessageProperty { CorrelationId = saga.CorrelationId.ToString() });
         }
         //async Task IEventHandler.Handle(MessageContext @event)

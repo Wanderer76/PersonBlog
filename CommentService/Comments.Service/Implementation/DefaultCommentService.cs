@@ -97,7 +97,7 @@ internal class DefaultCommentService : ICommentService
 
         if (comment == null)
         {
-            return Result.Failure(new("Комментария не существует"));
+            return Result.Failure(nameof(commentId), "Комментария не существует");
         }
 
         _repository.Attach(comment);

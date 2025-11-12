@@ -7,11 +7,11 @@ using System.Runtime.CompilerServices;
 
 namespace Infrastructure.Services
 {
-    internal class HttpContextUserService : ICurrentUserService
+    internal class HttpContextCachedUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ICacheService _cacheService;
-        public HttpContextUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService)
+        public HttpContextCachedUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService)
         {
             _contextAccessor = contextAccessor;
             _cacheService = cacheService;
@@ -19,7 +19,7 @@ namespace Infrastructure.Services
 
         public async Task<UserModel> GetCurrentUserAsync()
         {
-            var token = _contextAccessor.HttpContext.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
+            var token = _contextAccessor.HttpContext!.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
             var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
             if (tokenRepr == null || tokenRepr.IsFailure)
                 return UserModel.AnonymousUser();
