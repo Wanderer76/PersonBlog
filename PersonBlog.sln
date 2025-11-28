@@ -64,7 +64,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Persistence", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Service", "ConferenceService\Conference.Service\Conference.Service.csproj", "{38C7ACA8-0784-4355-BC83-13AB88DAE895}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.API", "VideoService\VideoView.Application\Gateway.API.csproj", "{E4038FF7-57D8-4F48-BEDB-B1D287344CF7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gateway.API", "GetewayService\Gateway.API\Gateway.API.csproj", "{E4038FF7-57D8-4F48-BEDB-B1D287344CF7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Contracts", "BlogService\Blog.Contracts\Blog.Contracts.csproj", "{1DD59E36-CA1B-4B66-A53B-CD95382E1F61}"
 EndProject
@@ -134,9 +134,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Contract", "No
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Domain", "NotificationService\Notification.Domain\Notification.Domain.csproj", "{4663116B-1D14-6159-FC31-C7E672DC1DD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireTest.AppHost", "VideoService\AspireTest\AspireTest.AppHost\AspireTest.AppHost.csproj", "{362BF21D-E90C-43C2-82A6-E9B3BE62C2B2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireTest.AppHost", "GetewayService\AspireTest\AspireTest.AppHost\AspireTest.AppHost.csproj", "{362BF21D-E90C-43C2-82A6-E9B3BE62C2B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireTest.ServiceDefaults", "VideoService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj", "{76F26146-868C-7ABE-28AF-AABBF650D54E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspireTest.ServiceDefaults", "GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj", "{76F26146-868C-7ABE-28AF-AABBF650D54E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
