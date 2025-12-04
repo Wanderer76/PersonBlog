@@ -30,8 +30,7 @@ public class AuthController : BaseController
 
     [HttpPost("create")]
     [Produces(typeof(AuthResponse))]
-    [AuthFilter]
-    public async Task<IActionResult> CreateUser(RegisterModel registerModel)
+    public async Task<IActionResult> CreateUser([FromBody] RegisterModel registerModel)
     {
         var response = await _authService.Register(registerModel);
         if (response.IsSuccess)
@@ -70,7 +69,7 @@ public class AuthController : BaseController
         }
         else
         {
-            return BadRequest(response.Error);
+            return Unauthorized(response.Error);
         }
     }
 

@@ -55,8 +55,8 @@ export class JwtTokenService {
     }
 
     static cleanAuth() {
-        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-        sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
     }
 
     static isAuth() {

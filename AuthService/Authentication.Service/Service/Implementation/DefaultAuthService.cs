@@ -148,6 +148,16 @@ internal class DefaultAuthService : IAuthService
         }
 
         var userId = tokenModel.UserId;
+
+        var currentRefreshToken = await _context.Get<Token>()
+            .Where(x=>x.AppUserId == userId)
+            .Where(x=>x.TokenType == TokenTypes.Refresh)
+            .FirstOrDefaultAsync();
+
+        if (currentRefreshToken == null)
+        {
+            return new Error("Время сессии закончено");
+        }
         await _tokenService.ClearUserToken(refreshToken);
 
         var user = await _context.Get<AppUser>()

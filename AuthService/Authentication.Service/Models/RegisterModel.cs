@@ -16,7 +16,7 @@ public class RegisterModel
     public DateTimeOffset? Birthdate { get; set; }
 
     [Required]
-    public required string Email { get; set; }
+    public string Email { get; set; }
 
-    public string RedirectUrl {  get; set; }
+    public string? RedirectUrl {  get; set; }
 }
