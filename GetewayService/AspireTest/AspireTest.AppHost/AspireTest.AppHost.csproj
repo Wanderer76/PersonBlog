@@ -22,7 +22,7 @@
     <ProjectReference Include="..\..\..\ProfileService\Profile.API\Profile.API.csproj" />
     <ProjectReference Include="..\..\..\RecommendationService\Recommendation.Application\Recommendation.Application.csproj" />
     <ProjectReference Include="..\..\..\SearchService\SearchService.Application\SearchService.Application.csproj" />
-    <ProjectReference Include="..\..\VideoView.Application\Gateway.API.csproj" />
+    <ProjectReference Include="..\..\Gateway.API\Gateway.API.csproj" />
   </ItemGroup>
 
   <ItemGroup>

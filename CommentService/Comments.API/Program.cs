@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Authentication.Contract.Events;
 using Comments.Domain.Services;
 using Comments.Persistence.Extensions;
@@ -17,7 +18,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCommentService();
 builder.Services.AddCustomJwtAuthentication();
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddProfileHttpClient(builder.Configuration);

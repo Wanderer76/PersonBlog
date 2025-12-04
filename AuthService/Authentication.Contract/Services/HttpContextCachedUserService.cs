@@ -1,20 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
-using Shared;
+﻿using Infrastructure.Services;
+using Microsoft.AspNetCore.Http;
 using Shared.Models;
 using Shared.Services;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("AuthTests")]
 
-namespace Infrastructure.Services
+namespace Authentication.Contract.Services
 {
     internal class HttpContextCachedUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly ICurrentUserService _currentUserService;
         private readonly ICacheService _cacheService;
-        public HttpContextCachedUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService)
+        public HttpContextCachedUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService, ICurrentUserService currentUserService)
         {
             _contextAccessor = contextAccessor;
             _cacheService = cacheService;
+            _currentUserService = currentUserService;
         }
 
         public async Task<UserModel> GetCurrentUserAsync()
@@ -29,7 +31,7 @@ namespace Infrastructure.Services
             var data = await _cacheService.GetCachedDataAsync<UserModel>(key);
             
             if (data == null)
-                return UserModel.AnonymousUser();
+                return await _currentUserService.GetCurrentUserAsync();
 
             return data;
         }

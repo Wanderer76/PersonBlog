@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Gateway.API;
@@ -17,7 +18,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddHttpClient("Auth", x =>

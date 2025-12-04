@@ -4,10 +4,10 @@ namespace Shared.Models
 {
     public class UserModel
     {
-        public Guid? UserId { get; set; }
-        public string UserName { get; set; }
-        public string? IpAddress { get; set; }
-        public Guid? BlogId { get; set; }
+        public Guid? UserId { get; }
+        public string UserName { get; }
+        public string? IpAddress { get; }
+        public Guid? BlogId { get; }
         public bool IsAnonymous => UserId == null;
         public List<Guid> Roles { get; } = [];
 

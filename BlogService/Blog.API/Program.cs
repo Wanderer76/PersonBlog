@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
@@ -21,7 +22,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddProfileServices();
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();

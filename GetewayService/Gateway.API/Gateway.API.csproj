@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
     <ProjectReference Include="..\..\AuthService\Authentication.Service\Authentication.Service.csproj" />
     <ProjectReference Include="..\..\BlogService\Blog.Service\Blog.Service.csproj" />
     <ProjectReference Include="..\..\CommentService\Comments.Domain\Comments.Domain.csproj" />
