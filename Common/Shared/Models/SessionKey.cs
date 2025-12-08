@@ -2,7 +2,7 @@
 
 namespace Shared.Models
 {
-    public class SessionKey : ICacheKey
+    public sealed class SessionKey : ICacheKey
     {
         public const string Key = "SessionId";
 

@@ -27,12 +27,7 @@ namespace Authentication.Contract.Services
                 return UserModel.AnonymousUser();
 
             var key = new SessionKey(tokenRepr.Value.UserId);
-
-            var data = await _cacheService.GetCachedDataAsync<UserModel>(key);
-            
-            if (data == null)
-                return await _currentUserService.GetCurrentUserAsync();
-
+            var data = await _cacheService.GetOrAddDataAsync(key, _currentUserService.GetCurrentUserAsync);
             return data;
         }
     }
