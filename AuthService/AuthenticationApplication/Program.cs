@@ -6,6 +6,7 @@ using AuthenticationApplication.HostedServices;
 using Blog.Contracts.Events;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using Infrastructure.Middleware;
 using MessageBus;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,6 +36,7 @@ builder.Services.AddMessageBus(builder.Configuration)
     });
 
 builder.Services.AddHostedService<EventPublishService>();
+builder.Services.AddHostedService<TokenCleanerHostedService>();
 
 var app = builder.Build();
 
@@ -58,6 +60,6 @@ app.UseRouting();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();        // ← современный способ (минималистичный)
-app.MapDefaultEndpoints();   // ← регистрирует /health, /alive, /metrics
+app.MapControllers();
+app.MapDefaultEndpoints();
 app.Run();

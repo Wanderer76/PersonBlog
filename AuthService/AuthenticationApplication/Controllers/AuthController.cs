@@ -2,7 +2,6 @@
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
 using AuthenticationApplication.Service;
-using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -76,9 +75,10 @@ public class AuthController : BaseController
     [HttpGet("/me")]
     public async Task<ActionResult<UserModel>> GetCurrentUser()
     {
+        var now = DateTimeService.Now();
         var token = HttpContext!.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
         var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
-        if (tokenRepr == null || tokenRepr.IsFailure)
+        if (tokenRepr == null || tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now)
             return UserModel.AnonymousUser();
 
         var tokenData = tokenRepr.Value;

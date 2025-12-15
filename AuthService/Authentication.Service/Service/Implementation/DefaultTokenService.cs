@@ -54,14 +54,15 @@ internal class DefaultTokenService : ITokenService
 
     private (Token accessToken, Token refreshToken) CreateTokenForUser(AppUser user)
     {
+        var now = DateTimeService.Now();
         var accessToken = new Token
         {
             Id = Guid.NewGuid(),
             AppUserId = user.Id,
             TokenType = TokenTypes.Access,
             Login = user.Login,
-            CreatedAt = DateTimeOffset.UtcNow,
-            ExpiredAt = DateTimeOffset.UtcNow.AddDays(10),
+            CreatedAt = now,
+            ExpiredAt = now.AddMinutes(5),
             RoleId = user.AppUserRoles.First().UserRoleId,
         };
         var refreshToken = new Token
@@ -70,8 +71,8 @@ internal class DefaultTokenService : ITokenService
             AppUserId = user.Id,
             TokenType = TokenTypes.Refresh,
             Login = user.Login,
-            CreatedAt = DateTimeOffset.UtcNow,
-            ExpiredAt = DateTimeOffset.UtcNow.AddYears(4),
+            CreatedAt = now,
+            ExpiredAt = now.AddMinutes(60),
             RoleId = user.AppUserRoles.First().UserRoleId
         };
         _context.Add(accessToken);
