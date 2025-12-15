@@ -2,6 +2,7 @@ using Authentication.Contract;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Gateway.API;
+using Gateway.API.Services;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -18,37 +19,40 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<HeaderClientHandler>();
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddHttpClient("Auth", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Profile", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Recommendation", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Reacting", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Reacting"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Search", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Search"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Conference", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Conference"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Comments", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Comments"]);
-});
+}).AddHttpMessageHandler<HeaderClientHandler>();
+
 
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();

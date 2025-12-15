@@ -6,7 +6,7 @@ namespace Gateway.API
     {
         private readonly RequestDelegate _next;
 
-        private const string CorrelationId = "X-Correlation-Id";
+        public const string CorrelationId = "X-Correlation-Id";
 
         public CorrelationMiddleware(RequestDelegate requestDelegate)
         {
