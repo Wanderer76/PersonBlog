@@ -343,7 +343,7 @@ namespace Blog.Service.Services.Implementation
             //if((currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
 
             if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
-                && !(currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
+                && !(currentUser.HasBlog && isBanned.BlogId == currentUser.BlogId))
             {
                 return default;
             }

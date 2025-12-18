@@ -34,7 +34,7 @@ namespace Profile.Service.Implementation
                 return Result.Failure(new Error("Forbbiden"));
             }
             var profile = await _readWriteRepository.Get<AppProfile>()
-                .Where(x => x.UserId == user.UserId.Value)
+                .Where(x => x.UserId == user.UserId)
                 .FirstAsync();
 
             var message = new PostBanRequest(profile.Id, report.Message, report.ReasonId, report.PostId);
@@ -45,7 +45,7 @@ namespace Profile.Service.Implementation
                 ObjectName = report.ObjectName,
                 ReasonId = report.ReasonId,
                 UserMessage = report.Message,
-                CreatorUserId = user.UserId.Value,
+                CreatorUserId = user.UserId,
                 CreatedAt = DateTimeService.Now(),
             };
             _readWriteRepository.Add(ReactingEvent.Create(@event, GuidService.GetNewGuid()));

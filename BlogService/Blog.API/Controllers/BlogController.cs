@@ -30,8 +30,7 @@ namespace Blog.API.Controllers
         [AuthFilter(Roles.User)]
         public async Task<IActionResult> CreateBlog([FromForm] BlogCreateForm form)
         {
-            var user = await _currentUserService.GetCurrentUserAsync();
-            var result = await _blogService.CreateBlogAsync(new BlogCreateDto(user.UserId!.Value, form.Title, form.Description, form.PhotoUrl));
+            var result = await _blogService.CreateBlogAsync(new BlogCreateDto(form.Title, form.Description, form.PhotoUrl));
             if (result.IsSuccess)
             {
                 return Ok(result);
@@ -55,7 +54,7 @@ namespace Blog.API.Controllers
         public async Task<IActionResult> HasUserBlog()
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-            var result = await _blogService.HasUserBlogAsync(user.UserId!.Value);
+            var result = await _blogService.HasUserBlogAsync(user.UserId!);
             return Ok(new HasBlogResponse { HasBlog = result });
         }
 
@@ -64,7 +63,7 @@ namespace Blog.API.Controllers
         public async Task<IActionResult> GetBlogDetail()
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-            var result = await _blogService.GetBlogByUserIdAsync(user.UserId!.Value);
+            var result = await _blogService.GetBlogByUserIdAsync(user.UserId);
             return Ok(result);
         }
 

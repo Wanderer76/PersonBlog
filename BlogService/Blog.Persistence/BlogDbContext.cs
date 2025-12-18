@@ -34,16 +34,16 @@ public class BlogDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<PersonBlog>();
                 entity.HasIndex(x => x.UserId).IsUnique();
-                entity.HasData(new[]
-               {
-                    new PersonBlog
-                    {
-                        Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                        Title = "Тест",
-                        UserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                        CreatedAt = new DateTimeOffset(2020,1,1,0,0,0,0,0,TimeSpan.Zero)
-                    }
-                });
+               // entity.HasData(new[]
+               //{
+               //     new PersonBlog
+               //     {
+               //         Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
+               //         Title = "Тест",
+               //         UserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
+               //         CreatedAt = new DateTimeOffset(2020,1,1,0,0,0,0,0,TimeSpan.Zero)
+               //     }
+               // });
             }
             {
                 var entity = modelBuilder.Entity<Subscriber>();

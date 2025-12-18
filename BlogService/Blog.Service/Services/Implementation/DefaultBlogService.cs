@@ -1,161 +1,149 @@
 ﻿using Blog.Contracts.Events;
 using Blog.Domain.Entities;
-using Blog.Service.Exceptions;
 using Blog.Service.Models.Blog;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
-using System.Text.Json;
 
-namespace Blog.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation;
+
+internal sealed class DefaultBlogService : IBlogService
 {
-    internal sealed class DefaultBlogService : IBlogService
+    private readonly IReadWriteRepository<IBlogEntity> _context;
+    private readonly ICacheService _cacheService;
+    private readonly IFileStorageFactory _fileStorageFactory;
+    private readonly ICurrentUserService _currentUserService;
+    public DefaultBlogService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory, ICurrentUserService currentUserService)
     {
-        private readonly IReadWriteRepository<IBlogEntity> _context;
-        private readonly ICacheService _cacheService;
-        private readonly IFileStorageFactory _fileStorageFactory;
+        _context = context;
+        _cacheService = cacheService;
+        _fileStorageFactory = fileStorageFactory;
+        _currentUserService = currentUserService;
+    }
 
-        public DefaultBlogService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory)
+    public async Task<Result<BlogModel>> CreateBlogAsync(BlogCreateDto model)
+    {
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
+        var isBlogAlreadyExists = await _context.Get<PersonBlog>()
+            .AnyAsync(x => x.UserId == currentUser.UserId);
+
+        if (isBlogAlreadyExists)
         {
-            _context = context;
-            _cacheService = cacheService;
-            _fileStorageFactory = fileStorageFactory;
+            return Result<BlogModel>.Failure(new Error("У данного пользователя уже существует блог"));
         }
 
-        public async Task<Result<BlogModel>> CreateBlogAsync(BlogCreateDto model)
+        using var storage = _fileStorageFactory.CreateFileStorage();
+        var blogId = GuidService.GetNewGuid();
+
+        var photoUrl = model.PhotoUrl == null
+            ? null
+            : await storage.PutFileAsync(blogId, model.PhotoUrl.FileName, model.PhotoUrl.OpenReadStream());
+
+        var blogResult = PersonBlog.CreateBlog(
+            blogId,
+            DateTimeService.Now(),
+            model.Title,
+            model.Description,
+            photoUrl,
+            currentUser.UserId
+        );
+        if (blogResult.IsSuccess)
         {
-            var isBlogAlreadyExists = await _context.Get<PersonBlog>()
-                .AnyAsync(x => x.UserId == model.UserId);
-
-            if (isBlogAlreadyExists)
-            {
-                return Result<BlogModel>.Failure(new Error("У данного пользователя уже существует блог"));
-            }
-
-            using var storage = _fileStorageFactory.CreateFileStorage();
-            var blogId = GuidService.GetNewGuid();
-
-            var photoUrl = model.PhotoUrl == null
-                ? null
-                : await storage.PutFileAsync(blogId, model.PhotoUrl.FileName, model.PhotoUrl.OpenReadStream());
-
-
-            var blog = new PersonBlog
-            {
-                Id = blogId,
-                CreatedAt = DateTimeService.Now(),
-                Title = model.Title,
-                Description = model.Description,
-                UserId = model.UserId,
-                PhotoUrl = photoUrl,
-            };
+            var blog = blogResult.Value;
             _context.Add(blog);
             var @event = new BlogCreateEvent(blogId, blog.UserId);
             _context.Add(VideoProcessEvent.Create(@event, blogId));
             await _context.SaveChangesAsync();
-            await _cacheService.RemoveCachedDataAsync(new BlogByUserIdCacheKey(model.UserId));
-            return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
+            await _cacheService.RemoveCachedDataAsync(new BlogByUserIdCacheKey(currentUser.UserId));
+            return await blog.ToBlogModel(storage);
         }
-
-        public async Task DeleteBlogAsync(Guid id)
+        else
         {
-            var blog = await _context.Get<PersonBlog>()
-                .FirstAsync(x => x.Id == id);
-            _context.Remove(blog);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<BlogModel> GetBlogByIdAsync(Guid id)
-        {
-            var key = new BlogByIdCacheKey(id);
-            var result = await _cacheService.GetCachedDataAsync<PersonBlog>(key);
-            if (result == null)
-            {
-                result = await _context.Get<PersonBlog>()
-                    .FirstAsync(x => x.Id == id);
-
-                await _cacheService.SetCachedDataAsync(key, result, TimeSpan.FromMinutes(10));
-            }
-            return await result.ToBlogModel(_fileStorageFactory.CreateFileStorage());
-        }
-
-        public async Task<BlogModel> GetBlogByPostIdAsync(Guid id)
-        {
-            var blog = await _context.Get<Post>()
-                .Where(x => x.Id == id)
-                .Select(x => x.Blog)
-                .FirstAsync();
-            return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
-        }
-
-        public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
-        {
-            var key = new BlogByUserIdCacheKey(userId);
-            var blog = await _cacheService.GetCachedDataAsync<PersonBlog>(key);
-            if (blog == null)
-            {
-                blog = await _context.Get<PersonBlog>()
-                    .Where(x => x.UserId == userId)
-                    .FirstOrDefaultAsync() ?? throw new EntityNotFoundException("Не удалось найти блог");
-
-                await _cacheService.SetCachedDataAsync(key, blog, TimeSpan.FromMinutes(10));
-            }
-            return await blog.ToBlogModel(_fileStorageFactory.CreateFileStorage());
-        }
-
-        public Task<BlogModel> UpdateBlogAsync(BlogEditDto model)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id, Guid? userId)
-        {
-            var blog = await _context.Get<Post>()
-                          .Where(x => x.Id == id)
-                          .Select(x => x.Blog)
-                          .FirstAsync();
-
-            var hasSubscription = userId.HasValue && await _context.Get<Subscriber>()
-                .Where(x => x.BlogId == blog.Id && x.UserId == userId.Value)
-                .AnyAsync();
-
-            using var storage = _fileStorageFactory.CreateFileStorage();
-
-            return await blog.ToBlogUserInfoViewModel(hasSubscription, storage);
-        }
-
-        public async Task<Guid?> HasUserBlogAsync(Guid userId)
-        {
-            var isBlogAlreadyExists = await _context.Get<PersonBlog>()
-                            .FirstOrDefaultAsync(x => x.UserId == userId);
-            return isBlogAlreadyExists?.Id;
+            return blogResult.Error!;
         }
     }
 
-    public class BlogByUserIdCacheKey : ICacheKey
+    public async Task<Result> DeleteBlogAsync(Guid id)
     {
-        public const string Key = nameof(BlogByUserIdCacheKey);
-        private readonly Guid userId;
+        var blog = await _context.Get<PersonBlog>()
+            .FirstOrDefaultAsync(x => x.Id == id);
 
-        public BlogByUserIdCacheKey(Guid userId)
+        if (blog == null)
         {
-            this.userId = userId;
+            return Result.Failure(nameof(id), "Blog doesn't exists");
         }
 
-        public string GetKey() => $"{Key}:{userId}";
+        _context.Remove(blog);
+        await _context.SaveChangesAsync();
+        return Result.Success();
     }
-    public class BlogByIdCacheKey : ICacheKey
+
+    public async Task<BlogModel> GetBlogByIdAsync(Guid id)
     {
-        public const string Key = nameof(BlogByIdCacheKey);
-        private readonly Guid id;
-
-        public BlogByIdCacheKey(Guid id)
-        {
-            this.id = id;
-        }
-
-        public string GetKey() => $"{Key}:{id}";
+        var key = new BlogByIdCacheKey(id);
+        var result = await _cacheService.GetOrAddDataAsync(key, () => _context.Get<PersonBlog>().FirstAsync(x => x.Id == id));
+        using var storage = _fileStorageFactory.CreateFileStorage();
+        return await result.ToBlogModel(storage);
     }
+
+    public async Task<BlogModel> GetBlogByPostIdAsync(Guid id)
+    {
+        var blog = await _context.Get<Post>()
+            .Where(x => x.Id == id)
+            .Select(x => x.Blog)
+            .FirstAsync();
+
+        using var storage = _fileStorageFactory.CreateFileStorage();
+        return await blog.ToBlogModel(storage);
+    }
+
+    public async Task<BlogModel> GetBlogByUserIdAsync(Guid userId)
+    {
+        var key = new BlogByUserIdCacheKey(userId);
+        var blog = await _cacheService.GetOrAddDataAsync(key, () => _context.Get<PersonBlog>().Where(x => x.UserId == userId).FirstAsync());
+        using var storage = _fileStorageFactory.CreateFileStorage();
+        return await blog.ToBlogModel(storage);
+    }
+
+    public Task<BlogModel> UpdateBlogAsync(BlogEditDto model)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id, Guid? userId)
+    {
+        var blog = await _context.Get<Post>()
+                      .Where(x => x.Id == id)
+                      .Select(x => x.Blog)
+                      .FirstAsync();
+
+        var hasSubscription = userId.HasValue && await _context.Get<Subscriber>()
+            .Where(x => x.BlogId == blog.Id && x.UserId == userId.Value)
+            .AnyAsync();
+
+        using var storage = _fileStorageFactory.CreateFileStorage();
+
+        return await blog.ToBlogUserInfoViewModel(hasSubscription, storage);
+    }
+
+    public async Task<Guid?> HasUserBlogAsync(Guid userId)
+    {
+        var isBlogAlreadyExists = await _context.Get<PersonBlog>()
+                        .FirstOrDefaultAsync(x => x.UserId == userId);
+        return isBlogAlreadyExists?.Id;
+    }
+}
+
+public sealed record BlogByUserIdCacheKey(Guid UserId) : ICacheKey
+{
+    public const string Key = nameof(BlogByUserIdCacheKey);
+    public string GetKey() => $"{Key}:{UserId}";
+}
+
+public sealed record BlogByIdCacheKey(Guid Id) : ICacheKey
+{
+    public const string Key = nameof(BlogByIdCacheKey);
+    public string GetKey() => $"{Key}:{Id}";
 }

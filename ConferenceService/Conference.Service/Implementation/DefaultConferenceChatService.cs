@@ -42,7 +42,7 @@ namespace Conference.Service.Implementation
 
             user.AssertFound();
 
-            var message = new Message(GuidService.GetNewGuid(), conference.Id, user.UserId!.Value, messageForm.Message);
+            var message = new Message(GuidService.GetNewGuid(), conference.Id, user.UserId, messageForm.Message);
             _readWriteRepository.Add(message);
             await _readWriteRepository.SaveChangesAsync();
 
@@ -68,8 +68,8 @@ namespace Conference.Service.Implementation
                 throw new ArgumentException("no such conference");
 
             var participantsUserNames = (await _cacheService.GetCachedDataAsync<UserModel>(conference.Participants.Select(x => new SessionKey(x.SessionId))))
-                .Where(x => x.UserId.HasValue)
-                .ToDictionary(x => x.UserId!.Value, x => x.UserName);
+                .Where(x => x.UserId != Guid.Empty)
+                .ToDictionary(x => x.UserId, x => x.UserName);
 
 
             var total = offset * limit;

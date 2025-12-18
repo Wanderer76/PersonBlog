@@ -52,7 +52,7 @@ namespace Music.API.Controllers
         public async Task<IActionResult> AddTrackToUserListenHistory(Guid trackId)
         {
             var user = await _userUserService.GetCurrentUserAsync();
-            var listenEvent = new ListenHistoryEvent(GuidService.GetNewGuid(), user.UserId.Value, trackId, DateTimeService.Now());
+            var listenEvent = new ListenHistoryEvent(GuidService.GetNewGuid(), user.UserId, trackId, DateTimeService.Now());
             _writeRepository.Add(MusicEvents.Create(listenEvent));
             await _writeRepository.SaveChangesAsync();
             return Ok();

@@ -53,7 +53,7 @@ internal class DefaultAuthService : IAuthService
                 .FirstOrDefaultAsync();
 
             var response = await _tokenService.GenerateTokenAsync(user);
-            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
+            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
             await _context.SaveChangesAsync();
 
             if (loginModel.RedirectUrl != null)
@@ -128,12 +128,12 @@ internal class DefaultAuthService : IAuthService
     public async ValueTask Logout()
     {
         var user = await _userSession.GetCurrentUserAsync();
-        if (user.UserId.HasValue)
+        if (!user.IsAnonymous)
         {
-            await _cacheService.RemoveCachedDataAsync(new SessionKey(user.UserId.Value));
+            await _cacheService.RemoveCachedDataAsync(new SessionKey(user.UserId));
 
             await _context.Get<Token>()
-                .Where(x => x.AppUserId == user.UserId.Value)
+                .Where(x => x.AppUserId == user.UserId)
                 .ExecuteDeleteAsync();
         }
     }
@@ -171,7 +171,7 @@ internal class DefaultAuthService : IAuthService
            .Select(x => x.BlogId)
            .FirstOrDefaultAsync();
         var response = await _tokenService.GenerateTokenAsync(user);
-        await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
+        await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId??Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
         await _context.SaveChangesAsync();
         return response;
     }

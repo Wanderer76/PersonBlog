@@ -104,7 +104,7 @@ namespace Blog.API.Controllers
             var user = await _currentUserService.GetCurrentUserAsync();
             var result = await _postService.CreatePostAsync(new PostCreateDto
             {
-                UserId = user.UserId!.Value,
+                UserId = user.UserId,
                 Type = PostType.Video,
                 Text = form.Description?.Trim(),
                 Title = form.Title.Trim(),

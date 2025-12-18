@@ -42,7 +42,7 @@ public class BanController : BaseController
             PostId = postReport.PostId,
             ObjectName = blogClient.Value.ObjectName,
             ReasonId = postReport.ReasonId,
-            UserId = user.UserId.Value
+            UserId = user.UserId
         };
 
         using var client = _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext);

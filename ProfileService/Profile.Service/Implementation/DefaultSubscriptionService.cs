@@ -28,9 +28,9 @@ namespace Profile.Service.Implementation
         public async Task<HasSubscriptionModel> CheckCurrentUserToSubscriptionAsync(Guid blogId)
         {
             var currentUser = await _userSession.GetCurrentUserAsync();
-            var hasSubscription = currentUser.UserId.HasValue
+            var hasSubscription = !currentUser.IsAnonymous
                 ? await _readWriteRepository.Get<SubscribedChanel>()
-                .Where(x => x.UserId == currentUser.UserId.Value)
+                .Where(x => x.UserId == currentUser.UserId)
                 .Where(x => x.BlogId == blogId)
                 .AnyAsync()
                 : false;
@@ -60,7 +60,7 @@ namespace Profile.Service.Implementation
         public async Task SubscribeToBlogAsync(Guid blogId)
         {
             var user = await _userSession.GetCurrentUserAsync();
-            if (!user.UserId.HasValue)
+            if (user.IsAnonymous)
             {
                 throw new ArgumentException();
             }
@@ -76,7 +76,7 @@ namespace Profile.Service.Implementation
             if (hasSubscription != null)
                 throw new ArgumentException("У вас уже есть подписка на канал");
 
-            var newSubscription = new SubscribedChanel(user.UserId!.Value, blogId);
+            var newSubscription = new SubscribedChanel(user.UserId!, blogId);
             _readWriteRepository.Add(newSubscription);
             await _readWriteRepository.SaveChangesAsync();
             await _messagePublish.PublishAsync(BaseEvent<SubscribeCreateEvent>.Create(new SubscribeCreateEvent
@@ -91,7 +91,7 @@ namespace Profile.Service.Implementation
         {
             var user = await _userSession.GetCurrentUserAsync();
             var hasActiveSubscription = await _readWriteRepository.Get<SubscribedChanel>()
-                .Where(x => x.UserId == user.UserId.Value && x.BlogId == blogId)
+                .Where(x => x.UserId == user.UserId && x.BlogId == blogId)
                 .FirstOrDefaultAsync();
 
             if (hasActiveSubscription == null)
@@ -101,7 +101,7 @@ namespace Profile.Service.Implementation
             await _readWriteRepository.SaveChangesAsync();
             await _messagePublish.PublishAsync(BaseEvent<SubscribeCancelEvent>.Create(new SubscribeCancelEvent
             {
-                UserId = user.UserId.Value,
+                UserId = user.UserId,
                 CreatedAt = DateTimeService.Now(),
                 BlogId = blogId
             }));

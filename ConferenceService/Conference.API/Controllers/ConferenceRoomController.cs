@@ -26,7 +26,7 @@ namespace Conference.API.Controllers
         public async Task<IActionResult> Index(Guid postId)
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-            var result = await _conferenceRoomService.CreateConferenceRoomAsync(user.UserId.Value, postId);
+            var result = await _conferenceRoomService.CreateConferenceRoomAsync(user.UserId, postId);
             return Ok(result);
         }
 
@@ -42,7 +42,7 @@ namespace Conference.API.Controllers
         public async Task<IActionResult> Join(Guid roomId)
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-            await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, user.UserId.Value);
+            await _conferenceRoomService.AddParticipantToConferenceAsync(roomId, user.UserId);
             return Ok();
         }
     }

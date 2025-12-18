@@ -35,11 +35,11 @@ internal class DefaultArtistService : IArtistService
     {
         var user = await _currentUserService.GetCurrentUserAsync();
 
-        if (await _repository.Get<Artist>().AnyAsync(x => x.UserId == user.UserId.Value))
+        if (await _repository.Get<Artist>().AnyAsync(x => x.UserId == user.UserId))
         {
             return Result.Failure(new Error("Artist for user already exist"));
         }
-        var artist = Artist.CreateForUser(createArtistRequest.ArtistName, user.UserId.Value, createArtistRequest.ThumbnailId);
+        var artist = Artist.CreateForUser(createArtistRequest.ArtistName, user.UserId, createArtistRequest.ThumbnailId);
         _repository.Add(artist);
         await _repository.SaveChangesAsync();
         return Result.Success();
@@ -50,7 +50,7 @@ internal class DefaultArtistService : IArtistService
         var user = await _currentUserService.GetCurrentUserAsync();
         var artist = await _repository.Get<Artist>()
             .Include(x => x.AvatarMetadata)
-            .FirstOrDefaultAsync(x => x.UserId == user.UserId.Value);
+            .FirstOrDefaultAsync(x => x.UserId == user.UserId);
 
         if (artist == null)
         {
@@ -62,7 +62,7 @@ internal class DefaultArtistService : IArtistService
            .CountAsync();
 
         var uploadedTracksCount = await _repository.Get<Track>()
-            .Where(x => x.UploadedByUserId == user.UserId.Value)
+            .Where(x => x.UploadedByUserId == user.UserId)
             .CountAsync();
 
         using var storage = _fileStorageFactory.CreateFileStorage();

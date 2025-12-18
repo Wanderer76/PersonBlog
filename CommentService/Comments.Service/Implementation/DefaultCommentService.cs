@@ -37,16 +37,16 @@ internal class DefaultCommentService : ICommentService
         }
 
         var user = await _currentUserService.GetCurrentUserAsync();
-        var comment = new Comment(user.UserId!.Value, createRequest.PostId, createRequest.Text, createRequest.ReplyTo);
+        var comment = new Comment(user.UserId, createRequest.PostId, createRequest.Text, createRequest.ReplyTo);
         _repository.Add(comment);
         await _repository.SaveChangesAsync();
         var userEntity = await _repository.Get<UserProfile>()
-            .FirstOrDefaultAsync(x => x.UserId == user.UserId.Value);
+            .FirstOrDefaultAsync(x => x.UserId == user.UserId);
 
         return new CommentCreateResponse
         {
             Id = comment.Id,
-            UserId = user.UserId.Value,
+            UserId = user.UserId,
             PhotoUrl = userEntity?.PhotoUrl,
             ReplyTo = createRequest.ReplyTo,
             Text = createRequest.Text,
@@ -118,13 +118,13 @@ internal class DefaultCommentService : ICommentService
 
         var currentUser = await _currentUserService.GetCurrentUserAsync();
 
-        if (comment.UserId != currentUser.UserId.Value)
+        if (comment.UserId != currentUser.UserId)
         {
             return Result<CommentCreateResponse>.Failure(new("Вы не можете редактировать чужой комментарий"));
         }
 
         var userEntity = await _repository.Get<UserProfile>()
-            .FirstOrDefaultAsync(x => x.UserId == currentUser.UserId.Value);
+            .FirstOrDefaultAsync(x => x.UserId == currentUser.UserId);
 
         _repository.Attach(comment);
         comment.UpdateComment(createRequest.Text);
@@ -133,7 +133,7 @@ internal class DefaultCommentService : ICommentService
         return new CommentCreateResponse
         {
             Id = comment.Id,
-            UserId = currentUser.UserId.Value,
+            UserId = currentUser.UserId,
             PhotoUrl = userEntity?.PhotoUrl,
             ReplyTo = comment.ParentId,
             Text = createRequest.Text,

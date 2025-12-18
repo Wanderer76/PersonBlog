@@ -16,7 +16,7 @@ namespace Blog.Persistence.Repository.Quries
 
             var currentUser = await userSession.GetCurrentUserAsync();
 
-            var canAccessPrivate = currentUser.UserId.HasValue && currentUser.UserId == userId;
+            var canAccessPrivate = !currentUser.IsAnonymous && currentUser.UserId == userId;
             //var paymentLevel = currentUser.UserId.HasValue
             //    ? await context.Get<PaymentSubscriber>()
             //        .Where(x => x.UserId == currentUser.UserId.Value)
