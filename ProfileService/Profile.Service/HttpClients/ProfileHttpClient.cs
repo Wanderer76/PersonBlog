@@ -47,7 +47,6 @@ namespace Profile.Service.HttpClients
         {
 
             var request = new HttpRequestMessage(HttpMethod.Get, "Profile/profile/my");
-            AddRequestHeaders(request);
 
             var response = await _httpClient.SendAsync(request);
 
@@ -58,21 +57,6 @@ namespace Profile.Service.HttpClients
             else
             {
                 return Result<ProfileModel>.Failure(new Error("Not found"));
-            }
-        }
-
-        private void AddRequestHeaders(HttpRequestMessage request)
-        {
-            var context = _httpContextAccessor.HttpContext;
-            if (context != null)
-            {
-                // Копируем нужные заголовки
-                var headersToForward = new[] { "Authorization", "X-Request-Id", "X-Correlation-Id" };
-
-                foreach (var headerName in context.Request.Headers)
-                {
-                    request.Headers.Add(headerName.Key, headerName.Value.ToList());
-                }
             }
         }
     }

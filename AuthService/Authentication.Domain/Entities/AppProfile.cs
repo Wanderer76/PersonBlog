@@ -1,4 +1,5 @@
 ﻿using Shared;
+using Shared.Utils;
 using System.ComponentModel.DataAnnotations;
 
 namespace Authentication.Domain.Entities;
@@ -8,15 +9,14 @@ public class AppProfile : BaseEntity, IAuthEntity
     [Key]
     public long Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     [EmailAddress]
-    public string Email { get; set; }
+    public string Email { get; set; } = null!;
 
     public Guid UserId { get; set; }
     public string? PhotoUrl { get; set; }
-    public Guid? BlogId { get; set; }
 
     public AppProfile() { }
 

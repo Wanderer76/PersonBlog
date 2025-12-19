@@ -1,7 +1,4 @@
-﻿using Blog.Domain.Entities;
-using Conference.Domain.Models;
-using Infrastructure.Extensions;
-using Infrastructure.Interface;
+﻿using Conference.Domain.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +17,7 @@ namespace Gateway.API.Controllers
         [Authorize]
         public async Task<IActionResult> Index(Guid postId)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Conference", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Conference");
             var result = await client.PostAsync($"ConferenceRoom/createConferenceToPost?postId={postId}", null);
             if (result.IsSuccessStatusCode)
             {
@@ -35,7 +32,7 @@ namespace Gateway.API.Controllers
         [HttpGet("joinLink")]
         public async Task<IActionResult> GetConferenceRoomAsync(Guid roomId)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Conference", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Conference");
             var result = await client.GetFromJsonAsync<ConferenceViewModel>($"ConferenceRoom/joinLink?roomId={roomId}");
             return Ok(result);
         }
@@ -43,7 +40,7 @@ namespace Gateway.API.Controllers
         [HttpGet("join")]
         public async Task<IActionResult> Join(Guid roomId)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Conference", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Conference");
             var result = await client.GetAsync($"ConferenceRoom/join?roomId={roomId}");
             if (result.IsSuccessStatusCode)
             {

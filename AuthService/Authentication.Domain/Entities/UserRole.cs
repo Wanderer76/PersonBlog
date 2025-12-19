@@ -8,7 +8,7 @@ public class UserRole : IAuthEntity
     public Guid Id { get; set; }
     [Required]
     [StringLength(20)]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public List<AppUserRole> AppUserRole { get; set; }
+    public List<AppUserRole> AppUserRole { get; set; } = null!;
 }

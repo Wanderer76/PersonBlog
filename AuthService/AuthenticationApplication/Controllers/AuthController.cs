@@ -78,10 +78,10 @@ public class AuthController : BaseController
         var now = DateTimeService.Now();
         var token = HttpContext!.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
         var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
-        if (tokenRepr == null || tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now)
+        if (tokenRepr == null || tokenRepr != null && (tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now))
             return UserModel.AnonymousUser();
 
-        var tokenData = tokenRepr.Value;
+        var tokenData = tokenRepr!.Value;
 
         var userRoles = await _readAuth.Get<AppUserRole>()
             .Where(x => x.AppUserId == tokenData.UserId)
@@ -91,5 +91,4 @@ public class AuthController : BaseController
         var model = new UserModel(tokenData.UserId, tokenData.Login, null, tokenData.BlogId, userRoles);
         return Ok(model);
     }
-
 }

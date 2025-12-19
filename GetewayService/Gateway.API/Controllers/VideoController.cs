@@ -38,7 +38,7 @@ public class VideoController : BaseController
             var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
             if (playlistParsed == null)
             {
-                playlistParsed = await storage.ProcessManifestAsync(blogId, postId, file);
+                playlistParsed = await storage.ProcessManifestAsync(blogId, file);
                 await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
             }
 
@@ -90,11 +90,6 @@ public class VideoController : BaseController
     public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
     {
         var client = _httpClientFactory.CreateClient("Reacting");
-        foreach (var i in HttpContext.Request.Headers)
-        {
-            client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
-
-        }
         var result = await client.PostAsJsonAsync("Reaction/setView", viewRequest);
         if (!result.IsSuccessStatusCode)
             return BadRequest(result.Content);
@@ -105,10 +100,7 @@ public class VideoController : BaseController
     public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
     {
         var client = _httpClientFactory.CreateClient("Reacting");
-        foreach (var i in HttpContext.Request.Headers)
-        {
-            client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
-        }
+
         var result = await client.PostAsync($"Reaction/setReaction/{postId}?isLike={isLike}", null);
         if (!result.IsSuccessStatusCode)
             return BadRequest(result.Content);
@@ -118,14 +110,7 @@ public class VideoController : BaseController
 
 internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, ReactionHistoryViewItem? UserPostInfo, List<string> Comment);
 
-file class FileCacheKey : ICacheKey
+file record FileCacheKey(string File) : ICacheKey
 {
-    private readonly string file;
-
-    public FileCacheKey(string file)
-    {
-        this.file = file;
-    }
-
-    public string GetKey() => $"{nameof(FileCacheKey)}:{file}";
+    public string GetKey() => $"{nameof(FileCacheKey)}:{File}";
 }

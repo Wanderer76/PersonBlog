@@ -1,5 +1,7 @@
-﻿using Blog.Domain.Services;
+﻿using Authentication.Contract.Constants;
+using Blog.Domain.Services;
 using Blog.Domain.Services.Models.Playlist;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,12 +14,14 @@ public class PlayListController : BaseController
 {
     private readonly IPlayListService _playListService;
     private readonly IFileStorage _fileStorage;
+    private readonly ICurrentUserService _currentUserService;
 
-    public PlayListController(ILogger<PlayListController> logger, IPlayListService playListService, IFileStorageFactory fileStorageFactory)
+    public PlayListController(ILogger<PlayListController> logger, IPlayListService playListService, IFileStorageFactory fileStorageFactory, ICurrentUserService currentUserService)
         : base(logger)
     {
         _playListService = playListService;
         _fileStorage = fileStorageFactory.CreateFileStorage();
+        _currentUserService = currentUserService;
     }
 
     [HttpGet("list")]
@@ -129,13 +133,13 @@ public class PlayListController : BaseController
     }
 
     [HttpPost("loadThumbnail")]
-    [Authorize]
+    [AuthFilter(Roles.Blogger)]
     [Produces(typeof(string))]
-    public async Task<IActionResult> AddVideoToPlayList([FromForm] IFormFile thumbnail)
+    public async Task<ActionResult<string>> AddVideoToPlayList([FromForm] IFormFile thumbnail)
     {
-        var userId = HttpContext.GetUserFromContext();
-        var thumbnailId = await _fileStorage.PutFileAsync(userId, GuidService.GetNewGuid(), thumbnail.OpenReadStream());
-        var url = await _fileStorage.GetFileUrlAsync(userId, thumbnailId);
+        var user = await _currentUserService.GetCurrentUserAsync();
+        var thumbnailId = await _fileStorage.PutFileAsync(user.BlogId, $"playListThumbnails/{GuidService.GetNewGuid()}", thumbnail.OpenReadStream());
+        var url = await _fileStorage.GetFileUrlAsync(user.UserId, thumbnailId);
         return Ok(new
         {
             ThumbnailId = thumbnailId,

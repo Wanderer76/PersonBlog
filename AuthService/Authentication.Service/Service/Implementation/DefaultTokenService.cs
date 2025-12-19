@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared;
 using Shared.Persistence;
 using Shared.Services;
+using Shared.Utils;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AuthTests")]
@@ -42,8 +43,8 @@ internal class DefaultTokenService : ITokenService
             .Where(x => x.UserId == user.Id)
             .FirstOrDefaultAsync();
 
-        var accessTokenModel = accessToken.ToTokenModel(profile);
-        var refreshTokenModel = refreshToken.ToTokenModel(profile);
+        var accessTokenModel = accessToken.ToTokenModel(user);
+        var refreshTokenModel = refreshToken.ToTokenModel(user);
         var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessTokenModel, refreshTokenModel);
         return new AuthResponse
         {
@@ -83,19 +84,23 @@ internal class DefaultTokenService : ITokenService
 
     public async Task ClearUserToken(string token)
     {
+        var user = GetTokenRepresentation(token);
 
-        var userId = GetTokenRepresentation(token).UserId;
-
-        await _context.Get<Token>()
-            .Where(x => x.AppUserId == userId)
-            .ExecuteDeleteAsync();
+        if (user.IsSuccess)
+        {
+            var userId = user.Value.UserId;
+            await _context.Get<Token>()
+                .Where(x => x.AppUserId == userId)
+                .ExecuteDeleteAsync();
+        }
     }
 
-    public TokenModel GetTokenRepresentation(string token)
+    public Result<TokenModel> GetTokenRepresentation(string token)
     {
         var result = JwtUtils.GetTokenRepresentaion(token);
         if (result.IsFailure)
-            return null;
+            return result;
+
         return result.Value;
     }
 
@@ -120,7 +125,6 @@ internal class DefaultTokenService : ITokenService
             RoleId = roleId,
             UserId = userId,
             Type = TokenTypes.Access,
-            Name = name
         };
 
         var refreshModel = new TokenModel

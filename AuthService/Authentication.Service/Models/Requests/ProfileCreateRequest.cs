@@ -7,5 +7,5 @@ public class ProfileCreateRequest
     public string? LastName { get; set; }
     public DateTimeOffset? Birthdate { get; set; }
     public Guid UserId { get; set; }
-    public string Email { get; set; }
+    public string Email { get; set; } = null!;
 }

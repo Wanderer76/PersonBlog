@@ -145,7 +145,7 @@ namespace Blog.Service.Services.Implementation
                 Id = playlist.Id,
                 CanEdit = true,
                 Title = playlist.Title,
-                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId, playlist.ThumbnailId) : null,
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.BlogId, playlist.ThumbnailId) : null,
                 Posts = await playlist.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
             };
             return result;
@@ -212,11 +212,6 @@ namespace Blog.Service.Services.Implementation
                 return data;
             });
 
-            var userId = await _repository.Get<PersonBlog>()
-                .Where(x => x.Id == blogId)
-                .Select(x => x.UserId)
-                .FirstAsync();
-
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
             var result = new List<PlayListViewModel>(playlists.Count);
             foreach (var x in playlists)
@@ -224,7 +219,7 @@ namespace Blog.Service.Services.Implementation
                 result.Add(new PlayListViewModel
                 {
                     Id = x.Id,
-                    ThumbnailUrl = x.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(userId, x.ThumbnailId),
+                    ThumbnailUrl = x.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(blogId, x.ThumbnailId),
                     Title = x.Title,
                     Posts = await _postService.GetDetailPostByIdsAsync(x.PlayListItems.Select(x => x.PostId)).ToListAsync()
                 });
@@ -264,10 +259,9 @@ namespace Blog.Service.Services.Implementation
                 Id = playlist.Id,
                 Title = playlist.Title,
                 CanEdit = canEdit,
-                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(userBlogId.UserId, playlist.ThumbnailId) : null,
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(userBlogId.Id, playlist.ThumbnailId!) : null,
                 Posts = await playlist.PlayListItems.OrderBy(x => x.Position).ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
             };
-
         }
 
         public async Task<Result<bool>> RemovePlayListAsync(Guid id)
@@ -362,7 +356,7 @@ namespace Blog.Service.Services.Implementation
                 Id = playlist.Id,
                 Title = playlist.Title,
                 CanEdit = true,
-                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId, playlist.ThumbnailId) : null,
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.BlogId, playlist.ThumbnailId) : null,
                 Posts = await playlist.PlayListItems.OrderBy(x => x.Position).ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
             };
 

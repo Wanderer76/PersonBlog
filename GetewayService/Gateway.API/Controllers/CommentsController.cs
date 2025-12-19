@@ -1,5 +1,4 @@
 ﻿using Comments.Domain.Models;
-using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +16,7 @@ namespace Gateway.API.Controllers
         [HttpGet("list")]
         public async Task<IActionResult> GetCommentsList(Guid postId)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Comments", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Comments");
             var result = await client.GetAsync($"Comments/list?postId={postId}");
             return Ok(await result.Content.ReadAsStringAsync());
         }
@@ -25,7 +24,7 @@ namespace Gateway.API.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateComment(CommentCreateRequest createRequest)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Comments", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Comments");
             var result = await client.PostAsJsonAsync($"Comments/create",createRequest);
             return Ok(await result.Content.ReadAsStringAsync());
         }

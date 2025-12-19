@@ -1,5 +1,4 @@
 ﻿using Blog.Service.Models.Blog;
-using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +23,7 @@ namespace Gateway.API.Controllers
         {
             try
             {
-                var client = _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext);
+                var client = _httpClientFactory.CreateClient("Reacting");
                 await client.PostAsync($"Subscriber/subscribe/{blogId}", null);
                 return Ok();
             }
@@ -40,7 +39,7 @@ namespace Gateway.API.Controllers
         {
             try
             {
-                var client = _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext);
+                var client = _httpClientFactory.CreateClient("Reacting");
                 await client.PostAsync($"Subscriber/unsubscribe/{blogId}", null);
                 return Ok();
             }
@@ -54,7 +53,7 @@ namespace Gateway.API.Controllers
         [Authorize]
         public async Task<IActionResult> SubscriptionsList(int page, int size)
         {
-            var client = _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext);
+            var client = _httpClientFactory.CreateClient("Reacting");
             var subscriptions = await client.GetFromJsonAsync<PagedViewModel<SubscribeViewModel>>($"Subscriber/subscriptions?page={page}&size={size}");
 
             if (subscriptions.Items.Count > 0)

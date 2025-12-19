@@ -13,12 +13,12 @@ public class Token : IAuthEntity
     public DateTimeOffset ExpiredAt { get; set; } = DateTimeOffset.Now.AddMinutes(15);
     public Guid AppUserId { get; set; }
 
-    public string Login { get; set; }
+    public string Login { get; set; } = null!;
     public Guid RoleId { get; set; }
     public string TokenType { get; set; } = null!;
 
     [ForeignKey(nameof(AppUserId))]
-    public AppUser AppUser { get; set; }
+    public AppUser AppUser { get; set; } = null!;
 }
 
 public class TokenTypes
@@ -43,7 +43,7 @@ public static class TokenExtensions
             BlogId = blogId ?? Guid.Empty
         };
     }
-    public static TokenModel ToTokenModel(this Token token, AppProfile? profile)
+    public static TokenModel ToTokenModel(this Token token, AppUser user)
     {
         return new TokenModel
         {
@@ -51,11 +51,10 @@ public static class TokenExtensions
             CreatedAt = token.CreatedAt,
             ExpiredAt = token.ExpiredAt,
             Login = token.Login,
-            Name = profile?.Name,
             RoleId = token.RoleId,
             UserId = token.AppUserId,
             Type = token.TokenType,
-            BlogId = profile?.BlogId ?? Guid.Empty
+            BlogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId ?? Guid.Empty
         };
     }
 }

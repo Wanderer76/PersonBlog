@@ -7,10 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="MassTransit" Version="8.5.1" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\..\Common\FileStorage.Service\FileStorage.Service.csproj" />
       <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
       <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
@@ -19,7 +15,5 @@
       <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
       <ProjectReference Include="..\Blog.Contracts\Blog.Contracts.csproj" />
     </ItemGroup>
-
-  
 
 </Project>

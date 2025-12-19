@@ -1,7 +1,6 @@
 ﻿using Blog.Domain.Services.Models.Playlist;
 using Blog.Service.Models.Blog;
 using Blog.Service.Models.Post;
-using Infrastructure.Extensions;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
@@ -19,9 +18,9 @@ namespace Gateway.API.Controllers
         [HttpGet("{channelId}")]
         public async Task<IActionResult> GetChannelInfo(Guid channelId)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Profile");
             var blog = await client.GetFromJsonAsync<BlogModel>($"api/Blog/blog/{channelId}");
-            var hasSubscription = await _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext)
+            var hasSubscription = await _httpClientFactory.CreateClient("Reacting")
                 .GetFromJsonAsync<HasSubscriptionModel>($"Subscriber/hasSubscription/{channelId}");
             return Ok(new
             {
@@ -39,7 +38,7 @@ namespace Gateway.API.Controllers
         [HttpGet("posts/{channelId}")]
         public async Task<IActionResult> GetChannelPosts(Guid channelId, int page, int size)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Profile");
             var blog = await client.GetFromJsonAsync<PostPagedListViewModel>($"api/Post/list?blogId={channelId}&page={page}&limit={size}");
             return Ok(blog);
         }
@@ -47,7 +46,7 @@ namespace Gateway.API.Controllers
         [HttpGet("playLists/{channelId}")]
         public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
         {
-            using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
+            using var client = _httpClientFactory.CreateClient("Profile");
             var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListViewModel>>($"api/PlayList/list?blogId={channelId}");
             return Ok(blog);
         }

@@ -1,5 +1,4 @@
 ﻿using Infrastructure.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Blog.API.Models;
 using Blog.Domain.Services.Models;

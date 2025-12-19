@@ -14,6 +14,7 @@ public class AuthenticationDbContext : BaseDbContext
     public DbSet<Token> Tokens { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<AuthEvent> AuthEvents { get; set; }
+    public DbSet<UserContext> UserContexts { get; set; }
     public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options)
     {
     }
@@ -79,7 +80,7 @@ public class AuthenticationDbContext : BaseDbContext
             {
                  new AppUserRole
                  {
-                     UserRoleId = Guid.Parse("accbc12f-6ff1-4343-a26f-13b99e64abb6"),
+                     UserRoleId = Roles.UserRoleId,
                      AppUserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e")
                  }
             });
@@ -96,6 +97,10 @@ public class AuthenticationDbContext : BaseDbContext
             //            name :"Артём")
 
             //    });
+        }
+        {
+            var entity = modelBuilder.Entity<UserContext>();
+            entity.HasKey(x => new { x.UserId, x.ContextType, x.ContextId });
         }
     }
 }
