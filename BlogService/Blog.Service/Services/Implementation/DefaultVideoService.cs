@@ -6,15 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
-using System;
 
 namespace Blog.Service.Services.Implementation
 {
-    internal class DefaultVideoService : IVideoService
+    internal sealed class DefaultVideoService : IVideoService
     {
         private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly ICacheService _cacheService;
-        const int LifeTimeInMinutes = 60000;
+        public const int LifeTimeInMinutes = 60000;
         public DefaultVideoService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService)
         {
             _context = context;
@@ -40,12 +39,7 @@ namespace Blog.Service.Services.Implementation
                 TotalSize = uploadVideoChunk.TotalSize
             };
 
-            var data = await _cacheService.GetOrAddDataAsync(progress, () =>
-            {
-                return Task.FromResult(progress);
-            }, LifeTimeInMinutes);
-
-            return progress;
+            return await _cacheService.GetOrAddDataAsync(progress, () => Task.FromResult(progress), LifeTimeInMinutes);
         }
 
         public async Task<Result<VideoMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
@@ -81,7 +75,6 @@ namespace Blog.Service.Services.Implementation
                 CreatedAt = DateTimeOffset.UtcNow,
                 ContentType = uploadVideoChunk.ContentType,
                 PostId = uploadVideoChunk.PostId,
-                IsProcessed = true,
                 Name = uploadVideoChunk.FileName,
                 Resolution = VideoResolution.Original,
                 Duration = uploadVideoChunk.Duration,

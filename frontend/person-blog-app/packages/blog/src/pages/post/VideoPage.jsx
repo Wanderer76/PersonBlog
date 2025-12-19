@@ -52,7 +52,7 @@ const VideoPage = function (props) {
 
     function getUrl(blogId,postId, objectName) {
         if (postId !== null && objectName !== null)
-            return `${BaseApUrl}/video/Video/test/${blogId}/${postId}/${objectName}`;
+            return `${BaseApUrl}/video/Video/${blogId}/${postId}/${objectName}`;
     }
 
     useEffect(() => {

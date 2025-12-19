@@ -142,25 +142,5 @@ namespace Blog.API.Handlers
                 HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId.PreviewId)
             }, new MessageProperty { CorrelationId = saga.CorrelationId.ToString() });
         }
-        //async Task IEventHandler.Handle(MessageContext @event)
-        //{
-        //    switch (@event.Message)
-        //    {
-        //        case CombineFileChunksCommand command:
-        //            await Handle(MessageContext.Create(@event.CorrelationId, command));
-        //            break;
-        //        case ChunksCombinedResponse response:
-        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
-        //            break;
-        //        case VideoConvertedResponse response:
-        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
-        //            break;
-        //        case VideoPublishedResponse response:
-        //            await Handle(MessageContext.Create(@event.CorrelationId, response));
-        //            break;
-        //        default:
-        //            throw new ArgumentException($"Unsupported event type: {@event.Message.GetType()}");
-        //    }
-        //}
     }
 }

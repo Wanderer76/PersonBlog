@@ -10,7 +10,7 @@ public interface IBlogService
     Task<Result> DeleteBlogAsync(Guid id);
     Task<BlogModel> GetBlogByIdAsync(Guid id);
     Task<BlogModel> GetBlogByPostIdAsync(Guid id);
-    Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id,Guid?userId);
+    Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id, Guid? userId);
     Task<BlogModel> GetBlogByUserIdAsync(Guid userId);
     Task<Guid?> HasUserBlogAsync(Guid userId);
 }

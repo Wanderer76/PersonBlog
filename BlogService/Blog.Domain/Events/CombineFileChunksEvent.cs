@@ -16,6 +16,7 @@ namespace Blog.Domain.Events
     //[EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class CombineFileChunksCommand
     {
+        public required Guid BlogId { get; set; }
         public Guid VideoMetadataId { get; set; }
         public Guid PostId { get; set; }
     }

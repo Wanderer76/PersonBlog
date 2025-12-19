@@ -15,9 +15,9 @@ namespace Blog.Domain.Services.Models
         public int LikeCount { get; set; }
         public int DislikeCount { get; set; }
         public VideoMetadataModel? VideoData { get; }
-        public bool IsProcessed { get; }
+        public ProcessState IsProcessed { get; }
 
-        public PostDetailViewModel(Guid id, string? previewUrl, DateTimeOffset createdAt, int viewCount, string? description, string title, PostType type, int likeCount, int dislikeCount, VideoMetadataModel? videoData, bool isProcessed)
+        public PostDetailViewModel(Guid id, string? previewUrl, DateTimeOffset createdAt, int viewCount, string? description, string title, PostType type, int likeCount, int dislikeCount, VideoMetadataModel? videoData, ProcessState isProcessed)
         {
             Id = id;
             PreviewUrl = previewUrl;

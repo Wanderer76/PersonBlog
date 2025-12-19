@@ -43,7 +43,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         };
         try
         {
-            var url = await _storage.GetFileUrlAsync(@event.PostId, @event.ObjectName);
+            var url = await _storage.GetFileUrlAsync(@event.BlogId, @event.ObjectName);
             var dir = Path.Combine(_tempPath, @event.VideoMetadataId.ToString());
             var fileId = GuidService.GetNewGuid();
 
@@ -57,12 +57,12 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             }
 
             result.IsProcessing = false;
-            result.ObjectName = $"{@event.VideoMetadataId}.m3u8";
+            result.ObjectName = $"{@event.PostId}/{@event.VideoMetadataId}.m3u8";
             result.Duration = videoStream.Duration;
             result.ProcessState = ProcessState.Complete;
             return result;
         }
-        catch (Exception e)
+            catch (Exception e)
         {
             result.Error = "Не удалось сконвертировать файл";
             result.ProcessState = ProcessState.Error;

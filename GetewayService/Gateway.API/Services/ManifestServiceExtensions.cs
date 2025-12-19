@@ -7,7 +7,7 @@ namespace Gateway.API.Services
         public static async Task<string> ProcessManifestAsync(this IFileStorage storage, Guid blogId, Guid postId, string file)
         {
             var manifestStream = new MemoryStream();
-            await storage.ReadFileAsync(blogId, $"{postId}/{file}", manifestStream);
+            await storage.ReadFileAsync(blogId, $"{file}", manifestStream);
             manifestStream.Position = 0;
             var manifestContent = await new StreamReader(manifestStream).ReadToEndAsync();
             var prefixPath = Path.GetDirectoryName(file).Replace("\\", "/");
@@ -16,7 +16,7 @@ namespace Gateway.API.Services
             {
                 if (line.EndsWith(".m3u8") || line.EndsWith(".ts"))
                 {
-                    var nestedPath = $"{postId}/{prefixPath}/{line}";
+                    var nestedPath = $"{prefixPath}/{line}";
 
                     var url = await storage.GetFileUrlAsync(
                         blogId,

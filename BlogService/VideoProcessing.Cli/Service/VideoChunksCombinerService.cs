@@ -42,7 +42,7 @@ public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand
                 await storage.ReadFileAsync(@event.PostId, chunk.ObjectName, memoryStream);
             }
             memoryStream.Position = 0;
-            var objectName = await storage.PutFileAsync(@event.PostId, @event.VideoMetadataId.ToString(), memoryStream);
+            var objectName = await storage.PutFileAsync(@event.BlogId, $"{@event.PostId}/{@event.VideoMetadataId}", memoryStream);
 
             var response = new ChunksCombinedResponse
             {
@@ -62,7 +62,7 @@ public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand
             return new ChunksCombinedResponse
             {
                 VideoMetadataId = @event.VideoMetadataId,
-                ErrorMessage = "Не обработать файл",
+                ErrorMessage = "Не удалось обработать файл",
                 PostId = @event.PostId
             };
         }

@@ -47,7 +47,7 @@ public class VideoController : BaseController
         else
         {
             var result = new MemoryStream();
-            await storage.ReadFileAsync(blogId, $"{postId}/{file!}", result);
+            await storage.ReadFileAsync(blogId, file, result);
             result.Position = 0;
             return File(result, HLSType);
         }

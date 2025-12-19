@@ -14,6 +14,7 @@ namespace Blog.API.Models
         public required long TotalSize { get; set; }
         public required string Duration { get; set; }
     }
+
     public static class UploadVideoChunkFormExtensions
     {
         public static UploadVideoChunkModel ToUploadVideoChunkModel(this UploadVideoChunkForm form)

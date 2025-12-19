@@ -12,211 +12,203 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Services;
 
-namespace Blog.API.Controllers
+namespace Blog.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class PostController : BaseController
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class PostController : BaseController
+    private readonly IPostService _postService;
+    private readonly IUserPostService _userPostService;
+    private readonly IVideoService _videoService;
+    private readonly ISubscriptionLevelService _subscriptionLevelService;
+    private readonly ICategoryService _categoryService;
+    private readonly ICurrentUserService _currentUserService;
+    public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService, ICategoryService categoryService) : base(logger)
     {
-        private readonly IPostService _postService;
-        private readonly IUserPostService _userPostService;
-        private readonly IVideoService _videoService;
-        private readonly ISubscriptionLevelService _subscriptionLevelService;
-        private readonly ICategoryService _categoryService;
-        private readonly ICurrentUserService _currentUserService;
-        public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService, ICategoryService categoryService) : base(logger)
+        _postService = postService;
+        _userPostService = userPostService;
+        _videoService = videoService;
+        _subscriptionLevelService = subscriptionLevelService;
+        _currentUserService = currentUserService;
+        _categoryService = categoryService;
+    }
+
+    [HttpGet("manifest/{postId:guid}")]
+    [Produces(typeof(PostFileMetadataModel))]
+    public async Task<ActionResult<PostFileMetadataModel>> GetVideoFileMetadataByPostIdAsync(Guid postId)
+    {
+        var result = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+        else return BadRequest(result.Error);
+    }
+
+    [HttpGet("detail/{postId:guid}")]
+    [Produces(typeof(PostDetailViewModel))]
+    public async Task<ActionResult<PostDetailViewModel>> GetDetailPostByIdAsync(Guid postId)
+    {
+        var result = await _postService.GetDetailPostByIdAsync(postId);
+        return Ok(result);
+    }
+
+    [HttpGet("userInfo/{postId:guid}")]
+    [Produces(typeof(UserViewInfo))]
+    public async Task<ActionResult<UserViewInfo>> GetDetailPostByIdAsync(Guid postId, Guid? userId, string? address)
+    {
+        var result = await _userPostService.GetUserViewPostInfoAsync(postId, userId, address);
+        return Ok(result);
+    }
+
+    [HttpPost("setReaction/{postId:guid}")]
+    public async Task<ActionResult> SetReactionToVideo(Guid postId, bool? isLike)
+    {
+        HttpContext.TryGetUserFromContext(out var userId);
+        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        await _postService.SetReactionToPost(new ReactionCreateModel
         {
-            _postService = postService;
-            _userPostService = userPostService;
-            _videoService = videoService;
-            _subscriptionLevelService = subscriptionLevelService;
-            _currentUserService = currentUserService;
-            _categoryService = categoryService;
+            IsLike = isLike,
+            PostId = postId,
+            RemoteIp = remoteIp,
+            UserId = userId
+        });
+        return Ok();
+    }
+
+    [HttpGet("list")]
+    public async Task<ActionResult<PostPagedListViewModel>> GetBlogPostPagedList(Guid blogId, int page, int limit)
+    {
+        var result = await _postService.GetPostsByBlogIdPagedAsync(blogId, page, limit);
+        return Ok(result);
+    }
+
+    [HttpGet("create")]
+    public async Task<ActionResult<CreatePostModelViewModel>> GetCreatePostModel()
+    {
+        var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
+        var visibilityList = await _postService.GetPostVisibilityListAsync();
+        var categoryList = await _categoryService.GetAllCategoriesAsync();
+        return Ok(new CreatePostModelViewModel(subscriptionLevels,visibilityList,categoryList));
+    }
+
+    [HttpPost("create")]
+    [Authorize]
+    public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateForm form)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+        var result = await _postService.CreatePostAsync(new PostCreateDto
+        {
+            UserId = user.UserId,
+            Type = PostType.Video,
+            Text = form.Description?.Trim(),
+            Title = form.Title.Trim(),
+            Video = form.Video,
+            Photos = form.Files,
+            IsPartial = form.IsPartial,
+            Visibility = form.Visibility,
+            Thumbnail = form.Thumbnail,
+            Categories = form.Categories ?? []
+        });
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
         }
-
-        [HttpGet("manifest/{postId:guid}")]
-        [Produces(typeof(PostFileMetadataModel))]
-        public async Task<IActionResult> GetVideoFileMetadataByPostIdAsync(Guid postId)
+        else
         {
-            var result = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
-            if (result.IsSuccess)
-                return Ok(result.Value);
-            else return BadRequest(result.Error);
-        }
-
-        [HttpGet("detail/{postId:guid}")]
-        [Produces(typeof(PostDetailViewModel))]
-        public async Task<IActionResult> GetDetailPostByIdAsync(Guid postId)
-        {
-            var result = await _postService.GetDetailPostByIdAsync(postId);
-            return Ok(result);
-        }
-
-        [HttpGet("userInfo/{postId:guid}")]
-        [Produces(typeof(UserViewInfo))]
-        public async Task<IActionResult> GetDetailPostByIdAsync(Guid postId, Guid? userId, string? address)
-        {
-            var result = await _userPostService.GetUserViewPostInfoAsync(postId, userId, address);
-            return Ok(result);
-        }
-
-        [HttpPost("setReaction/{postId:guid}")]
-        public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
-        {
-            HttpContext.TryGetUserFromContext(out var userId);
-            var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            await _postService.SetReactionToPost(new ReactionCreateModel
-            {
-                IsLike = isLike,
-                PostId = postId,
-                RemoteIp = remoteIp,
-                UserId = userId
-            });
-            return Ok();
-        }
-
-        [HttpGet("list")]
-        public async Task<IActionResult> GetBlogPostPagedList(Guid blogId, int page, int limit)
-        {
-            var result = await _postService.GetPostsByBlogIdPagedAsync(blogId, page, limit);
-            return Ok(result);
-        }
-
-        [HttpGet("create")]
-        public async Task<IActionResult> GetCreatePostModel()
-        {
-            var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
-            var visibilityList = await _postService.GetPostVisibilityListAsync();
-            var categoryList = await _categoryService.GetAllCategoriesAsync();
-
-            return Ok(new
-            {
-                SubscriptionLevels = subscriptionLevels,
-                Visibility = visibilityList,
-                CateboryList = categoryList,
-            });
-        }
-
-        [HttpPost("create")]
-        [Authorize]
-        public async Task<IActionResult> AddPostToBlog([FromForm] PostCreateForm form)
-        {
-            var user = await _currentUserService.GetCurrentUserAsync();
-            var result = await _postService.CreatePostAsync(new PostCreateDto
-            {
-                UserId = user.UserId,
-                Type = PostType.Video,
-                Text = form.Description?.Trim(),
-                Title = form.Title.Trim(),
-                Video = form.Video,
-                Photos = form.Files,
-                IsPartial = form.IsPartial,
-                Visibility = form.Visibility,
-                Thumbnail = form.Thumbnail,
-                Categories = form.Categories ?? []
-            });
-            if (result.IsSuccess)
-            {
-                return Ok(result.Value);
-            }
-            else
-            {
-                return BadRequest(result.Error);
-            }
-        }
-
-        [HttpGet("edit/{postId:guid}")]
-        [Authorize]
-        public async Task<IActionResult> EditPost(Guid postId)
-        {
-            var result = await _postService.GetPostUpdateModelAsync(postId);
-            if (result.IsSuccess)
-                return Ok(result.Value);
             return BadRequest(result.Error);
         }
+    }
 
-        [HttpPost("edit")]
-        [Authorize]
-        public async Task<IActionResult> EditPost([FromForm] PostEditForm form)
+    [HttpGet("edit/{postId:guid}")]
+    [Authorize]
+    public async Task<ActionResult<PostEditViewModel>> EditPost(Guid postId)
+    {
+        var result = await _postService.GetPostUpdateModelAsync(postId);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+        return BadRequest(result.Error);
+    }
+
+    [HttpPost("edit")]
+    [Authorize]
+    public async Task<ActionResult<PostModel>> EditPost([FromForm] PostEditForm form)
+    {
+        var userId = HttpContext.GetUserFromContext();
+
+        var result = await _postService.UpdatePostAsync(new PostEditDto
+        (
+            form.Id,
+            userId,
+            form.Description,
+            form.Title,
+            form.PreviewId,
+            form.Categories ?? []
+        ));
+        return Ok(result);
+    }
+
+    [HttpDelete("delete/{id:guid}")]
+    [Authorize]
+    public async Task<ActionResult> DeletePost(Guid id)
+    {
+        await _postService.RemovePostByIdAsync(id);
+        return Ok();
+    }
+
+    [HttpGet("uploadProgress")]
+    [Authorize]
+    public async Task<ActionResult<UploadVideoProgress>> GetPostVideoUploadProgress(Guid fileId)
+    {
+        var result = await _videoService.GetUploadVideoMetadata(fileId);
+        if (result.IsSuccess)
         {
-            var userId = HttpContext.GetUserFromContext();
-
-            var result = await _postService.UpdatePostAsync(new PostEditDto
-            (
-                form.Id,
-                userId,
-                form.Description,
-                form.Title,
-                form.PreviewId,
-                form.Categories ?? []
-            ));
-            return Ok(result);
+            return Ok(result.Value);
         }
 
-        [HttpDelete("delete/{id:guid}")]
-        [Authorize]
-        public async Task<IActionResult> DeletePost(Guid id)
+        return BadRequest(result.Error);
+    }
+
+    [HttpPost("uploadProgress")]
+    [Authorize]
+    public async Task<ActionResult<UploadVideoProgress>> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
+    {
+        var result = await _videoService.CreateUploadVideoMetadata(request);
+        if (result.IsSuccess)
         {
-            await _postService.RemovePostByIdAsync(id);
-            return Ok();
+            return Ok(result.Value);
         }
 
-        [HttpGet("uploadProgress")]
-        [Authorize]
-        public async Task<IActionResult> GetPostVideoUploadProgress(Guid fileId)
+        return BadRequest(result.Error);
+    }
+
+    [HttpPost("uploadChunk")]
+    public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
+    {
+        try
         {
-            var result = await _videoService.GetUploadVideoMetadata(fileId);
-            if (result.IsSuccess)
+            var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
+            using var data = uploadVideoChunk.ChunkData.OpenReadStream();
+            await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
             {
-                return Ok(result.Value);
-            }
-
-            return BadRequest(result.Error);
+                ChunkNumber = uploadVideoChunk.ChunkNumber,
+                TotalChunkCount = uploadVideoChunk.TotalChunkCount,
+                ChunkData = data,
+                PostId = uploadVideoChunk.PostId
+            });
         }
-
-        [HttpPost("uploadProgress")]
-        [Authorize]
-        public async Task<IActionResult> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
+        catch (Exception ex)
         {
-            var result = await _videoService.CreateUploadVideoMetadata(request);
-            if (result.IsSuccess)
-            {
-                return Ok(result.Value);
-            }
-
-            return BadRequest(result.Error);
+            return BadRequest();
         }
+        return Ok();
 
-        [HttpPost("uploadChunk")]
-        public async Task<IActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
-        {
-            try
-            {
-                var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
+    }
 
-                using var data = uploadVideoChunk.ChunkData.OpenReadStream();
-                await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
-                {
-                    ChunkNumber = uploadVideoChunk.ChunkNumber,
-                    TotalChunkCount = uploadVideoChunk.TotalChunkCount,
-                    ChunkData = data,
-                    PostId = uploadVideoChunk.PostId
-                });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest();
-            }
-            return Ok();
-
-        }
-
-        [HttpGet("hasView")]
-        [Produces(typeof(bool))]
-        public async Task<IActionResult> CheckForViewAsync(Guid? userId, string? ipAddress)
-        {
-            var result = await _postService.CheckForViewAsync(userId, ipAddress);
-            return Ok(result);
-        }
+    [HttpGet("hasView")]
+    [Produces(typeof(bool))]
+    public async Task<ActionResult<bool>> CheckForViewAsync(Guid? userId, string? ipAddress)
+    {
+        var result = await _postService.CheckForViewAsync(userId, ipAddress);
+        return Ok(result);
     }
 }

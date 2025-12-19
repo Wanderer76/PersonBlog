@@ -40,14 +40,12 @@ namespace Blog.API.Handlers
             {
                 fileMetadata.ErrorMessage = @event.Error;
                 fileMetadata.ProcessState = ProcessState.Error;
-                fileMetadata.IsProcessed = false;
             }
             else
             {
                 if (@event.PreviewId != null)
                     post.PreviewId = @event.PreviewId;
-                fileMetadata.IsProcessed = false;
-                fileMetadata.ObjectName = $"{fileMetadata.Id}.m3u8";
+                fileMetadata.ObjectName = @event.ObjectName;
                 fileMetadata.Duration = @event.Duration;
                 fileMetadata.ProcessState = ProcessState.Complete;
                 post.VideoFileId = fileMetadata.Id;

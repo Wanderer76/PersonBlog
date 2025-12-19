@@ -212,8 +212,13 @@ namespace Blog.Service.Services.Implementation
 
         public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
         {
-            var fileStorage = _fileStorageFactory.CreateFileStorage();
+            using var fileStorage = _fileStorageFactory.CreateFileStorage();
             var metadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(new VideoMetadataCacheKey(uploadVideoChunkDto.PostId));
+
+            var blogId = await _context.Get<Post>()
+                .Where(x => x.Id == uploadVideoChunkDto.PostId)
+                .Select(x => x.BlogId)
+                .FirstAsync();
 
             if (metadata == null)
             {
@@ -229,20 +234,24 @@ namespace Blog.Service.Services.Implementation
             if (progress.Value.LastUploadChunkNumber >= uploadVideoChunkDto.ChunkNumber)
                 return true;
 
-            await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId, GuidService.GetNewGuid(), uploadVideoChunkDto.ChunkData, new VideoChunkUploadingInfo
-            {
-                FileId = metadata.Id,
-                ChunkNumber = uploadVideoChunkDto.ChunkNumber,
-            });
+            await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId,
+                GuidService.GetNewGuid(),
+                uploadVideoChunkDto.ChunkData,
+                new VideoChunkUploadingInfo
+                {
+                    FileId = metadata.Id,
+                    ChunkNumber = uploadVideoChunkDto.ChunkNumber,
+                });
 
             progress.Value.LastUploadChunkNumber++;
 
-            await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(600000));
+            await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(DefaultVideoService.LifeTimeInMinutes));
 
             if (progress.Value.LastUploadChunkNumber == progress.Value.TotalChunkCount)
             {
                 var videoCreateEvent = new CombineFileChunksCommand
                 {
+                    BlogId = blogId,
                     VideoMetadataId = metadata.Id,
                     PostId = uploadVideoChunkDto.PostId,
                 };
@@ -370,7 +379,7 @@ namespace Blog.Service.Services.Implementation
                     : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
 
                 var videoMetadata = post.VideoFile;
-                var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+                var processState = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
 
                 return new PostDetailViewModel(
                     post.Id,
@@ -382,7 +391,7 @@ namespace Blog.Service.Services.Implementation
                     post.Type,
                     post.LikeCount,
                     post.DislikeCount,
-                    post.VideoFile != null && !isProcessed ?
+                    post.VideoFile != null && processState == ProcessState.Complete ?
                                 new VideoMetadataModel(
                                     videoMetadata.Id,
                                     videoMetadata.Length,
@@ -390,7 +399,7 @@ namespace Blog.Service.Services.Implementation
                                     videoMetadata.ContentType,
                                     videoMetadata.ObjectName
                                 ) : null,
-                    isProcessed
+                    processState
                 );
             });
             return cacheData;
@@ -532,7 +541,7 @@ namespace Blog.Service.Services.Implementation
                     : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
 
                 var videoMetadata = post.VideoFile;
-                var isProcessed = post.VideoFile != null ? post.VideoFile.IsProcessed : false;
+                var processState = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
 
                 if (post.BanMessageId.HasValue && post.BlogId != currentUser.BlogId)
                 {
@@ -549,10 +558,10 @@ namespace Blog.Service.Services.Implementation
                     post.Type,
                     post.LikeCount,
                     post.DislikeCount,
-                    post.VideoFile?.ProcessState == ProcessState.Complete
+                    processState.IsComplete()
                     ? new VideoMetadataModel(videoMetadata.Id, videoMetadata.Length, videoMetadata.Duration, videoMetadata.ContentType, videoMetadata.ObjectName)
                     : null,
-                    isProcessed
+                    processState
                 );
             }
         }
