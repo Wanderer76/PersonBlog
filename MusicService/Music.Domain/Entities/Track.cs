@@ -57,7 +57,7 @@ namespace Music.Domain.Entities
         {
             if (string.IsNullOrWhiteSpace(title))
             {
-                return Result.Failure(new("title is empty"));
+                return Result.Failure(new Error("title is empty"));
             }
             Title = title.Trim();
             return Result.Success();

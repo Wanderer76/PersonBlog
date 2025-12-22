@@ -25,7 +25,7 @@ namespace Recommendation.Service.Service.Implementaion
                 .Include(x => x.VideoFile)
                 .Where(x => x.Type == PostType.Video)
                 .Where(x => x.Visibility == PostVisibility.Public)
-                .Where(x => x.VideoFile.IsProcessed == false)
+                .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
                 .Where(x => x.IsDeleted == false)
                 .Where(x => x.PreviewId != null)
                 .OrderByDescending(x => x.CreatedAt)
@@ -51,7 +51,7 @@ namespace Recommendation.Service.Service.Implementaion
                 .Select(post => Task.Run(async () =>
                 {
                     using var fileStorage = _fileStorageFactory.CreateFileStorage();
-                    var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId) : null;
+                    var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId) : null;
                     var profileUrl = post.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PhotoUrl) : null;
                     postMetadata.TryAdd(post.Id, (previewUrl, profileUrl));
                 }))
@@ -96,7 +96,7 @@ namespace Recommendation.Service.Service.Implementaion
                            .Where(x => notCachedValues.Contains(x.Id))
                            .Where(x => x.Type == PostType.Video)
                            .Where(x => x.Visibility == PostVisibility.Public)
-                           .Where(x => x.VideoFile.IsProcessed == false)
+                           .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
                            .Where(x => x.IsDeleted == false)
                            .Where(x => x.PreviewId != null)
                            .OrderByDescending(x => x.CreatedAt)

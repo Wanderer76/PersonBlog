@@ -6,7 +6,6 @@ namespace Blog.Domain.Entities
 {
     public sealed class VideoMetadata : FileMetadata, IBlogEntity
     {
-        public bool IsProcessed { get; set; }
         public VideoResolution Resolution { get; set; }
         public double Duration { get; set; }
         public string? ErrorMessage { get; set; }
@@ -20,6 +19,11 @@ namespace Blog.Domain.Entities
         Complete,
         Load,
         Error
+    }
+
+    public static class ProcessStateExtensions
+    {
+        public static bool IsComplete(this ProcessState state) {  return state == ProcessState.Complete; }
     }
 
     public sealed class VideoMetadataCacheKey : ICacheKey

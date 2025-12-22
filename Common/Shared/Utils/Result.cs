@@ -52,21 +52,25 @@
 
     public sealed class Result
     {
-        private readonly Error? _error;
-        private Result(Error? error)
+        private readonly IReadOnlyList<Error> _error;
+        private Result(Error error)
         {
-            _error = error;
+            _error = [error];
         }
 
         public Error? Error
         {
-            get => _error;
+            get => _error.Count == 0 ? null : _error[0];
         }
-        public bool IsFailure => _error != null;
-        public bool IsSuccess => _error == null;
+        public IReadOnlyList<Error> Errors => _error;
+
+        public bool IsFailure => _error.Count > 0;
+        public bool IsSuccess => _error.Count == 0;
 
         public static Result Success() => new(null);
         public static Result Failure(Error error) => new(error);
+        public static Result Failure(string key, string message) => new(new Error(key, message));
+        public static Result Failure(string message) => new(new Error(message));
     }
 
     public sealed class Result<TValue>

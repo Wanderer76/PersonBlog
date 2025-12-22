@@ -85,10 +85,7 @@ namespace FFmpeg.Service.Internal
 
             var ffmpegCommand = @$"-hide_banner -y -i ""{inputUrl}"" -filter_complex ""{filterComplex}"" {mapVideoParams} {mapAudioParams} -f hls -hls_time 10 -hls_playlist_type vod -hls_flags independent_segments -hls_segment_type mpegts -hls_segment_filename {output}/{options.SegmentFileName}_%v/data%05d.ts -master_pl_name {options.MasterName}.m3u8 -var_stream_map ""{mapVariants}"" {output}/{options.SegmentFileName}_%v/playlist.m3u8";
 
-            Console.WriteLine($"ffmpeg {ffmpegCommand}");
-
             await ExecuteCommand(fFMpegOptions.FFMpegPath, ffmpegCommand, callback);
-
         }
 
         private async Task<IEnumerable<FFProbeStream>> GetStreams(string inputFile)

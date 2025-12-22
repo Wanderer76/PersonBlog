@@ -10,12 +10,12 @@ namespace Authentication.Service.Models
     public class AuthResponse
     {
         [JsonPropertyName("accessToken")]
-        public string AccessToken { get; set; }
+        public string AccessToken { get; set; } = null!;
 
         [JsonPropertyName("refreshToken")]
-        public string RefreshToken { get; set; }
-        
+        public string RefreshToken { get; set; } = null!;
+
         [JsonPropertyName("authCode")]
-        public string AuthCode { get; set; }
+        public string AuthCode { get; set; } = null!;
     }
 }

@@ -1,20 +1,59 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using Shared.Utils;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
-namespace Blog.Domain.Entities
+namespace Blog.Domain.Entities;
+
+public class PersonBlog : IBlogEntity
 {
-    public class PersonBlog : IBlogEntity
-    {
-        [Key]
-        public Guid Id { get; set; }
-        [Required]
-        public required string Title { get; set; }
-        public string? Description { get; set; }
-        public DateTimeOffset CreatedAt { get; set; }
-        public string? PhotoUrl { get; set; }
-        public Guid UserId { get; set; }
-        public int SubscriptionsCount { get; set; }
+    [Key]
+    public Guid Id { get; private set; }
+    [Required]
+    public string Title { get; private set; }
+    public string? Description { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    public string? PhotoUrl { get; private set; }
+    public Guid UserId { get; private set; }
+    public int SubscriptionsCount { get; private set; }
+    public List<Subscriber> Subscriptions { get; private set; } = [];
 
-        public List<Subscriber> Subscriptions { get; set; } = [];
+    internal PersonBlog() { }
+    [JsonConstructor]
+    internal PersonBlog(Guid id, string title, string? description, DateTimeOffset createdAt, string? photoUrl, Guid userId, int subscriptionsCount, List<Subscriber> subscriptions)
+    {
+        Id = id;
+        Title = title;
+        Description = description;
+        CreatedAt = createdAt;
+        PhotoUrl = photoUrl;
+        UserId = userId;
+        SubscriptionsCount = subscriptionsCount;
+        Subscriptions = subscriptions;
+    }
+
+    public static Result<PersonBlog> CreateBlog(
+        Guid id,
+        DateTimeOffset createdAt,
+        string title,
+        string? description,
+        string? photoId,
+        Guid creatorId)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result<PersonBlog>.Failure(new Error(nameof(title), "Blog title is empty"));
+        }
+
+        var blog = new PersonBlog(
+            id,
+            title,
+            description,
+            createdAt,
+            photoId,
+            creatorId,
+            0,
+            []);
+
+        return blog;
     }
 }

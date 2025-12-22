@@ -27,13 +27,13 @@ namespace Blog.Service.Models.Post
     {
         public Guid Id { get; }
         public string Title { get; }
-        public string Description { get; }
-        public string PreviewId { get; }
+        public string? Description { get; }
+        public string? PreviewId { get; }
         public PostVisibility Visibility { get; }
         public Guid? PaymentSubscriptionId { get; }
         public List<int> Categories { get; }
 
-        public PostEditViewModel(Guid id, string title, string description, string previewId, PostVisibility visibility, Guid? paymentSubscriptionId, List<int> categories)
+        public PostEditViewModel(Guid id, string title, string? description, string? previewId, PostVisibility visibility, Guid? paymentSubscriptionId, List<int> categories)
         {
             Id = id;
             Title = title;

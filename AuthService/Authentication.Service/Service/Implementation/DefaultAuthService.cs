@@ -34,6 +34,7 @@ internal class DefaultAuthService : IAuthService
     {
         var user = await _context.Get<AppUser>()
             .Include(x => x.AppUserRoles)
+            .Include(x => x.UserContexts)
             .FirstOrDefaultAsync(x => x.Login == loginModel.Login);
 
         if (user == null)
@@ -47,13 +48,10 @@ internal class DefaultAuthService : IAuthService
                 return new Error("400", "Неверный логин/пароль");
             }
 
-            var blogId = await _context.Get<AppProfile>()
-                .Where(x => x.UserId == user.Id)
-                .Select(x => x.BlogId)
-                .FirstOrDefaultAsync();
+            var blogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId;
 
             var response = await _tokenService.GenerateTokenAsync(user);
-            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
+            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
             await _context.SaveChangesAsync();
 
             if (loginModel.RedirectUrl != null)
@@ -128,12 +126,12 @@ internal class DefaultAuthService : IAuthService
     public async ValueTask Logout()
     {
         var user = await _userSession.GetCurrentUserAsync();
-        if (user.UserId.HasValue)
+        if (!user.IsAnonymous)
         {
-            await _cacheService.RemoveCachedDataAsync(new SessionKey(user.UserId.Value));
+            await _cacheService.RemoveCachedDataAsync(new SessionKey(user.UserId));
 
             await _context.Get<Token>()
-                .Where(x => x.AppUserId == user.UserId.Value)
+                .Where(x => x.AppUserId == user.UserId)
                 .ExecuteDeleteAsync();
         }
     }
@@ -142,26 +140,41 @@ internal class DefaultAuthService : IAuthService
     {
         var tokenModel = _tokenService.GetTokenRepresentation(refreshToken);
 
-        if (tokenModel.Type != TokenTypes.Refresh)
+        if (tokenModel.IsFailure)
+            return tokenModel.Error!;
+
+        if (tokenModel.Value.Type != TokenTypes.Refresh)
         {
             return new Error("Не верный тип токена");
         }
 
-        var userId = tokenModel.UserId;
+        var userId = tokenModel.Value.UserId;
+
+        var currentRefreshToken = await _context.Get<Token>()
+            .Where(x => x.AppUserId == userId)
+            .Where(x => x.TokenType == TokenTypes.Refresh)
+            .FirstOrDefaultAsync();
+
+        if (currentRefreshToken == null)
+        {
+            return new Error("Время сессии закончено");
+        }
         await _tokenService.ClearUserToken(refreshToken);
 
         var user = await _context.Get<AppUser>()
             .Include(x => x.AppUserRoles)
+            .Include(x => x.UserContexts)
             .Where(x => x.Id == userId)
-            .FirstOrDefaultAsync();
+            .FirstAsync();
+        
+        if (user == null)
+        {
+            return new Error("Пользователь не найден");
+        }
 
-        user.AssertFound("Пользователь не найден");
-        var blogId = await _context.Get<AppProfile>()
-           .Where(x => x.UserId == user.Id)
-           .Select(x => x.BlogId)
-           .FirstOrDefaultAsync();
+        var blogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId;
         var response = await _tokenService.GenerateTokenAsync(user);
-        await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
+        await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
         await _context.SaveChangesAsync();
         return response;
     }

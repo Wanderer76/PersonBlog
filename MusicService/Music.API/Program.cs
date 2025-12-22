@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using FFmpeg.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
@@ -25,7 +26,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddFileStorage(builder.Configuration);
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddFFMpegAudioExtractorService(builder.Configuration);
 builder.Services.AddHostedService<OutboxPublisherService>();
 builder.Services.AddMusicRecommendationServices(builder.Configuration);

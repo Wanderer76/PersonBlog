@@ -1,10 +1,11 @@
-using Blog.API.Handlers;
+using Authentication.Contract;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
 using Blog.Contracts;
 using Blog.Contracts.Events;
 using Blog.Domain.Events.Handlers;
 using Blog.Persistence;
+using Blog.Service.EventHandlers;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Infrastructure.Extensions;
@@ -16,11 +17,12 @@ using Profile.Domain.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddProfileServices();
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
@@ -57,15 +59,15 @@ builder.Services.AddMessageBus(builder.Configuration)
             RoutingKey = "post.banned"
         };
     })
-        .AddSubscription<PostUnBannedEvent, PostUnBannedEventHandler>(x =>
+    .AddSubscription<PostUnBannedEvent, PostUnBannedEventHandler>(x =>
+    {
+        x.QueueName = "post-to-unban";
+        x.Exchange = new ExchangeParam
         {
-            x.QueueName = "post-to-unban";
-            x.Exchange = new ExchangeParam
-            {
-                Name = "blogs",
-                RoutingKey = "post.unbanned"
-            };
-        }); ;
+            Name = "blogs",
+            RoutingKey = "post.unbanned"
+        };
+    }); ;
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -98,6 +100,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseJwtMiddleware();
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 
 app.Run();

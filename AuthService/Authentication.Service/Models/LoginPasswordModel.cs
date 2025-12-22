@@ -5,17 +5,17 @@ namespace AuthenticationApplication.Models;
 public class LoginPasswordModel
 {
     [Required]
-    public string Login { get; set; }
-    
+    public string Login { get; set; } = null!;
+
     [Required]
-    public string Password { get; set; }
+    public string Password { get; set; } = null!;
 
     public string? RedirectUrl { get; set; }
 
     public LoginPasswordModel()
     {
-        
     }
+
     public LoginPasswordModel(string login, string password)
     {
         Login = login;

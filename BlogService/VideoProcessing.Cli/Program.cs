@@ -9,6 +9,7 @@ using VideoProcessing.Cli.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddFFMpeg(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
@@ -33,4 +34,5 @@ builder.Services.AddMessageBus(builder.Configuration)
     });
 
 var app = builder.Build();
+app.MapDefaultEndpoints();
 app.Run();

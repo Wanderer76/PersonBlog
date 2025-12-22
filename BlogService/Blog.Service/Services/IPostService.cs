@@ -27,11 +27,10 @@ namespace Blog.Service.Services
         Task RemovePostByIdAsync(Guid id);
         Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
         Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
-        Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
-        [Obsolete]
-        Task SetVideoViewed(ViewedVideoModel value);
+        Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId);
+        IAsyncEnumerable<PostDetailViewModel> GetDetailPostByIdsAsync(IEnumerable<Guid> postIds);
         Task SetReactionToPost(ReactionCreateModel value);
-        Task<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
+        ValueTask<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
         Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync();
         Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId);
     }

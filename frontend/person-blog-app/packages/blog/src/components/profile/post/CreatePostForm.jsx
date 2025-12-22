@@ -226,7 +226,7 @@ const CreatePostForm = function () {
         />
 
         <CategoryMultiSelect
-          options={createModel?.cateboryList || []}
+          options={createModel?.categoryList || []}
           value={postForm.categories || []}
           onChange={updateForm}
         />

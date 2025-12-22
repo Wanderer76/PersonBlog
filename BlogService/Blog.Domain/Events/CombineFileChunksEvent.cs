@@ -16,6 +16,7 @@ namespace Blog.Domain.Events
     //[EventPublish(Exchange = "video-event", RoutingKey = "saga")]
     public class CombineFileChunksCommand
     {
+        public required Guid BlogId { get; set; }
         public Guid VideoMetadataId { get; set; }
         public Guid PostId { get; set; }
     }
@@ -34,6 +35,7 @@ namespace Blog.Domain.Events
     [EventPublish(Exchange = "video-event", RoutingKey = "video.convert")]
     public class ConvertVideoCommand
     {
+        public required Guid BlogId { get; set; }
         public Guid PostId { get; set; }
         public Guid VideoMetadataId { get; set; }
         public string ObjectName { get; set; }
@@ -49,7 +51,7 @@ namespace Blog.Domain.Events
         public Guid VideoMetadataId { get; set; }
         public Guid PostId { get; set; }
         public string? PreviewId { get; set; }
-        public bool IsProcessed { get; set; }
+        public bool IsProcessing { get; set; }
         public string ObjectName { get; set; }
         public double Duration { get; set; }
         public ProcessState ProcessState { get; set; }

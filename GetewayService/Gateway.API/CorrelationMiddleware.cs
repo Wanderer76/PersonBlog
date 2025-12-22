@@ -1,0 +1,33 @@
+﻿using Shared.Services;
+
+namespace Gateway.API
+{
+    internal class CorrelationMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public const string CorrelationId = "X-Correlation-Id";
+
+        public CorrelationMiddleware(RequestDelegate requestDelegate)
+        {
+            _next = requestDelegate;
+        }
+
+        public async Task InvokeAsync(HttpContext context)
+        {
+            if (!context.Request.Headers.ContainsKey(CorrelationId))
+            {
+                context.Request.Headers[CorrelationId] = GuidService.GetNewGuid().ToString();
+            }
+            await _next(context);
+        }
+    }
+
+    public static class CorrelationMiddlewareExtensions
+    {
+        public static IApplicationBuilder UseCorrelationMiddleware(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<CorrelationMiddleware>();
+        }
+    }
+}

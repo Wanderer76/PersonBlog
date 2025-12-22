@@ -11,7 +11,7 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
   const videoRef = React.useRef(null);
   const playerRef = React.useRef(null);
 
-  const url =  `${BaseApUrl}/video/Video/${path.postId}/${path.objectName}`;
+  const url =  `${BaseApUrl}/video/Video/${path.blogId}/${path.postId}/${path.objectName}`;
   const options = {
     autoplay: path.autoplay == undefined ? false : path.autoplay,
     controls: true,

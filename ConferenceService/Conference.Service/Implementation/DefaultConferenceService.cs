@@ -43,9 +43,9 @@ namespace Conference.Service.Implementation
         {
             var roomId = GuidService.GetNewGuid();
             var creatorUser = (await _currentUserService.GetCurrentUserAsync())!;
-            if (creatorUser.UserId.HasValue)
+            if (creatorUser.IsAnonymous == false)
             {
-                var creator = new ConferenceParticipant(GuidService.GetNewGuid(), creatorUser.UserId!.Value, creatorUser.UserName, roomId);
+                var creator = new ConferenceParticipant(GuidService.GetNewGuid(), creatorUser.UserId, creatorUser.UserName, roomId);
                 var conference = new ConferenceRoom(roomId, postId, creator);
                 _readWriteRepository.Add(conference);
                 await _readWriteRepository.SaveChangesAsync();

@@ -24,7 +24,7 @@ namespace MusicRecommendation.API.Controllers
         public async Task<IActionResult> GetReccomendationsToUser(int page =1, int size=10)
         {
             var user = await _currentUserService.GetCurrentUserAsync();
-            var result = await _trackRecommendationRepository.GetContentBasedRecommendations(user.UserId.Value, page, size);
+            var result = await _trackRecommendationRepository.GetContentBasedRecommendations(user.UserId, page, size);
             return Ok(result);
         }
     }

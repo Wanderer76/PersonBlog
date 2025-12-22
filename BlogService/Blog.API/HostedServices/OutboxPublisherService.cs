@@ -58,7 +58,7 @@ namespace Blog.API.HostedServices
                     }
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Интервал опроса
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
             }
         }
     }

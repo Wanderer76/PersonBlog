@@ -136,9 +136,9 @@ namespace Blog.Domain.Entities
         }
     }
 
-    public readonly struct PlayListCacheKey(Guid id) : ICacheKey
+    public record PlayListCacheKey(Guid Id) : ICacheKey
     {
         private const string Key = nameof(PlayListCacheKey);
-        public string GetKey() => $"{Key}:{id}";
+        public string GetKey() => $"{Key}:{Id}";
     }
 }

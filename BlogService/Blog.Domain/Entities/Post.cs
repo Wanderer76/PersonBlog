@@ -1,6 +1,4 @@
-﻿using Blog.Domain.Entities;
-using Shared.Services;
-using Shared.Utils;
+﻿using Shared.Services;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

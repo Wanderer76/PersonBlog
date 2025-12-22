@@ -1,4 +1,5 @@
-﻿using Authentication.Domain.Entities;
+﻿using Authentication.Contract.Constants;
+using Authentication.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -13,6 +14,7 @@ public class AuthenticationDbContext : BaseDbContext
     public DbSet<Token> Tokens { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<AuthEvent> AuthEvents { get; set; }
+    public DbSet<UserContext> UserContexts { get; set; }
     public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options)
     {
     }
@@ -27,24 +29,29 @@ public class AuthenticationDbContext : BaseDbContext
            {
                 new UserRole
                 {
-                    Id = Guid.Parse("57a2b99b-b6ee-4c98-a1f0-b18fe96dae60"),
+                    Id = Roles.AdminRoleId,
                     Name = "admin"
                 },
                 new UserRole
                 {
-                    Id = Guid.Parse("accbc12f-6ff1-4343-a26f-13b99e64abb6"),
+                    Id = Roles.SuperAdminRoleId,
                     Name = "superadmin"
                 },
                 new UserRole
                 {
-                    Id = Guid.Parse("d95ca3d6-0f63-4b48-a54f-1202f3d6bf2c"),
+                    Id = Roles.UserRoleId,
                     Name = "user"
                 },
                 new UserRole
                 {
-                    Id = Guid.Parse("c2ff298c-dd14-436c-a28b-e2036866ef41"),
-                    Name = "bloger"
+                    Id = Roles.BloggerRoleId,
+                    Name = "blogger"
                 },
+                new UserRole
+                {
+                    Id = Roles.ArtistRoleId,
+                    Name = "artist"
+                }
                 //new UserRole
                 //{
                 //    Id = Guid.Parse("c2ff298c-dd14-436c-a28b-e2036866ef42"),
@@ -73,7 +80,7 @@ public class AuthenticationDbContext : BaseDbContext
             {
                  new AppUserRole
                  {
-                     UserRoleId = Guid.Parse("accbc12f-6ff1-4343-a26f-13b99e64abb6"),
+                     UserRoleId = Roles.UserRoleId,
                      AppUserId = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e")
                  }
             });
@@ -90,6 +97,10 @@ public class AuthenticationDbContext : BaseDbContext
             //            name :"Артём")
 
             //    });
+        }
+        {
+            var entity = modelBuilder.Entity<UserContext>();
+            entity.HasKey(x => new { x.UserId, x.ContextType, x.ContextId });
         }
     }
 }

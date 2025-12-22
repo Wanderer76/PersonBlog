@@ -28,7 +28,7 @@ internal class DefaultPlayListService : IMusicPlayListService
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var playList = await _repository.Get<PlayList>()
-            .Where(x => x.UserId == user.UserId.Value && x.Type == liked)
+            .Where(x => x.UserId == user.UserId && x.Type == liked)
             .FirstAsync();
         _repository.Attach(playList);
         await playList.AddTrackAsync(_repository, trackId);
@@ -40,7 +40,7 @@ internal class DefaultPlayListService : IMusicPlayListService
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var playList = await _repository.Get<PlayList>()
-            .Where(x => x.UserId == user.UserId.Value && x.Id == id)
+            .Where(x => x.UserId == user.UserId && x.Id == id)
             .FirstOrDefaultAsync();
         if(playList == null)
         {
@@ -63,7 +63,7 @@ internal class DefaultPlayListService : IMusicPlayListService
     public async Task<Result<IReadOnlyList<PlayListViewModel>>> CreateDefaultUserPlayListsAsync()
     {
         var currentUser = await _currentUserService.GetCurrentUserAsync();
-        return await CreateDefaultUserPlayListsAsync(currentUser.UserId.Value);
+        return await CreateDefaultUserPlayListsAsync(currentUser.UserId);
     }
 
     public async Task<Result<IReadOnlyList<PlayListViewModel>>> CreateDefaultUserPlayListsAsync(Guid userId)
@@ -120,7 +120,7 @@ internal class DefaultPlayListService : IMusicPlayListService
         {
             return Result<PlayListViewModel>.Failure(new Error("Плейлист с таким названием уже существует"));
         }
-        var playList = new PlayList(createPlayList.Title, user.UserId.Value, ConstPlayListType.Created, []);
+        var playList = new PlayList(createPlayList.Title, user.UserId, ConstPlayListType.Created, []);
         _repository.Add(playList);
         await _repository.SaveChangesAsync();
         return new PlayListViewModel(playList.Id, playList.Name, 0, null, playList.Type.ToString(), true, true);
@@ -130,7 +130,7 @@ internal class DefaultPlayListService : IMusicPlayListService
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var result = await _repository.Get<PlayList>()
-                     .Where(x => x.UserId == user.UserId.Value)
+                     .Where(x => x.UserId == user.UserId)
                      .Select(x => new
                      {
                          x.Id,
@@ -149,7 +149,7 @@ internal class DefaultPlayListService : IMusicPlayListService
             return result;
         if (result.Count == 0)
         {
-            var playLists = await CreateDefaultUserPlayListsAsync(user.UserId.Value);
+            var playLists = await CreateDefaultUserPlayListsAsync(user.UserId);
             return playLists;
         }
         return Result<IReadOnlyList<PlayListViewModel>>.Failure(new Error("Somethig went wrong"));
@@ -229,7 +229,7 @@ internal class DefaultPlayListService : IMusicPlayListService
         {
             return Result.Failure(new Error("Плейлист не найден"));
         }
-        if (playlist.UserId != user.UserId.Value)
+        if (playlist.UserId != user.UserId)
         {
             return Result.Failure(new Error("Вы не можете удалить чужой плейлист"));
         }
@@ -248,7 +248,7 @@ internal class DefaultPlayListService : IMusicPlayListService
         var user = await _currentUserService.GetCurrentUserAsync();
         var playList = await _repository.Get<PlayList>()
             .FirstAsync(x => x.Id == id);
-        if (user.UserId.Value != playList.UserId)
+        if (user.UserId != playList.UserId)
         {
             return Result.Failure(new Error("Вы не можете удалять треки не из своего плейлиста"));
         }

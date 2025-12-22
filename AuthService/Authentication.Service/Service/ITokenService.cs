@@ -1,6 +1,7 @@
 ﻿using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using Shared;
+using Shared.Utils;
 
 namespace Authentication.Service.Service
 {
@@ -10,6 +11,6 @@ namespace Authentication.Service.Service
         bool Validate(string token);
         Task<AuthResponse> GenerateTokenAsync(AppUser user);
         AuthResponse GenerateToken(AppUser user,Dictionary<string, string> claims);
-        TokenModel GetTokenRepresentation(string token);
+        Result<TokenModel> GetTokenRepresentation(string token);
     }
 }

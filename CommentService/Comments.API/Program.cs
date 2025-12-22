@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Authentication.Contract.Events;
 using Comments.Domain.Services;
 using Comments.Persistence.Extensions;
@@ -10,14 +11,14 @@ using Profile.Service;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.AddServiceDefaults();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCommentService();
 builder.Services.AddCustomJwtAuthentication();
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddProfileHttpClient(builder.Configuration);
@@ -42,7 +43,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthorization();
-
+app.MapDefaultEndpoints();
 app.MapControllers();
 
 app.Run();

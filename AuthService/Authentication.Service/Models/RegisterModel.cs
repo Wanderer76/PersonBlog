@@ -11,12 +11,12 @@ public class RegisterModel
     [Compare(nameof(Password), ErrorMessage = "пароли должны совпадать")]
     public string PasswordConfirm { get; set; } = null!;
     [Required]
-    public string Name { get; set; } 
+    public string Name { get; set; } = null!;
 
     public DateTimeOffset? Birthdate { get; set; }
 
     [Required]
-    public required string Email { get; set; }
+    public string Email { get; set; } = null!;
 
-    public string RedirectUrl {  get; set; }
+    public string? RedirectUrl {  get; set; }
 }

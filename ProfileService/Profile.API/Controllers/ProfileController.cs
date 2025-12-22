@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models.Profile;
 using Profile.Domain.Services;
-using Shared.Services;
 
 namespace Profile.API.Controllers;
 
@@ -36,7 +35,7 @@ public class ProfileController : ControllerBase
         var user = await _currentUserService.GetCurrentUserAsync();
         if (!user.IsAnonymous)
         {
-            var profileModel = await _profileService.GetProfileByUserIdAsync(user.UserId!.Value);
+            var profileModel = await _profileService.GetProfileByUserIdAsync(user.UserId);
             return Ok(profileModel);
         }
         return Forbid();

@@ -31,9 +31,6 @@ namespace Authentication.Peristence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<Guid?>("BlogId")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -90,10 +87,10 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 8, 28, 6, 10, 3, 466, DateTimeKind.Unspecified).AddTicks(8242), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2025, 12, 19, 10, 32, 20, 830, DateTimeKind.Unspecified).AddTicks(281), new TimeSpan(0, 0, 0, 0, 0)),
                             LastAuthenticate = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Login = "admin",
-                            Password = "39pgitWENkw=;vfwIBcvuNOIXDC4MgCw5ZkS89KILemL97F0SjbQ8tsU="
+                            Password = "CZB/81yNwZ0=;iiFKYtT4M2RJ9teZbF6Ki/XVt3rSFv34NcyvoLCSoPA="
                         });
                 });
 
@@ -115,7 +112,7 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             AppUserId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            UserRoleId = new Guid("accbc12f-6ff1-4343-a26f-13b99e64abb6")
+                            UserRoleId = new Guid("d95ca3d6-0f63-4b48-a54f-1202f3d6bf2c")
                         });
                 });
 
@@ -186,6 +183,27 @@ namespace Authentication.Peristence.Migrations
                     b.ToTable("Tokens", "Authentication");
                 });
 
+            modelBuilder.Entity("Authentication.Domain.Entities.UserContext", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ContextType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ContextId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AppUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "ContextType", "ContextId");
+
+                    b.HasIndex("AppUserId");
+
+                    b.ToTable("UserContexts", "Authentication");
+                });
+
             modelBuilder.Entity("Authentication.Domain.Entities.UserRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -220,7 +238,12 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             Id = new Guid("c2ff298c-dd14-436c-a28b-e2036866ef41"),
-                            Name = "bloger"
+                            Name = "blogger"
+                        },
+                        new
+                        {
+                            Id = new Guid("72c4bbed-5375-47fc-864f-1490ca82aced"),
+                            Name = "artist"
                         });
                 });
 
@@ -254,9 +277,18 @@ namespace Authentication.Peristence.Migrations
                     b.Navigation("AppUser");
                 });
 
+            modelBuilder.Entity("Authentication.Domain.Entities.UserContext", b =>
+                {
+                    b.HasOne("Authentication.Domain.Entities.AppUser", null)
+                        .WithMany("UserContexts")
+                        .HasForeignKey("AppUserId");
+                });
+
             modelBuilder.Entity("Authentication.Domain.Entities.AppUser", b =>
                 {
                     b.Navigation("AppUserRoles");
+
+                    b.Navigation("UserContexts");
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.UserRole", b =>

@@ -18,6 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
+    <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Profile.Persistence\Profile.Persistence.csproj" />
     <ProjectReference Include="..\Profile.Service\Profile.Service.csproj" />
     <ProjectReference Include="..\Profile.Domain\Profile.Domain.csproj" />

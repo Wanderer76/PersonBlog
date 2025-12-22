@@ -152,42 +152,48 @@ internal class RabbitMqMessageBus : IMessagePublish, IAsyncDisposable
         var consumer = new AsyncEventingBasicConsumer(channel);
         consumer.ReceivedAsync += async (model, ea) =>
         {
-            var body = JsonSerializer.Deserialize<BaseEvent<T>>(ea.Body.Span, deserializeOptions)!;
-            using var scope = _serviceScope.CreateScope();
-            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(body.EventType);
-            if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType) && handlers.Any())
+            try
             {
-                foreach (var handler in handlers)
+                var body = JsonSerializer.Deserialize<BaseEvent<T>>(ea.Body.Span, deserializeOptions)!;
+                using var scope = _serviceScope.CreateScope();
+                var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(body.EventType);
+                if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType) && handlers.Any())
                 {
-                    try
+                    foreach (var handler in handlers)
                     {
-                        var handlerBody = body.EventData;
-                        Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
-                        ? null
-                        : Guid.Parse(ea.BasicProperties.CorrelationId);
-
-                        var context = MessageContext.Create(correlationId, handlerBody, this);
-                        await handler.Handle(context);
-                    }
-                    catch (Exception e)
-                    {
-                        await channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+                        try
                         {
-                            Body = body,
-                            Error = e.ToString()
-                        })));
-                        await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
-                        return;
+                            var handlerBody = body.EventData;
+                            Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
+                            ? null
+                            : Guid.Parse(ea.BasicProperties.CorrelationId);
+
+                            var context = MessageContext.Create(correlationId, handlerBody, this);
+                            await handler.Handle(context);
+                        }
+                        catch (Exception e)
+                        {
+                            await channel.BasicPublishAsync("error", "", Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+                            {
+                                Body = body,
+                                Error = e.ToString()
+                            })));
+                            await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
+                            return;
+                        }
+
                     }
+                    await channel.BasicAckAsync(ea.DeliveryTag, false);
 
                 }
-                await channel.BasicAckAsync(ea.DeliveryTag, false);
-
-            }
-            else
+                else
+                {
+                    await channel.BasicNackAsync(ea.DeliveryTag, false, true);
+                    return;
+                }
+            }catch(Exception e)
             {
-                await channel.BasicNackAsync(ea.DeliveryTag, false, true);
-                return;
+                await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: false);
             }
         };
         await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);

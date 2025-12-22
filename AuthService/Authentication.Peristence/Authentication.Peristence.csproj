@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+      <ProjectReference Include="..\Authentication.Contract\Authentication.Contract.csproj" />
       <ProjectReference Include="..\Authentication.Domain\Authentication.Domain.csproj" />
     </ItemGroup>
 

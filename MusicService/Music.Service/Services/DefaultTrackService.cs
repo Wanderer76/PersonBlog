@@ -87,12 +87,12 @@ namespace Music.Service.Services
 
             var userUploadPlayList = await _repository.Get<PlayList>()
                 .Where(x => x.Type == ConstPlayListType.Upload)
-                .Where(x => x.UserId == currentUser.UserId.Value)
+                .Where(x => x.UserId == currentUser.UserId)
                 .FirstOrDefaultAsync();
 
             var track = new Track(
                 createRequest.Name,
-                currentUser.UserId.Value,
+                currentUser.UserId,
                 createRequest.AlbumId,
                 createRequest.PostId,
                 createRequest.ThumbnailId,
@@ -178,7 +178,7 @@ namespace Music.Service.Services
             var track = await _repository.Get<Track>()
                 .FirstAsync(x => x.Id == id);
 
-            if (track.UploadedByUserId != user.UserId.Value)
+            if (track.UploadedByUserId != user.UserId)
             {
                 return Result.Failure(new Error("Вы не можете удалить не свой трек"));
             }

@@ -46,7 +46,7 @@ namespace Blog.Service.Services.Implementation
             }
 
             var userBlogId = await _repository.Get<PersonBlog>()
-               .Where(x => x.UserId == user.UserId.Value)
+               .Where(x => x.UserId == user.UserId)
                .Select(x => x.Id)
                .FirstAsync();
 
@@ -73,13 +73,16 @@ namespace Blog.Service.Services.Implementation
             return new PlayListViewModel
             {
                 Id = playlist.Id,
-                ThumbnailUrl = await fileStorage.GetFileUrlAsync(user.UserId.Value, playlist.ThumbnailId),
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId, playlist.ThumbnailId) : null,
                 Title = playlist.Title,
-                Posts = await playlist.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
+                Posts = await playlist.PlayListItems
+                .ToAsyncEnumerable()
+                .SelectAwait(async x => (await _postService.GetDetailPostByIdAsync(x.PostId))!)
+                .ToListAsync(),
             };
         }
 
-        public async Task<Result<PostCommonModel>> ChangePostPositionAsync(ChangePostPositionRequest changePostPositionRequest)
+        public async Task<Result<PlayListViewModel>> ChangePostPositionAsync(ChangePostPositionRequest changePostPositionRequest)
         {
             var key = new PlayListCacheKey(changePostPositionRequest.PlaylistId);
             var playlist = await _cacheService.GetOrAddDataAsync(key, async () =>
@@ -91,30 +94,32 @@ namespace Blog.Service.Services.Implementation
             });
             if (playlist == null)
             {
-                return Result<PostCommonModel>.Failure(new("404", "Не найден плейлист"));
+                return Result<PlayListViewModel>.Failure(new Error("404", "Не найден плейлист"));
             }
             var user = await _userSession.GetCurrentUserAsync();
             var userBlogId = await _repository.Get<PersonBlog>()
-               .Where(x => x.UserId == user.UserId.Value)
+               .Where(x => x.UserId == user.UserId)
                .Select(x => x.Id)
                .FirstAsync();
 
             if (userBlogId != playlist.BlogId)
             {
-                return new Error("403");
+                return Result<PlayListViewModel>.Failure(new Error("403"));
             }
-
 
             _repository.Attach(playlist);
 
             var result = playlist.ChangeVideoPosition(changePostPositionRequest.PostId, changePostPositionRequest.Destination);
             if (result.IsFailure)
             {
-                return result.Error;
+                return Result<PlayListViewModel>.Failure(result.Error!);
             }
             await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
-            return Result<PostCommonModel>.Success(null);
+
+            using var storage = _fileStorageFactory.CreateFileStorage();
+
+            return Result<PlayListViewModel>.Success(await CreatePlayListViewModelAsync(playlist.BlogId, storage, playlist));
         }
 
         public async Task<Result<PlayListDetailViewModel>> CreatePlayListAsync(PlayListCreateRequest playList)
@@ -124,7 +129,7 @@ namespace Blog.Service.Services.Implementation
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
             var blogId = await _repository.Get<PersonBlog>()
-            .Where(x => x.UserId == user.UserId.Value)
+            .Where(x => x.UserId == user.UserId)
             .Select(x => x.Id)
             .FirstAsync();
 
@@ -145,8 +150,11 @@ namespace Blog.Service.Services.Implementation
                 Id = playlist.Id,
                 CanEdit = true,
                 Title = playlist.Title,
-                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId.Value, playlist.ThumbnailId) : null,
-                Posts = await playlist.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.BlogId, playlist.ThumbnailId) : null,
+                Posts = await playlist.PlayListItems
+                .ToAsyncEnumerable()
+                .SelectAwait(async x => (await _postService.GetDetailPostByIdAsync(x.PostId))!)
+                .ToListAsync(),
             };
             return result;
         }
@@ -186,7 +194,7 @@ namespace Blog.Service.Services.Implementation
                 .AsAsyncEnumerable()
                 .SelectAwait(async x =>
                 {
-                    var fileUrl = await storage.GetFileUrlAsync(x.Id, x.PreviewUrl);
+                    var fileUrl = await storage.GetFileUrlAsync(x.Id, x.PreviewUrl!);
                     return new PostCommonModel
                     {
                         Id = x.Id,
@@ -212,21 +220,25 @@ namespace Blog.Service.Services.Implementation
                 return data;
             });
 
-            var userId = await _repository.Get<PersonBlog>()
-                .Where(x => x.Id == blogId)
-                .Select(x => x.UserId)
-                .FirstAsync();
-
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var result = await playlists.ToAsyncEnumerable().SelectAwait(async x => new PlayListViewModel
+            var result = new List<PlayListViewModel>(playlists.Count);
+            foreach (var x in playlists)
             {
-                Id = x.Id,
-                ThumbnailUrl = x.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(userId, x.ThumbnailId),
-                Title = x.Title,
-                Posts = await x.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync()
-            }).ToListAsync();
+                result.Add(await CreatePlayListViewModelAsync(fileStorage, x));
+            }
 
             return result;
+        }
+
+        private async Task<PlayListViewModel> CreatePlayListViewModelAsync(IFileStorage fileStorage, PlayList playlist)
+        {
+            return new PlayListViewModel
+            {
+                Id = playlist.Id,
+                ThumbnailUrl = playlist.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(playlist.BlogId, playlist.ThumbnailId),
+                Title = playlist.Title,
+                Posts = await _postService.GetDetailPostByIdsAsync(playlist.PlayListItems.Select(x => x.PostId)).ToListAsync()
+            };
         }
 
         public async Task<Result<PlayListDetailViewModel>> GetPlayListDetailAsync(Guid id)
@@ -241,7 +253,10 @@ namespace Blog.Service.Services.Implementation
                 return data;
             });
 
-            playlist.AssertFound();
+            if (playlist == null)
+            {
+                return Result<PlayListDetailViewModel>.Failure(new("id", "PlayList not found"));
+            }
 
             var userId = (await _userSession.GetCurrentUserAsync()).UserId;
 
@@ -260,10 +275,13 @@ namespace Blog.Service.Services.Implementation
                 Id = playlist.Id,
                 Title = playlist.Title,
                 CanEdit = canEdit,
-                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(userBlogId.UserId, playlist.ThumbnailId) : null,
-                Posts = await playlist.PlayListItems.OrderBy(x => x.Position).ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(userBlogId.Id, playlist.ThumbnailId!) : null,
+                Posts = await playlist.PlayListItems
+                .OrderBy(x => x.Position)
+                .ToAsyncEnumerable()
+                .SelectAwait(async x => (await _postService.GetDetailPostByIdAsync(x.PostId))!)
+                .ToListAsync(),
             };
-
         }
 
         public async Task<Result<bool>> RemovePlayListAsync(Guid id)
@@ -301,7 +319,7 @@ namespace Blog.Service.Services.Implementation
             if (playlist == null) { return Result<PlayListViewModel>.Failure(new("404", "Плейлист не найден")); }
 
             var userBlogId = await _repository.Get<PersonBlog>()
-               .Where(x => x.UserId == user.UserId.Value)
+               .Where(x => x.UserId == user.UserId)
                .Select(x => x.Id)
                .FirstAsync();
 
@@ -316,14 +334,17 @@ namespace Blog.Service.Services.Implementation
             await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var userId = (await _userSession.GetCurrentUserAsync()).UserId!.Value;
+            var userId = (await _userSession.GetCurrentUserAsync()).UserId;
 
             return new PlayListViewModel
             {
                 Id = playlist.Id,
                 ThumbnailUrl = playlist.ThumbnailId == null ? null : await fileStorage.GetFileUrlAsync(userId!, playlist.ThumbnailId!),
                 Title = playlist.Title,
-                Posts = await playlist.PlayListItems.ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync()
+                Posts = await playlist.PlayListItems
+                .ToAsyncEnumerable()
+                .SelectAwait(async x => (await _postService.GetDetailPostByIdAsync(x.PostId))!)
+                .ToListAsync()
             };
         }
 
@@ -340,10 +361,16 @@ namespace Blog.Service.Services.Implementation
                 data.AssertFound();
                 return data;
             });
+
+            if (playlist == null)
+            {
+                return new Error($"{nameof(updateRequest.PlayListId)}", "PlayList not found");
+            }
+
             var user = await _userSession.GetCurrentUserAsync();
 
             var userBlogId = await _repository.Get<PersonBlog>()
-                .Where(x => x.UserId == user.UserId.Value)
+                .Where(x => x.UserId == user.UserId)
                 .Select(x => x.Id)
                 .FirstAsync();
 
@@ -358,8 +385,12 @@ namespace Blog.Service.Services.Implementation
                 Id = playlist.Id,
                 Title = playlist.Title,
                 CanEdit = true,
-                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId.Value, playlist.ThumbnailId) : null,
-                Posts = await playlist.PlayListItems.OrderBy(x => x.Position).ToAsyncEnumerable().SelectAwait(async x => await _postService.GetDetailPostByIdAsync(x.PostId)).ToListAsync(),
+                ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.BlogId, playlist.ThumbnailId) : null,
+                Posts = await playlist.PlayListItems
+                .OrderBy(x => x.Position)
+                .ToAsyncEnumerable()
+                .SelectAwait(async x => (await _postService.GetDetailPostByIdAsync(x.PostId))!)
+                .ToListAsync(),
             };
 
             if (string.IsNullOrWhiteSpace(updateRequest.ThumbnailId) && string.IsNullOrWhiteSpace(updateRequest.Title))
@@ -373,7 +404,7 @@ namespace Blog.Service.Services.Implementation
                 if (!string.IsNullOrWhiteSpace(playlist.ThumbnailId))
                 {
 
-                    await fileStorage.RemoveFileAsync(user.UserId.Value, playlist.ThumbnailId);
+                    await fileStorage.RemoveFileAsync(user.UserId, playlist.ThumbnailId);
                 }
 
                 playlist.ThumbnailId = updateRequest.ThumbnailId;
@@ -386,7 +417,7 @@ namespace Blog.Service.Services.Implementation
 
 
             playlistDetailViewModel.Title = playlist.Title;
-            playlistDetailViewModel.ThumbnailUrl = await fileStorage.GetFileUrlAsync(user.UserId.Value, playlist.ThumbnailId);
+            playlistDetailViewModel.ThumbnailUrl = playlist.ThumbnailId != null ? await fileStorage.GetFileUrlAsync(user.UserId, playlist.ThumbnailId) : null;
             await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
             return playlistDetailViewModel;
         }

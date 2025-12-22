@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.3.1" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>71920282-9f7f-4262-92d0-7e13f66423c0</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AuthService\AuthenticationApplication\AuthenticationApplication.csproj" />
+    <ProjectReference Include="..\..\..\BlogService\Blog.API\Blog.API.csproj" />
+    <ProjectReference Include="..\..\..\BlogService\VideoProcessing.Cli\VideoProcessing.Cli.csproj" />
+    <ProjectReference Include="..\..\..\CommentService\Comments.API\Comments.API.csproj" />
+    <ProjectReference Include="..\..\..\ConferenceService\Conference.API\Conference.API.csproj" />
+    <ProjectReference Include="..\..\..\MusicRecommendationService\MusicRecommendation.API\MusicRecommendation.API.csproj" />
+    <ProjectReference Include="..\..\..\MusicService\Music.API\Music.API.csproj" />
+    <ProjectReference Include="..\..\..\NotificationService\Notification.API\Notification.API.csproj" />
+    <ProjectReference Include="..\..\..\ProfileService\Profile.API\Profile.API.csproj" />
+    <ProjectReference Include="..\..\..\RecommendationService\Recommendation.Application\Recommendation.Application.csproj" />
+    <ProjectReference Include="..\..\..\SearchService\SearchService.Application\SearchService.Application.csproj" />
+    <ProjectReference Include="..\..\Gateway.API\Gateway.API.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.0" />
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.0.0" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" Version="13.0.0" />
+  </ItemGroup>
+
+</Project>

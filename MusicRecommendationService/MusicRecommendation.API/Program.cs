@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
@@ -15,7 +16,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMusicRecommendationPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddMessageBus(builder.Configuration)
     .AddSubscription<TrackCreateEvent, TrackCreateHandler>(cfg =>

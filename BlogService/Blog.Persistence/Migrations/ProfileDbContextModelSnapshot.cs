@@ -249,16 +249,6 @@ namespace Profile.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Blogs", "Blog");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2020, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            SubscriptionsCount = 0,
-                            Title = "Тест",
-                            UserId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e")
-                        });
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PlayList", b =>
@@ -487,9 +477,6 @@ namespace Profile.Persistence.Migrations
                     b.Property<string>("FileExtension")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("IsProcessed")
-                        .HasColumnType("boolean");
 
                     b.Property<long>("Length")
                         .HasColumnType("bigint");

@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Conference.Persistence.Extensions;
 using Conference.Service.Extensions;
 using Conference.Service.Hubs;
@@ -14,7 +15,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddConferencePersistence(builder.Configuration);
 builder.Services.AddConferenceService();
-builder.Services.AddUserSessionServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCors();
