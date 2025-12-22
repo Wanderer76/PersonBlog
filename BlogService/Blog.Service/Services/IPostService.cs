@@ -27,7 +27,7 @@ namespace Blog.Service.Services
         Task RemovePostByIdAsync(Guid id);
         Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto);
         Task<PostModel> UpdatePostAsync(PostEditDto postEditDto);
-        Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId);
+        Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId);
         IAsyncEnumerable<PostDetailViewModel> GetDetailPostByIdsAsync(IEnumerable<Guid> postIds);
         Task SetReactionToPost(ReactionCreateModel value);
         ValueTask<bool> CheckForViewAsync(Guid? userId, string? ipAddress);

@@ -1,11 +1,11 @@
 using Authentication.Contract;
-using Blog.API.Handlers;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
 using Blog.Contracts;
 using Blog.Contracts.Events;
 using Blog.Domain.Events.Handlers;
 using Blog.Persistence;
+using Blog.Service.EventHandlers;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Infrastructure.Extensions;

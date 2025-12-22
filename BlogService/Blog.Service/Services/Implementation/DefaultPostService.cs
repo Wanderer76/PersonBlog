@@ -112,7 +112,7 @@ namespace Blog.Service.Services.Implementation
                 fileMetadata.CreatedAt,
                 fileMetadata.Id,
                 fileMetadata.ObjectName,
-                await _fileStorageFactory.CreateFileStorage().GetFileUrlAsync(postId, post.PreviewId.ToString()),
+                await _fileStorageFactory.CreateFileStorage().GetFileUrlAsync(postId, post.PreviewId!.ToString()),
                 postId);
         }
 
@@ -157,7 +157,7 @@ namespace Blog.Service.Services.Implementation
                                     post.Description,
                                     post.CreatedAt,
                                     previewUrl,
-                                    post.VideoFile != null && isProcessed == ProcessState.Complete ?
+                                    videoFile != null && isProcessed == ProcessState.Complete ?
                                     new VideoMetadataModel(
                                         videoFile.Id,
                                         videoFile.Length,
@@ -321,7 +321,7 @@ namespace Blog.Service.Services.Implementation
                             post.Description,
                             post.CreatedAt,
                             previewUrl,
-                            post.VideoFile != null && isProcessed == ProcessState.Complete ?
+                            videoMetadata != null && isProcessed == ProcessState.Complete ?
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
@@ -341,12 +341,13 @@ namespace Blog.Service.Services.Implementation
             return result;
         }
 
-        public async Task<PostDetailViewModel> GetDetailPostByIdAsync(Guid postId)
+        public async Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId)
         {
             var isBanned = await _context.Get<Post>()
                 .Where(x => x.Id == postId)
                 .Select(x => new { x.BanMessageId, x.BlogId })
-                .FirstOrDefaultAsync();
+                .FirstAsync();
+
             var currentUser = await _userSession.GetCurrentUserAsync();
 
             //if((currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
@@ -354,7 +355,7 @@ namespace Blog.Service.Services.Implementation
             if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
                 && !(currentUser.HasBlog && isBanned.BlogId == currentUser.BlogId))
             {
-                return default;
+                return null;
             }
 
             var cacheData = await _cacheService.GetOrAddDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
@@ -391,7 +392,7 @@ namespace Blog.Service.Services.Implementation
                     post.Type,
                     post.LikeCount,
                     post.DislikeCount,
-                    post.VideoFile != null && processState == ProcessState.Complete ?
+                    videoMetadata != null && processState == ProcessState.Complete ?
                                 new VideoMetadataModel(
                                     videoMetadata.Id,
                                     videoMetadata.Length,
@@ -438,7 +439,7 @@ namespace Blog.Service.Services.Implementation
                     PostId = @event.PostId,
                     IsLike = @event.IsLike,
                     UserId = userId,
-                    UserIpAddress = ipAddress,
+                    UserIpAddress = ipAddress!,
                 };
                 _context.Add(existView);
             }
@@ -448,22 +449,22 @@ namespace Blog.Service.Services.Implementation
                 {
                     if (@event.IsLike == true)
                     {
-                        post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 1), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 0), 0);
+                        post.LikeCount = Math.Max(post.LikeCount + (existView!.IsLike == true ? -1 : 1), 0);
+                        post.DislikeCount = Math.Max(post.DislikeCount + (existView!.IsLike == false ? -1 : 0), 0);
                     }
                     else
                     {
-                        post.LikeCount = Math.Max(post.LikeCount + (existView?.IsLike == true ? -1 : 0), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + (existView?.IsLike == false ? -1 : 1), 0);
+                        post.LikeCount = Math.Max(post.LikeCount + (existView!.IsLike == true ? -1 : 0), 0);
+                        post.DislikeCount = Math.Max(post.DislikeCount + (existView!.IsLike == false ? -1 : 1), 0);
                     }
                 }
                 else
                 {
-                    if (existView?.IsLike == true)
+                    if (existView!.IsLike == true)
                     {
                         post.LikeCount = Math.Max(post.LikeCount - 1, 0);
                     }
-                    else if (existView?.IsLike == false)
+                    else if (existView!.IsLike == false)
                     {
                         post.DislikeCount = Math.Max(post.DislikeCount - 1, 0);
                     }
@@ -472,7 +473,7 @@ namespace Blog.Service.Services.Implementation
                 _context.Attach(existView);
                 existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
                 existView.UserId = userId;
-                existView.UserIpAddress = ipAddress;
+                existView.UserIpAddress = ipAddress!;
             }
 
             await _context.SaveChangesAsync();
@@ -559,7 +560,7 @@ namespace Blog.Service.Services.Implementation
                     post.LikeCount,
                     post.DislikeCount,
                     processState.IsComplete()
-                    ? new VideoMetadataModel(videoMetadata.Id, videoMetadata.Length, videoMetadata.Duration, videoMetadata.ContentType, videoMetadata.ObjectName)
+                    ? new VideoMetadataModel(videoMetadata!.Id, videoMetadata.Length, videoMetadata.Duration, videoMetadata.ContentType, videoMetadata.ObjectName)
                     : null,
                     processState
                 );
