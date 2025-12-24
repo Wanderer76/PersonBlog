@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
 {
-    public class ConferenceChatController : BaseController
+    public class ConferenceChatController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public ConferenceChatController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public ConferenceChatController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }

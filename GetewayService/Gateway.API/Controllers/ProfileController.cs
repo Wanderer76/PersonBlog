@@ -9,10 +9,10 @@ using System.Text.Json;
 
 namespace Gateway.API.Controllers
 {
-    public class ProfileController : BaseController
+    public class ProfileController : BaseApiController
     {
         private readonly ProfileHttpClient _profileHttpClient;
-        public ProfileController(ILogger<BaseController> logger, ProfileHttpClient profileHttpClient) : base(logger)
+        public ProfileController(ILogger<BaseApiController> logger, ProfileHttpClient profileHttpClient) : base(logger)
         {
             _profileHttpClient = profileHttpClient;
         }

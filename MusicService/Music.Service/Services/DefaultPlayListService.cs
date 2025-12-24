@@ -54,7 +54,7 @@ internal class DefaultPlayListService : IMusicPlayListService
         _repository.Attach(playList);
         var result = await playList.AddTrackAsync(_repository, trackId);
         if (result.IsFailure)
-            return Result.Failure(result.Error);
+            return Result.Failure(result.Errors);
 
         await _repository.SaveChangesAsync();
         return Result.Success();

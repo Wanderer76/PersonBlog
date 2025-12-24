@@ -5,10 +5,10 @@ using Profile.Domain.Services;
 
 namespace Profile.API.Controllers
 {
-    public class BanController : BaseController
+    public class BanController : BaseApiController
     {
         private readonly IBanService _banService;
-        public BanController(ILogger<BaseController> logger, IBanService banService) : base(logger)
+        public BanController(ILogger<BaseApiController> logger, IBanService banService) : base(logger)
         {
             _banService = banService;
         }
@@ -23,7 +23,7 @@ namespace Profile.API.Controllers
             }
             else
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
         }
 

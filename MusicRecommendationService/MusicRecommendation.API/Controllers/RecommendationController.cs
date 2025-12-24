@@ -7,7 +7,7 @@ using MusicRecommendation.Domain.Repositories;
 
 namespace MusicRecommendation.API.Controllers
 {
-    public class RecommendationController : BaseController
+    public class RecommendationController : BaseApiController
     {
         private readonly ITrackRecommendationRepository _trackRecommendationRepository;
         private readonly ICurrentUserService _currentUserService;

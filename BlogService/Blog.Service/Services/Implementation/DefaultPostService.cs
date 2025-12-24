@@ -1,5 +1,6 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Contracts.Events;
+using Blog.Contracts.Models;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
 using Blog.Domain.Services.Models;
@@ -13,315 +14,386 @@ using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
 
-namespace Blog.Service.Services.Implementation
+namespace Blog.Service.Services.Implementation;
+
+internal class DefaultPostService : IPostService
 {
-    internal class DefaultPostService : IPostService
+    private readonly IReadWriteRepository<IBlogEntity> _context;
+    private readonly IFileStorageFactory _fileStorageFactory;
+    private readonly ICacheService _cacheService;
+    private readonly ICurrentUserService _userSession;
+    private readonly IVideoService _videoService;
+
+    public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userSession, IVideoService videoService)
     {
-        private readonly IReadWriteRepository<IBlogEntity> _context;
-        private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly ICacheService _cacheService;
-        private readonly ICurrentUserService _userSession;
-        private readonly IVideoService _videoService;
+        _context = context;
+        _fileStorageFactory = fileStorageFactory;
+        _cacheService = cacheService;
+        _userSession = userSession;
+        _videoService = videoService;
+    }
 
-        public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userSession, IVideoService videoService)
+    public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
+    {
+        var blog = await _context.Get<PersonBlog>()
+        .FirstAsync(x => x.UserId == postCreateDto.UserId);
+
+        var postId = GuidService.GetNewGuid();
+        var now = DateTimeService.Now();
+
+        var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<PaymentSubscription>()
+            .Where(x => x.BlogId == blog.Id)
+            .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
+            .Where(x => x.IsDeleted == false)
+            .AnyAsync()
+            : true;
+
+        if (!hasSubscription)
         {
-            _context = context;
-            _fileStorageFactory = fileStorageFactory;
-            _cacheService = cacheService;
-            _userSession = userSession;
-            _videoService = videoService;
+            return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
         }
 
-        public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
+        var categories = postCreateDto.Categories.Count != 0
+            ? await _context.Get<Category>()
+            .Where(x => postCreateDto.Categories.Contains(x.Id))
+            .ToListAsync()
+            : [];
+
+        var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility, categories);
+        if (postCreateDto.Thumbnail != null)
         {
-            var blog = await _context.Get<PersonBlog>()
-            .FirstAsync(x => x.UserId == postCreateDto.UserId);
-
-            var postId = GuidService.GetNewGuid();
-            var now = DateTimeService.Now();
-
-            var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<PaymentSubscription>()
-                .Where(x => x.BlogId == blog.Id)
-                .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
-                .Where(x => x.IsDeleted == false)
-                .AnyAsync()
-                : true;
-
-            if (!hasSubscription)
-            {
-                return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
-            }
-
-            var categories = postCreateDto.Categories.Count != 0
-                ? await _context.Get<Category>()
-                .Where(x => postCreateDto.Categories.Contains(x.Id))
-                .ToListAsync()
-                : [];
-
-            var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility, categories);
-            if (postCreateDto.Thumbnail != null)
-            {
-                using var storage = _fileStorageFactory.CreateFileStorage();
-                var previewUrl = await storage.PutFileAsync(blog.Id, $"{post.Id}/{GuidService.GetNewGuid()}", postCreateDto.Thumbnail.OpenReadStream());
-                post.PreviewId = previewUrl;
-            }
-            _context.Add(post);
-            await _context.SaveChangesAsync();
-
-            return Result<Guid, ErrorList>.Success(postId);
+            using var storage = _fileStorageFactory.CreateFileStorage();
+            var previewUrl = await storage.PutFileAsync(blog.Id, $"{post.Id}/{GuidService.GetNewGuid()}", postCreateDto.Thumbnail.OpenReadStream());
+            post.PreviewId = previewUrl;
         }
+        _context.Add(post);
+        await _context.SaveChangesAsync();
 
-        public async Task<Result<PostFileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
+        return Result<Guid, ErrorList>.Success(postId);
+    }
+
+    public async Task<Result<PostFileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
+    {
+        var session = await _userSession.GetCurrentUserAsync();
+
+        var post = await _context.Get<Post>()
+            .Where(x => x.Id == postId)
+            .Select(x => new { x.Visibility, x.Blog.UserId, x.PreviewId, x.BanMessageId })
+            .FirstAsync();
+
+        if (post.Visibility == PostVisibility.Private)
         {
-            var session = await _userSession.GetCurrentUserAsync();
-
-            var post = await _context.Get<Post>()
-                .Where(x => x.Id == postId)
-                .Select(x => new { x.Visibility, x.Blog.UserId, x.PreviewId, x.BanMessageId })
-                .FirstAsync();
-
-            if (post.Visibility == PostVisibility.Private)
-            {
-                if (session.UserId != post.UserId)
-                {
-                    return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
-                }
-            }
-
-            if (session.UserId != post.UserId && post.BanMessageId.HasValue)
+            if (session.UserId != post.UserId)
             {
                 return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
             }
-
-            var key = new VideoMetadataCacheKey(postId);
-
-            var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(key);
-            if (fileMetadata == null)
-            {
-                fileMetadata = await _context.Get<VideoMetadata>()
-                    .Where(x => x.PostId == postId)
-                    .FirstAsync();
-
-                await _cacheService.SetCachedDataAsync(key, fileMetadata, TimeSpan.FromHours(1));
-            }
-
-            return new PostFileMetadataModel(
-                fileMetadata.ContentType,
-                fileMetadata.Length,
-                fileMetadata.Name,
-                fileMetadata.CreatedAt,
-                fileMetadata.Id,
-                fileMetadata.ObjectName,
-                await _fileStorageFactory.CreateFileStorage().GetFileUrlAsync(postId, post.PreviewId!.ToString()),
-                postId);
         }
 
-        public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
+        if (session.UserId != post.UserId && post.BanMessageId.HasValue)
         {
-            var videoData = await _context.Get<VideoMetadata>()
-                .Where(x => x.Id == fileMetadataId)
-                .FirstAsync();
-
-            var storage = _fileStorageFactory.CreateFileStorage();
-            await storage.ReadFileByChunksAsync(postId, videoData.ObjectName, offset, length, output);
-            return fileMetadataId;
+            return Result<PostFileMetadataModel, ErrorList>.Failure(new List<Error> { new Error("403", "Forbiden") });
         }
 
-        public async ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId)
+        var key = new VideoMetadataCacheKey(postId);
+
+        var fileMetadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(key);
+        if (fileMetadata == null)
         {
-            var hasVideo = await _context.Get<VideoMetadata>()
+            fileMetadata = await _context.Get<VideoMetadata>()
                 .Where(x => x.PostId == postId)
-                .AnyAsync();
-            return hasVideo;
-        }
-
-        public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
-        {
-            var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, _userSession, page, limit);
-
-            var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var posts = new List<PostModel>(pagedPosts.Posts.Count());
-
-            var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => new PostModelCacheKey(x.Id)))).ToList();
-            if (cachedPosts.Count != pagedPosts.Posts.Count())
-            {
-                foreach (var post in pagedPosts.Posts.ExceptBy(cachedPosts.Select(x => x.Id), x => x.Id))
-                {
-                    var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
-                    var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
-                    var videoFile = post.VideoFile;
-                    var postModel = new PostModel(
-                                    post.Id,
-                                    post.Type,
-                                    post.Title,
-                                    post.Description,
-                                    post.CreatedAt,
-                                    previewUrl,
-                                    videoFile != null && isProcessed == ProcessState.Complete ?
-                                    new VideoMetadataModel(
-                                        videoFile.Id,
-                                        videoFile.Length,
-                                        videoFile.Duration,
-                                        videoFile.ContentType,
-                                        videoFile.ObjectName
-                                    ) : null,
-                                    isProcessed,
-                                    isProcessed == ProcessState.Error ? videoFile?.ErrorMessage : null,
-                                    post.ViewCount,
-                                    post.BanMessageId.HasValue
-                                );
-                    posts.Add(postModel);
-                    cachedPosts.Add(postModel);
-                    await _cacheService.SetCachedDataAsync(new PostModelCacheKey(postModel.Id), postModel, TimeSpan.FromHours(10));
-
-                }
-            }
-            return new PostPagedListViewModel
-            {
-                TotalPageCount = pagedPosts.TotalPagesCount,
-                TotalPostsCount = pagedPosts.TotalPosts,
-                Posts = cachedPosts.OrderByDescending(x => x.CreatedAt),
-            };
-        }
-
-        public async Task RemovePostByIdAsync(Guid id)
-        {
-            var post = await _context.Get<Post>()
-                .Where(x => x.Id == id)
-                .FirstOrDefaultAsync();
-            if (post != null)
-            {
-                _context.Attach(post);
-                post.IsDeleted = true;
-                _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
-                _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
-                {
-                    BlogId = post.BlogId,
-                    CreatedAt = DateTimeService.Now(),
-                    UpdateType = UpdateType.Delete,
-                    Description = post.Description,
-                    PostId = post.Id,
-                    Title = post.Title,
-                    ViewCount = post.ViewCount
-                }));
-            }
-
-            await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
-        {
-            using var fileStorage = _fileStorageFactory.CreateFileStorage();
-            var metadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(new VideoMetadataCacheKey(uploadVideoChunkDto.PostId));
-
-            var blogId = await _context.Get<Post>()
-                .Where(x => x.Id == uploadVideoChunkDto.PostId)
-                .Select(x => x.BlogId)
                 .FirstAsync();
 
-            if (metadata == null)
-            {
-                return new Error("Не существует метаданных поста");
-            }
-            var progress = await _videoService.GetUploadVideoMetadata(metadata.Id);
-
-            if (progress.IsFailure)
-            {
-                return progress.Error!;
-            }
-
-            if (progress.Value.LastUploadChunkNumber >= uploadVideoChunkDto.ChunkNumber)
-                return true;
-
-            await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId,
-                GuidService.GetNewGuid(),
-                uploadVideoChunkDto.ChunkData,
-                new VideoChunkUploadingInfo
-                {
-                    FileId = metadata.Id,
-                    ChunkNumber = uploadVideoChunkDto.ChunkNumber,
-                });
-
-            progress.Value.LastUploadChunkNumber++;
-
-            await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(DefaultVideoService.LifeTimeInMinutes));
-
-            if (progress.Value.LastUploadChunkNumber == progress.Value.TotalChunkCount)
-            {
-                var videoCreateEvent = new CombineFileChunksCommand
-                {
-                    BlogId = blogId,
-                    VideoMetadataId = metadata.Id,
-                    PostId = uploadVideoChunkDto.PostId,
-                };
-
-                var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
-                metadata.ProcessState = ProcessState.Running;
-                _context.Add(metadata);
-                _context.Add(videoEvent);
-                await _context.SaveChangesAsync();
-                await _cacheService.RemoveCachedDataAsync(progress.Value);
-            }
-            return true;
+            await _cacheService.SetCachedDataAsync(key, fileMetadata, TimeSpan.FromHours(1));
         }
 
-        public async Task<PostModel> UpdatePostAsync(PostEditDto postEditDto)
+        return new PostFileMetadataModel(
+            fileMetadata.ContentType,
+            fileMetadata.Length,
+            fileMetadata.Name,
+            fileMetadata.CreatedAt,
+            fileMetadata.Id,
+            fileMetadata.ObjectName,
+            await _fileStorageFactory.CreateFileStorage().GetFileUrlAsync(postId, post.PreviewId!.ToString()),
+            postId);
+    }
+
+    public async Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output)
+    {
+        var videoData = await _context.Get<VideoMetadata>()
+            .Where(x => x.Id == fileMetadataId)
+            .FirstAsync();
+
+        var storage = _fileStorageFactory.CreateFileStorage();
+        await storage.ReadFileByChunksAsync(postId, videoData.ObjectName, offset, length, output);
+        return fileMetadataId;
+    }
+
+    public async ValueTask<bool> HasVideoExistByPostIdAsync(Guid postId)
+    {
+        var hasVideo = await _context.Get<VideoMetadata>()
+            .Where(x => x.PostId == postId)
+            .AnyAsync();
+        return hasVideo;
+    }
+
+    public async Task<PostPagedListViewModel> GetPostsByBlogIdPagedAsync(Guid blogId, int page, int limit)
+    {
+        var pagedPosts = await _context.GetPostByBlogIdPagedAsync(blogId, _userSession, page, limit);
+
+        var fileStorage = _fileStorageFactory.CreateFileStorage();
+        var posts = new List<PostModel>(pagedPosts.Posts.Count());
+
+        var cachedPosts = (await _cacheService.GetCachedDataAsync<PostModel>(pagedPosts.Posts.Select(x => new PostModelCacheKey(x.Id)))).ToList();
+        if (cachedPosts.Count != pagedPosts.Posts.Count())
         {
-            var post = await _context.Get<Post>()
-                .Include(x => x.VideoFile)
-                .FirstOrDefaultAsync(x => x.Id == postEditDto.Id) ?? throw new ArgumentException("Пост не найден");
-
-            var blogUserId = await _context.Get<PersonBlog>()
-                .Where(x => x.Id == post.BlogId)
-                .Select(x => x.UserId)
-                .FirstAsync();
-
-            if (blogUserId != postEditDto.UserId)
+            foreach (var post in pagedPosts.Posts.ExceptBy(cachedPosts.Select(x => x.Id), x => x.Id))
             {
-                throw new ArgumentException("Пост вам не принадлежит");
-            }
-            var storage = _fileStorageFactory.CreateFileStorage();
+                var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
+                var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
+                var videoFile = post.VideoFile;
+                var postModel = new PostModel(
+                                post.Id,
+                                post.Type,
+                                post.Title,
+                                post.Description,
+                                post.CreatedAt,
+                                previewUrl,
+                                videoFile != null && isProcessed == ProcessState.Complete ?
+                                new VideoMetadataModel(
+                                    videoFile.Id,
+                                    videoFile.Length,
+                                    videoFile.Duration,
+                                    videoFile.ContentType,
+                                    videoFile.ObjectName
+                                ) : null,
+                                isProcessed,
+                                isProcessed == ProcessState.Error ? videoFile?.ErrorMessage : null,
+                                post.ViewCount,
+                                post.BanMessageId.HasValue
+                            );
+                posts.Add(postModel);
+                cachedPosts.Add(postModel);
+                await _cacheService.SetCachedDataAsync(new PostModelCacheKey(postModel.Id), postModel, TimeSpan.FromHours(10));
 
-            _context.Attach(post);
-            if (postEditDto.PreviewId != null)
-            {
-                var snapshotFileId = GuidService.GetNewGuid();
-                using var copyStream = postEditDto.PreviewId.OpenReadStream();
-                copyStream.Position = 0;
-                var objectName = await storage.PutFileAsync(post.Id, snapshotFileId, copyStream);
-                post.PreviewId = objectName;
             }
-            _context.Attach(post);
-            post.Title = postEditDto.Title;
-            post.Description = postEditDto.Description;
+        }
+        return new PostPagedListViewModel
+        {
+            TotalPageCount = pagedPosts.TotalPagesCount,
+            TotalPostsCount = pagedPosts.TotalPosts,
+            Posts = cachedPosts.OrderByDescending(x => x.CreatedAt),
+        };
+    }
 
-            var postUpdateEvent = new PostUpdateEvent
+    public async Task RemovePostByIdAsync(Guid id)
+    {
+        var post = await _context.Get<Post>()
+            .Where(x => x.Id == id)
+            .FirstOrDefaultAsync();
+        if (post != null)
+        {
+            _context.Attach(post);
+            post.IsDelete = true;
+            _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
+            _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
             {
                 BlogId = post.BlogId,
-                CreatedAt = post.CreatedAt,
+                CreatedAt = DateTimeService.Now(),
+                UpdateType = UpdateType.Delete,
                 Description = post.Description,
                 PostId = post.Id,
                 Title = post.Title,
-                UpdateType = UpdateType.Update,
                 ViewCount = post.ViewCount
+            }));
+        }
+
+        await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
+    {
+        using var fileStorage = _fileStorageFactory.CreateFileStorage();
+        var metadata = await _cacheService.GetCachedDataAsync<VideoMetadata>(new VideoMetadataCacheKey(uploadVideoChunkDto.PostId));
+
+        var blogId = await _context.Get<Post>()
+            .Where(x => x.Id == uploadVideoChunkDto.PostId)
+            .Select(x => x.BlogId)
+            .FirstAsync();
+
+        if (metadata == null)
+        {
+            return new Error("Не существует метаданных поста");
+        }
+        var progress = await _videoService.GetUploadVideoMetadata(metadata.Id);
+
+        if (progress.IsFailure)
+        {
+            return Result<bool>.Failure(progress.Errors!);
+        }
+
+        if (progress.Value.LastUploadChunkNumber >= uploadVideoChunkDto.ChunkNumber)
+            return true;
+
+        await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId,
+            GuidService.GetNewGuid(),
+            uploadVideoChunkDto.ChunkData,
+            new VideoChunkUploadingInfo
+            {
+                FileId = metadata.Id,
+                ChunkNumber = uploadVideoChunkDto.ChunkNumber,
+            });
+
+        progress.Value.LastUploadChunkNumber++;
+
+        await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(DefaultVideoService.LifeTimeInMinutes));
+
+        if (progress.Value.LastUploadChunkNumber == progress.Value.TotalChunkCount)
+        {
+            var videoCreateEvent = new CombineFileChunksCommand
+            {
+                BlogId = blogId,
+                VideoMetadataId = metadata.Id,
+                PostId = uploadVideoChunkDto.PostId,
             };
 
-            _context.Add(VideoProcessEvent.Create(postUpdateEvent));
-
+            var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
+            metadata.ProcessState = ProcessState.Running;
+            _context.Add(metadata);
+            _context.Add(videoEvent);
             await _context.SaveChangesAsync();
+            await _cacheService.RemoveCachedDataAsync(progress.Value);
+        }
+        return true;
+    }
 
-            var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await storage.GetFileUrlAsync(post.Id, post.PreviewId);
-            var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
+    public async Task<PostModel> UpdatePostAsync(PostEditDto postEditDto)
+    {
+        var post = await _context.Get<Post>()
+            .Include(x => x.VideoFile)
+            .FirstOrDefaultAsync(x => x.Id == postEditDto.Id) ?? throw new ArgumentException("Пост не найден");
+
+        var blogUserId = await _context.Get<PersonBlog>()
+            .Where(x => x.Id == post.BlogId)
+            .Select(x => x.UserId)
+            .FirstAsync();
+
+        if (blogUserId != postEditDto.UserId)
+        {
+            throw new ArgumentException("Пост вам не принадлежит");
+        }
+        var storage = _fileStorageFactory.CreateFileStorage();
+
+        _context.Attach(post);
+        if (postEditDto.PreviewId != null)
+        {
+            var snapshotFileId = GuidService.GetNewGuid();
+            using var copyStream = postEditDto.PreviewId.OpenReadStream();
+            copyStream.Position = 0;
+            var objectName = await storage.PutFileAsync(post.Id, snapshotFileId, copyStream);
+            post.PreviewId = objectName;
+        }
+        _context.Attach(post);
+        post.Title = postEditDto.Title;
+        post.Description = postEditDto.Description;
+
+        var postUpdateEvent = new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = post.CreatedAt,
+            Description = post.Description,
+            PostId = post.Id,
+            Title = post.Title,
+            UpdateType = UpdateType.Update,
+            ViewCount = post.ViewCount
+        };
+
+        _context.Add(VideoProcessEvent.Create(postUpdateEvent));
+
+        await _context.SaveChangesAsync();
+
+        var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await storage.GetFileUrlAsync(post.Id, post.PreviewId);
+        var isProcessed = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
+        var videoMetadata = post.VideoFile;
+        var result = new PostModel(
+                        post.Id,
+                        post.Type,
+                        post.Title,
+                        post.Description,
+                        post.CreatedAt,
+                        previewUrl,
+                        videoMetadata != null && isProcessed == ProcessState.Complete ?
+                        new VideoMetadataModel(
+                            videoMetadata.Id,
+                            videoMetadata.Length,
+                            videoMetadata.Duration,
+                            videoMetadata.ContentType,
+                            videoMetadata.ObjectName
+                        ) : null,
+                        isProcessed,
+                        isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null,
+                        post.ViewCount,
+                        post.BanMessageId.HasValue
+                    );
+
+        await _cacheService.SetCachedDataAsync(new PostModelCacheKey(result.Id), result, TimeSpan.FromHours(10));
+        await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
+
+        return result;
+    }
+
+    public async Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId)
+    {
+        var isBanned = await _context.Get<Post>()
+            .Where(x => x.Id == postId)
+            .Select(x => new { x.BanMessageId, x.BlogId })
+            .FirstAsync();
+
+        var currentUser = await _userSession.GetCurrentUserAsync();
+
+        //if((currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
+
+        if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
+            && !(currentUser.HasBlog && isBanned.BlogId == currentUser.BlogId))
+        {
+            return null;
+        }
+
+        var cacheData = await _cacheService.GetOrAddDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
+        {
+            var post = await _context.Get<Post>()
+            .Include(x => x.VideoFile)
+            .Include(x => x.Blog)
+            .FirstAsync(x => x.Id == postId);
+
+            if (post.Visibility == PostVisibility.Private)
+            {
+                var session = await _userSession.GetCurrentUserAsync();
+                if (session.UserId != post.Blog.UserId)
+                {
+                    throw new ArgumentException();
+                }
+            }
+            var fileStorage = _fileStorageFactory.CreateFileStorage();
+
+            var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
+                ? null
+                : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
+
             var videoMetadata = post.VideoFile;
-            var result = new PostModel(
-                            post.Id,
-                            post.Type,
-                            post.Title,
-                            post.Description,
-                            post.CreatedAt,
-                            previewUrl,
-                            videoMetadata != null && isProcessed == ProcessState.Complete ?
+            var processState = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
+
+            return new PostDetailViewModel(
+                post.Id,
+                previewUrl,
+                post.CreatedAt,
+                post.ViewCount,
+                post.Description,
+                post.Title,
+                post.Type,
+                post.LikeCount,
+                post.DislikeCount,
+                videoMetadata != null && processState == ProcessState.Complete ?
                             new VideoMetadataModel(
                                 videoMetadata.Id,
                                 videoMetadata.Length,
@@ -329,242 +401,192 @@ namespace Blog.Service.Services.Implementation
                                 videoMetadata.ContentType,
                                 videoMetadata.ObjectName
                             ) : null,
-                            isProcessed,
-                            isProcessed == ProcessState.Error ? videoMetadata?.ErrorMessage : null,
-                            post.ViewCount,
-                            post.BanMessageId.HasValue
-                        );
+                processState
+            );
+        });
+        return cacheData;
+    }
 
-            await _cacheService.SetCachedDataAsync(new PostModelCacheKey(result.Id), result, TimeSpan.FromHours(10));
-            await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
+    public async Task SetReactionToPost(ReactionCreateModel @event)
+    {
+        var userId = @event.UserId;
+        var ipAddress = @event.RemoteIp;
 
-            return result;
-        }
+        var post = await _context.Get<Post>()
+            .FirstAsync(x => x.Id == @event.PostId);
 
-        public async Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId)
+        var existView = await _context.Get<PostViewer>()
+            .Where(x => x.PostId == post.Id)
+            .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
+            .FirstOrDefaultAsync();
+
+        _context.Attach(post);
+
+
+        if (existView == null)
         {
-            var isBanned = await _context.Get<Post>()
-                .Where(x => x.Id == postId)
-                .Select(x => new { x.BanMessageId, x.BlogId })
-                .FirstAsync();
-
-            var currentUser = await _userSession.GetCurrentUserAsync();
-
-            //if((currentUser.BlogId.HasValue && isBanned.BlogId == currentUser.BlogId.Value))
-
-            if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
-                && !(currentUser.HasBlog && isBanned.BlogId == currentUser.BlogId))
+            if (@event.IsLike == true)
             {
-                return null;
+                post.LikeCount++;
             }
-
-            var cacheData = await _cacheService.GetOrAddDataAsync(new PostDetailViewModelCacheKey(postId), async () =>
+            if (@event.IsLike == false)
             {
-                var post = await _context.Get<Post>()
-                .Include(x => x.VideoFile)
-                .Include(x => x.Blog)
-                .FirstAsync(x => x.Id == postId);
-
-                if (post.Visibility == PostVisibility.Private)
-                {
-                    var session = await _userSession.GetCurrentUserAsync();
-                    if (session.UserId != post.Blog.UserId)
-                    {
-                        throw new ArgumentException();
-                    }
-                }
-                var fileStorage = _fileStorageFactory.CreateFileStorage();
-
-                var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
-                    ? null
-                    : await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId);
-
-                var videoMetadata = post.VideoFile;
-                var processState = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Load;
-
-                return new PostDetailViewModel(
-                    post.Id,
-                    previewUrl,
-                    post.CreatedAt,
-                    post.ViewCount,
-                    post.Description,
-                    post.Title,
-                    post.Type,
-                    post.LikeCount,
-                    post.DislikeCount,
-                    videoMetadata != null && processState == ProcessState.Complete ?
-                                new VideoMetadataModel(
-                                    videoMetadata.Id,
-                                    videoMetadata.Length,
-                                    videoMetadata.Duration,
-                                    videoMetadata.ContentType,
-                                    videoMetadata.ObjectName
-                                ) : null,
-                    processState
-                );
-            });
-            return cacheData;
+                post.DislikeCount++;
+            }
+            post.ViewCount++;
+            existView = new PostViewer
+            {
+                Id = GuidService.GetNewGuid(),
+                PostId = @event.PostId,
+                IsLike = @event.IsLike,
+                UserId = userId,
+                UserIpAddress = ipAddress!,
+            };
+            _context.Add(existView);
         }
-
-        public async Task SetReactionToPost(ReactionCreateModel @event)
+        else
         {
-            var userId = @event.UserId;
-            var ipAddress = @event.RemoteIp;
-
-            var post = await _context.Get<Post>()
-                .FirstAsync(x => x.Id == @event.PostId);
-
-            var existView = await _context.Get<PostViewer>()
-                .Where(x => x.PostId == post.Id)
-                .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
-                .FirstOrDefaultAsync();
-
-            _context.Attach(post);
-
-
-            if (existView == null)
+            if (@event.IsLike.HasValue)
             {
                 if (@event.IsLike == true)
                 {
-                    post.LikeCount++;
-                }
-                if (@event.IsLike == false)
-                {
-                    post.DislikeCount++;
-                }
-                post.ViewCount++;
-                existView = new PostViewer
-                {
-                    Id = GuidService.GetNewGuid(),
-                    PostId = @event.PostId,
-                    IsLike = @event.IsLike,
-                    UserId = userId,
-                    UserIpAddress = ipAddress!,
-                };
-                _context.Add(existView);
-            }
-            else
-            {
-                if (@event.IsLike.HasValue)
-                {
-                    if (@event.IsLike == true)
-                    {
-                        post.LikeCount = Math.Max(post.LikeCount + (existView!.IsLike == true ? -1 : 1), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + (existView!.IsLike == false ? -1 : 0), 0);
-                    }
-                    else
-                    {
-                        post.LikeCount = Math.Max(post.LikeCount + (existView!.IsLike == true ? -1 : 0), 0);
-                        post.DislikeCount = Math.Max(post.DislikeCount + (existView!.IsLike == false ? -1 : 1), 0);
-                    }
+                    post.LikeCount = Math.Max(post.LikeCount + (existView!.IsLike == true ? -1 : 1), 0);
+                    post.DislikeCount = Math.Max(post.DislikeCount + (existView!.IsLike == false ? -1 : 0), 0);
                 }
                 else
                 {
-                    if (existView!.IsLike == true)
-                    {
-                        post.LikeCount = Math.Max(post.LikeCount - 1, 0);
-                    }
-                    else if (existView!.IsLike == false)
-                    {
-                        post.DislikeCount = Math.Max(post.DislikeCount - 1, 0);
-                    }
+                    post.LikeCount = Math.Max(post.LikeCount + (existView!.IsLike == true ? -1 : 0), 0);
+                    post.DislikeCount = Math.Max(post.DislikeCount + (existView!.IsLike == false ? -1 : 1), 0);
                 }
-
-                _context.Attach(existView);
-                existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
-                existView.UserId = userId;
-                existView.UserIpAddress = ipAddress!;
+            }
+            else
+            {
+                if (existView!.IsLike == true)
+                {
+                    post.LikeCount = Math.Max(post.LikeCount - 1, 0);
+                }
+                else if (existView!.IsLike == false)
+                {
+                    post.DislikeCount = Math.Max(post.DislikeCount - 1, 0);
+                }
             }
 
-            await _context.SaveChangesAsync();
+            _context.Attach(existView);
+            existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
+            existView.UserId = userId;
+            existView.UserIpAddress = ipAddress!;
         }
 
-        public async ValueTask<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
+        await _context.SaveChangesAsync();
+    }
+
+    public async ValueTask<bool> CheckForViewAsync(Guid? userId, string? ipAddress)
+    {
+        if (userId == null && ipAddress == null)
         {
-            if (userId == null && ipAddress == null)
-            {
-                return true;
-            }
-            return await _context.Get<PostViewer>()
-                .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
-                .AnyAsync();
+            return true;
+        }
+        return await _context.Get<PostViewer>()
+            .Where(x => x.UserId == userId && x.UserIpAddress == ipAddress)
+            .AnyAsync();
+    }
+
+    public Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync()
+    {
+        return Task.FromResult(Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName())));
+    }
+
+    public async Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId)
+    {
+        var currentUser = await _userSession.GetCurrentUserAsync();
+
+        var post = await _context.Get<Post>()
+            .Include(x => x.PostCategories)
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+        {
+            return new Error("Пост не найден");
         }
 
-        public Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync()
+        if (currentUser.BlogId != post.BlogId)
         {
-            return Task.FromResult(Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName())));
+            return new Error("Пост не относится к вашему блогу");
         }
 
-        public async Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId)
+        return new PostEditViewModel(
+            post.Id,
+            post.Title,
+            post.Description,
+            post.PreviewId,
+            post.Visibility,
+            post.PaymentSubscriptionId,
+            post.PostCategories.Select(x => x.CategoryId).ToList()
+        );
+
+    }
+
+    public async IAsyncEnumerable<PostDetailViewModel> GetDetailPostByIdsAsync(IEnumerable<Guid> postIds)
+    {
+        var currentUser = await _userSession.GetCurrentUserAsync();
+        var postList = await _context.Get<Post>()
+        .Include(x => x.VideoFile)
+        .Include(x => x.Blog)
+        .Where(x => postIds.Contains(x.Id))
+        .ToListAsync();
+
+        var fileStorage = _fileStorageFactory.CreateFileStorage();
+        foreach (var post in postList)
         {
-            var currentUser = await _userSession.GetCurrentUserAsync();
+            var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
+                ? null
+                : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
 
-            var post = await _context.Get<Post>()
-                .Include(x => x.PostCategories)
-                .FirstOrDefaultAsync(x => x.Id == postId);
+            var videoMetadata = post.VideoFile;
+            var processState = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
 
-            if (post == null)
+            if (post.BanMessageId.HasValue && post.BlogId != currentUser.BlogId)
             {
-                return new Error("Пост не найден");
+                continue;
             }
 
-            if (currentUser.BlogId != post.BlogId)
-            {
-                return new Error("Пост не относится к вашему блогу");
-            }
-
-            return new PostEditViewModel(
+            yield return new PostDetailViewModel(
                 post.Id,
-                post.Title,
+                previewUrl,
+                post.CreatedAt,
+                post.ViewCount,
                 post.Description,
-                post.PreviewId,
-                post.Visibility,
-                post.PaymentSubscriptionId,
-                post.PostCategories.Select(x => x.CategoryId).ToList()
+                post.Title,
+                post.Type,
+                post.LikeCount,
+                post.DislikeCount,
+                processState.IsComplete()
+                ? new VideoMetadataModel(videoMetadata!.Id, videoMetadata.Length, videoMetadata.Duration, videoMetadata.ContentType, videoMetadata.ObjectName)
+                : null,
+                processState
             );
-
         }
+    }
 
-        public async IAsyncEnumerable<PostDetailViewModel> GetDetailPostByIdsAsync(IEnumerable<Guid> postIds)
-        {
-            var currentUser = await _userSession.GetCurrentUserAsync();
-            var postList = await _context.Get<Post>()
-            .Include(x => x.VideoFile)
-            .Include(x => x.Blog)
+    public async Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds)
+    {
+        var fileStorage = _fileStorageFactory.CreateFileStorage();
+
+        var posts = await _context.Get<Post>()
             .Where(x => postIds.Contains(x.Id))
             .ToListAsync();
 
-            var fileStorage = _fileStorageFactory.CreateFileStorage();
-            foreach (var post in postList)
+        var result = posts.Select(async post =>
+        {
+            return new PostCommonModel
             {
-                var previewUrl = string.IsNullOrWhiteSpace(post.PreviewId)
-                    ? null
-                    : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId);
+                Id = post.Id,
+                Description = post.Description,
+                Title = post.Title,
+                PreviewObjectName = string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId)
+            };
+        });
 
-                var videoMetadata = post.VideoFile;
-                var processState = post.VideoFile != null ? post.VideoFile.ProcessState : ProcessState.Running;
-
-                if (post.BanMessageId.HasValue && post.BlogId != currentUser.BlogId)
-                {
-                    continue;
-                }
-
-                yield return new PostDetailViewModel(
-                    post.Id,
-                    previewUrl,
-                    post.CreatedAt,
-                    post.ViewCount,
-                    post.Description,
-                    post.Title,
-                    post.Type,
-                    post.LikeCount,
-                    post.DislikeCount,
-                    processState.IsComplete()
-                    ? new VideoMetadataModel(videoMetadata!.Id, videoMetadata.Length, videoMetadata.Duration, videoMetadata.ContentType, videoMetadata.ObjectName)
-                    : null,
-                    processState
-                );
-            }
-        }
+        return await Task.WhenAll(result);
     }
 }

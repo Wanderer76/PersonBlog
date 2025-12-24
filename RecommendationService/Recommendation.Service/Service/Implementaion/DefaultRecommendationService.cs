@@ -26,7 +26,7 @@ namespace Recommendation.Service.Service.Implementaion
                 .Where(x => x.Type == PostType.Video)
                 .Where(x => x.Visibility == PostVisibility.Public)
                 .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
-                .Where(x => x.IsDeleted == false)
+                .Where(x => x.IsDelete == false)
                 .Where(x => x.PreviewId != null)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((page - 1) * limit)
@@ -97,7 +97,7 @@ namespace Recommendation.Service.Service.Implementaion
                            .Where(x => x.Type == PostType.Video)
                            .Where(x => x.Visibility == PostVisibility.Public)
                            .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
-                           .Where(x => x.IsDeleted == false)
+                           .Where(x => x.IsDelete == false)
                            .Where(x => x.PreviewId != null)
                            .OrderByDescending(x => x.CreatedAt)
                            .Select(x => new

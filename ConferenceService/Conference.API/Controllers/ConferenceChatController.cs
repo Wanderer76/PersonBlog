@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Conference.API.Controllers
 {
-    public class ConferenceChatController : BaseController
+    public class ConferenceChatController : BaseApiController
     {
         private readonly IConferenceChatService _conferenceChatService;
         private readonly ICurrentUserService _userSession;

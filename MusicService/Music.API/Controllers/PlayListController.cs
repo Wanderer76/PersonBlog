@@ -9,10 +9,10 @@ using Music.Domain.Services;
 
 namespace Music.API.Controllers
 {
-    public class ProfilePlayListController : BaseController
+    public class ProfilePlayListController : BaseApiController
     {
         private readonly IMusicPlayListService _musicPlayListService;
-        public ProfilePlayListController(ILogger<BaseController> logger, IMusicPlayListService musicPlayListService) : base(logger)
+        public ProfilePlayListController(ILogger<BaseApiController> logger, IMusicPlayListService musicPlayListService) : base(logger)
         {
             _musicPlayListService = musicPlayListService;
         }
@@ -31,7 +31,7 @@ namespace Music.API.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return
-                BadRequest(result.Error);
+                BadRequest(result.Errors);
         }
 
         [HttpGet("{id}")]
@@ -42,7 +42,7 @@ namespace Music.API.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return
-                BadRequest(result.Error);
+                BadRequest(result.Errors);
         }
 
         [HttpGet("{id}/tracks")]
@@ -53,7 +53,7 @@ namespace Music.API.Controllers
             if (result.IsSuccess)
                 return Ok(result.Value);
             return
-                BadRequest(result.Error);
+                BadRequest(result.Errors);
         }
 
         [HttpPost("{id}/tracks/{trackId}/delete")]
@@ -64,7 +64,7 @@ namespace Music.API.Controllers
             if (result.IsSuccess)
                 return Ok();
             return
-                BadRequest(result.Error);
+                BadRequest(result.Errors);
         }
 
         [HttpPost("{id}/tracks/{trackId}/add")]
@@ -75,7 +75,7 @@ namespace Music.API.Controllers
             if (result.IsSuccess)
                 return Ok();
             return
-                BadRequest(result.Error);
+                BadRequest(result.Errors);
         }
 
 
@@ -137,7 +137,7 @@ namespace Music.API.Controllers
             {
                 return Ok(result.Value);
             }
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
         [HttpPost("remove/{id}")]
@@ -149,7 +149,7 @@ namespace Music.API.Controllers
             {
                 return Ok();
             }
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
     }
 }

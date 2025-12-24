@@ -6,10 +6,10 @@ using Shared.Persistence;
 
 namespace Blog.API.Controllers.Internal
 {
-    public class InternalPostController : BaseController
+    public class InternalPostController : BaseApiController
     {
         private readonly IReadRepository<IBlogEntity> _repository;
-        public InternalPostController(ILogger<BaseController> logger, IReadRepository<IBlogEntity> repository) : base(logger)
+        public InternalPostController(ILogger<BaseApiController> logger, IReadRepository<IBlogEntity> repository) : base(logger)
         {
             _repository = repository;
         }

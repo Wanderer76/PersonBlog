@@ -9,7 +9,7 @@ using Shared.Services;
 
 namespace Gateway.API.Controllers;
 
-public class ViewController : BaseController
+public class ViewController : BaseApiController
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ICacheService _cache;

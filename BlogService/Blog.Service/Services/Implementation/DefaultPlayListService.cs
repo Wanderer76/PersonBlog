@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Blog.Contracts.Models;
+using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models;
 using Blog.Domain.Services.Models.Playlist;
@@ -37,7 +38,7 @@ namespace Blog.Service.Services.Implementation
                 return await _repository.Get<PlayList>()
                 .Where(x => x.Id == playListItems.PlayListId && x.IsDeleted == false)
                 .Include(x => x.PlayListItems)
-                .FirstOrDefaultAsync();
+                .FirstAsync();
             });
 
             if (playlist == null)
@@ -64,7 +65,7 @@ namespace Blog.Service.Services.Implementation
                 var isAdded = playlist.AddVideo(playListItem.PostId);
                 if (isAdded.IsFailure)
                 {
-                    return isAdded.Error!;
+                    return new Error(nameof(playListItem.PostId),"Post already add");
                 }
             }
 
@@ -90,7 +91,7 @@ namespace Blog.Service.Services.Implementation
                 return await _repository.Get<PlayList>()
                 .Where(x => x.Id == changePostPositionRequest.PlaylistId)
                 .Include(x => x.PlayListItems.OrderBy(x => x.Position))
-                .FirstOrDefaultAsync();
+                .FirstAsync();
             });
             if (playlist == null)
             {
@@ -112,14 +113,14 @@ namespace Blog.Service.Services.Implementation
             var result = playlist.ChangeVideoPosition(changePostPositionRequest.PostId, changePostPositionRequest.Destination);
             if (result.IsFailure)
             {
-                return Result<PlayListViewModel>.Failure(result.Error!);
+                return Result<PlayListViewModel>.Failure(result.Errors!);
             }
             await _repository.SaveChangesAsync();
             await _cacheService.SetCachedDataAsync(key, playlist, TimeSpan.FromMinutes(10));
 
             using var storage = _fileStorageFactory.CreateFileStorage();
 
-            return Result<PlayListViewModel>.Success(await CreatePlayListViewModelAsync(playlist.BlogId, storage, playlist));
+            return Result<PlayListViewModel>.Success(await CreatePlayListViewModelAsync(storage, playlist));
         }
 
         public async Task<Result<PlayListDetailViewModel>> CreatePlayListAsync(PlayListCreateRequest playList)
@@ -159,31 +160,23 @@ namespace Blog.Service.Services.Implementation
             return result;
         }
 
-        public async Task<Result<IEnumerable<PostCommonModel>>> GetAvailablePostsToPlayListByIdAsync(Guid? playlistId)
+        public async Task<Result<IEnumerable<PostCommonModel>>> GetAvailablePostsToPlayListByIdAsync(IEnumerable<Guid> exceptIds)
         {
             using var storage = _fileStorageFactory.CreateFileStorage();
 
             var user = await _userSession.GetCurrentUserAsync();
-            var userBlogId = await _repository.Get<PersonBlog>()
-                .Where(x => x.UserId == user.UserId)
-                .Select(x => x.Id)
-                .FirstAsync();
+            var userBlogId = user.BlogId;
 
             var availablePostQuery = _repository.Get<Post>()
                 .Where(x => x.BlogId == userBlogId)
                 .Where(x => x.VideoFile != null)
-                .Where(x => x.IsDeleted == false);
+                .Where(x => x.IsDelete == false);
 
-            availablePostQuery = playlistId.HasValue
-                ?
-                availablePostQuery
-                .Where(x => !_repository.Get<PlayList>()
-                .Where(x => x.Id == playlistId)
-                .SelectMany(x => x.PlayListItems)
-                .Select(x => x.PostId).Contains(x.Id))
+            availablePostQuery = exceptIds.Any()
+                ? availablePostQuery.Where(x => !exceptIds.Contains(x.Id))
                 : availablePostQuery;
 
-            var post = await availablePostQuery
+            var postList = await availablePostQuery
                 .Select(x => new
                 {
                     Id = x.Id,
@@ -191,21 +184,21 @@ namespace Blog.Service.Services.Implementation
                     Title = x.Title,
                     PreviewUrl = x.PreviewId
                 })
-                .AsAsyncEnumerable()
-                .SelectAwait(async x =>
-                {
-                    var fileUrl = await storage.GetFileUrlAsync(x.Id, x.PreviewUrl!);
-                    return new PostCommonModel
-                    {
-                        Id = x.Id,
-                        Description = x.Description,
-                        Title = x.Title,
-                        PreviewUrl = fileUrl
-                    };
-                })
                 .ToListAsync();
 
-            return post;
+            var result = postList.Select(async x =>
+            {
+                var fileUrl = await storage.GetFileUrlAsync(x.Id, x.PreviewUrl!);
+                return new PostCommonModel
+                {
+                    Id = x.Id,
+                    Description = x.Description,
+                    Title = x.Title,
+                    PreviewObjectName = fileUrl
+                };
+            });
+
+            return await Task.WhenAll(result);
         }
 
         public async Task<Result<IReadOnlyList<PlayListViewModel>>> GetBlogPlayListsAsync(Guid blogId)
@@ -249,13 +242,13 @@ namespace Blog.Service.Services.Implementation
                 var data = await _repository.Get<PlayList>()
                 .Where(x => x.Id == id)
                 .Include(x => x.PlayListItems.OrderBy(x => x.Position))
-                .FirstOrDefaultAsync();
+                .FirstAsync();
                 return data;
             });
 
             if (playlist == null)
             {
-                return Result<PlayListDetailViewModel>.Failure(new("id", "PlayList not found"));
+                return Result<PlayListDetailViewModel>.Failure(new Error("id", "PlayList not found"));
             }
 
             var userId = (await _userSession.GetCurrentUserAsync()).UserId;
@@ -316,7 +309,7 @@ namespace Blog.Service.Services.Implementation
 
             var user = await _userSession.GetCurrentUserAsync();
 
-            if (playlist == null) { return Result<PlayListViewModel>.Failure(new("404", "Плейлист не найден")); }
+            if (playlist == null) { return Result<PlayListViewModel>.Failure(new Error("404", "Плейлист не найден")); }
 
             var userBlogId = await _repository.Get<PersonBlog>()
                .Where(x => x.UserId == user.UserId)
@@ -357,8 +350,7 @@ namespace Blog.Service.Services.Implementation
                 var data = await _repository.Get<PlayList>()
                 .Where(x => x.Id == updateRequest.PlayListId && x.IsDeleted == false)
                 .Include(x => x.PlayListItems)
-                .FirstOrDefaultAsync();
-                data.AssertFound();
+                .FirstAsync();
                 return data;
             });
 

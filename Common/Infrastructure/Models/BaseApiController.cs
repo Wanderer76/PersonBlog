@@ -7,13 +7,13 @@ namespace Infrastructure.Models
 {
     [ApiController]
     [Route("api/[controller]")]
-    public abstract class BaseController : ControllerBase
+    public abstract class BaseApiController : ControllerBase
     {
-        protected readonly ILogger<BaseController> _logger;
+        protected readonly ILogger<BaseApiController> _logger;
 
         protected string GetSessionKey(string session) => $"Session:{session}";
 
-        protected BaseController(ILogger<BaseController> logger)
+        protected BaseApiController(ILogger<BaseApiController> logger)
         {
             _logger = logger;
         }

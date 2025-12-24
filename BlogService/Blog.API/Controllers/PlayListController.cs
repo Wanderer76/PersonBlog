@@ -1,6 +1,7 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models.Playlist;
+using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
@@ -10,7 +11,8 @@ using Shared.Services;
 
 namespace Blog.API.Controllers;
 
-public class PlayListController : BaseController
+[Obsolete]
+public class PlayListController : BaseApiController
 {
     private readonly IPlayListService _playListService;
     private readonly IFileStorage _fileStorage;
@@ -31,20 +33,20 @@ public class PlayListController : BaseController
         var result = await _playListService.GetBlogPlayListsAsync(blogId);
 
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
 
         return Ok(result.Value);
     }
 
     [HttpGet("availableVideos")]
-    [Authorize]
+    [AuthFilter(Roles.Blogger)]
     [Produces(typeof(IReadOnlyList<PlayListViewModel>))]
-    public async Task<IActionResult> GetAvailablePostsToPlayList(Guid? playlistId)
+    public async Task<IActionResult> GetAvailablePostsToPlayList(IEnumerable<Guid> playlistId)
     {
         var result = await _playListService.GetAvailablePostsToPlayListByIdAsync(playlistId);
 
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
 
         return Ok(result.Value);
     }
@@ -57,7 +59,7 @@ public class PlayListController : BaseController
         var result = await _playListService.GetPlayListDetailAsync(id);
 
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 
@@ -68,7 +70,7 @@ public class PlayListController : BaseController
     {
         var result = await _playListService.CreatePlayListAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 
@@ -79,7 +81,7 @@ public class PlayListController : BaseController
     {
         var result = await _playListService.UpdatePlayListCommonDataAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 
@@ -91,7 +93,7 @@ public class PlayListController : BaseController
     {
         var result = await _playListService.AddVideoToPlayListAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
     
@@ -102,7 +104,7 @@ public class PlayListController : BaseController
     {
         var result = await _playListService.ChangePostPositionAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 
@@ -113,7 +115,7 @@ public class PlayListController : BaseController
     {
         var result = await _playListService.RemovePlayListAsync(id);
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok();
     }
 
@@ -128,7 +130,7 @@ public class PlayListController : BaseController
             PostId = form.PostId,
         });
         if (result.IsFailure)
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 

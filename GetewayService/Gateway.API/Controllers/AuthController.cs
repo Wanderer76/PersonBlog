@@ -8,7 +8,7 @@ namespace Gateway.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : BaseController
+    public class AuthController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public AuthController(ILogger<AuthController> logger, IHttpClientFactory httpClientFactory) : base(logger)
@@ -23,7 +23,7 @@ namespace Gateway.API.Controllers
             var result = await _httpClientFactory.CreateUserAsync(registerModel);
             if (result.IsFailure)
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
             return Ok(result.Value);
         }
@@ -39,7 +39,7 @@ namespace Gateway.API.Controllers
             }
             else
             {
-                return BadRequest(response.Error);
+                return BadRequest(response.Errors);
             }
         }
 
@@ -54,7 +54,7 @@ namespace Gateway.API.Controllers
             }
             else
             {
-                return Unauthorized(response.Error);
+                return Unauthorized(response.Errors);
             }
         }
 

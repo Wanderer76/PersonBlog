@@ -13,7 +13,7 @@ namespace Gateway.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class VideoController : BaseController
+public class VideoController : BaseApiController
 {
     private const string HLSType = "application/x-mpegURL";
     private readonly IFileStorage storage;

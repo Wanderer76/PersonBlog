@@ -2,9 +2,9 @@
 
 namespace AuthenticationApplication.Controllers
 {
-    public class TokenController : BaseController
+    public class TokenController : BaseApiController
     {
-        public TokenController(ILogger<BaseController> logger) : base(logger)
+        public TokenController(ILogger<BaseApiController> logger) : base(logger)
         {
         }
     }

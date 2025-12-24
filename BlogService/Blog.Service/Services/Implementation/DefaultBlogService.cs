@@ -61,7 +61,7 @@ internal sealed class DefaultBlogService : IBlogService
         }
         else
         {
-            return blogResult.Error!;
+            return Result<BlogModel>.Failure(blogResult.Errors!);
         }
     }
 

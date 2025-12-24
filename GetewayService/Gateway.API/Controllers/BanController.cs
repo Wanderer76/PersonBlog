@@ -11,12 +11,12 @@ using Profile.Domain.Models;
 
 namespace Gateway.API.Controllers;
 
-public class BanController : BaseController
+public class BanController : BaseApiController
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ICurrentUserService _currentUserService;
 
-    public BanController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory, ICurrentUserService currentUserService) : base(logger)
+    public BanController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory, ICurrentUserService currentUserService) : base(logger)
     {
         _httpClientFactory = httpClientFactory;
         _currentUserService = currentUserService;
@@ -33,7 +33,7 @@ public class BanController : BaseController
 
         if (blogClient.IsFailure)
         {
-            return BadRequest(blogClient.Error);
+            return BadRequest(blogClient.Errors);
         }
 
         var requestBody = new PostReport

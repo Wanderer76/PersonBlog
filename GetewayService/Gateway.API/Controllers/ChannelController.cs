@@ -7,10 +7,10 @@ using Profile.Domain.Models;
 
 namespace Gateway.API.Controllers
 {
-    public class ChannelController : BaseController
+    public class ChannelController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public ChannelController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public ChannelController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }
@@ -29,7 +29,7 @@ namespace Gateway.API.Controllers
                 blog.PhotoUrl,
                 blog.CreatedAt,
                 blog.Id,
-                blog.ProfileId,
+                blog.UserId,
                 blog.SubscribersCount,
                 IsSubscribed = hasSubscription.HasSubscription
             });

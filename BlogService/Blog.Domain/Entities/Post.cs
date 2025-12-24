@@ -17,7 +17,7 @@ namespace Blog.Domain.Entities
         [Required]
         public string Title { get; set; }
         public string? Description { get; set; }
-        public bool IsDeleted { get; set; }
+        public bool IsDelete { get; set; }
 
 
         public string? PreviewId { get; set; }
@@ -50,7 +50,7 @@ namespace Blog.Domain.Entities
             Type = type;
             CreatedAt = DateTimeService.Now();
             Description = description;
-            IsDeleted = false;
+            IsDelete = false;
             Title = title;
             PaymentSubscriptionId = paymentSubscriptionId;
             Visibility = visibility;

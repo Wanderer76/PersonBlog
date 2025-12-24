@@ -9,10 +9,10 @@ namespace Gateway.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class SubscriberController : BaseController
+    public class SubscriberController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public SubscriberController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public SubscriberController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }

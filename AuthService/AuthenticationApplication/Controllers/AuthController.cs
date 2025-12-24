@@ -14,7 +14,7 @@ namespace AuthenticationApplication.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : BaseController
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
     private readonly ICurrentUserService _userSession;

@@ -11,14 +11,14 @@ using Shared.Services;
 
 namespace Music.API.Controllers
 {
-    public class TrackListenController : BaseController
+    public class TrackListenController : BaseApiController
     {
         private readonly IReadRepository<IMusicEntity> _read;
         private readonly IWriteRepository<IMusicEntity> _writeRepository;
         private readonly IFileStorageFactory _fileStorageFactory;
         private readonly ICacheService _cacheService;
         private readonly ICurrentUserService _userUserService;
-        public TrackListenController(ILogger<BaseController> logger, IReadRepository<IMusicEntity> read, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService urrentUserService, IWriteRepository<IMusicEntity> writeRepository) : base(logger)
+        public TrackListenController(ILogger<BaseApiController> logger, IReadRepository<IMusicEntity> read, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService urrentUserService, IWriteRepository<IMusicEntity> writeRepository) : base(logger)
         {
             _read = read;
             _fileStorageFactory = fileStorageFactory;

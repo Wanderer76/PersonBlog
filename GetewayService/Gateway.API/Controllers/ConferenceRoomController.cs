@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
 {
-    public class ConferenceRoomController : BaseController
+    public class ConferenceRoomController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
         public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IHttpClientFactory httpClientFactory) : base(logger)

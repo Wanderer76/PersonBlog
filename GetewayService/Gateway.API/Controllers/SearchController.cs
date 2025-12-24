@@ -6,11 +6,11 @@ using System.Text.Encodings.Web;
 
 namespace Gateway.API.Controllers
 {
-    public class SearchController : BaseController
+    public class SearchController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public SearchController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public SearchController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }

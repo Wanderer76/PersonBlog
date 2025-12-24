@@ -27,7 +27,7 @@ namespace Blog.Persistence.Repository.Quries
 
             var postQuery = context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
-                .Where(x => x.IsDeleted == false);
+                .Where(x => x.IsDelete == false);
 
             if (!canAccessPrivate)
             {

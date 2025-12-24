@@ -9,10 +9,10 @@ namespace Blog.Application.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class ContentController : BaseController
+    public class ContentController : BaseApiController
     {
         private readonly IRecommendationService _recommendationService;
-        public ContentController(ILogger<BaseController> logger, IRecommendationService recommendationService) : base(logger)
+        public ContentController(ILogger<BaseApiController> logger, IRecommendationService recommendationService) : base(logger)
         {
             _recommendationService = recommendationService;
         }

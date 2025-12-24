@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Comments.API.Controllers;
 
-public class CommentsController : BaseController
+public class CommentsController : BaseApiController
 {
     private readonly ICommentService _commentService;
     public CommentsController(ILogger<CommentsController> logger, ICommentService commentService) : base(logger)
@@ -22,7 +22,7 @@ public class CommentsController : BaseController
 
         if (result.IsFailure)
         {
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
         return Ok(result.Value);
@@ -36,7 +36,7 @@ public class CommentsController : BaseController
 
         if (result.IsFailure)
         {
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
         return Ok(result.Value);

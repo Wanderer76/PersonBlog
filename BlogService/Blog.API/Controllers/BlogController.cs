@@ -13,12 +13,12 @@ namespace Blog.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BlogController : BaseController
+public class BlogController : BaseApiController
 {
     private readonly IBlogService _blogService;
     private readonly ISubscriptionLevelService _subscriptionLevelService;
     private readonly ICurrentUserService _currentUserService;
-    public BlogController(ILogger<BaseController> logger, IBlogService blogService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService) : base(logger)
+    public BlogController(ILogger<BaseApiController> logger, IBlogService blogService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService) : base(logger)
     {
         _blogService = blogService;
         _subscriptionLevelService = subscriptionLevelService;
@@ -36,7 +36,7 @@ public class BlogController : BaseController
         }
         else
         {
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
     }
 

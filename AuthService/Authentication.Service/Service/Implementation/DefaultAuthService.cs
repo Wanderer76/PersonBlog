@@ -141,7 +141,7 @@ internal class DefaultAuthService : IAuthService
         var tokenModel = _tokenService.GetTokenRepresentation(refreshToken);
 
         if (tokenModel.IsFailure)
-            return tokenModel.Error!;
+            return Result<AuthResponse, Error>.Failure(tokenModel.Errors![0]);
 
         if (tokenModel.Value.Type != TokenTypes.Refresh)
         {

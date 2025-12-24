@@ -1,4 +1,5 @@
-﻿using Blog.Domain.Entities;
+﻿using Blog.Contracts.Models;
+using Blog.Domain.Entities;
 using Blog.Domain.Services.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
@@ -33,5 +34,6 @@ namespace Blog.Service.Services
         ValueTask<bool> CheckForViewAsync(Guid? userId, string? ipAddress);
         Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync();
         Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId);
+        Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds);
     }
 }

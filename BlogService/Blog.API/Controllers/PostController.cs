@@ -1,4 +1,5 @@
 ﻿using Blog.API.Models;
+using Blog.Contracts.Models;
 using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models;
@@ -16,7 +17,7 @@ namespace Blog.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class PostController : BaseController
+public class PostController : BaseApiController
 {
     private readonly IPostService _postService;
     private readonly IUserPostService _userPostService;
@@ -88,7 +89,7 @@ public class PostController : BaseController
         var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
         var visibilityList = await _postService.GetPostVisibilityListAsync();
         var categoryList = await _categoryService.GetAllCategoriesAsync();
-        return Ok(new CreatePostModelViewModel(subscriptionLevels,visibilityList,categoryList));
+        return Ok(new CreatePostModelViewModel(subscriptionLevels, visibilityList, categoryList));
     }
 
     [HttpPost("create")]
@@ -126,7 +127,7 @@ public class PostController : BaseController
         var result = await _postService.GetPostUpdateModelAsync(postId);
         if (result.IsSuccess)
             return Ok(result.Value);
-        return BadRequest(result.Error);
+        return BadRequest(result.Errors);
     }
 
     [HttpPost("edit")]
@@ -165,7 +166,7 @@ public class PostController : BaseController
             return Ok(result.Value);
         }
 
-        return BadRequest(result.Error);
+        return BadRequest(result.Errors);
     }
 
     [HttpPost("uploadProgress")]
@@ -178,7 +179,7 @@ public class PostController : BaseController
             return Ok(result.Value);
         }
 
-        return BadRequest(result.Error);
+        return BadRequest(result.Errors);
     }
 
     [HttpPost("uploadChunk")]
@@ -210,5 +211,12 @@ public class PostController : BaseController
     {
         var result = await _postService.CheckForViewAsync(userId, ipAddress);
         return Ok(result);
+    }
+
+    [HttpPost("commonByIds")]
+    [Produces(typeof(PostCommonModel))]
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModel([FromBody]List<Guid> ids)
+    {
+        return Ok(await _postService.GetPostCommonModelAsync(ids));
     }
 }

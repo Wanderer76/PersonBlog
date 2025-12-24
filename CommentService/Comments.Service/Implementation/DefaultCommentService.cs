@@ -32,7 +32,7 @@ internal class DefaultCommentService : ICommentService
                 .AnyAsync();
             if (!isReplyExists)
             {
-                return Result<CommentCreateResponse>.Failure(new("Комментария не существует"));
+                return Result<CommentCreateResponse>.Failure(new Error("Комментария не существует"));
             }
         }
 
@@ -113,14 +113,14 @@ internal class DefaultCommentService : ICommentService
 
         if (comment == null)
         {
-            return Result<CommentCreateResponse>.Failure(new("Комментария не существует"));
+            return Result<CommentCreateResponse>.Failure(new Error("Комментария не существует"));
         }
 
         var currentUser = await _currentUserService.GetCurrentUserAsync();
 
         if (comment.UserId != currentUser.UserId)
         {
-            return Result<CommentCreateResponse>.Failure(new("Вы не можете редактировать чужой комментарий"));
+            return Result<CommentCreateResponse>.Failure(new Error("Вы не можете редактировать чужой комментарий"));
         }
 
         var userEntity = await _repository.Get<UserProfile>()

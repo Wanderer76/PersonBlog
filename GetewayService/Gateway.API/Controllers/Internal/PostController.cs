@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers.Internal
 {
-    public class PostController : BaseController
+    public class PostController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public PostController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public PostController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }
@@ -22,7 +22,7 @@ namespace Gateway.API.Controllers.Internal
             {
                 return Ok(result.Value);
             }
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
     }

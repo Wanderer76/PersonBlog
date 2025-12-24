@@ -7,7 +7,7 @@ namespace Gateway.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class RecommendationController : BaseController
+    public class RecommendationController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
 

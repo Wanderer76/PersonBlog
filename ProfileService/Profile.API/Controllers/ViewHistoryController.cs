@@ -5,7 +5,7 @@ using Profile.Domain.Services;
 namespace Profile.API.Controllers
 {
     [ApiController]
-    public class ViewHistoryController : BaseController
+    public class ViewHistoryController : BaseApiController
     {
         private readonly IViewHistoryService _viewHistoryService;
 
@@ -20,7 +20,7 @@ namespace Profile.API.Controllers
             var result = await _viewHistoryService.GetUserViewHistoryListAsync(userId);
             if (result.IsFailure)
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
 
             return Ok(result.Value);
@@ -32,7 +32,7 @@ namespace Profile.API.Controllers
             var result = await _viewHistoryService.GetUserViewHistoryItemAsync(postId, userId);
             if (result.IsFailure)
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
 
             return Ok(result.Value);
@@ -44,7 +44,7 @@ namespace Profile.API.Controllers
             var result = await _viewHistoryService.GetUserPostReactionAsync(postId, userId,blogId);
             if (result.IsFailure)
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
 
             return Ok(result.Value);

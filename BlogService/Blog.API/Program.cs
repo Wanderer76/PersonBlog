@@ -29,7 +29,6 @@ builder.Services.AddAuthorization();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddBlogContract();
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddVideoConvertSaga()
@@ -89,7 +88,8 @@ if (app.Environment.IsDevelopment())
             initializer.Initialize();
         }
     }
-    app.UseCustomSwagger(app.Configuration);
+    app.UseSwagger();
+    //app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 }
 

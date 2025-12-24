@@ -9,6 +9,7 @@ namespace FileStorage.Service.Service
 {
     internal class MinioFileStorage : IFileStorage
     {
+        private const int Expiry = 604800;
         private readonly IMinioClient _client;
 
         public MinioFileStorage(IOptions<FileStorageOptions> options)
@@ -91,7 +92,7 @@ namespace FileStorage.Service.Service
         {
             var result = await _client.PresignedGetObjectAsync(new Minio.DataModel.Args.PresignedGetObjectArgs()
                              .WithBucket(bucketId.ToString())
-                             .WithExpiry(604800)
+                             .WithExpiry(Expiry)
                              .WithObject(objectName));
             return result;
         }
@@ -102,7 +103,7 @@ namespace FileStorage.Service.Service
                                     new Minio.DataModel.Args.PresignedPutObjectArgs()
                                     .WithBucket(bucketId.ToString())
                                     .WithObject(GeFileNameFromId(fileId, VideoResolution.Original))
-                                    .WithExpiry(604800));
+                                    .WithExpiry(Expiry));
             return result;
         }
 

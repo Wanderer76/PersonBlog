@@ -13,6 +13,7 @@ namespace Infrastructure.Services
     public static class CacheServiceExtensions
     {
         public static async Task<T> GetOrAddDataAsync<T>(this ICacheService cache, ICacheKey key, Func<Task<T>> store, long ttlInMinutes = 10)
+            where T : notnull
         {
             var data = await cache.GetCachedDataAsync<T>(key);
             if (data == null)
@@ -21,7 +22,7 @@ namespace Infrastructure.Services
                 await cache.SetCachedDataAsync(key, result, TimeSpan.FromMinutes(ttlInMinutes));
                 data = result;
             }
-            return data;
+            return data!;
         }
     }
 }

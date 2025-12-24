@@ -322,7 +322,7 @@ namespace Profile.Persistence.Migrations
                     b.Property<int>("DislikeCount")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LikeCount")

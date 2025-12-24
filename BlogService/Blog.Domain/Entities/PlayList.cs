@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace Blog.Domain.Entities
 {
+    [Obsolete]
     public class PlayList : IBlogEntity
     {
         [Key]

@@ -1,109 +1,118 @@
-﻿namespace Shared.Utils
+﻿using static System.Runtime.InteropServices.JavaScript.JSType;
+
+namespace Shared.Utils;
+
+public sealed class Result<TValue, TError> where TError : class
 {
-    public sealed class Result<TValue, TError> where TError : class
+    private readonly TValue? _value;
+    public TError? Error { get; }
+    public bool IsSuccess { get; }
+
+    private Result(TValue value)
     {
-        private readonly TValue? _value;
-        public TError? Error { get; }
-        public bool IsSuccess { get; }
+        Value = value;
+        IsSuccess = true;
+        Error = null;
+    }
+    private Result(TError error)
+    {
+        IsSuccess = false;
+        Error = error ?? throw new ArgumentException("invalid error", nameof(error));
+    }
 
-        private Result(TValue value)
+    public TValue Value
+    {
+        get
         {
-            Value = value;
-            IsSuccess = true;
-            Error = null;
-        }
-        private Result(TError error)
-        {
-            IsSuccess = false;
-            Error = error ?? throw new ArgumentException("invalid error", nameof(error));
-        }
-
-        public TValue Value
-        {
-            get
+            if (IsFailure)
             {
-                if (IsFailure)
-                {
-                    throw new InvalidOperationException("there is no value for failure");
-                }
-                return _value!;
+                throw new InvalidOperationException("there is no value for failure");
             }
-            private init => _value = value;
+            return _value!;
         }
-
-        public bool IsFailure => !IsSuccess;
-
-        public static Result<TValue, TError> Success(TValue value) => new(value);
-        public static Result<TValue, TError> Failure(TError error) => new(error);
-
-        public static implicit operator Result<TValue, TError>(TValue value) => Success(value);
-
-        public static implicit operator Result<TValue, TError>(TError error) => Failure(error);
-        public static Result<TValue, TError> From<TException>(
-            Func<TValue> func,
-            Func<TException, TError> errorFactory)
-            where TException : Exception
-        {
-            try { return Success(func()); }
-            catch (TException ex) { return Failure(errorFactory(ex)); }
-        }
-
+        private init => _value = value;
     }
 
-    public sealed class Result
+    public bool IsFailure => !IsSuccess;
+
+    public static Result<TValue, TError> Success(TValue value) => new(value);
+    public static Result<TValue, TError> Failure(TError error) => new(error);
+
+    public static implicit operator Result<TValue, TError>(TValue value) => Success(value);
+
+    public static implicit operator Result<TValue, TError>(TError error) => Failure(error);
+    public static Result<TValue, TError> From<TException>(
+        Func<TValue> func,
+        Func<TException, TError> errorFactory)
+        where TException : Exception
     {
-        private readonly IReadOnlyList<Error> _error;
-        private Result(Error error)
-        {
-            _error = [error];
-        }
-
-        public Error? Error
-        {
-            get => _error.Count == 0 ? null : _error[0];
-        }
-        public IReadOnlyList<Error> Errors => _error;
-
-        public bool IsFailure => _error.Count > 0;
-        public bool IsSuccess => _error.Count == 0;
-
-        public static Result Success() => new(null);
-        public static Result Failure(Error error) => new(error);
-        public static Result Failure(string key, string message) => new(new Error(key, message));
-        public static Result Failure(string message) => new(new Error(message));
+        try { return Success(func()); }
+        catch (TException ex) { return Failure(errorFactory(ex)); }
     }
+}
 
-    public sealed class Result<TValue>
+public sealed class Result
+{
+    private readonly IReadOnlyList<Error> _errors;
+    private Result(IReadOnlyList<Error> error)
     {
-        private readonly Result<TValue, Error> _result;
-
-        private Result(TValue value)
-        {
-            _result = Result<TValue, Error>.Success(value);
-        }
-        private Result(Error error)
-        {
-            _result = Result<TValue, Error>.Failure(error);
-        }
-
-        public TValue Value
-        {
-            get => _result.Value;
-        }
-        public Error? Error
-        {
-            get => _result.Error;
-        }
-        public bool IsFailure => _result.IsFailure;
-        public bool IsSuccess => !IsFailure;
-
-        public static Result<TValue> Success(TValue value) => new(value);
-        public static Result<TValue> Failure(Error error) => new(error);
-
-        public static implicit operator Result<TValue>(TValue value)
-            => Success(value);
-        public static implicit operator Result<TValue>(Error error)
-            => Failure(error);
-
+        _errors = error;
     }
+
+    public IReadOnlyList<Error> Errors => _errors;
+
+    public bool IsFailure => _errors.Count > 0;
+    public bool IsSuccess => _errors.Count == 0;
+
+    public static Result Success() => new([]);
+    public static Result Failure(Error error) => new([error]);
+    public static Result Failure(IReadOnlyList<Error> error) => new(error);
+    public static Result Failure(string key, string message) => new([new Error(key, message)]);
+    public static Result Failure(string message) => new([new Error(message)]);
+}
+
+public sealed class Result<TValue>
+{
+    private readonly TValue? _value;
+    private readonly IReadOnlyList<Error> _errors;
+
+    private Result(TValue value)
+    {
+        _value = value;
+        _errors = [];
+    }
+    private Result(IReadOnlyList<Error> error)
+    {
+        _value = default(TValue);
+        _errors = error;
+    }
+
+    public TValue Value
+    {
+        get
+        {
+            if (_errors.Count == 0)
+                return _value;
+            else
+                throw new InvalidOperationException("there is no value for failure");
+        }
+    }
+    public IReadOnlyList<Error> Errors
+    {
+        get => _errors;
+    }
+
+    public bool IsFailure => _errors.Count > 0;
+    public bool IsSuccess => !IsFailure;
+
+    public static Result<TValue> Success(TValue value) => new(value);
+    public static Result<TValue> Failure(Error error) => new([error]);
+    public static Result<TValue> Failure(IReadOnlyList<Error> error) => new(error);
+
+    public static implicit operator Result<TValue>(TValue value)
+        => Success(value);
+    public static implicit operator Result<TValue>(Error error)
+        => Failure(error);
+    public static explicit operator Result<TValue>(Error[] error)
+        => Failure(error);
 }

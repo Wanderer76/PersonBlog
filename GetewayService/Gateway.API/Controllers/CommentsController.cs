@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
 {
-    public class CommentsController : BaseController
+    public class CommentsController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public CommentsController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public CommentsController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }

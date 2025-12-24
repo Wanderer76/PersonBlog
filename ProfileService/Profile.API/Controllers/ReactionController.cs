@@ -9,7 +9,7 @@ using Profile.Domain.Events;
 namespace Profile.API.Controllers
 {
     [ApiController]
-    public class ReactionController : BaseController
+    public class ReactionController : BaseApiController
     {
         private readonly IReactionService _reactionService;
 
