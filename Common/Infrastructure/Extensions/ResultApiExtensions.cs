@@ -5,33 +5,12 @@ namespace Infrastructure.Extensions;
 
 public sealed record ApiException
 {
-    /// <summary>
-    /// Short, human-readable summary of the problem.
-    /// </summary>
     public string Title { get; init; } = "An error occurred.";
-
-    /// <summary>
-    /// HTTP status code (e.g. 400, 404, 500).
-    /// </summary>
     public int Status { get; init; } = 400;
+    public object? Data { get; init; }
 
-    /// <summary>
-    /// Optional: specific error instance (e.g. UUID of failed request).
-    /// </summary>
-    public string? Instance { get; init; }
-
-    // --- Extensions (not in RFC 7807, but widely adopted) ---
-
-    /// <summary>
-    /// Machine-readable error codes (e.g. "VALIDATION_FAILED").
-    /// </summary>
     public string? Code { get; init; }
 
-    /// <summary>
-    /// Field-level validation errors.
-    /// Key: field name (e.g. "Email", "Items[2].Url")
-    /// Value: list of error messages.
-    /// </summary>
     public Dictionary<string, string[]>? Errors { get; init; }
 }
 
@@ -56,7 +35,6 @@ public static class ApiExceptionExtensions
         {
             Title = ValidationErrorTitle,
             Status = 400,
-            Instance = instance,
             Errors = fieldErrors.Count > 0 ? fieldErrors : null,
             Code = "VALIDATION_FAILED"
         };
@@ -101,8 +79,29 @@ public static class ApiExceptionExtensions
         {
             Title = title,
             Status = status,
-            Instance = instance,
             Code = code
         };
+    }
+    public static ApiException WithData<TData>(
+        this TData data)
+    {
+        return new ApiException { Data = data };
+    }
+
+    public static IReadOnlyList<Error> FromApiException(this ApiException? ex)
+    {
+        if (ex is null)
+            return [new Error("Unknown", "An unexpected error occurred.")];
+
+        if (ex.Errors is { Count: > 0 })
+        {
+            return ex.Errors
+                .SelectMany(kvp => kvp.Value.Select(msg => new Error(kvp.Key, msg)))
+                .ToArray();
+        }
+
+        var key = ex.Code ?? "Global";
+        var message = ex.Title;
+        return [new Error(key, message)];
     }
 }

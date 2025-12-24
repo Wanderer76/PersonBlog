@@ -11,7 +11,7 @@ using Shared.Utils;
 
 namespace PlayListService.Services.Services;
 
-public sealed class CrudPlayListService
+internal sealed class CrudPlayListService : IPlayListService
 {
     private readonly IReadWriteRepository<IPlayListEntity> _repository;
     private readonly ICurrentUserService _currentUserService;

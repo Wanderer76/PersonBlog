@@ -6,7 +6,7 @@ public static class PlayListServiceExtensions
 {
     public static void AddPlayListService(this IServiceCollection services)
     {
-        services.AddScoped<CrudPlayListService>();
+        services.AddScoped<IPlayListService, CrudPlayListService>();
         services.AddScoped<PlayListFileService>();
     }
 }

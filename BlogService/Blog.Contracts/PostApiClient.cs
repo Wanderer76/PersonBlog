@@ -23,7 +23,7 @@ public class PostApiClient
             if (result.IsSuccessStatusCode)
                 return (await result.Content.ReadFromJsonAsync<List<PostCommonModel>>())!;
             return [];
-        });
+        },1);
     }
 }
 

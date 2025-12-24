@@ -12,15 +12,14 @@ namespace PlayListService.API.Controllers;
 
 public class PlayListController : BaseApiController
 {
-    private readonly CrudPlayListService _playListService;
-    public PlayListController(ILogger<BaseApiController> logger, CrudPlayListService playListService) : base(logger)
+    private readonly IPlayListService _playListService;
+    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService) : base(logger)
     {
         _playListService = playListService;
     }
 
     [HttpGet("list")]
-    [Produces(typeof(IReadOnlyList<PlayListListItem>))]
-    public async Task<ActionResult<PlayListListItem>> GetAllPlayLists(Guid blogId)
+    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAllPlayLists(Guid blogId)
     {
         var result = await _playListService.GetPlayListsByBlogId(blogId);
         if (result.IsFailure)
@@ -44,7 +43,6 @@ public class PlayListController : BaseApiController
 
 
     [HttpGet("item/{id:guid}")]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PlayListListItem>> GetPlayList(Guid id)
     {
         var playList = await _playListService.GetPlayListAsync(id);
@@ -55,7 +53,6 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("item/{id:guid}/postList")]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PagedListViewModel<PostCommonModel>>> GetPlayList(Guid id, int page, int pageSize)
     {
         var playList = await _playListService.GetPlayListPostPagedAsync(id, page, pageSize);
@@ -64,7 +61,6 @@ public class PlayListController : BaseApiController
 
     [HttpPost("create")]
     [AuthFilter(Roles.User)]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PlayListListItem>> CreatePlayList([FromForm] CreatePlayListRequest form)
     {
         var result = await _playListService.CreatePlayListAsync(form);
@@ -86,29 +82,26 @@ public class PlayListController : BaseApiController
 
     [HttpPost("addVideo")]
     [AuthFilter(Roles.User)]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PlayListListItem>> AddVideoToPlayList([FromBody] PlayListItemAddRequest form)
     {
         var result = await _playListService.AddVideoAsync(form);
         if (result.IsFailure)
             return BadRequest(result.Errors.ToValidationProblem());
-        return Ok(result.Value);
+        return Ok(result.Value.WithData());
     }
 
     [HttpPost("updatePositions")]
     [AuthFilter(Roles.User)]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PlayListListItem>> UpdatePostPositions([FromBody] ChangePostPositionRequest form)
     {
         var result = await _playListService.ChangePostPositionAsync(form);
         if (result.IsFailure)
             return BadRequest(result.Errors.ToValidationProblem());
-        return Ok(result.Value);
+        return Ok(result.Value.WithData());
     }
 
     [HttpPost("removePlaylist/{id:guid}")]
     [AuthFilter(Roles.User)]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PlayListListItem>> RemovePlayList(Guid id)
     {
         var result = await _playListService.RemovePlayListAsync(id);
@@ -119,7 +112,6 @@ public class PlayListController : BaseApiController
 
     [HttpPost("removeVideo")]
     [AuthFilter(Roles.User)]
-    [Produces(typeof(PlayListListItem))]
     public async Task<ActionResult<PlayListListItem>> RemoveVideoFromPlayList([FromBody] PlayListItemRemoveRequest form)
     {
         var result = await _playListService.RemoveVideoAsync(form);
