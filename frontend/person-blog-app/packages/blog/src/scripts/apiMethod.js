@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSession, JwtTokenService } from './TokenStrorage';
+import { JwtTokenService } from './TokenStrorage';
 
 export const BaseApUrl = 'http://localhost:7892';
 const API = axios.create({

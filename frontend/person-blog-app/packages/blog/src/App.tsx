@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useSearchParams } from 'react-router-dom';
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import './App.css';
-import { getAccessToken, JwtTokenService } from './scripts/TokenStrorage';
+import { JwtTokenService } from './scripts/TokenStrorage';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
@@ -21,39 +21,40 @@ const HistoryPage = lazy(() => import('./pages/history/HistoryPage'));
 const Header = lazy(() => import('./components/header/Header'));
 
 // Приватный маршрут
-const PrivateRoute = ({ redirectPath = '/auth' }) => {
-  const isAuthenticated = JwtTokenService.isAuth();
-  return isAuthenticated ? <Outlet /> : <Navigate to={redirectPath} />;
-};
+interface PrivateRouteProps {
+  redirectPath?: string;
+}
 
+const PrivateRoute = ({ redirectPath = '/auth' }: PrivateRouteProps) => {
+  const isAuthenticated = JwtTokenService.isAuth();
+  return isAuthenticated? <Outlet /> : <Navigate to={redirectPath} replace />;
+};
 // Публичный маршрут (если нужно ограничить доступ к auth)
-const PublicRoute = ({ children }) => {
+// Публичный маршрут
+interface PublicRouteProps {
+  children: ReactNode;
+}
+
+const PublicRoute = ({ children }: PublicRouteProps) => {
   const isAuthenticated = JwtTokenService.isAuth();
   const [searchParams] = useSearchParams();
-  var isRedirect = searchParams.get("redirect");
-  return !isAuthenticated || isRedirect != null ? children : <Navigate to="/" />;
+  const isRedirect = searchParams.get('redirect');
+
+  return !isAuthenticated|| isRedirect !== null ? <>{children}</> : <Navigate to="/" replace />;
 };
 
 // Компонент проверки сессии
-const Session = ({ children }) => {
+interface SessionProps {
+  children: ReactNode;
+}
+
+const Session = ({ children }: SessionProps) => {
   useEffect(() => {
-    // слушаем сообщения от Service Worker
-
-
-    // при загрузке страницы триггерим догрузку всех чанков
-
-
-    // при загрузке страницы триггерим догрузку всех чанков
     if (JwtTokenService.isAuth()) {
       navigator.serviceWorker?.controller?.postMessage({
         type: 'UPLOAD_ALL_CHUNKS'
       });
     }
-    // API.get("video/api/Auth/session", { withCredentials: true })
-    //   .then(response => {
-    //     setSession(response.data)
-    //   })
-    //   .catch(() => JwtTokenService.cleanAuth());
   }, []);
 
   return <>{children}</>;
