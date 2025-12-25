@@ -6,6 +6,7 @@ using Gateway.API.Services;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
+using PlayListService.Contract;
 using Profile.Service;
 using Serilog;
 
@@ -23,6 +24,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<HeaderClientHandler>();
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddFileStorage(builder.Configuration);
+
+builder.Services.AddPlayListContract(builder.Configuration);
 
 builder.Services.AddHttpClient("Auth", x =>
 {

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Infrastructure.Middleware;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PlayListService.Services.Services;
 
@@ -10,6 +11,6 @@ public static class PlayListContractServiceExtension
         services.AddHttpClient<IPlayListService, PlaylistHttpApiClient>(cfg =>
         {
             cfg.BaseAddress = new Uri(configuration["AppUrls:PlayList"]!);
-        });
+        }).AddHttpMessageHandler<HeaderClientHandler>();
     }
 }

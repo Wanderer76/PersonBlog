@@ -247,7 +247,7 @@ internal sealed class CrudPlayListService : IPlayListService
         return await Task.WhenAll(result);
     }
 
-    public async Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogId(Guid blogId)
+    public async Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogIdAsync(Guid blogId)
     {
         var blog = await blogApiClient.GetBlogDetailsAsync(blogId);
         if (blog.IsFailure)

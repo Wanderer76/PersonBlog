@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using PlayListService.Services.Models;
 using PlayListService.Services.Services;
 using Shared.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace PlayListService.API.Controllers;
 
@@ -19,11 +20,11 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("list")]
-    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAllPlayLists(Guid blogId)
+    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAllPlayLists([Required] Guid blogId)
     {
-        var result = await _playListService.GetPlayListsByBlogId(blogId);
+        var result = await _playListService.GetPlayListsByBlogIdAsync(blogId);
         if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 
@@ -48,7 +49,7 @@ public class PlayListController : BaseApiController
         var playList = await _playListService.GetPlayListAsync(id);
 
         if (playList.IsFailure)
-            return BadRequest(playList.Errors.ToValidationProblem());
+            return BadRequest(playList.Errors);
         return Ok(playList.Value);
     }
 
@@ -65,7 +66,7 @@ public class PlayListController : BaseApiController
     {
         var result = await _playListService.CreatePlayListAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 
@@ -86,7 +87,7 @@ public class PlayListController : BaseApiController
     {
         var result = await _playListService.AddVideoAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
+            return BadRequest(result.Errors);
         return Ok(result.Value.WithData());
     }
 
@@ -96,7 +97,7 @@ public class PlayListController : BaseApiController
     {
         var result = await _playListService.ChangePostPositionAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
+            return BadRequest(result.Errors);
         return Ok(result.Value.WithData());
     }
 
@@ -106,7 +107,7 @@ public class PlayListController : BaseApiController
     {
         var result = await _playListService.RemovePlayListAsync(id);
         if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
+            return BadRequest(result.Errors);
         return Ok();
     }
 
@@ -116,7 +117,7 @@ public class PlayListController : BaseApiController
     {
         var result = await _playListService.RemoveVideoAsync(form);
         if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
+            return BadRequest(result.Errors);
         return Ok(result.Value);
     }
 

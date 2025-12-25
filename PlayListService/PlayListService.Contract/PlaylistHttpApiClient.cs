@@ -1,5 +1,4 @@
 ﻿using Blog.Contracts.Models;
-using Infrastructure.Extensions;
 using Infrastructure.Services;
 using PlayListService.Services.Models;
 using PlayListService.Services.Services;
@@ -22,61 +21,61 @@ public class PlaylistHttpApiClient : IPlayListService
 
     public async Task<Result<PlayListListItem>> AddVideoAsync(PlayListItemAddRequest playListItems)
     {
-        var result = await _client.PostAsJsonAsync("addVideo", playListItems);
+        var result = await _client.PostAsJsonAsync("PlayList/addVideo", playListItems);
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<PlayListListItem>())!;
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
 
-        return Result<PlayListListItem>.Failure(errors.FromApiException());
+        return Result<PlayListListItem>.Failure(errors);
     }
 
     public async Task<Result<PlayListListItem>> ChangePostPositionAsync(ChangePostPositionRequest changePostPositionRequest)
     {
-        var result = await _client.PostAsJsonAsync("updatePositions", changePostPositionRequest);
+        var result = await _client.PostAsJsonAsync("PlayList/updatePositions", changePostPositionRequest);
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<PlayListListItem>())!;
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
 
-        return Result<PlayListListItem>.Failure(errors.FromApiException());
+        return Result<PlayListListItem>.Failure(errors);
     }
 
     public async Task<Result<PlayListListItem>> CreatePlayListAsync(CreatePlayListRequest request)
     {
-        var result = await _client.PostAsJsonAsync("create", request);
+        var result = await _client.PostAsJsonAsync("PlayList/create", request);
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<PlayListListItem>())!;
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
 
-        return Result<PlayListListItem>.Failure(errors.FromApiException());
+        return Result<PlayListListItem>.Failure(errors);
     }
 
     public async Task<Result<PlayListListItem>> GetPlayListAsync(Guid id)
     {
-        var result = await _client.GetAsync($"item/{id}");
+        var result = await _client.GetAsync($"PlayList/item/{id}");
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<PlayListListItem>())!;
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
-        return Result<PlayListListItem>.Failure(errors.FromApiException());
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
+        return Result<PlayListListItem>.Failure(errors);
     }
 
     public async Task<PagedListViewModel<PostCommonModel>> GetPlayListPostPagedAsync(Guid playListId, int page, int pageSize)
     {
-        var result = await _client.GetAsync($"item/{playListId}/postList?{nameof(page)}={page}&{nameof(pageSize)}={pageSize}");
+        var result = await _client.GetAsync($"PlayList/item/{playListId}/postList?{nameof(page)}={page}&{nameof(pageSize)}={pageSize}");
         return (await result.Content.ReadFromJsonAsync<PagedListViewModel<PostCommonModel>>())!;
     }
 
-    public async Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogId(Guid blogId)
+    public async Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogIdAsync(Guid blogId)
     {
-        var result = await _client.GetAsync("list");
+        var result = await _client.GetAsync($"PlayList/list?blogId={blogId}");
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<List<PlayListListItem>>())!;
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
-        return Result<IReadOnlyList<PlayListListItem>>.Failure(errors.FromApiException());
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
+        return Result<IReadOnlyList<PlayListListItem>>.Failure(errors);
     }
 
     public Task<IReadOnlyList<PlayListListItem>> GetUserPlayLists()
@@ -86,21 +85,21 @@ public class PlaylistHttpApiClient : IPlayListService
 
     public async Task<Result> RemovePlayListAsync(Guid id)
     {
-        var result = await _client.PostAsync($"removePlaylist/{id}",null);
+        var result = await _client.PostAsync($"PlayList/removePlaylist/{id}",null);
         if (result.IsSuccessStatusCode)
             return Result.Success();
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
-        return Result.Failure(errors.FromApiException());
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
+        return Result.Failure(errors);
     }
 
     public async Task<Result<PlayListListItem>> RemoveVideoAsync(PlayListItemRemoveRequest request)
     {
-        var result = await _client.PostAsJsonAsync($"removeVideo", request);
+        var result = await _client.PostAsJsonAsync($"PlayList/removeVideo", request);
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<PlayListListItem>())!;
 
-        var errors = (await result.Content.ReadFromJsonAsync<ApiException>())!;
-        return Result<PlayListListItem>.Failure(errors.FromApiException());
+        var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
+        return Result<PlayListListItem>.Failure(errors);
     }
 }

@@ -25,6 +25,7 @@ internal class Program
         builder.Services.AddRedisCache(builder.Configuration);
         builder.Services.AddFileStorage(builder.Configuration);
         builder.Services.AddPlayListPersistence(builder.Configuration);
+        builder.Services.AddCors();
 
         builder.Services.AddPlayListService();
         builder.Services.AddUserSessionServices();

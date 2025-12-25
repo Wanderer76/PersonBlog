@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\BlogService\Blog.Service\Blog.Service.csproj" />
     <ProjectReference Include="..\..\CommentService\Comments.Domain\Comments.Domain.csproj" />
     <ProjectReference Include="..\..\ConferenceService\Conference.Domain\Conference.Domain.csproj" />
+    <ProjectReference Include="..\..\PlayListService\PlayListService.Contract\PlayListService.Contract.csproj" />
     <ProjectReference Include="..\..\ProfileService\Profile.Service\Profile.Service.csproj" />
     <ProjectReference Include="..\..\RecommendationService\Recommendation.Service\Recommendation.Service.csproj" />
     <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />

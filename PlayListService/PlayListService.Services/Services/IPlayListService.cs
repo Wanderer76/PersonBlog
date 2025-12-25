@@ -11,7 +11,7 @@ public interface IPlayListService
     Task<Result<PlayListListItem>> CreatePlayListAsync(CreatePlayListRequest request);
     Task<Result<PlayListListItem>> GetPlayListAsync(Guid id);
     Task<PagedListViewModel<PostCommonModel>> GetPlayListPostPagedAsync(Guid playListId, int page, int pageSize);
-    Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogId(Guid blogId);
+    Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogIdAsync(Guid blogId);
     Task<IReadOnlyList<PlayListListItem>> GetUserPlayLists();
     Task<Result> RemovePlayListAsync(Guid id);
     Task<Result<PlayListListItem>> RemoveVideoAsync(PlayListItemRemoveRequest request);

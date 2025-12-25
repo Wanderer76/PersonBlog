@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers.Internal
 {
+    [Obsolete("Худшее решение в жизни")]
     public class PostController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
