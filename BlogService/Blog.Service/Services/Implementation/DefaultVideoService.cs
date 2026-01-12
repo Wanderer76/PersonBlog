@@ -13,11 +13,13 @@ namespace Blog.Service.Services.Implementation
     {
         private readonly IReadWriteRepository<IBlogEntity> _context;
         private readonly ICacheService _cacheService;
+        private readonly IFileStorageFactory _fileStorageFactory;
         public const int LifeTimeInMinutes = 60000;
-        public DefaultVideoService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService)
+        public DefaultVideoService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory)
         {
             _context = context;
             _cacheService = cacheService;
+            _fileStorageFactory = fileStorageFactory;
         }
 
         public async Task<Result<UploadVideoProgress>> CreateUploadVideoMetadata(CreateUploadVideoProgressRequest uploadVideoChunk)
@@ -82,6 +84,9 @@ namespace Blog.Service.Services.Implementation
                 Length = uploadVideoChunk.TotalSize,
                 ProcessState = ProcessState.Load
             };
+
+            using var fileStorage = _fileStorageFactory.CreateFileStorage();
+            await fileStorage.CreateTempBucketAsync(post.Id);
             await _cacheService.SetCachedDataAsync(cacheKey, metadata, TimeSpan.FromMinutes(LifeTimeInMinutes));
             return metadata;
 

@@ -157,7 +157,7 @@ internal class RabbitMqMessageBus : IMessagePublish, IAsyncDisposable
                 var body = JsonSerializer.Deserialize<BaseEvent<T>>(ea.Body.Span, deserializeOptions)!;
                 using var scope = _serviceScope.CreateScope();
                 var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(body.EventType);
-                if (_subscriptionInfo.EventTypes.TryGetValue(body.EventType, out var eventType) && handlers.Any())
+                if (_subscriptionInfo.EventTypes.ContainsKey(body.EventType) && handlers.Any())
                 {
                     foreach (var handler in handlers)
                     {

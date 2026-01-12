@@ -90,17 +90,16 @@ internal sealed class CrudPlayListService : IPlayListService
             .Include(x => x.PlayListItems)
             .FirstAsync();
 
-
         if (user.UserId != playlist.UserId)
         {
-            return new Error("");
+            return new Error("Нельзя добавить пост не в свой плейлист");
         }
 
         var now = DateTimeService.Now();
         _repository.Attach(playlist);
-        foreach (var playListItem in playListItems.Items)
+        foreach (var playListItem in playListItems.PostsToAdd)
         {
-            var isAdded = playlist.AddVideo(playListItem.PostId, now, playListItem.Position);
+            var isAdded = playlist.AddVideo(playListItem, now);
             if (isAdded.IsFailure)
             {
                 return Result<PlayListListItem>.Failure(isAdded.Errors!);
@@ -108,13 +107,13 @@ internal sealed class CrudPlayListService : IPlayListService
         }
 
         await _repository.SaveChangesAsync();
-        return Result<PlayListListItem>.Success(new PlayListListItem
+        return new PlayListListItem
         {
             Id = playlist.Id,
             PostCount = playlist.PlayListItems.Count,
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
             Title = playlist.Title,
-        });
+        };
     }
 
     public async Task<Result<PlayListListItem>> RemoveVideoAsync(PlayListItemRemoveRequest request)
@@ -283,13 +282,7 @@ public class PlayListItemAddRequest
 {
     public required Guid PlayListId { get; set; }
 
-    public required List<PlayListAddItem> Items { get; set; }
-}
-
-public class PlayListAddItem
-{
-    public required Guid PostId { get; set; }
-    public int? Position { get; set; }
+    public required List<Guid> PostsToAdd { get; set; }
 }
 
 public class ChangePostPositionRequest

@@ -15,8 +15,6 @@ public class BlogDbContext : BaseDbContext
     public DbSet<PostViewer> PostViewers { get; set; }
     public DbSet<PaymentSubscriber> ProfileSubscriptions { get; set; }
     public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
-    public DbSet<PlayList> PlayLists { get; set; }
-    public DbSet<PlayListItem> PlayListItems { get; set; }
     public DbSet<VideoProcessingSagaState> VideoProcessingSagaStates { get; set; }
     public DbSet<PostRemoveEvent> PostRemoveEvents { get; set; }
     public DbSet<Category> Categories { get; set; }
@@ -106,20 +104,6 @@ public class BlogDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<PaymentSubscriber>();
                 entity.HasKey(x => new { x.UserId, x.SubscriptionLevelId });
-            }
-            {
-                var entity = modelBuilder.Entity<PlayListItem>();
-                entity.HasKey(x => new { x.PlayListId, x.PostId });
-                entity.HasIndex(x => new { x.PlayListId, x.PostId, x.Position }).IsUnique();
-            }
-            {
-                var entity = modelBuilder.Entity<PlayList>();
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.BlogId);
-                entity.Property(x => x.Title).HasMaxLength(255);
-                entity.Property(x => x.ThumbnailId);
-                entity.Property(x => x.CreatedAt);
-                entity.Property(x => x.IsDeleted);
             }
             {
                 var entity = modelBuilder.Entity<Category>();

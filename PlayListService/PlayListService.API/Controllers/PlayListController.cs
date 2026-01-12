@@ -28,6 +28,14 @@ public class PlayListController : BaseApiController
         return Ok(result.Value);
     }
 
+    [HttpGet("my/list")]
+    [AuthFilter(Roles.User)]
+    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetCurrentUserPlayLists()
+    {
+        var result = await _playListService.GetUserPlayLists();
+        return Ok(result);
+    }
+
     //TODO возможно сюда перенести
     //[HttpGet("availableVideos")]
     //[AuthFilter(Roles.Blogger)]

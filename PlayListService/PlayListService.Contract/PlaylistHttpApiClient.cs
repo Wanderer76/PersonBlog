@@ -73,7 +73,6 @@ public class PlaylistHttpApiClient : IPlayListService
         var result = await _client.GetAsync($"PlayList/list?blogId={blogId}");
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<List<PlayListListItem>>())!;
-
         var errors = (await result.Content.ReadFromJsonAsync<List<Error>>())!;
         return Result<IReadOnlyList<PlayListListItem>>.Failure(errors);
     }

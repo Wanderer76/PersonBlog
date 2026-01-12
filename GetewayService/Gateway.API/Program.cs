@@ -1,4 +1,5 @@
 using Authentication.Contract;
+using Blog.Contracts;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Gateway.API;
@@ -61,6 +62,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddProfileHttpClient(builder.Configuration);
+builder.Services.AddBlogContract(builder.Configuration);
 
 var app = builder.Build();
 app.UseSerilogRequestLogger();

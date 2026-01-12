@@ -62,9 +62,9 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             result.ProcessState = ProcessState.Complete;
             return result;
         }
-            catch (Exception e)
+        catch (Exception e)
         {
-            result.Error = "Не удалось сконвертировать файл";
+            result.Error = $"{e}";
             result.ProcessState = ProcessState.Error;
             return result;
         }

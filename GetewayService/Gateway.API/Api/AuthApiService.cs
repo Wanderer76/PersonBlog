@@ -15,7 +15,7 @@ namespace Gateway.API.Api
             var response = await httpClientFactory.CreateClient(ClientName).PostAsJsonAsync("Auth/create", registerModel);
             if (response.IsSuccessStatusCode)
             {
-                return await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream());
+                return (await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream()))!;
             }
             return new Error(await response.Content.ReadAsStringAsync());
         }
@@ -30,7 +30,7 @@ namespace Gateway.API.Api
             var response = await client.PostAsJsonAsync("Auth/login", loginModel);
             if (response.IsSuccessStatusCode)
             {
-                return await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream());
+                return (await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream()))!;
             }
             return new Error(await response.Content.ReadAsStringAsync());
         }
@@ -56,7 +56,7 @@ namespace Gateway.API.Api
             var response = await client.PostAsync($"Auth/refresh?refreshToken={refreshToken}", null);
             if (response.IsSuccessStatusCode)
             {
-                return await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream());
+                return (await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream()))!;
             }
             return new Error(await response.Content.ReadAsStringAsync());
         }

@@ -35,5 +35,6 @@ namespace Blog.Service.Services
         Task<IEnumerable<SelectItem<PostVisibility>>> GetPostVisibilityListAsync();
         Task<Result<PostEditViewModel>> GetPostUpdateModelAsync(Guid postId);
         Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds);
+        Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostListAsync();
     }
 }

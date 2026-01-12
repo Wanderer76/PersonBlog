@@ -75,7 +75,7 @@ const ProfilePage = () => {
 
     useEffect(() => {
         if (blogId.current) {
-            API.get(`/profile/api/PlayList/list?blogId=${blogId.current}`).then(response => {
+            API.get(`/video/api/PlayList/list?blogId=${blogId.current}`).then(response => {
                 if (response.status === 200) {
                     setPlayLists(response.data)
                 }

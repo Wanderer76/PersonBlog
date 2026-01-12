@@ -1,4 +1,5 @@
 ﻿using Authentication.Contract.Constants;
+using Blog.Contracts;
 using Blog.Contracts.Models;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
@@ -14,10 +15,12 @@ namespace Gateway.API.Controllers;
 public class PlayListController : BaseApiController
 {
     private readonly IPlayListService _playListService;
+    private readonly BlogApiClient blogApiClient;
 
-    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService) : base(logger)
+    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService, BlogApiClient blogApiClient) : base(logger)
     {
         _playListService = playListService;
+        this.blogApiClient = blogApiClient;
     }
 
     [HttpGet("item/{id:guid}")]
@@ -43,6 +46,18 @@ public class PlayListController : BaseApiController
     public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAllPlayLists([Required] Guid blogId)
     {
         var result = await _playListService.GetPlayListsByBlogIdAsync(blogId);
+
+        if (result.IsFailure)
+            return BadRequest(result.Errors.ToValidationProblem());
+
+        return Ok(result.Value);
+    }
+    
+    [HttpGet("availableVideos")]
+    [Produces(typeof(IReadOnlyList<PostCommonModel>))]
+    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAllPlayLists()
+    {
+        var result = await blogApiClient.GetCurrentUserPostListAsync();
 
         if (result.IsFailure)
             return BadRequest(result.Errors.ToValidationProblem());

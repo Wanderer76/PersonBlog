@@ -1,4 +1,5 @@
-﻿using Blog.API.Models;
+﻿using Authentication.Contract.Constants;
+using Blog.API.Models;
 using Blog.Contracts.Models;
 using Blog.Domain.Entities;
 using Blog.Domain.Services;
@@ -7,6 +8,7 @@ using Blog.Service.Models;
 using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using Blog.Service.Services;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -218,5 +220,13 @@ public class PostController : BaseApiController
     public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModel([FromBody]List<Guid> ids)
     {
         return Ok(await _postService.GetPostCommonModelAsync(ids));
+    }
+    
+    [HttpGet("my/list")]
+    [Produces(typeof(PostCommonModel))]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetCurrentUserPostListAsync()
+    {
+        return Ok(await _postService.GetCurrentUserPostListAsync());
     }
 }

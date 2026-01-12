@@ -9,6 +9,7 @@ using Blog.Service.Models.File;
 using Blog.Service.Models.Post;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
@@ -238,11 +239,7 @@ internal class DefaultPostService : IPostService
         await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId,
             GuidService.GetNewGuid(),
             uploadVideoChunkDto.ChunkData,
-            new VideoChunkUploadingInfo
-            {
-                FileId = metadata.Id,
-                ChunkNumber = uploadVideoChunkDto.ChunkNumber,
-            });
+            new ChunkUploadingInfo(metadata.Id, uploadVideoChunkDto.ChunkNumber));
 
         progress.Value.LastUploadChunkNumber++;
 
@@ -290,7 +287,7 @@ internal class DefaultPostService : IPostService
             var snapshotFileId = GuidService.GetNewGuid();
             using var copyStream = postEditDto.PreviewId.OpenReadStream();
             copyStream.Position = 0;
-            var objectName = await storage.PutFileAsync(post.Id, snapshotFileId, copyStream);
+            var objectName = await storage.PutFileAsync(post.Id, snapshotFileId.ToString(), copyStream);
             post.PreviewId = objectName;
         }
         _context.Attach(post);
@@ -588,5 +585,29 @@ internal class DefaultPostService : IPostService
         });
 
         return await Task.WhenAll(result);
+    }
+
+    public async Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostListAsync()
+    {
+        var user = await _userSession.GetCurrentUserAsync();
+
+        var posts = await _context.Get<Post>()
+            .Where(x => x.IsDelete == false)
+            .Where(x => x.BlogId == user.BlogId)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+
+        using var storage = _fileStorageFactory.CreateFileStorage();
+
+        var result = posts.Select(async x => new PostCommonModel
+        {
+            Id = x.Id,
+            Description = x.Description,
+            PreviewObjectName = string.IsNullOrWhiteSpace(x.PreviewId) ? null : await storage.GetFileUrlAsync(x.BlogId, x.PreviewId),
+            Title = x.Title
+        });
+
+        return await Task.WhenAll(result);
+
     }
 }

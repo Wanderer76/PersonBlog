@@ -8,6 +8,8 @@ public static class PlayListContractServiceExtension
 {
     public static void AddPlayListContract(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddTransient<HeaderClientHandler>();
+
         services.AddHttpClient<IPlayListService, PlaylistHttpApiClient>(cfg =>
         {
             cfg.BaseAddress = new Uri(configuration["AppUrls:PlayList"]!);
