@@ -111,7 +111,7 @@ public sealed class VideoProcessSagaHandler :
             VideoMetadataId = message.VideoMetadataId,
             Duration = message.Duration,
             ObjectName = message.ObjectName!,
-            PreviewId = message.PreviewId,
+            PreviewId = message.PreviewId?.Id,
             ProcessState = message.ProcessState,
             CreatedAt = DateTimeService.Now()
         }, context));
@@ -123,14 +123,14 @@ public sealed class VideoProcessSagaHandler :
         var message = @event.Message;
         saga.ObjectName = message.ObjectName;
 
-        var video = await _repository.Get<VideoMetadata>()
+        var video = await _repository.Get<VideoFile>()
         .Where(x => x.Id == message.VideoMetadataId)
         .FirstAsync();
         video.ObjectName = message.ObjectName;
 
         var hasPreviewId = await _repository.Get<Post>()
         .Where(x => x.Id == message.PostId)
-        .Select(x => new { x.PreviewId,x.BlogId })
+        .Select(x => new { x.VideoPostInfo.PreviewId,x.BlogId })
         .FirstAsync();
 
         await @event.PublishAsync("video-event", "video.convert", new ConvertVideoCommand
@@ -140,7 +140,7 @@ public sealed class VideoProcessSagaHandler :
             ObjectName = saga.ObjectName!,
             PostId = saga.PostId,
             VideoMetadata = video,
-            HasPreviewId = !string.IsNullOrWhiteSpace(hasPreviewId.PreviewId)
+            HasPreviewId = hasPreviewId.PreviewId.HasValue
         }, new MessageProperty { CorrelationId = saga.CorrelationId.ToString() });
     }
 }

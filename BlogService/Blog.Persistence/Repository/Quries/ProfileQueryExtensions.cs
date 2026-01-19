@@ -40,7 +40,7 @@ namespace Blog.Persistence.Repository.Quries
             var posts = await postQuery
                 .Where(x => canAccessPrivate || x.Visibility == PostVisibility.Public)
                 .OrderByDescending(x => x.CreatedAt)
-                .Include(x => x.VideoFile)
+                .Include(x => x.VideoPostInfo)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync();

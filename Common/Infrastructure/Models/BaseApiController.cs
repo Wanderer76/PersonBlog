@@ -11,8 +11,6 @@ namespace Infrastructure.Models
     {
         protected readonly ILogger<BaseApiController> _logger;
 
-        protected string GetSessionKey(string session) => $"Session:{session}";
-
         protected BaseApiController(ILogger<BaseApiController> logger)
         {
             _logger = logger;

@@ -18,6 +18,13 @@ public static class ApiExceptionExtensions
 {
     private const string ValidationErrorTitle = "One or more validation errors occurred.";
 
+    /// <summary>
+    /// Нужно использовать для отдачи клиенту, для общения между сервисами не нужен
+    /// </summary>
+    /// <param name="errors"></param>
+    /// <param name="instance"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
     public static ApiException ToValidationProblem(
         this IReadOnlyList<Error> errors,
         string? instance = null)

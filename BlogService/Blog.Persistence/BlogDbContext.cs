@@ -10,7 +10,7 @@ public class BlogDbContext : BaseDbContext
     public DbSet<Subscriber> Subscribers { get; set; }
     public DbSet<PersonBlog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
-    public DbSet<VideoMetadata> VideoMetadata { get; set; }
+    public DbSet<VideoFile> VideoMetadata { get; set; }
     public DbSet<VideoProcessEvent> ProfileEventMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
     public DbSet<PaymentSubscriber> ProfileSubscriptions { get; set; }
@@ -19,6 +19,9 @@ public class BlogDbContext : BaseDbContext
     public DbSet<PostRemoveEvent> PostRemoveEvents { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<BanMessage> BanMessages { get; set; }
+    public DbSet<VideoPostInfo> VideoPostInfos { get; set; }
+    public DbSet<TextPostInfo> TextPostInfos { get; set; }
+    public DbSet<PostFile> PostFiles { get; set; }
 
     public BlogDbContext(DbContextOptions<BlogDbContext> options) : base(options)
     {
@@ -59,7 +62,7 @@ public class BlogDbContext : BaseDbContext
                 //});
             }
             {
-                var entity = modelBuilder.Entity<VideoMetadata>();
+                var entity = modelBuilder.Entity<VideoFile>();
 
                 entity.HasIndex(x => new
                 {

@@ -1,5 +1,6 @@
 ﻿using Blog.Domain.Entities;
 using MessageBus;
+using Shared.Models;
 
 namespace Blog.Domain.Events
 {
@@ -40,8 +41,7 @@ namespace Blog.Domain.Events
         public Guid VideoMetadataId { get; set; }
         public string ObjectName { get; set; }
         public bool HasPreviewId { get; set; }
-        public required VideoMetadata VideoMetadata { get; set; }
-
+        public required VideoFile VideoMetadata { get; set; }
     }
 
     //[EntityName("video-events")]
@@ -50,12 +50,11 @@ namespace Blog.Domain.Events
     {
         public Guid VideoMetadataId { get; set; }
         public Guid PostId { get; set; }
-        public string? PreviewId { get; set; }
+        public FileMetadata? PreviewId { get; set; }
         public bool IsProcessing { get; set; }
         public string ObjectName { get; set; }
         public double Duration { get; set; }
         public ProcessState ProcessState { get; set; }
         public string? Error { get; set; }
-
     }
 }

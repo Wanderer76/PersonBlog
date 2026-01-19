@@ -31,16 +31,18 @@ internal sealed class CrudPlayListService : IPlayListService
     public async Task<Result<PlayListListItem>> CreatePlayListAsync(CreatePlayListRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-
+        
+        using var transaction = await _repository.BeginTransactionAsync();
         var playListId = GuidService.GetNewGuid();
-        var thumbnailUrl = request.Thumbnail == null ? null : await _playListFileService.UploadThumbnailAsync(playListId, user.UserId, request.Thumbnail.OpenReadStream());
+
+        var thumbnailId = await GetThumbnailFileId(request, user, playListId);
 
         var newPlayList = PlayList.Create(
             id: playListId,
             createdAt: DateTimeService.Now(),
             title: request.Title,
             userId: user.UserId,
-            thumbnailId: thumbnailUrl,
+            thumbnailId: thumbnailId,
             playListItems: request.PostIds
             );
 
@@ -51,7 +53,7 @@ internal sealed class CrudPlayListService : IPlayListService
 
         _repository.Add(newPlayList.Value);
         await _repository.SaveChangesAsync();
-
+        await transaction.CommitAsync();
         return new PlayListListItem
         {
             Id = newPlayList.Value.Id,
@@ -59,6 +61,42 @@ internal sealed class CrudPlayListService : IPlayListService
             Title = request.Title,
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(newPlayList.Value)
         };
+    }
+
+    private async Task<Guid?> GetThumbnailFileId(CreatePlayListRequest request, UserModel user, Guid playListId)
+    {
+        if (request.ThumbnailId.HasValue)
+        {
+            var existFile = await _repository.Get<PlayListFile>()
+                .FirstAsync(x=>x.Id == request.ThumbnailId.Value);
+
+            _repository.Attach(existFile);
+            existFile.PlaylistId = playListId;
+            return request.ThumbnailId.Value;
+        }
+        else
+        {
+            if (request.Thumbnail != null)
+            {
+                return (await _playListFileService.UploadThumbnailAsync(
+                    playListId,
+                    user.UserId,
+                    new FileMetadata
+                    {
+                        Id = GuidService.GetNewGuid(),
+                        ContentType = request.Thumbnail.ContentType,
+                        CreatedAt = DateTimeService.Now(),
+                        FileExtension = Path.GetExtension(request.Thumbnail.FileName),
+                        Length = request.Thumbnail.Length,
+                        Name = request.Thumbnail.Name,
+                    },
+                    request.Thumbnail.OpenReadStream())).Id;
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 
     public async Task<Result<PlayListListItem>> GetPlayListAsync(Guid id)
@@ -240,7 +278,7 @@ internal sealed class CrudPlayListService : IPlayListService
             Id = x.Id,
             PostCount = x.PlayListItemsCount,
             Title = x.Title,
-            ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(user.UserId, x.ThumbnailId)
+            ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(user.UserId, x.ThumbnailId.Value)
         });
 
         return await Task.WhenAll(result);
@@ -271,9 +309,8 @@ internal sealed class CrudPlayListService : IPlayListService
             Id = x.Id,
             PostCount = x.PlayListItemsCount,
             Title = x.Title,
-            ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(blog.Value.UserId, x.ThumbnailId)
+            ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(blog.Value.UserId, x.ThumbnailId.Value)
         });
-
         return await Task.WhenAll(result);
     }
 }

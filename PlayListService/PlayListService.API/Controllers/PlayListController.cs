@@ -3,10 +3,12 @@ using Blog.Contracts.Models;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using PlayListService.Services.Models;
 using PlayListService.Services.Services;
 using Shared.Models;
+using Shared.Services;
 using System.ComponentModel.DataAnnotations;
 
 namespace PlayListService.API.Controllers;
@@ -14,9 +16,14 @@ namespace PlayListService.API.Controllers;
 public class PlayListController : BaseApiController
 {
     private readonly IPlayListService _playListService;
-    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService) : base(logger)
+    private readonly ICurrentUserService _currentUserService;
+    private readonly PlayListFileService _playListFileService;
+
+    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService, ICurrentUserService currentUserService, PlayListFileService playListFileService) : base(logger)
     {
         _playListService = playListService;
+        _currentUserService = currentUserService;
+        _playListFileService = playListFileService;
     }
 
     [HttpGet("list")]
@@ -129,18 +136,23 @@ public class PlayListController : BaseApiController
         return Ok(result.Value);
     }
 
-    //TODO Возможно будет потом
-    //[HttpPost("loadThumbnail")]
-    //[AuthFilter(Roles.User)]
-    //public async Task<ActionResult<string>> UploadThumbnail([FromForm] IFormFile thumbnail)
-    //{
-    //    var user = await _currentUserService.GetCurrentUserAsync();
-    //    var thumbnailId = await _fileStorage.PutFileAsync(user.BlogId, $"playListThumbnails/{GuidService.GetNewGuid()}", thumbnail.OpenReadStream());
-    //    var url = await _fileStorage.GetFileUrlAsync(user.UserId, thumbnailId);
-    //    return Ok(new
-    //    {
-    //        ThumbnailId = thumbnailId,
-    //        ThumbnailUrl = url
-    //    });
-    //}
+    // TODO Возможно будет потом
+    [HttpPost("loadThumbnail")]
+    [AuthFilter(Roles.User)]
+    public async Task<ActionResult<Guid>> UploadThumbnail([FromForm] IFormFile thumbnail)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+
+        var result = await _playListFileService.UploadThumbnailWithoutPlayListAsync(user.UserId, new FileMetadata
+        {
+            Id = GuidService.GetNewGuid(),
+            ContentType = thumbnail.ContentType,
+            CreatedAt = DateTimeService.Now(),
+            FileExtension = Path.GetExtension(thumbnail.FileName),
+            Length = thumbnail.Length,
+            Name = thumbnail.Name
+        }, thumbnail.OpenReadStream());
+
+        return Ok(result.Id);
+    }
 }

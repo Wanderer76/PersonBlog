@@ -27,7 +27,7 @@ interface PrivateRouteProps {
 
 const PrivateRoute = ({ redirectPath = '/auth' }: PrivateRouteProps) => {
   const isAuthenticated = JwtTokenService.isAuth();
-  return isAuthenticated? <Outlet /> : <Navigate to={redirectPath} replace />;
+  return isAuthenticated ? <Outlet /> : <Navigate to={redirectPath} replace />;
 };
 // Публичный маршрут (если нужно ограничить доступ к auth)
 // Публичный маршрут
@@ -40,7 +40,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
   const [searchParams] = useSearchParams();
   const isRedirect = searchParams.get('redirect');
 
-  return !isAuthenticated|| isRedirect !== null ? <>{children}</> : <Navigate to="/" replace />;
+  return !isAuthenticated || isRedirect !== null ? <>{children}</> : <Navigate to="/" replace />;
 };
 
 // Компонент проверки сессии

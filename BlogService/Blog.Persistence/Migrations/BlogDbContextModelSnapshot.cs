@@ -3,28 +3,155 @@ using System;
 using Blog.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Profile.Persistence.Migrations
+namespace Blog.Persistence.Migrations
 {
     [DbContext(typeof(BlogDbContext))]
-    [Migration("20250609105041_AddPostRemove")]
-    partial class AddPostRemove
+    partial class BlogDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasDefaultSchema("Profile")
+                .HasDefaultSchema("Blog")
                 .HasAnnotation("ProductVersion", "8.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Blog.Domain.Entities.BanMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BanReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("BannedDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId")
+                        .IsUnique();
+
+                    b.ToTable("BanMessages", "Blog");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories", "Blog");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Title = "Развлечения",
+                            Type = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Title = "Музыка",
+                            Type = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Title = "Игры",
+                            Type = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Title = "Образование",
+                            Type = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Title = "Наука и технологии",
+                            Type = 5
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Title = "Спорт",
+                            Type = 6
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Title = "Кино и анимация",
+                            Type = 7
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Title = "Новости и политика",
+                            Type = 8
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Title = "Авто и транспорт",
+                            Type = 9
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Title = "Путешествия и события",
+                            Type = 10
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Title = "Образ жизни",
+                            Type = 11
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Title = "Кулинария",
+                            Type = 12
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Title = "Юмор",
+                            Type = 13
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Title = "Личный блог",
+                            Type = 14
+                        });
+                });
 
             modelBuilder.Entity("Blog.Domain.Entities.PaymentSubscriber", b =>
                 {
@@ -47,7 +174,7 @@ namespace Profile.Persistence.Migrations
 
                     b.HasIndex("SubscriptionLevelId");
 
-                    b.ToTable("ProfileSubscriptions", "Profile");
+                    b.ToTable("ProfileSubscriptions", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PaymentSubscription", b =>
@@ -88,7 +215,7 @@ namespace Profile.Persistence.Migrations
 
                     b.HasIndex("NextLevelId");
 
-                    b.ToTable("PaymentSubscriptions", "Profile");
+                    b.ToTable("PaymentSubscriptions", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PersonBlog", b =>
@@ -121,67 +248,7 @@ namespace Profile.Persistence.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Blogs", "Profile");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d3e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 6, 9, 10, 50, 39, 157, DateTimeKind.Unspecified).AddTicks(1237), new TimeSpan(0, 0, 0, 0, 0)),
-                            SubscriptionsCount = 0,
-                            Title = "Тест",
-                            UserId = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e")
-                        });
-                });
-
-            modelBuilder.Entity("Blog.Domain.Entities.PlayList", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("BlogId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ThumbnailId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PlayLists", "Profile");
-                });
-
-            modelBuilder.Entity("Blog.Domain.Entities.PlayListItem", b =>
-                {
-                    b.Property<Guid>("PlayListId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PostId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Position")
-                        .HasColumnType("integer");
-
-                    b.HasKey("PlayListId", "PostId");
-
-                    b.HasIndex("PlayListId", "PostId", "Position")
-                        .IsUnique();
-
-                    b.ToTable("PlayListItems", "Profile");
+                    b.ToTable("Blogs", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.Post", b =>
@@ -190,19 +257,22 @@ namespace Profile.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BanMessageId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("BlogId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
+                    b.Property<DateTimeOffset?>("DeleteDateTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("DislikeCount")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LikeCount")
@@ -211,8 +281,8 @@ namespace Profile.Persistence.Migrations
                     b.Property<Guid?>("PaymentSubscriptionId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("PreviewId")
-                        .HasColumnType("text");
+                    b.Property<int>("ProcessState")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -220,9 +290,6 @@ namespace Profile.Persistence.Migrations
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
-
-                    b.Property<Guid?>("VideoFileId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("ViewCount")
                         .HasColumnType("integer");
@@ -234,9 +301,68 @@ namespace Profile.Persistence.Migrations
 
                     b.HasIndex("BlogId");
 
-                    b.HasIndex("VideoFileId");
+                    b.ToTable("Posts", "Blog");
+                });
 
-                    b.ToTable("Posts", "Profile");
+            modelBuilder.Entity("Blog.Domain.Entities.PostCategory", b =>
+                {
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("VideoPostInfoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("PostId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("VideoPostInfoId");
+
+                    b.ToTable("PostCategory", "Blog");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.PostFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Length")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ObjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PostId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TextPostInfoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TextPostInfoId");
+
+                    b.ToTable("PostFiles", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PostRemoveEvent", b =>
@@ -255,7 +381,7 @@ namespace Profile.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PostRemoveEvents", "Profile");
+                    b.ToTable("PostRemoveEvents", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PostViewer", b =>
@@ -290,7 +416,7 @@ namespace Profile.Persistence.Migrations
 
                     b.HasIndex("UserId", "PostId", "UserIpAddress", "CreatedAt");
 
-                    b.ToTable("PostViewers", "Profile");
+                    b.ToTable("PostViewers", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.Subscriber", b =>
@@ -315,13 +441,26 @@ namespace Profile.Persistence.Migrations
 
                     b.HasIndex("BlogId");
 
-                    b.HasIndex("UserId", "BlogId")
-                        .IsUnique();
+                    b.HasIndex("UserId", "BlogId");
 
-                    b.ToTable("Subscribers", "Profile");
+                    b.ToTable("Subscribers", "Blog");
                 });
 
-            modelBuilder.Entity("Blog.Domain.Entities.VideoMetadata", b =>
+            modelBuilder.Entity("Blog.Domain.Entities.TextPostInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TextPostInfos", "Blog");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.VideoFile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -344,9 +483,6 @@ namespace Profile.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("IsProcessed")
-                        .HasColumnType("boolean");
-
                     b.Property<long>("Length")
                         .HasColumnType("bigint");
 
@@ -361,9 +497,6 @@ namespace Profile.Persistence.Migrations
                     b.Property<Guid>("PostId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("ProcessState")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Resolution")
                         .HasColumnType("integer");
 
@@ -372,7 +505,30 @@ namespace Profile.Persistence.Migrations
                     b.HasIndex("PostId", "Resolution", "ContentType")
                         .IsUnique();
 
-                    b.ToTable("VideoMetadata", "Profile");
+                    b.ToTable("VideoMetadata", "Blog");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.VideoPostInfo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PreviewId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("VideoFileId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PreviewId");
+
+                    b.HasIndex("VideoFileId");
+
+                    b.ToTable("VideoPostInfos", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.VideoProcessEvent", b =>
@@ -406,7 +562,7 @@ namespace Profile.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProfileEventMessages", "Profile");
+                    b.ToTable("ProfileEventMessages", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.VideoProcessingSagaState", b =>
@@ -430,7 +586,18 @@ namespace Profile.Persistence.Migrations
 
                     b.HasKey("CorrelationId");
 
-                    b.ToTable("VideoProcessingSagaStates", "Profile");
+                    b.ToTable("VideoProcessingSagaStates", "Blog");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.BanMessage", b =>
+                {
+                    b.HasOne("Blog.Domain.Entities.Post", "Post")
+                        .WithOne("BanMessage")
+                        .HasForeignKey("Blog.Domain.Entities.BanMessage", "PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PaymentSubscriber", b =>
@@ -453,15 +620,6 @@ namespace Profile.Persistence.Migrations
                     b.Navigation("NextSubscriptionLevel");
                 });
 
-            modelBuilder.Entity("Blog.Domain.Entities.PlayListItem", b =>
-                {
-                    b.HasOne("Blog.Domain.Entities.PlayList", null)
-                        .WithMany("PlayListItems")
-                        .HasForeignKey("PlayListId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Blog.Domain.Entities.Post", b =>
                 {
                     b.HasOne("Blog.Domain.Entities.PersonBlog", "Blog")
@@ -470,13 +628,37 @@ namespace Profile.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Blog.Domain.Entities.VideoMetadata", "VideoFile")
-                        .WithMany()
-                        .HasForeignKey("VideoFileId");
-
                     b.Navigation("Blog");
+                });
 
-                    b.Navigation("VideoFile");
+            modelBuilder.Entity("Blog.Domain.Entities.PostCategory", b =>
+                {
+                    b.HasOne("Blog.Domain.Entities.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Blog.Domain.Entities.Post", "Post")
+                        .WithMany()
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Blog.Domain.Entities.VideoPostInfo", null)
+                        .WithMany("PostCategories")
+                        .HasForeignKey("VideoPostInfoId");
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.PostFile", b =>
+                {
+                    b.HasOne("Blog.Domain.Entities.TextPostInfo", null)
+                        .WithMany("Files")
+                        .HasForeignKey("TextPostInfoId");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.Subscriber", b =>
@@ -490,14 +672,64 @@ namespace Profile.Persistence.Migrations
                     b.Navigation("Blog");
                 });
 
+            modelBuilder.Entity("Blog.Domain.Entities.TextPostInfo", b =>
+                {
+                    b.HasOne("Blog.Domain.Entities.Post", "Post")
+                        .WithOne("TextPostInfo")
+                        .HasForeignKey("Blog.Domain.Entities.TextPostInfo", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.VideoPostInfo", b =>
+                {
+                    b.HasOne("Blog.Domain.Entities.Post", "Post")
+                        .WithOne("VideoPostInfo")
+                        .HasForeignKey("Blog.Domain.Entities.VideoPostInfo", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Blog.Domain.Entities.PostFile", "PreviewFile")
+                        .WithMany()
+                        .HasForeignKey("PreviewId");
+
+                    b.HasOne("Blog.Domain.Entities.VideoFile", "VideoFile")
+                        .WithMany()
+                        .HasForeignKey("VideoFileId");
+
+                    b.Navigation("Post");
+
+                    b.Navigation("PreviewFile");
+
+                    b.Navigation("VideoFile");
+                });
+
             modelBuilder.Entity("Blog.Domain.Entities.PersonBlog", b =>
                 {
                     b.Navigation("Subscriptions");
                 });
 
-            modelBuilder.Entity("Blog.Domain.Entities.PlayList", b =>
+            modelBuilder.Entity("Blog.Domain.Entities.Post", b =>
                 {
-                    b.Navigation("PlayListItems");
+                    b.Navigation("BanMessage");
+
+                    b.Navigation("TextPostInfo")
+                        .IsRequired();
+
+                    b.Navigation("VideoPostInfo")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.TextPostInfo", b =>
+                {
+                    b.Navigation("Files");
+                });
+
+            modelBuilder.Entity("Blog.Domain.Entities.VideoPostInfo", b =>
+                {
+                    b.Navigation("PostCategories");
                 });
 #pragma warning restore 612, 618
         }

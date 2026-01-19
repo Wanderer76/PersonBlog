@@ -27,7 +27,15 @@ public class PostController : BaseApiController
     private readonly ISubscriptionLevelService _subscriptionLevelService;
     private readonly ICategoryService _categoryService;
     private readonly ICurrentUserService _currentUserService;
-    public PostController(ILogger<PostController> logger, IPostService postService, IUserPostService userPostService, IVideoService videoService, ISubscriptionLevelService subscriptionLevelService, ICurrentUserService currentUserService, ICategoryService categoryService) : base(logger)
+    public PostController(
+        ILogger<PostController> logger,
+        IPostService postService,
+        IUserPostService userPostService,
+        IVideoService videoService,
+        ISubscriptionLevelService subscriptionLevelService,
+        ICurrentUserService currentUserService,
+        ICategoryService categoryService)
+        : base(logger)
     {
         _postService = postService;
         _userPostService = userPostService;
@@ -96,21 +104,18 @@ public class PostController : BaseApiController
 
     [HttpPost("create")]
     [Authorize]
-    public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateForm form)
+    public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateRequest form)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var result = await _postService.CreatePostAsync(new PostCreateDto
         {
             UserId = user.UserId,
             Type = PostType.Video,
-            Text = form.Description?.Trim(),
+            Text = form.VideoPostData.Description?.Trim(),
             Title = form.Title.Trim(),
-            Video = form.Video,
-            Photos = form.Files,
-            IsPartial = form.IsPartial,
             Visibility = form.Visibility,
-            Thumbnail = form.Thumbnail,
-            Categories = form.Categories ?? []
+            Thumbnail = form.VideoPostData.Thumbnail,
+            Categories = form.VideoPostData.Categories ?? []
         });
         if (result.IsSuccess)
         {
@@ -142,10 +147,10 @@ public class PostController : BaseApiController
         (
             form.Id,
             userId,
-            form.Description,
+            form.VideoPostData.Description,
             form.Title,
-            form.PreviewId,
-            form.Categories ?? []
+            form.VideoPostData.Thumbnail,
+            form.VideoPostData.Categories ?? []
         ));
         return Ok(result);
     }
@@ -217,11 +222,11 @@ public class PostController : BaseApiController
 
     [HttpPost("commonByIds")]
     [Produces(typeof(PostCommonModel))]
-    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModel([FromBody]List<Guid> ids)
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModel([FromBody] List<Guid> ids)
     {
         return Ok(await _postService.GetPostCommonModelAsync(ids));
     }
-    
+
     [HttpGet("my/list")]
     [Produces(typeof(PostCommonModel))]
     [AuthFilter(Roles.Blogger)]

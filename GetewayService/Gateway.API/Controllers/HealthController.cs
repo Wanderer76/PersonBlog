@@ -5,7 +5,8 @@ namespace Gateway.API.Controllers
 {
     public class HealthController : BaseApiController
     {
-        public HealthController(ILogger<BaseApiController> logger) : base(logger)
+        public HealthController(ILogger<BaseApiController> logger)
+            : base(logger)
         {
         }
 

@@ -44,7 +44,7 @@ namespace Blog.Service.Services.Implementation
             return await _cacheService.GetOrAddDataAsync(progress, () => Task.FromResult(progress), LifeTimeInMinutes);
         }
 
-        public async Task<Result<VideoMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
+        public async Task<Result<VideoFile>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
         {
             var progress = await GetUploadVideoMetadata(uploadVideoChunk.FileId);
 
@@ -55,7 +55,7 @@ namespace Blog.Service.Services.Implementation
 
             var cacheKey = new VideoMetadataCacheKey(uploadVideoChunk.PostId);
 
-            var cacheResult = await _cacheService.GetCachedDataAsync<VideoMetadata>(cacheKey);
+            var cacheResult = await _cacheService.GetCachedDataAsync<VideoFile>(cacheKey);
 
             if (cacheResult != null)
             {
@@ -70,26 +70,28 @@ namespace Blog.Service.Services.Implementation
                 return new Error("Пост не является постом с видео");
             }
 
-            var metadata = new VideoMetadata
+            _context.Attach(post);
+            post.ProcessState = ProcessState.Load;
+            
+            var metadata = new VideoFile
             {
                 Id = progress.Value.FileId,
                 FileExtension = uploadVideoChunk.FileExtension,
-                CreatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTimeService.Now(),
                 ContentType = uploadVideoChunk.ContentType,
                 PostId = uploadVideoChunk.PostId,
                 Name = uploadVideoChunk.FileName,
                 Resolution = VideoResolution.Original,
                 Duration = uploadVideoChunk.Duration,
                 ObjectName = string.Empty,
-                Length = uploadVideoChunk.TotalSize,
-                ProcessState = ProcessState.Load
+                Length = uploadVideoChunk.TotalSize
             };
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
             await fileStorage.CreateTempBucketAsync(post.Id);
             await _cacheService.SetCachedDataAsync(cacheKey, metadata, TimeSpan.FromMinutes(LifeTimeInMinutes));
+            await _context.SaveChangesAsync();
             return metadata;
-
         }
 
         public async Task<Result<UploadVideoProgress>> GetUploadVideoMetadata(Guid fileId)

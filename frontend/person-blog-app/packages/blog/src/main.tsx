@@ -12,6 +12,5 @@ if ('serviceWorker' in navigator) {
         });
     });
 }
-root.render(
-    <App />,
-)
+
+root.render(<App />)

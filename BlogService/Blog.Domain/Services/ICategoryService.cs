@@ -4,6 +4,7 @@ namespace Blog.Domain.Services
 {
     public interface ICategoryService
     {
-        Task<List<CategoryModel>> GetAllCategoriesAsync();
+        Task<IReadOnlyList<CategoryModel>> GetAllCategoriesAsync();
+        Task<IReadOnlyList<CategoryModel>> GetCategoriesByIdsAsync(IEnumerable<int> ids);
     }
 }

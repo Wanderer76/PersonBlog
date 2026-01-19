@@ -13,7 +13,7 @@ namespace Blog.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BlogController : BaseApiController
+public sealed class BlogController : BaseApiController
 {
     private readonly IBlogService _blogService;
     private readonly ISubscriptionLevelService _subscriptionLevelService;
@@ -112,7 +112,7 @@ public class BlogController : BaseApiController
     }
 }
 
-public class HasBlogResponse
+public sealed class HasBlogResponse
 {
     public Guid? HasBlog { get; set; }
 }

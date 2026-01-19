@@ -81,7 +81,19 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             using var copyStream = new MemoryStream();
             await fileStream.CopyToAsync(copyStream);
             copyStream.Position = 0;
-            result.PreviewId = await _storage.PutFileAsync(@event.BlogId, $"{@event.PostId}/{snapshotFileId.ToString()}", copyStream);
+
+            var objectName = await _storage.PutFileAsync(@event.BlogId, $"{@event.PostId}/{snapshotFileId.ToString()}", copyStream);
+
+            result.PreviewId = new Shared.Models.FileMetadata
+            {
+                CreatedAt  =DateTimeService.Now(),
+                ContentType = "image/png",
+                FileExtension = ".png",
+                Id = snapshotFileId,
+                Length = copyStream.Length,
+                Name = snapshotFileName,
+                ObjectName = objectName
+            };
         }
         catch (Exception)
         {
@@ -96,7 +108,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         }
     }
 
-    private async Task ProcessHls(Guid blogId, VideoMetadata fileMetadata, string dir, Guid fileId, string inputUrl, FFProbeStream videoStream)
+    private async Task ProcessHls(Guid blogId, VideoFile fileMetadata, string dir, Guid fileId, string inputUrl, FFProbeStream videoStream)
     {
         try
         {
@@ -183,5 +195,4 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             return Path.GetFileName(filePath);
         }
     }
-
 }

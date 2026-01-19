@@ -19,7 +19,7 @@ internal class DefaultCategoryService : ICategoryService
         _cacheService = cacheService;
     }
 
-    public async Task<List<CategoryModel>> GetAllCategoriesAsync()
+    public async Task<IReadOnlyList<CategoryModel>> GetAllCategoriesAsync()
     {
         return await _cacheService.GetOrAddDataAsync(new CategoryListCacheKey(), async () =>
         {
@@ -30,6 +30,8 @@ internal class DefaultCategoryService : ICategoryService
             .ToListAsync();
         });
     }
+
+    public async Task<IReadOnlyList<CategoryModel>> GetCategoriesByIdsAsync(IEnumerable<int> ids) => [.. (await GetAllCategoriesAsync()).Where(x => ids.Contains(x.Id))];
 }
 
 class CategoryListCacheKey : ICacheKey

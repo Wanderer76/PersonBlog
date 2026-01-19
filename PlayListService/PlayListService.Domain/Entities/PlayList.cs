@@ -10,19 +10,21 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
     public DateTimeOffset CreatedAt { get; private set; }
     public bool IsDelete { get; private set; }
     public DateTimeOffset? DeleteDateTime { get; private set; }
-    public string? ThumbnailId { get; private set; }
+    //public string? ThumbnailId { get; private set; }
+    public Guid? ThumbnailId { get; private set; }
     public Guid UserId { get; private set; }
 
+    public PlayListFile? ThumbnailFile { get; private set; }
     public IReadOnlyList<PlayListItem> PlayListItems => playListItems;
 
     private readonly List<PlayListItem> playListItems = [];
 
     private PlayList()
     {
-        
+
     }
-    
-    private PlayList(Guid id, DateTimeOffset createdAt, string title, Guid userId, string? thumbnailId, List<Guid> playListItems)
+
+    private PlayList(Guid id, DateTimeOffset createdAt, string title, Guid userId, Guid? thumbnailId, List<Guid> playListItems)
     {
         Id = id;
         Title = title;
@@ -33,7 +35,7 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
         this.playListItems = playListItems.Select((postId, index) => new PlayListItem(postId, Id, index + 1, createdAt)).ToList();
     }
 
-    public static Result<PlayList> Create(Guid id, DateTimeOffset createdAt, string title, Guid userId, string? thumbnailId, List<Guid> playListItems)
+    public static Result<PlayList> Create(Guid id, DateTimeOffset createdAt, string title, Guid userId, Guid? thumbnailId, List<Guid> playListItems)
     {
         if (string.IsNullOrEmpty(title))
         {
