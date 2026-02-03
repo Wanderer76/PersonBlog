@@ -17,29 +17,22 @@ using Shared.Services;
 
 namespace Blog.API.Controllers;
 
-public class PostV2Controller : BaseApiController
+public class PostV2Controller(
+    ILogger<BaseApiController> logger,
+    IReadWriteRepository<IBlogEntity> repository,
+    ICurrentUserService currentUserService,
+    IFileStorageFactory fileStorageFactory,
+    IPostService postService,
+    ISubscriptionLevelService subscriptionLevelService,
+    ICategoryService categoryService,
+    IVideoService videoService)
+    : BaseApiController(logger)
 {
-    private readonly IReadWriteRepository<IBlogEntity> repository;
-    private readonly ICurrentUserService _currentUserService;
-    private readonly IFileStorageFactory _fileStorageFactory;
-
-    private readonly IPostService _postService;
-    private readonly ISubscriptionLevelService _subscriptionLevelService;
-    private readonly ICategoryService _categoryService;
-    private readonly IVideoService _videoService;
-
-    public PostV2Controller(ILogger<BaseApiController> logger, IReadWriteRepository<IBlogEntity> repository, ICurrentUserService currentUserService, IFileStorageFactory fileStorageFactory) : base(logger)
-    {
-        this.repository = repository;
-        _currentUserService = currentUserService;
-        _fileStorageFactory = fileStorageFactory;
-    }
-
     [HttpGet("my")]
     [AuthFilter(Roles.Blogger)]
     public async Task<ActionResult<PagedListViewModel<UserPostInfoDto>>> GetCurrentUserPostPaged(int page, int pageSize, PostType postType = PostType.Video)
     {
-        var user = await _currentUserService.GetCurrentUserAsync();
+        var user = await currentUserService.GetCurrentUserAsync();
 
         var postQuery = repository.Get<Post>()
             .Where(x => x.IsDelete == false)
@@ -60,7 +53,7 @@ public class PostV2Controller : BaseApiController
             .Take(pageSize)
             .ToListAsync();
 
-        using var storage = _fileStorageFactory.CreateFileStorage();
+        using var storage = fileStorageFactory.CreateFileStorage();
 
         var result = postList.Select(async x => new UserPostInfoDto
         {
@@ -97,36 +90,32 @@ public class PostV2Controller : BaseApiController
     [AuthFilter(Roles.Blogger)]
     public async Task<IActionResult> GetPostCreateModel()
     {
-        var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
-        var visibilityList = await _postService.GetPostVisibilityListAsync();
-        var categoryList = await _categoryService.GetAllCategoriesAsync();
+        var subscriptionLevels = await subscriptionLevelService.GetAllSubscriptionsAsync();
+        var visibilityList = await postService.GetPostVisibilityListAsync();
+        var categoryList = await categoryService.GetAllCategoriesAsync();
         return Ok(new CreatePostModelViewModel(subscriptionLevels, visibilityList, categoryList));
     }
 
     [HttpPost("create")]
     [AuthFilter(Roles.Blogger)]
-    public async Task<IActionResult> CreatePost([FromForm] PostCreateRequest request)
-    {// 1. Получаем блог пользователя
-        var currentUser = await _currentUserService.GetCurrentUserAsync();
-
+    public async Task<IActionResult> CreatePost([FromBody] PostCreateRequest request)
+    {
+        var currentUser = await currentUserService.GetCurrentUserAsync();
         var blogId = currentUser.BlogId;
 
-        // 2. Валидация по типу
         if (request.Type == PostType.Video && request.VideoPostData == null)
             return BadRequest("VideoPostData is required for video posts.");
 
         if (request.Type == PostType.Text && request.TextPostData == null)
             return BadRequest("TextPostData is required for text posts.");
 
-        // 4. Генерация ID
         var postId = GuidService.GetNewGuid();
 
-        // 5. Извлечение данных
-        string? description = request.Type == PostType.Video ? request.VideoPostData?.Description : null;
-        string text = request.Type == PostType.Text ? request.TextPostData!.Text.Trim() : string.Empty;
+        var description = request.Type == PostType.Video ? request.VideoPostData?.Description : null;
+        var text = request.Type == PostType.Text ? request.TextPostData!.Text.Trim() : null;
 
         var categories = (request.VideoPostData?.Categories) != null
-            ? await _categoryService.GetCategoriesByIdsAsync(request.VideoPostData.Categories) 
+            ? await categoryService.GetCategoriesByIdsAsync(request.VideoPostData.Categories)
             : [];
 
         var post = new Post(
@@ -141,10 +130,8 @@ public class PostV2Controller : BaseApiController
             text: text
         );
 
-        // 7. Работа с файлами — через фабрику хранилища
-        using var storage = _fileStorageFactory.CreateFileStorage();
+        using var storage = fileStorageFactory.CreateFileStorage();
 
-        // Обработка файлов текстового поста
         if (request.Type == PostType.Text && request.TextPostData?.Files != null)
         {
             var uploadedFiles = new List<PostFile>();
@@ -158,7 +145,7 @@ public class PostV2Controller : BaseApiController
                     Id = id,
                     PostId = postId,
                     ObjectName = objectName,
-                    Name = Path.GetFileName(file.FileName), // безопасное имя
+                    Name = Path.GetFileName(file.FileName),
                     ContentType = file.ContentType,
                     Length = file.Length,
                     CreatedAt = DateTimeService.Now(),
@@ -168,7 +155,6 @@ public class PostV2Controller : BaseApiController
             post.TextPostInfo = new TextPostInfo(postId, text, uploadedFiles);
         }
 
-        // Обработка миниатюры для видео
         if (request.Type == PostType.Video && request.VideoPostData?.Thumbnail != null)
         {
             var thumb = request.VideoPostData.Thumbnail;
@@ -238,34 +224,12 @@ public class PostV2Controller : BaseApiController
         return Ok();
     }
 
-    [HttpPost("uploadChunk")]
-    [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
-    {
-        try
-        {
-            var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
-            using var data = uploadVideoChunk.ChunkData.OpenReadStream();
-            await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
-            {
-                ChunkNumber = uploadVideoChunk.ChunkNumber,
-                TotalChunkCount = uploadVideoChunk.TotalChunkCount,
-                ChunkData = data,
-                PostId = uploadVideoChunk.PostId
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex);
-        }
-        return Ok();
-    }
 
     [HttpGet("availablePostByBlogId/{blogId:guid}")]
     [AuthFilter]
     public async Task<IActionResult> GetAvailablePostPagedByBlogId(Guid blogId, int page, int pageSize, PostType postType = PostType.Video)
     {
-        var user = await _currentUserService.GetCurrentUserAsync();
+        var user = await currentUserService.GetCurrentUserAsync();
 
         var postQuery = repository.Get<Post>()
             .Where(x => x.IsDelete == false)
@@ -291,7 +255,7 @@ public class PostV2Controller : BaseApiController
             .Take(pageSize)
             .ToListAsync();
 
-        using var storage = _fileStorageFactory.CreateFileStorage();
+        using var storage = fileStorageFactory.CreateFileStorage();
 
         var result = postList.Select(async x => new PostCommonModelV2
         {
@@ -309,31 +273,4 @@ public class PostV2Controller : BaseApiController
 
         return Ok(new PagedListViewModel<PostCommonModelV2>((int)Math.Ceiling((double)totalCount / pageSize), pageSize, await Task.WhenAll(result)));
     }
-}
-
-public class UserPostInfoDto
-{
-    public Guid Id { get; set; }
-    public Guid BlogId { get; set; }
-    public int DislikeCount { get; set; }
-    public int LikeCount { get; set; }
-    public long ViewCount { get; set; }
-    public Guid? PaymentSubscriptionId { get; set; }
-    public PostVisibility Visibility { get; set; }
-    public string Title { get; set; } = default!;
-
-    public TextInfoDto? TextInfo { get; set; }
-    public VideoInfoDto? VideoInfo { get; set; }
-}
-
-public class TextInfoDto
-{
-    public string Text { get; set; } = default!;
-}
-
-public class VideoInfoDto
-{
-    public bool? ProcessState { get; set; }
-    public string? PreviewUrl { get; set; }
-    public VideoMetadataModel? VideoMetadata { get; set; }
 }

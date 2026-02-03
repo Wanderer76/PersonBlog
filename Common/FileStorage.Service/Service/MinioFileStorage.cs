@@ -83,7 +83,7 @@ internal class MinioFileStorage : IFileStorage
         return result.ObjectName;
     }
 
-    private async Task CreateBucketIfNotExistAsync(Guid bucketId)
+    public async Task CreateBucketIfNotExistAsync(Guid bucketId)
     {
         if (!await _client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucketId.ToString())))
         {

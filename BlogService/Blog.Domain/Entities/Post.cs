@@ -34,7 +34,7 @@ public sealed class Post : IBlogEntity, ISoftDelete
 
     private Post() { }
 
-    public Post(Guid id, Guid blogId, PostType type, string? description, string title, Guid? paymentSubscriptionId, PostVisibility visibility, IEnumerable<int> categories, string text)
+    public Post(Guid id, Guid blogId, PostType type, string? description, string title, Guid? paymentSubscriptionId, PostVisibility visibility, IEnumerable<int> categories, string? text)
     {
         Id = id;
         BlogId = blogId;
