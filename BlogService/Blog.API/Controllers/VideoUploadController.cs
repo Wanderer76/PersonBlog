@@ -1,10 +1,15 @@
 ﻿using Authentication.Contract.Constants;
+using Blog.Domain.Entities;
+using Blog.Domain.Events;
+using Blog.Service.Models.File;
 using Blog.Service.Services;
 using Blog.Service.Services.Implementation;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Shared.Persistence;
 
 namespace Blog.API.Controllers;
 
@@ -12,7 +17,8 @@ public class VideoUploadController(
     ILogger<BaseApiController> _logger,
     IMultipartFileUpload _multipartFileUpload,
     ICurrentUserService _currentUserService,
-    IVideoService videoService
+    IVideoService videoService,
+    IReadWriteRepository<IBlogEntity> context
     ) : BaseApiController(_logger)
 {
 
@@ -64,6 +70,27 @@ public class VideoUploadController(
             bucketId.ToString(),
             request.UploadId,
             request.Parts);
+
+        var metadata = await context.Get<VideoFile>()
+            .Where(x => x.PostId == request.PostId)
+            .FirstAsync();
+
+        var videoCreateEvent = new CombineFileChunksCommand
+        {
+            BlogId = user.BlogId,
+            VideoMetadataId = metadata.Id,
+            PostId = metadata.PostId,
+        };
+
+        var post = await context.Get<Post>()
+            .FirstAsync(x => x.Id == metadata.PostId);
+
+        context.Attach(post);
+
+        var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
+        post.ProcessState = ProcessState.Running;
+        context.Add(videoEvent);
+        await context.SaveChangesAsync();
 
         return Ok(eTag);
     }
@@ -132,6 +159,7 @@ public class VideoUploadController(
 }
 public class CompleteUploadRequest
 {
+    public Guid PostId { get; set; }
     public string UploadId { get; set; } = null!;
     public List<MultipartUploadPart> Parts { get; set; } = new();
 }

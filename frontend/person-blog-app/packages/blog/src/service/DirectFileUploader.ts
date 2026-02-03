@@ -39,6 +39,7 @@ export interface MultipartUploadPart {
 }
 
 export interface CompleteUploadRequest {
+    postId: string;
     uploadId: string;
     parts: MultipartUploadPart[];
 }
@@ -87,7 +88,7 @@ export class DirectFileUploader {
         const totalParts = Math.ceil(file.size / this.chunkSize);
 
         // Загружаем все части параллельно с ограничением
-        const maxConcurrent = 1;
+        const maxConcurrent = 5;
         const partNumbers = Array.from({ length: totalParts }, (_, i) => i + 1);
 
         for (let i = 0; i < totalParts; i += maxConcurrent) {
@@ -162,17 +163,11 @@ export class DirectFileUploader {
     private async completeUpload(): Promise<void> {
         const sortedParts = this.parts.sort((a, b) => a.partNumber - b.partNumber);
 
-        console.log('[COMPLETE] Sending parts to backend:');
-        sortedParts.forEach(p => {
-            console.log(`  Part ${p.partNumber}: eTag="${p.eTag}" (length: ${p.eTag.length})`);
-        });
-
         const request: CompleteUploadRequest = {
             uploadId: this.uploadId,
+            postId:this.postId,
             parts: sortedParts
         };
-
-        console.log('[COMPLETE] Full request payload:', JSON.stringify(request, null, 2));
 
         await API.post('/profile/api/VideoUpload/complete', request);
     }

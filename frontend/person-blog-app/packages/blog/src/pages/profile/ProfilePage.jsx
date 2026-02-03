@@ -98,11 +98,11 @@ const ProfilePage = () => {
 
     async function loadPosts() {
         if (blogId.current) {
-            const url = `/profile/api/Post/list?blogId=${blogId.current}&page=${page}&limit=${pageSize}`;
+            const url = `/profile/api/PostV2/my?page=${page}&pageSize=${pageSize}`;
             await API.get(url).then(response => {
                 if (response.status === 200) {
                     var result = response.data;
-                    setPosts(prev => [...prev, ...result.posts]);
+                    setPosts(prev => [...prev, ...result.items]);
                     setProfile((prev) => (
                         {
                             ...prev,
