@@ -28,15 +28,14 @@ public class VideoUploadController(
     [FromBody] InitiateUploadRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var bucketId = user.UserId;
-
-        var metadata = await videoService.CreateFileMetadataAsync(request);
+        var objectName = $"{request.PostId}/{request.ObjectName}";
         var session = await _multipartFileUpload.InitiateUploadAsync(
-            bucketId.ToString(),
-            $"{request.PostId}/{request.ObjectName}",
+            user.BlogId.ToString(),
+            objectName,
             request.Size);
 
-
+        request.ObjectName = objectName;
+        var metadata = await videoService.CreateFileMetadataAsync(request);
 
         return Ok(session);
     }
@@ -47,7 +46,7 @@ public class VideoUploadController(
         [FromBody] GenerateUrlRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var bucketId = user.UserId;
+        var bucketId = user.BlogId;
 
         var url = await _multipartFileUpload.GenerateUploadPartUrlAsync(
             bucketId.ToString(),
@@ -64,7 +63,7 @@ public class VideoUploadController(
         [FromBody] CompleteUploadRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var bucketId = user.UserId;
+        var bucketId = user.BlogId;
 
         var eTag = await _multipartFileUpload.CompleteUploadAsync(
             bucketId.ToString(),
@@ -75,20 +74,25 @@ public class VideoUploadController(
             .Where(x => x.PostId == request.PostId)
             .FirstAsync();
 
-        var videoCreateEvent = new CombineFileChunksCommand
+
+        var post = await context.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .FirstAsync(x => x.Id == metadata.PostId);
+
+        var videoCreateEvent = new ConvertVideoCommand
         {
+            VideoMetadata = metadata,
+            HasPreviewId = post.VideoPostInfo.PreviewId.HasValue,
+            ObjectName = metadata.ObjectName,
             BlogId = user.BlogId,
             VideoMetadataId = metadata.Id,
             PostId = metadata.PostId,
         };
 
-        var post = await context.Get<Post>()
-            .FirstAsync(x => x.Id == metadata.PostId);
-
         context.Attach(post);
 
         var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
-        post.ProcessState = ProcessState.Running;
+        post.ProcessState = ProcessState.Draft;
         context.Add(videoEvent);
         await context.SaveChangesAsync();
 
@@ -101,7 +105,7 @@ public class VideoUploadController(
         [FromBody] AbortUploadRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var bucketId = user.UserId;
+        var bucketId = user.BlogId;
 
         await _multipartFileUpload.AbortUploadAsync(bucketId.ToString(), request.UploadId);
         return Ok();
@@ -112,7 +116,7 @@ public class VideoUploadController(
     public async Task<ActionResult<MultipartUploadSession>> GetSession(string uploadId)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var bucketId = user.UserId;
+        var bucketId = user.BlogId;
 
         var session = await _multipartFileUpload.GetUploadSessionAsync(bucketId.ToString(), uploadId);
 
@@ -127,7 +131,7 @@ public class VideoUploadController(
     public async Task<ActionResult<List<MultipartUploadPart>>> GetParts(string uploadId)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var bucketId = user.UserId;
+        var bucketId = user.BlogId;
 
         var parts = await _multipartFileUpload.ListPartsAsync(bucketId.ToString(), uploadId);
         return Ok(parts);

@@ -78,6 +78,12 @@ public sealed class Post : IBlogEntity, ISoftDelete
         BanMessageId = null;
         BanMessage = null;
     }
+
+    public void Delete()
+    {
+        IsDelete = true;
+        DeleteDateTime = DateTimeService.Now();
+    }
 }
 
 public enum PostType
@@ -87,7 +93,7 @@ public enum PostType
 }
 public enum ProcessState
 {
-    Running,
+    Draft,
     Complete,
     Load,
     Error

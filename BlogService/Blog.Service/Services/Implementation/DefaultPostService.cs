@@ -192,28 +192,29 @@ internal class DefaultPostService : IPostService
 
     public async Task RemovePostByIdAsync(Guid id)
     {
-        //var post = await _context.Get<Post>()
-        //    .Where(x => x.Id == id)
-        //    .FirstOrDefaultAsync();
-        //if (post != null)
-        //{
-        //    _context.Attach(post);
-        //    post.IsDelete = true;
-        //    _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
-        //    _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
-        //    {
-        //        BlogId = post.BlogId,
-        //        CreatedAt = DateTimeService.Now(),
-        //        UpdateType = UpdateType.Delete,
-        //        Description = post.Description,
-        //        PostId = post.Id,
-        //        Title = post.Title,
-        //        ViewCount = post.ViewCount
-        //    }));
-        //}
+        var post = await _context.Get<Post>()
+            .Where(x => x.Id == id)
+            .Include(x=>x.VideoPostInfo)
+            .FirstOrDefaultAsync();
+        if (post != null)
+        {
+            _context.Attach(post);
+            post.Delete();
+            _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
+            _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
+            {
+                BlogId = post.BlogId,
+                CreatedAt = DateTimeService.Now(),
+                UpdateType = UpdateType.Delete,
+                Description = post.VideoPostInfo.Description,
+                PostId = post.Id,
+                Title = post.Title,
+                ViewCount = post.ViewCount
+            }));
+        }
 
-        //await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
-        //await _context.SaveChangesAsync();
+        await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
+        await _context.SaveChangesAsync();
     }
 
     public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
@@ -264,7 +265,7 @@ internal class DefaultPostService : IPostService
             _context.Attach(post);
 
             var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
-            post.ProcessState = ProcessState.Running;
+            post.ProcessState = ProcessState.Draft;
             _context.Add(metadata);
             _context.Add(videoEvent);
             await _context.SaveChangesAsync();

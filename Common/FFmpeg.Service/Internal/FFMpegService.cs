@@ -65,7 +65,7 @@ namespace FFmpeg.Service.Internal
 
                     string bufsize = rate.Replace("M", "0M").Replace("k", "k");
                 mapVideoParamsBuilder.Append($"-map \"[v{i}out]\" -c:v:{i} {fFMpegOptions.DefaultEncoder} " +
-                    $"-b:v:{i} {rate} -maxrate:v:{i} {rate} -allow_skip_frames 1 -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset medium" +
+                    $"-b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset medium" +
                     $" -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
                 if (inputAudio != null)
                 {

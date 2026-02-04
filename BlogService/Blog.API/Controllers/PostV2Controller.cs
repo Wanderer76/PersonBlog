@@ -11,6 +11,7 @@ using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
@@ -65,13 +66,14 @@ public class PostV2Controller(
             PaymentSubscriptionId = x.PaymentSubscriptionId,
             Visibility = x.Visibility,
             Title = x.Title,
+            CreatedAt = x.CreatedAt,
             TextInfo = postType == PostType.Text ? new TextInfoDto
             {
                 Text = x.TextPostInfo.Text,
             } : null,
             VideoInfo = postType == PostType.Video ? new VideoInfoDto
             {
-                ProcessState = x.IsProcessComplete(),
+                ProcessState = x.ProcessState,
                 PreviewUrl = x.VideoPostInfo.PreviewFile == null ? null : await storage.GetFileUrlAsync(x.BlogId, x.VideoPostInfo.PreviewFile!.ObjectName),
                 VideoMetadata = x.IsProcessComplete() ? new VideoMetadataModel(
                                 x.VideoPostInfo.VideoFile!.Id,
@@ -190,13 +192,14 @@ public class PostV2Controller(
             PaymentSubscriptionId = post.PaymentSubscriptionId,
             Visibility = post.Visibility,
             Title = post.Title,
+            CreatedAt = post.CreatedAt,
             TextInfo = post.Type == PostType.Text ? new TextInfoDto
             {
                 Text = post.TextPostInfo.Text,
             } : null,
             VideoInfo = post.Type == PostType.Video ? new VideoInfoDto
             {
-                ProcessState = post.IsProcessComplete(),
+                ProcessState = post.ProcessState,
                 PreviewUrl = post.VideoPostInfo.PreviewFile == null ? null : await storage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName),
                 VideoMetadata = post.IsProcessComplete() ? new VideoMetadataModel(
                                 post.VideoPostInfo.VideoFile!.Id,

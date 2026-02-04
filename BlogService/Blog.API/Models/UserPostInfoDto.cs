@@ -15,4 +15,5 @@ public class UserPostInfoDto
 
     public TextInfoDto? TextInfo { get; set; }
     public VideoInfoDto? VideoInfo { get; set; }
+    public DateTimeOffset CreatedAt { get; internal set; }
 }

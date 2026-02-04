@@ -5,6 +5,7 @@ using FFmpeg.Service.Models;
 using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
+using Shared.Models;
 using Shared.Services;
 using Shared.Utils;
 

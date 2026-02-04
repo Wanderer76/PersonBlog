@@ -4,7 +4,7 @@ import API from "../../scripts/apiMethod";
 import './ProfilePage.css';
 import { useNavigate } from "react-router-dom";
 import DefaultProfileIcon from '../../defaultProfilePic.png'
-import { getLocalDateTime } from "../../scripts/LocalDate";
+import { getLocalDateTime, secondsToHumanReadable } from "../../scripts/LocalDate";
 
 
 const ProfilePage = () => {
@@ -295,31 +295,31 @@ const CreatePostCard = function ({ post, lastPostRef, navigate, handleRemove }) 
         });
     }
     // }
+    console.log(post)
     return (
 
         <div className="postCard" ref={lastPostRef ? lastPostRef : null}>
-
-            <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>
-                <img src={post.previewId} alt={post.title} />
-                <div className="videoDuration">{post.duration}</div>
+            <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.videoInfo.processState === 1) navigate(`/video/${post.id}`); }}>
+                <img src={post.videoInfo.previewUrl} alt={post.title} />
+                <div className="videoDuration">{secondsToHumanReadable(post.videoInfo.videoMetadata.duration)}</div>
                 {post.type === 1 &&
                     <div className="postStatus">{
-                        post.state === 1
+                        post.videoInfo.processState === 1
                             ? "Опубликовано"
-                            : post.state === 0
+                            : post.videoInfo.state === 0
                                 ? "В обработке"
-                                : post.state === 2 ?
+                                : post.videoInfo.state === 2 ?
                                     `Загрузка ${uploadProgress}%`
                                     : post.errorMessage
                     }</div>}
             </div>
             <div className="postContent">
-                <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
-                <p className="postDescription">{post.description}</p>
+                <h3 className="postTitle" onClick={(e) => { e.preventDefault(); if (post.videoInfo.state === 1) navigate(`/video/${post.id}`); }}>{post.title}</h3>
+                {/* <p className="postDescription">{post.description}</p> */}
 
                 <div className="postMeta">
                     <div className="postStats">
-                        <span>👁 {post.views}</span>
+                        <span>👁 {post.viewCount}</span>
                         <span>📅 {new Date(post.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="postActions">

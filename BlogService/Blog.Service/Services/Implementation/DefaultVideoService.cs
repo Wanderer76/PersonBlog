@@ -135,7 +135,7 @@ internal sealed class DefaultVideoService : IVideoService
             Name = initiateUploadRequest.FileName,
             Resolution = VideoResolution.Original,
             Duration = initiateUploadRequest.Duration,
-            ObjectName = string.Empty,
+            ObjectName = initiateUploadRequest.ObjectName,
             Length = initiateUploadRequest.Size
         };
         _context.Add(metadata);
