@@ -1,7 +1,6 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
-using Blog.Service.Models.File;
 using Blog.Service.Services;
 using Blog.Service.Services.Implementation;
 using Infrastructure.Middleware;
@@ -13,7 +12,7 @@ using Shared.Persistence;
 
 namespace Blog.API.Controllers;
 
-public class VideoUploadController(
+public sealed class VideoUploadController(
     ILogger<BaseApiController> _logger,
     IMultipartFileUpload _multipartFileUpload,
     ICurrentUserService _currentUserService,
@@ -136,31 +135,8 @@ public class VideoUploadController(
         var parts = await _multipartFileUpload.ListPartsAsync(bucketId.ToString(), uploadId);
         return Ok(parts);
     }
-
-    /*
-    [HttpPost("uploadChunk")]
-    [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
-    {
-        try
-        {
-            var metadata = await videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
-            using var data = uploadVideoChunk.ChunkData.OpenReadStream();
-            await postService.UploadVideoChunkAsync(new UploadVideoChunkDto
-            {
-                ChunkNumber = uploadVideoChunk.ChunkNumber,
-                TotalChunkCount = uploadVideoChunk.TotalChunkCount,
-                ChunkData = data,
-                PostId = uploadVideoChunk.PostId
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex);
-        }
-        return Ok();
-    }*/
 }
+
 public class CompleteUploadRequest
 {
     public Guid PostId { get; set; }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { JwtTokenService } from '../../scripts/TokenStrorage';
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import { useNavigate } from "react-router-dom";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
 import SideBar from "../../components/sidebar/SideBar";

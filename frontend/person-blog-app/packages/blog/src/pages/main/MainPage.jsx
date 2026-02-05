@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import './MainPage.css';
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import SideBar from "../../components/sidebar/SideBar";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
 

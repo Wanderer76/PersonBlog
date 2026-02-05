@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from './CreatePostForm.module.css';
-import API from "../../../scripts/apiMethod";
+import API from "../../../lib/api/client";
 import { useNavigate, useParams } from "react-router-dom";
 import VideoPlayer from "../../VideoPlayer/VideoPlayer";
 import {

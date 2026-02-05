@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BaseApUrl } from "../../scripts/apiMethod";
+import { BaseApUrl } from "../../lib/api/client";
 import { saveAccessToken, saveRefreshToken } from "../../scripts/TokenStrorage";
 import { useNavigate, useSearchParams } from "react-router-dom";
 

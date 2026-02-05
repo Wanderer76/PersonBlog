@@ -4,7 +4,7 @@ import PostListItem from "../../components/VideoCards/PostListItem/PostListItem"
 import styles from './LikedPage.module.css';
 import { getLocalDate } from "../../scripts/LocalDate";
 import { useState } from "react";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 
 const LikedPage = function () {
     const [likedList, setLikedList] = useState([]);

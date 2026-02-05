@@ -1,34 +1,26 @@
-﻿using Blog.Domain.Entities;
-using Infrastructure.Models;
+﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Shared.Persistence;
 
 namespace Blog.API.Controllers.Internal
 {
-    public class InternalPostController : BaseApiController
+    public class InternalPostController(ILogger<BaseApiController> logger) : BaseApiController(logger)
     {
-        private readonly IReadRepository<IBlogEntity> _repository;
-        public InternalPostController(ILogger<BaseApiController> logger, IReadRepository<IBlogEntity> repository) : base(logger)
-        {
-            _repository = repository;
-        }
-
         [HttpGet("blogSubscribers/{blogId}")]
-        public async IAsyncEnumerable<string> GetBlogSubscribers(Guid blogId, int page, int pageSize)
+        public async Task<IActionResult> GetBlogSubscribers(Guid blogId, int page, int pageSize)
         {
-            Response.Headers.ContentType = "application/x-ndjson"; // или text/plain
-            var query = _repository.Get<Subscriber>()
-                .Active()
-                .Where(x => x.BlogId == blogId)
-                .Select(x => x.UserId)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize);
+            //Response.Headers.ContentType = "application/x-ndjson"; // или text/plain
+            //var query = _repository.Get<Subscriber>()
+            //    .Active()
+            //    .Where(x => x.BlogId == blogId)
+            //    .Select(x => x.UserId)
+            //    .Skip((page - 1) * pageSize)
+            //    .Take(pageSize);
 
-            await foreach (var subscriber in query.AsAsyncEnumerable())
-            {
-                yield return subscriber.ToString();
-            }
+            //await foreach (var subscriber in query.AsAsyncEnumerable())
+            //{
+            //    yield return subscriber.ToString();
+            //}
+            return NotFound();
         }
     }
 }

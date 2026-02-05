@@ -45,7 +45,7 @@ internal class S3FileStorage : IMultipartFileUpload
         await SaveSessionAsync(bucketId, session);
         return session;
     }
-    private int CalculateParts(long totalSize)
+    private static int CalculateParts(long totalSize)
     {
         const int maxParts = 10000;
         var partSize = Math.Max(_minPartSize, totalSize / maxParts);
@@ -159,11 +159,7 @@ internal class S3FileStorage : IMultipartFileUpload
 
     public async Task<List<MultipartUploadPart>> ListPartsAsync(string bucketId, string uploadId)
     {
-        var session = await GetSessionAsync(bucketId, uploadId);
-
-        if (session == null)
-            throw new InvalidOperationException($"Upload session {uploadId} not found");
-
+        var session = await GetSessionAsync(bucketId, uploadId) ?? throw new InvalidOperationException($"Upload session {uploadId} not found");
         var parts = new List<MultipartUploadPart>();
         string? nextPartNumberMarker = null;
         bool isTruncated = true;
@@ -237,10 +233,6 @@ internal class S3FileStorage : IMultipartFileUpload
 
         await _client.PutObjectAsync(request);
     }
-    public void Dispose()
-    {
-        _client?.Dispose();
-    }
 
     public async Task<PreSignedUrl> GenerateUploadPartUrlAsync(string bucketId, string uploadId, int partNumber, TimeSpan expiry = default)
     {
@@ -312,7 +304,6 @@ internal class S3FileStorage : IMultipartFileUpload
             HttpMethod = "GET"
         };
     }
-
 
     private async Task CreateBucketIfNotExistsAsync(string bucketName)
     {

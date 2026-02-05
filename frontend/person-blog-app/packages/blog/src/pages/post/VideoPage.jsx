@@ -2,7 +2,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import './VideoPage.css';
 import React, { useEffect, useRef, useState } from 'react';
-import API, { BaseApUrl } from '../../scripts/apiMethod';
+import API, { BaseApUrl } from '../../lib/api/client';
 import { getLocalDateTime } from '../../scripts/LocalDate';
 import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
@@ -50,7 +50,7 @@ const VideoPage = function (props) {
     const [blog, setBlog] = useState({
     });
 
-    function getUrl(blogId,postId, objectName) {
+    function getUrl(blogId, postId, objectName) {
         if (postId !== null && objectName !== null)
             return `${BaseApUrl}/video/Video/${blogId}/${postId}/${objectName}`;
     }
@@ -238,12 +238,14 @@ const VideoPage = function (props) {
             return;
         const currentWathcedTime = player.currentTime();
         const duration = player.duration();
-        watchedTime.current = currentWathcedTime;
-        await API.post('/video/Video/setView', {
-            postId: post.id,
-            time: currentWathcedTime,
-            isComplete: currentWathcedTime >= duration * 0.85
-        });
+        if (watchedTime.current != currentWathcedTime) {
+            watchedTime.current = currentWathcedTime;
+            await API.post('/video/Video/setView', {
+                postId: post.id,
+                time: currentWathcedTime,
+                isComplete: currentWathcedTime >= duration * 0.85
+            });
+        }
     }
 
     if (isLoading) {
@@ -313,7 +315,7 @@ const VideoPage = function (props) {
             <VideoPlayer key={post.id} className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
-                    url: getUrl(blog.id,post.id, post.videoData.objectName),
+                    url: getUrl(blog.id, post.id, post.videoData.objectName),
                     label: '',
                     postId: post.id,
                     blogId: blog.id,

@@ -87,6 +87,7 @@ public class PostController : BaseApiController
     }
 
     [HttpGet("list")]
+    [Obsolete]
     public async Task<ActionResult<PostPagedListViewModel>> GetBlogPostPagedList(Guid blogId, int page, int limit)
     {
         var result = await _postService.GetPostsByBlogIdPagedAsync(blogId, page, limit);
@@ -94,6 +95,7 @@ public class PostController : BaseApiController
     }
 
     [HttpGet("create")]
+    [Obsolete]
     public async Task<ActionResult<CreatePostModelViewModel>> GetCreatePostModel()
     {
         var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
@@ -104,6 +106,7 @@ public class PostController : BaseApiController
 
     [HttpPost("create")]
     [Authorize]
+    [Obsolete]
     public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateRequest form)
     {
         var user = await _currentUserService.GetCurrentUserAsync();

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from './CreatePostForm.module.css';
-import API from "../../../scripts/apiMethod";
+import API from "../../../lib/api/client";
 import { useNavigate } from "react-router-dom";
 import { DirectFileUploader, type InitiateUploadResponse } from "../../../service/DirectFileUploader";
 import {
@@ -66,7 +66,7 @@ const CreatePostForm = () => {
 
   // Загрузка данных для формы
   useEffect(() => {
-    API.get("/profile/api/PostV2/create")
+    API.get("/profile/api/ProfilePostV2/create")
       .then(response => setCreateModel(response.data))
       .catch(error => console.error("Ошибка загрузки данных:", error));
   }, []);
@@ -122,7 +122,7 @@ const CreatePostForm = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await API.post("/profile/api/PostV2/create", {
+      const response = await API.post("/profile/api/ProfilePostV2/create", {
         title: postForm.title,
         videoPostData: postForm.videoPostData,
         type: 1,

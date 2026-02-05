@@ -1,5 +1,5 @@
 // src/utils/DirectFileUploader.ts
-import API from "../scripts/apiMethod";
+import API from "../lib/api/client";
 
 
 export interface InitiateUploadRequest {

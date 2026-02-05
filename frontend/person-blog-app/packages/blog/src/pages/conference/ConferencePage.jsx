@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getLocalDateTime } from "../../scripts/LocalDate";
 import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
 import logo from '../../defaultProfilePic.png';
-import API, { BaseApUrl } from "../../scripts/apiMethod";
+import API, { BaseApUrl } from "../../lib/api/client";
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import './ConferencePage.css';
 import '../post/VideoPage.css';

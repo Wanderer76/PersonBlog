@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { JwtTokenService } from "../../scripts/TokenStrorage";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import './ProfilePage.css';
 import { useNavigate } from "react-router-dom";
 import DefaultProfileIcon from '../../defaultProfilePic.png'
@@ -98,7 +98,7 @@ const ProfilePage = () => {
 
     async function loadPosts() {
         if (blogId.current) {
-            const url = `/profile/api/PostV2/my?page=${page}&pageSize=${pageSize}`;
+            const url = `/profile/api/ProfilePostV2/my?page=${page}&pageSize=${pageSize}`;
             await API.get(url).then(response => {
                 if (response.status === 200) {
                     var result = response.data;

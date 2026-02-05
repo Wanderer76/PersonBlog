@@ -4,29 +4,26 @@ using Blog.Contracts.Models;
 using Blog.Domain.Entities;
 using Blog.Domain.Services;
 using Blog.Domain.Services.Models;
-using Blog.Service.Models.File;
 using Blog.Service.Services;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 
 namespace Blog.API.Controllers;
 
-public class PostV2Controller(
+public class ProfilePostV2Controller(
     ILogger<BaseApiController> logger,
     IReadWriteRepository<IBlogEntity> repository,
     ICurrentUserService currentUserService,
     IFileStorageFactory fileStorageFactory,
     IPostService postService,
     ISubscriptionLevelService subscriptionLevelService,
-    ICategoryService categoryService,
-    IVideoService videoService)
+    ICategoryService categoryService)
     : BaseApiController(logger)
 {
     [HttpGet("my")]
@@ -211,22 +208,6 @@ public class PostV2Controller(
             } : null
         });
     }
-
-    [HttpGet("uploadProgress")]
-    [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult<UploadVideoProgress>> GetPostVideoUploadProgress(Guid fileId)
-    {
-        return Ok();
-    }
-
-    //TODO возможно не нужно, достаточно метода uploadChunk + redis или отдавать проценты при загрузке чанка
-    [HttpPost("uploadProgress")]
-    [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult<UploadVideoProgress>> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
-    {
-        return Ok();
-    }
-
 
     [HttpGet("availablePostByBlogId/{blogId:guid}")]
     [AuthFilter]

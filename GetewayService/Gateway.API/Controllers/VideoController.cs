@@ -30,17 +30,18 @@ public class VideoController : BaseApiController
 
 
     [HttpGet("{blogId}/{postId}/{*file}")]
+    [ResponseCache(NoStore = false, Duration = 6000, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid blogId, Guid postId, string file)
     {
         if (file.EndsWith("playlist.m3u8"))
         {
-            var key = new FileCacheKey(file);
-            var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
-            if (playlistParsed == null)
-            {
-                playlistParsed = await storage.ProcessManifestAsync(blogId, file);
-                await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
-            }
+            //var key = new FileCacheKey(file);
+            //var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
+            //if (playlistParsed == null)
+            //{
+            var playlistParsed = await storage.ProcessHLSManifestAsync(blogId, file);
+            //await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
+            //}
 
             return Content(playlistParsed, HLSType);
         }

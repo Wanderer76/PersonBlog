@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import styles from '../post/CreatePostForm.module.css';
-import API from "../../../scripts/apiMethod";
+import API from "../../../lib/api/client";
 import { useNavigate } from "react-router-dom";
 
 const CreateBlogForm = function () {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import styles from './ChannelPage.module.css';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
 import { getLocalDateTime } from "../../scripts/LocalDate";

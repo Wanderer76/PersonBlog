@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, memo } from "react";
 import { JwtTokenService } from '../../scripts/TokenStrorage';
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../../components/sidebar/SideBar";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import styles from './CreatePlaylistForm.module.css';
 
 const CreatePlaylistForm = () => {
