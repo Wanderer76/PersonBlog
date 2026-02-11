@@ -1,5 +1,4 @@
-﻿using Blog.Service.Models.Blog;
-using Infrastructure.Services;
+﻿using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Models;

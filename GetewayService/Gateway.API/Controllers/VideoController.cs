@@ -1,5 +1,5 @@
-using Blog.Domain.Services.Models;
-using Blog.Service.Models.Blog;
+using Blog.Contracts.Models;
+using Blog.Contracts.Models.Blog;
 using Gateway.API.Api;
 using Gateway.API.Services;
 using Infrastructure.Models;

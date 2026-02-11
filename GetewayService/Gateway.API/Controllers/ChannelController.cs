@@ -1,5 +1,5 @@
-﻿using Blog.Service.Models.Blog;
-using Blog.Service.Models.Post;
+﻿using Blog.Contracts.Models.Blog;
+using Blog.Contracts.Models.Post;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using PlayListService.Services.Models;

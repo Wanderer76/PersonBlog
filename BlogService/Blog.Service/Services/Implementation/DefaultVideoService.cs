@@ -1,8 +1,10 @@
-﻿using Blog.Domain.Entities;
-using Blog.Service.Models.File;
+﻿using Blog.Contracts.Models.File;
+using Blog.Contracts.Services;
+using Blog.Domain.Entities;
 using FileStorage.Service.Models;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
@@ -43,7 +45,7 @@ internal sealed class DefaultVideoService : IVideoService
         return await _cacheService.GetOrAddDataAsync(progress, () => Task.FromResult(progress), LifeTimeInMinutes);
     }
 
-    public async Task<Result<VideoFile>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
+    public async Task<Result<FileMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
     {
         var progress = await GetUploadVideoMetadata(uploadVideoChunk.FileId);
 
@@ -142,14 +144,4 @@ internal sealed class DefaultVideoService : IVideoService
         await _context.SaveChangesAsync();
         return Result.Success();
     }
-}
-public class InitiateUploadRequest
-{
-    public Guid PostId { get; set; }
-    public string ObjectName { get; set; } = null!;
-    public long Size { get; set; }
-    public string ContentType { get; set; }= null!;
-    public string FileExtension { get; set; } = null!;
-    public string FileName { get; set; } = null!;
-    public double Duration { get; set; }
 }

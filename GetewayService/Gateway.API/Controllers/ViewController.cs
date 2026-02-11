@@ -1,4 +1,4 @@
-﻿using Blog.Domain.Services.Models;
+﻿using Blog.Contracts.Models;
 using Gateway.API.Api;
 using Infrastructure.Models;
 using Infrastructure.Services;

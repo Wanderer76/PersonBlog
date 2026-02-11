@@ -1,13 +1,10 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.API.Models;
 using Blog.Contracts.Models;
+using Blog.Contracts.Models.File;
+using Blog.Contracts.Models.Post;
+using Blog.Contracts.Services;
 using Blog.Domain.Entities;
-using Blog.Domain.Services;
-using Blog.Domain.Services.Models;
-using Blog.Service.Models;
-using Blog.Service.Models.File;
-using Blog.Service.Models.Post;
-using Blog.Service.Services;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
@@ -104,31 +101,31 @@ public class PostController : BaseApiController
         return Ok(new CreatePostModelViewModel(subscriptionLevels, visibilityList, categoryList));
     }
 
-    [HttpPost("create")]
-    [Authorize]
-    [Obsolete]
-    public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateRequest form)
-    {
-        var user = await _currentUserService.GetCurrentUserAsync();
-        var result = await _postService.CreatePostAsync(new PostCreateDto
-        {
-            UserId = user.UserId,
-            Type = PostType.Video,
-            Text = form.VideoPostData.Description?.Trim(),
-            Title = form.Title.Trim(),
-            Visibility = form.Visibility,
-            Thumbnail = form.VideoPostData.Thumbnail,
-            Categories = form.VideoPostData.Categories ?? []
-        });
-        if (result.IsSuccess)
-        {
-            return Ok(result.Value);
-        }
-        else
-        {
-            return BadRequest(result.Error);
-        }
-    }
+    //[HttpPost("create")]
+    //[Authorize]
+    //[Obsolete]
+    //public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateRequest form)
+    //{
+    //    var user = await _currentUserService.GetCurrentUserAsync();
+    //    var result = await _postService.CreatePostAsync(new PostCreateDto
+    //    {
+    //        UserId = user.UserId,
+    //        Type = PostType.Video,
+    //        Text = form.VideoPostData.Description?.Trim(),
+    //        Title = form.Title.Trim(),
+    //        Visibility = form.Visibility,
+    //        Thumbnail = form.VideoPostData.Thumbnail,
+    //        Categories = form.VideoPostData.Categories ?? []
+    //    });
+    //    if (result.IsSuccess)
+    //    {
+    //        return Ok(result.Value);
+    //    }
+    //    else
+    //    {
+    //        return BadRequest(result.Error);
+    //    }
+    //}
 
     [HttpGet("edit/{postId:guid}")]
     [Authorize]

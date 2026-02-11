@@ -1,8 +1,8 @@
 ﻿using Authentication.Contract.Constants;
+using Blog.Contracts.Events;
+using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Blog.Domain.Events;
-using Blog.Service.Services;
-using Blog.Service.Services.Implementation;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;

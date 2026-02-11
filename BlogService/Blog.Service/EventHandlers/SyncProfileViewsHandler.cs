@@ -1,6 +1,6 @@
 ﻿using Blog.Contracts.Events;
+using Blog.Contracts.Models;
 using Blog.Domain.Entities;
-using Blog.Domain.Services.Models;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;

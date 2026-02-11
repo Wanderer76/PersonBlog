@@ -1,5 +1,4 @@
 ﻿using Authentication.Contract.Constants;
-using Blog.Service.Models.File;
 using Gateway.API.Api;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;

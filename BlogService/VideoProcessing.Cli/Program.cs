@@ -1,4 +1,4 @@
-using Blog.Domain.Events;
+using Blog.Contracts.Events;
 using FFmpeg.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;

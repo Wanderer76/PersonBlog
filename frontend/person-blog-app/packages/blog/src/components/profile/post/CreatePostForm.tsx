@@ -59,7 +59,7 @@ const CreatePostForm = () => {
       const videoURL = URL.createObjectURL(postForm.video);
       videoRef.current.src = videoURL;
       videoRef.current.load();
-      
+
       return () => URL.revokeObjectURL(videoURL);
     }
   }, [postForm.video]);
@@ -74,21 +74,21 @@ const CreatePostForm = () => {
   // Обновление формы
   const updateForm = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, files } = event.target;
-    
+
     if (name === 'video' && files?.[0]) {
       const file = files[0];
-      
+
       // Валидация видео
       if (file.size > 2 * 1024 * 1024 * 1024) {
         alert("Файл слишком большой. Максимальный размер 2GB");
         return;
       }
-      
+
       if (!file.type.startsWith('video/')) {
         alert("Пожалуйста, выберите видео файл");
         return;
       }
-      
+
       setPostForm(prev => ({ ...prev, video: file }));
     } else {
       setPostForm(prev => ({ ...prev, [name]: value }));
@@ -113,38 +113,62 @@ const CreatePostForm = () => {
 
   // Отправка формы
   const sendForm = async () => {
-    if (!postForm.title.trim()) {
-      alert("Пожалуйста, добавьте название видео");
-      return;
+  if (!postForm.title.trim()) {
+    alert("Пожалуйста, добавьте название видео");
+    return;
+  }
+
+  if (isSubmitting) return;
+  setIsSubmitting(true);
+
+  try {
+    const formData = new FormData();
+    
+    // Основные поля
+    formData.append('type', postForm.type.toString());
+    formData.append('title', postForm.title.trim());
+    formData.append('visibility', postForm.visibility.toString());
+
+    // Поля videoPostData
+    // Описание: преобразуем null в пустую строку для корректной отправки
+    const descriptionValue = postForm.videoPostData.description ?? '';
+    formData.append('videoPostData[description]', descriptionValue.trim());
+
+    // Категории: отправляем каждый ID отдельно с именем массива
+    postForm.videoPostData.categories.forEach(categoryId => {
+      formData.append('videoPostData[categories][]', categoryId.toString());
+    });
+
+    // Превью: добавляем файл только если это экземпляр File
+    if (postForm.videoPostData.thumbnail instanceof File) {
+      formData.append(
+        'videoPostData[thumbnail]',
+        postForm.videoPostData.thumbnail,
+        postForm.videoPostData.thumbnail.name
+      );
     }
 
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    // ВАЖНО: Не устанавливаем заголовок 'Content-Type' вручную!
+    // Браузер автоматически установит правильный boundary для multipart/form-data
+    const response = await API.post("/profile/api/ProfilePostV2/create", formData);
 
-    try {
-      const response = await API.post("/profile/api/ProfilePostV2/create", {
-        title: postForm.title,
-        videoPostData: postForm.videoPostData,
-        type: 1,
-        visibility: postForm.visibility
-      });
+    if (response.status === 200 && response.data?.id) {
+      const postId = response.data.id;
 
-      if (response.status === 200) {
-        const postId = response.data.id;
-        
-        if (postForm.video) {
-          await uploadFile(postId, postForm.video);
-        }
+      // Загружаем видео отдельно, если оно выбрано
+      if (postForm.video) {
+        await uploadFile(postId, postForm.video);
       }
-
-      navigate('/profile');
-    } catch (error) {
-      console.error("Ошибка создания поста:", error);
-      alert("Произошла ошибка при создании поста");
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+
+    navigate('/profile');
+  } catch (error) {
+    console.error("Ошибка создания поста:", error);
+    alert("Произошла ошибка при создании поста. Проверьте заполнение полей и попробуйте снова.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Загрузка видео файла
   const uploadFile = async (postId: string, file: File) => {
@@ -153,10 +177,9 @@ const CreatePostForm = () => {
       uploaderRef.current = uploader;
 
       uploader.setProgressCallback(setUploadProgress);
-
       const session: InitiateUploadResponse = await uploader.initiateUpload(
-        postId, 
-        videoRef.current!.duration!, 
+        postId,
+        videoRef.current!.duration!,
         file
       );
 
@@ -166,7 +189,7 @@ const CreatePostForm = () => {
 
     } catch (error) {
       console.error('Upload failed:', error);
-      
+
       if (uploaderRef.current) {
         await uploaderRef.current.abortUpload().catch(console.error);
       }
@@ -177,7 +200,7 @@ const CreatePostForm = () => {
   // Отмена создания
   const handleCancel = () => {
     const isUploading = uploadProgress > 0 && uploadProgress < 100;
-    
+
     if (isUploading && !confirm('Загрузка еще не завершена. Отменить?')) {
       return;
     }
@@ -185,7 +208,7 @@ const CreatePostForm = () => {
     if (uploaderRef.current && isUploading) {
       uploaderRef.current.abortUpload().catch(console.error);
     }
-    
+
     navigate('/profile');
   };
 

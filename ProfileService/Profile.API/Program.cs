@@ -25,7 +25,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<VideoViewEvent, VideoViewEventHandler>(x =>
+    .AddSubscription<Profile.Domain.Events.VideoViewEvent, VideoViewEventHandler>(x =>
     {
         x.QueueName = QueueConstants.QueueName;
         x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };

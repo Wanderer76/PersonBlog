@@ -1,4 +1,4 @@
-﻿using Blog.Service.Models.Blog;
+﻿using Blog.Contracts.Models.Blog;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -1,5 +1,5 @@
-﻿using Blog.Service.Models;
-using Blog.Service.Models.Post;
+﻿using Blog.Contracts.Models.Post;
+using Blog.Service.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Encodings.Web;

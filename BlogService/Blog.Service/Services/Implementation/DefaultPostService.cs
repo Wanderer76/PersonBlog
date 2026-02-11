@@ -1,12 +1,10 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Contracts.Events;
 using Blog.Contracts.Models;
+using Blog.Contracts.Models.File;
+using Blog.Contracts.Models.Post;
+using Blog.Contracts.Services;
 using Blog.Domain.Entities;
-using Blog.Domain.Events;
-using Blog.Domain.Services.Models;
-using Blog.Persistence.Repository.Quries;
-using Blog.Service.Models.File;
-using Blog.Service.Models.Post;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
@@ -33,45 +31,45 @@ internal class DefaultPostService : IPostService
         _videoService = videoService;
     }
 
-    public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
-    {
-        return null!;
-        //var blog = await _context.Get<PersonBlog>()
-        //.FirstAsync(x => x.UserId == postCreateDto.UserId);
+    //public async Task<Result<Guid, ErrorList>> CreatePostAsync(PostCreateDto postCreateDto)
+    //{
+    //    return null!;
+    //    //var blog = await _context.Get<PersonBlog>()
+    //    //.FirstAsync(x => x.UserId == postCreateDto.UserId);
 
-        //var postId = GuidService.GetNewGuid();
-        //var now = DateTimeService.Now();
+    //    //var postId = GuidService.GetNewGuid();
+    //    //var now = DateTimeService.Now();
 
-        //var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<PaymentSubscription>()
-        //    .Where(x => x.BlogId == blog.Id)
-        //    .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
-        //    .Where(x => x.IsDeleted == false)
-        //    .AnyAsync()
-        //    : true;
+    //    //var hasSubscription = postCreateDto.SubscriptionLevelId.HasValue ? await _context.Get<PaymentSubscription>()
+    //    //    .Where(x => x.BlogId == blog.Id)
+    //    //    .Where(x => x.Id == postCreateDto.SubscriptionLevelId)
+    //    //    .Where(x => x.IsDeleted == false)
+    //    //    .AnyAsync()
+    //    //    : true;
 
-        //if (!hasSubscription)
-        //{
-        //    return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
-        //}
+    //    //if (!hasSubscription)
+    //    //{
+    //    //    return Result<Guid, ErrorList>.Failure(new ErrorList([new Error("", "Не существует текущего уровня подписки")]));
+    //    //}
 
-        //var categories = postCreateDto.Categories.Count != 0
-        //    ? await _context.Get<Category>()
-        //    .Where(x => postCreateDto.Categories.Contains(x.Id))
-        //    .ToListAsync()
-        //    : [];
+    //    //var categories = postCreateDto.Categories.Count != 0
+    //    //    ? await _context.Get<Category>()
+    //    //    .Where(x => postCreateDto.Categories.Contains(x.Id))
+    //    //    .ToListAsync()
+    //    //    : [];
 
-        //var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility, categories);
-        //if (postCreateDto.Thumbnail != null)
-        //{
-        //    using var storage = _fileStorageFactory.CreateFileStorage();
-        //    var previewUrl = await storage.PutFileAsync(blog.Id, $"{post.Id}/{GuidService.GetNewGuid()}", postCreateDto.Thumbnail.OpenReadStream());
-        //    post.PreviewId = previewUrl;
-        //}
-        //_context.Add(post);
-        //await _context.SaveChangesAsync();
+    //    //var post = new Post(postId, blog.Id, postCreateDto.Type, postCreateDto.Text, postCreateDto.Title, postCreateDto.SubscriptionLevelId, postCreateDto.Visibility, categories);
+    //    //if (postCreateDto.Thumbnail != null)
+    //    //{
+    //    //    using var storage = _fileStorageFactory.CreateFileStorage();
+    //    //    var previewUrl = await storage.PutFileAsync(blog.Id, $"{post.Id}/{GuidService.GetNewGuid()}", postCreateDto.Thumbnail.OpenReadStream());
+    //    //    post.PreviewId = previewUrl;
+    //    //}
+    //    //_context.Add(post);
+    //    //await _context.SaveChangesAsync();
 
-        //return Result<Guid, ErrorList>.Success(postId);
-    }
+    //    //return Result<Guid, ErrorList>.Success(postId);
+    //}
 
     public async Task<Result<PostFileMetadataModel, ErrorList>> GetVideoFileMetadataByPostIdAsync(Guid postId)
     {

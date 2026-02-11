@@ -1,5 +1,6 @@
-﻿using Blog.Domain.Entities;
-using Blog.Service.Models;
+﻿using Blog.Contracts.Models;
+using Blog.Contracts.Services;
+using Blog.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 

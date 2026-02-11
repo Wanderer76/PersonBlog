@@ -27,10 +27,9 @@
       <ProjectReference Include="..\..\Common\MessageBus.Shared\MessageBus.Shared.csproj" />
       <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
       <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
-      <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
-      <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
+      <!--<ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
+      <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />-->
       <ProjectReference Include="..\Blog.Contracts\Blog.Contracts.csproj" />
-      <ProjectReference Include="..\Blog.Domain\Blog.Domain.csproj" />
       <ProjectReference Include="..\Blog.Service\Blog.Service.csproj" />
     </ItemGroup>
 

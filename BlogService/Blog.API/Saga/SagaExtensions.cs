@@ -1,5 +1,4 @@
 ﻿using Blog.Contracts.Events;
-using Blog.Domain.Events;
 using Blog.Service.EventHandlers;
 using MessageBus;
 using MessageBus.Models;

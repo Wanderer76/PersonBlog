@@ -1,6 +1,6 @@
 ﻿
 using Blog.Contracts.Models;
-using Blog.Service.Models.Blog;
+using Blog.Contracts.Models.Blog;
 using Shared.Utils;
 using System.Net.Http.Json;
 

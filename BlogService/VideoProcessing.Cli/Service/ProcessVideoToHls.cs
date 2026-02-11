@@ -1,5 +1,5 @@
-﻿using Blog.Domain.Entities;
-using Blog.Domain.Events;
+﻿using Blog.Contracts.Events;
+using Blog.Domain.Entities;
 using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using Infrastructure.Services;

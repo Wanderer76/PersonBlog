@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
-using Profile.Domain.Services;
 using Shared.Services;
 using Profile.Domain.Events;
+using Profile.Service;
 
 namespace Profile.API.Controllers
 {

@@ -1,5 +1,5 @@
 ﻿using Authentication.Contract.Constants;
-using Blog.Service.Models.Blog;
+using Blog.Contracts.Models.Blog;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;

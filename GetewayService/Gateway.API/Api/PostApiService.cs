@@ -1,6 +1,6 @@
-﻿using Blog.Domain.Services.Models;
-using Blog.Service.Models.Blog;
-using Blog.Service.Models.File;
+﻿using Blog.Contracts.Models;
+using Blog.Contracts.Models.Blog;
+using Blog.Contracts.Models.File;
 using Infrastructure.Extensions;
 using Profile.Domain.Models;
 using Shared.Utils;

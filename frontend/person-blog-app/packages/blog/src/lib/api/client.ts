@@ -2,10 +2,10 @@
 import axios from 'axios';
 import { JwtTokenService } from '../../scripts/TokenStrorage';
 
-export const BaseApiUrl = 'http://localhost:7892';
+export const BaseApUrl = 'http://localhost:7892';
 
 export const API = axios.create({
-  baseURL: BaseApiUrl,
+  baseURL: BaseApUrl,
   withCredentials: false,
 });
 

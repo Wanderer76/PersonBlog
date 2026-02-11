@@ -31,30 +31,37 @@ builder.Services.AddPlayListContract(builder.Configuration);
 builder.Services.AddHttpClient("Auth", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Profile", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Recommendation", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Reacting", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Reacting"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Search", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Search"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Conference", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Conference"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Comments", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Comments"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 
 

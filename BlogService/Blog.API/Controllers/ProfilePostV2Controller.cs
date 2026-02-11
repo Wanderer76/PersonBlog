@@ -1,23 +1,114 @@
 ﻿using Authentication.Contract.Constants;
-using Blog.API.Models;
 using Blog.Contracts.Models;
+using Blog.Contracts.Services;
 using Blog.Domain.Entities;
-using Blog.Domain.Services;
-using Blog.Domain.Services.Models;
-using Blog.Service.Services;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Models;
-using Shared.Persistence;
-using Shared.Services;
 
 namespace Blog.API.Controllers;
 
 public class ProfilePostV2Controller(
     ILogger<BaseApiController> logger,
+    IProfilePostV2Service profilePostService,
+    ICurrentUserService currentUserService)
+    : BaseApiController(logger)
+{
+    [HttpGet("my")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<PagedListViewModel<UserPostInfoDto>>> GetCurrentUserPostPaged(
+        int page,
+        int pageSize,
+        PostType postType = PostType.Video)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var result = await profilePostService.GetCurrentUserPostsAsync(
+            user.BlogId, page, pageSize, postType);
+        return Ok(result);
+    }
+
+    [HttpGet("create")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<CreatePostModelViewModel>> GetPostCreateModel()
+    {
+        var model = await profilePostService.GetPostCreateModelAsync();
+        return Ok(model);
+    }
+
+    [HttpPost("create")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<UserPostInfoDto>> CreatePost([FromForm] PostCreateRequest request)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        // Преобразование HTTP-запроса в доменную команду
+        var command = MapToCommand(request);
+
+        try
+        {
+            var result = await profilePostService.CreatePostAsync(command, user.BlogId);
+            return Ok(result.Value);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("availablePostByBlogId/{blogId:guid}")]
+    [AuthFilter]
+    public async Task<ActionResult<PagedListViewModel<PostCommonModelV2>>> GetAvailablePostPagedByBlogId(
+        Guid blogId,
+        int page,
+        int pageSize,
+        PostType postType = PostType.Video)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var result = await profilePostService.GetAvailablePostsByBlogIdAsync(
+            user.BlogId, blogId, page, pageSize, postType);
+        return Ok(result);
+    }
+
+    private PostCreateCommand MapToCommand(PostCreateRequest request)
+    {
+        PostFileUpload? MapFile(IFormFile? file) => file == null || file.Length == 0
+            ? null
+            : new PostFileUpload(
+                file.OpenReadStream(),
+                file.FileName,
+                file.Length,
+                file.ContentType);
+
+        return new PostCreateCommand(
+            Type: request.Type,
+            Title: request.Title,
+            Visibility: request.Visibility,
+            Description: request.Type == PostType.Video ? request.VideoPostData?.Description : null,
+            TextContent: request.Type == PostType.Text ? request.TextPostData?.Text.Trim() : null,
+            CategoryIds: request.VideoPostData?.Categories,
+            TextFiles: request.Type == PostType.Text
+                ? request.TextPostData?.Files?.Where(f => f.Length > 0)
+                    .Select(f => new PostFileUpload(
+                        f.OpenReadStream(),
+                        f.FileName,
+                        f.Length,
+                        f.ContentType))
+                    .ToList()
+                : null,
+            Thumbnail: request.Type == PostType.Video
+                ? MapFile(request.VideoPostData?.Thumbnail)
+                : null
+        );
+    }
+}
+
+
+/*
+public class ProfilePostV2Controller(
+    ILogger<BaseApiController> logger,
+    IProfilePostV2Service profilePostV2Service,
     IReadWriteRepository<IBlogEntity> repository,
     ICurrentUserService currentUserService,
     IFileStorageFactory fileStorageFactory,
@@ -258,3 +349,4 @@ public class ProfilePostV2Controller(
         return Ok(new PagedListViewModel<PostCommonModelV2>((int)Math.Ceiling((double)totalCount / pageSize), pageSize, await Task.WhenAll(result)));
     }
 }
+*/

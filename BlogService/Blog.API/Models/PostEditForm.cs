@@ -1,4 +1,6 @@
-﻿namespace Blog.API.Models
+﻿using Blog.Contracts.Services;
+
+namespace Blog.API.Models
 {
     public class PostEditForm : PostCreateRequest
     {

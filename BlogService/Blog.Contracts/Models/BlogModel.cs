@@ -1,4 +1,4 @@
-﻿namespace Blog.Service.Models.Blog;
+﻿namespace Blog.Contracts.Models.Blog;
 
 public class BlogModel
 {

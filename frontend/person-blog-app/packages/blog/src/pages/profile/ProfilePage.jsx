@@ -301,7 +301,7 @@ const CreatePostCard = function ({ post, lastPostRef, navigate, handleRemove }) 
         <div className="postCard" ref={lastPostRef ? lastPostRef : null}>
             <div className="postThumbnail" onClick={(e) => { e.preventDefault(); if (post.videoInfo.processState === 1) navigate(`/video/${post.id}`); }}>
                 <img src={post.videoInfo.previewUrl} alt={post.title} />
-                <div className="videoDuration">{secondsToHumanReadable(post.videoInfo.videoMetadata.duration)}</div>
+                <div className="videoDuration">{secondsToHumanReadable(post.videoInfo?.videoMetadata?.duration??0)}</div>
                 {post.type === 1 &&
                     <div className="postStatus">{
                         post.videoInfo.processState === 1
