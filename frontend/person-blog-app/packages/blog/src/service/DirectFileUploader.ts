@@ -74,14 +74,14 @@ export class DirectFileUploader {
             duration: duration,
 
         });
-        const session = response.data;
+        const session = response.data as InitiateUploadResponse;
 
         this.postId = postId;
         this.uploadId = session.uploadId;
         this.objectName = file.name;
         this.size = file.size;
         this.parts = [];
-        return response;
+        return session;
     }
 
     async uploadFile(file: File): Promise<void> {

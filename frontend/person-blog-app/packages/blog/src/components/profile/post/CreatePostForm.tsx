@@ -90,6 +90,13 @@ const CreatePostForm = () => {
       }
 
       setPostForm(prev => ({ ...prev, video: file }));
+    }
+    else if (name === 'thumbnail' && files?.[0]) {
+      const file = files[0];
+      setPostForm(prev => ({
+      ...prev,
+      videoPostData: { ...prev.videoPostData, thumbnail: file }
+    }));
     } else {
       setPostForm(prev => ({ ...prev, [name]: value }));
     }
@@ -113,62 +120,64 @@ const CreatePostForm = () => {
 
   // Отправка формы
   const sendForm = async () => {
-  if (!postForm.title.trim()) {
-    alert("Пожалуйста, добавьте название видео");
-    return;
-  }
-
-  if (isSubmitting) return;
-  setIsSubmitting(true);
-
-  try {
-    const formData = new FormData();
-    
-    // Основные поля
-    formData.append('type', postForm.type.toString());
-    formData.append('title', postForm.title.trim());
-    formData.append('visibility', postForm.visibility.toString());
-
-    // Поля videoPostData
-    // Описание: преобразуем null в пустую строку для корректной отправки
-    const descriptionValue = postForm.videoPostData.description ?? '';
-    formData.append('videoPostData[description]', descriptionValue.trim());
-
-    // Категории: отправляем каждый ID отдельно с именем массива
-    postForm.videoPostData.categories.forEach(categoryId => {
-      formData.append('videoPostData[categories][]', categoryId.toString());
-    });
-
-    // Превью: добавляем файл только если это экземпляр File
-    if (postForm.videoPostData.thumbnail instanceof File) {
-      formData.append(
-        'videoPostData[thumbnail]',
-        postForm.videoPostData.thumbnail,
-        postForm.videoPostData.thumbnail.name
-      );
+    if (!postForm.title.trim()) {
+      alert("Пожалуйста, добавьте название видео");
+      return;
     }
 
-    // ВАЖНО: Не устанавливаем заголовок 'Content-Type' вручную!
-    // Браузер автоматически установит правильный boundary для multipart/form-data
-    const response = await API.post("/profile/api/ProfilePostV2/create", formData);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    if (response.status === 200 && response.data?.id) {
-      const postId = response.data.id;
+    try {
+      const formData = new FormData();
 
-      // Загружаем видео отдельно, если оно выбрано
-      if (postForm.video) {
-        await uploadFile(postId, postForm.video);
+      // Основные поля
+      formData.append('type', postForm.type.toString());
+      formData.append('title', postForm.title.trim());
+      formData.append('visibility', postForm.visibility.toString());
+
+      // Поля videoPostData
+      // Описание: преобразуем null в пустую строку для корректной отправки
+      const descriptionValue = postForm.videoPostData.description ?? '';
+      formData.append('videoPostData[description]', descriptionValue.trim());
+
+      // Категории: отправляем каждый ID отдельно с именем массива
+      postForm.videoPostData.categories.forEach(categoryId => {
+        formData.append('videoPostData[categories][]', categoryId.toString());
+      });
+console.log('Тип:', typeof postForm.videoPostData.thumbnail);
+console.log('Это файл:', postForm.videoPostData.thumbnail instanceof File);
+console.log('Значение:', postForm.videoPostData.thumbnail);
+      // Превью: добавляем файл только если это экземпляр File
+     if (postForm.videoPostData.thumbnail && postForm.videoPostData.thumbnail instanceof File)  {
+          formData.append(
+    'videoPostData.thumbnail',
+    postForm.videoPostData.thumbnail,
+    postForm.videoPostData.thumbnail.name
+  );
       }
-    }
 
-    navigate('/profile');
-  } catch (error) {
-    console.error("Ошибка создания поста:", error);
-    alert("Произошла ошибка при создании поста. Проверьте заполнение полей и попробуйте снова.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      // ВАЖНО: Не устанавливаем заголовок 'Content-Type' вручную!
+      // Браузер автоматически установит правильный boundary для multipart/form-data
+      const response = await API.post("/profile/api/ProfilePostV2/create", formData);
+
+      if (response.status === 200 && response.data?.id) {
+        const postId = response.data.id;
+
+        // Загружаем видео отдельно, если оно выбрано
+        if (postForm.video) {
+          await uploadFile(postId, postForm.video);
+        }
+      }
+
+      navigate('/profile');
+    } catch (error) {
+      console.error("Ошибка создания поста:", error);
+      alert("Произошла ошибка при создании поста. Проверьте заполнение полей и попробуйте снова.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Загрузка видео файла
   const uploadFile = async (postId: string, file: File) => {

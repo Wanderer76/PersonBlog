@@ -28,6 +28,7 @@ internal class DefaultProfilePostV2Service(
         var query = BuildBasePostQuery(blogId, postType);
         var totalCount = await query.CountAsync();
         var posts = await ApplyIncludes(query, postType)
+            .OrderByDescending(x=>x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

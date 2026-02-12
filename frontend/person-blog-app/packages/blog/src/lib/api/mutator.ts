@@ -7,7 +7,7 @@ let refreshTokenPromise: Promise<void> | null = null;
 // Функция с дженерик типом для Orval
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
   const instance = axios.create({
-    baseURL: 'http://localhost:7892',
+    baseURL: 'http://localhost:7892/video',
     withCredentials: false,
   });
 
