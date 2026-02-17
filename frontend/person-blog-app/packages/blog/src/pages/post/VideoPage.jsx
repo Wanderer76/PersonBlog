@@ -346,9 +346,7 @@ const VideoPage = function (props) {
 }
 
 async function createConference(postId, navigate) {
-    const response = await API.post(`video/api/ConferenceRoom/createConferenceToPost?postId=${postId}`, null, {
-        headers: { Authorization: JwtTokenService.getFormatedTokenForHeader() }
-    });
+    const response = await API.post(`video/api/ConferenceRoom/createConferenceToPost?postId=${postId}`, null);
 
     if (response.status === 200) {
         navigate(`/conference/${response.data.id}`)

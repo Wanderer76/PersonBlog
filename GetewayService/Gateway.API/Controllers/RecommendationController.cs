@@ -1,6 +1,6 @@
-﻿using Blog.Service.Models;
-using Infrastructure.Models;
+﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Recommendation.Service.Models;
 using System.Web;
 
 namespace Gateway.API.Controllers

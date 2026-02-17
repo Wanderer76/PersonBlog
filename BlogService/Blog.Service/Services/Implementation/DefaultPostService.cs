@@ -14,7 +14,7 @@ using Shared.Utils;
 
 namespace Blog.Service.Services.Implementation;
 
-internal class DefaultPostService : IPostService
+internal class DefaultPostService //: IPostService
 {
     private readonly IReadWriteRepository<IBlogEntity> _context;
     private readonly IFileStorageFactory _fileStorageFactory;
@@ -215,62 +215,62 @@ internal class DefaultPostService : IPostService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
-    {
-        using var fileStorage = _fileStorageFactory.CreateFileStorage();
-        var metadata = await _cacheService.GetCachedDataAsync<VideoFile>(new VideoMetadataCacheKey(uploadVideoChunkDto.PostId));
+    //public async Task<Result<bool>> UploadVideoChunkAsync(UploadVideoChunkDto uploadVideoChunkDto)
+    //{
+    //    using var fileStorage = _fileStorageFactory.CreateFileStorage();
+    //    var metadata = await _cacheService.GetCachedDataAsync<VideoFile>(new VideoMetadataCacheKey(uploadVideoChunkDto.PostId));
 
-        var blogId = await _context.Get<Post>()
-            .Where(x => x.Id == uploadVideoChunkDto.PostId)
-            .Select(x => x.BlogId)
-            .FirstAsync();
+    //    var blogId = await _context.Get<Post>()
+    //        .Where(x => x.Id == uploadVideoChunkDto.PostId)
+    //        .Select(x => x.BlogId)
+    //        .FirstAsync();
 
-        if (metadata == null)
-        {
-            return new Error("Не существует метаданных поста");
-        }
-        var progress = await _videoService.GetUploadVideoMetadata(metadata.Id);
+    //    if (metadata == null)
+    //    {
+    //        return new Error("Не существует метаданных поста");
+    //    }
+    //    var progress = await _videoService.GetUploadVideoMetadata(metadata.Id);
 
-        if (progress.IsFailure)
-        {
-            return Result<bool>.Failure(progress.Errors!);
-        }
+    //    if (progress.IsFailure)
+    //    {
+    //        return Result<bool>.Failure(progress.Errors!);
+    //    }
 
-        if (progress.Value.LastUploadChunkNumber >= uploadVideoChunkDto.ChunkNumber)
-            return true;
+    //    if (progress.Value.LastUploadChunkNumber >= uploadVideoChunkDto.ChunkNumber)
+    //        return true;
 
-        await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId,
-            GuidService.GetNewGuid(),
-            uploadVideoChunkDto.ChunkData,
-            new ChunkUploadingInfo(metadata.Id, uploadVideoChunkDto.ChunkNumber));
+    //    await fileStorage.PutFileChunkAsync(uploadVideoChunkDto.PostId,
+    //        GuidService.GetNewGuid(),
+    //        uploadVideoChunkDto.ChunkData,
+    //        new ChunkUploadingInfo(metadata.Id, uploadVideoChunkDto.ChunkNumber));
 
-        progress.Value.LastUploadChunkNumber++;
+    //    progress.Value.LastUploadChunkNumber++;
 
-        await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(DefaultVideoService.LifeTimeInMinutes));
+    //    await _cacheService.SetCachedDataAsync(progress.Value, progress.Value, TimeSpan.FromMinutes(DefaultVideoService.LifeTimeInMinutes));
 
-        if (progress.Value.LastUploadChunkNumber == progress.Value.TotalChunkCount)
-        {
-            var videoCreateEvent = new CombineFileChunksCommand
-            {
-                BlogId = blogId,
-                VideoMetadataId = metadata.Id,
-                PostId = uploadVideoChunkDto.PostId,
-            };
+    //    if (progress.Value.LastUploadChunkNumber == progress.Value.TotalChunkCount)
+    //    {
+    //        var videoCreateEvent = new CombineFileChunksCommand
+    //        {
+    //            BlogId = blogId,
+    //            VideoMetadataId = metadata.Id,
+    //            PostId = uploadVideoChunkDto.PostId,
+    //        };
 
-            var post = await _context.Get<Post>()
-                .FirstAsync(x=>x.Id==metadata.PostId);
+    //        var post = await _context.Get<Post>()
+    //            .FirstAsync(x=>x.Id==metadata.PostId);
 
-            _context.Attach(post);
+    //        _context.Attach(post);
 
-            var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
-            post.ProcessState = ProcessState.Draft;
-            _context.Add(metadata);
-            _context.Add(videoEvent);
-            await _context.SaveChangesAsync();
-            await _cacheService.RemoveCachedDataAsync(progress.Value);
-        }
-        return true;
-    }
+    //        var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
+    //        post.ProcessState = ProcessState.Draft;
+    //        _context.Add(metadata);
+    //        _context.Add(videoEvent);
+    //        await _context.SaveChangesAsync();
+    //        await _cacheService.RemoveCachedDataAsync(progress.Value);
+    //    }
+    //    return true;
+    //}
 
     public async Task<PostModel> UpdatePostAsync(PostEditDto postEditDto)
     {
@@ -370,6 +370,8 @@ internal class DefaultPostService : IPostService
             var post = await _context.Get<Post>()
             .Include(x => x.VideoPostInfo)
             .ThenInclude(x => x.VideoFile)
+            .Include(x=>x.VideoPostInfo)
+            .ThenInclude(x=>x.PreviewFile)
             .Include(x => x.Blog)
             .FirstAsync(x => x.Id == postId);
 
@@ -385,7 +387,7 @@ internal class DefaultPostService : IPostService
 
             var previewUrl = !post.VideoPostInfo.PreviewId.HasValue
                 ? null
-                : await fileStorage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewId.Value.ToString());
+                : await fileStorage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName);
 
             var videoMetadata = post.VideoPostInfo.VideoFile;
             var processState = post.VideoPostInfo.VideoFile != null ? post.ProcessState : ProcessState.Load;

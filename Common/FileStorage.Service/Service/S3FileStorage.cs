@@ -105,7 +105,7 @@ internal class S3FileStorage : IMultipartFileUpload
 
         if (parts == null || parts.Count == 0)
         {
-            parts = await ListPartsAsync(bucketId, uploadId);
+            parts = (await ListPartsAsync(bucketId, uploadId)).ToList();
         }
 
         if (parts.Count == 0)
@@ -157,7 +157,7 @@ internal class S3FileStorage : IMultipartFileUpload
         return await GetSessionAsync(bucketId, uploadId);
     }
 
-    public async Task<List<MultipartUploadPart>> ListPartsAsync(string bucketId, string uploadId)
+    public async Task<IReadOnlyList<MultipartUploadPart>> ListPartsAsync(string bucketId, string uploadId)
     {
         var session = await GetSessionAsync(bucketId, uploadId) ?? throw new InvalidOperationException($"Upload session {uploadId} not found");
         var parts = new List<MultipartUploadPart>();

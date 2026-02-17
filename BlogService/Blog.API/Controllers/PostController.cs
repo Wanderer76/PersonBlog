@@ -167,6 +167,7 @@ public class PostController : BaseApiController
     [Authorize]
     public async Task<ActionResult<UploadVideoProgress>> GetPostVideoUploadProgress(Guid fileId)
     {
+        throw new NotImplementedException();
         var result = await _videoService.GetUploadVideoMetadata(fileId);
         if (result.IsSuccess)
         {
@@ -189,28 +190,28 @@ public class PostController : BaseApiController
         return BadRequest(result.Errors);
     }
 
-    [HttpPost("uploadChunk")]
-    public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
-    {
-        try
-        {
-            var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
-            using var data = uploadVideoChunk.ChunkData.OpenReadStream();
-            await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
-            {
-                ChunkNumber = uploadVideoChunk.ChunkNumber,
-                TotalChunkCount = uploadVideoChunk.TotalChunkCount,
-                ChunkData = data,
-                PostId = uploadVideoChunk.PostId
-            });
-        }
-        catch (Exception ex)
-        {
-            return BadRequest();
-        }
-        return Ok();
+    //[HttpPost("uploadChunk")]
+    //public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
+    //{
+    //    try
+    //    {
+    //        var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
+    //        using var data = uploadVideoChunk.ChunkData.OpenReadStream();
+    //        await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
+    //        {
+    //            ChunkNumber = uploadVideoChunk.ChunkNumber,
+    //            TotalChunkCount = uploadVideoChunk.TotalChunkCount,
+    //            ChunkData = data,
+    //            PostId = uploadVideoChunk.PostId
+    //        });
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        return BadRequest();
+    //    }
+    //    return Ok();
 
-    }
+    //}
 
     [HttpGet("hasView")]
     [Produces(typeof(bool))]

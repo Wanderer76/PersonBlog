@@ -1,4 +1,6 @@
-﻿using Blog.Contracts.Models.File;
+﻿using Amazon.Runtime.Internal;
+using Blog.Contracts.Events;
+using Blog.Contracts.Models.File;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using FileStorage.Service.Models;
@@ -105,7 +107,7 @@ internal sealed class DefaultVideoService : IVideoService
         return data;
     }
 
-    public async Task<Result> CreateFileMetadataAsync(InitiateUploadRequest initiateUploadRequest)
+    public async Task<Result> InitVideoUploadAsync(InitiateUploadRequest initiateUploadRequest)
     {
         var post = await _context.Get<Post>()
             .FirstAsync(x => x.Id == initiateUploadRequest.PostId);
@@ -115,8 +117,8 @@ internal sealed class DefaultVideoService : IVideoService
             return Result.Failure(new Error("Пост не является постом с видео"));
         }
 
-        var exists  = await _context.Get<VideoFile>()
-            .FirstOrDefaultAsync(x=>x.PostId == post.Id);
+        var exists = await _context.Get<VideoFile>()
+            .FirstOrDefaultAsync(x => x.PostId == post.Id);
 
         if (exists != null)
         {
@@ -126,7 +128,7 @@ internal sealed class DefaultVideoService : IVideoService
 
         _context.Attach(post);
         post.ProcessState = ProcessState.Load;
-        
+
         var metadata = new VideoFile
         {
             Id = GuidService.GetNewGuid(),
@@ -138,10 +140,39 @@ internal sealed class DefaultVideoService : IVideoService
             Resolution = VideoResolution.Original,
             Duration = initiateUploadRequest.Duration,
             ObjectName = initiateUploadRequest.ObjectName,
-            Length = initiateUploadRequest.Size
+            Length = initiateUploadRequest.Size,
         };
         _context.Add(metadata);
         await _context.SaveChangesAsync();
         return Result.Success();
+    }
+
+    public async Task CompleteUploadAsync(Guid postId)
+    {
+        var metadata = await _context.Get<VideoFile>()
+                  .Where(x => x.PostId == postId)
+                  .FirstAsync();
+
+
+        var post = await _context.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .FirstAsync(x => x.Id == metadata.PostId);
+
+        var videoCreateEvent = new ConvertVideoCommand
+        {
+            VideoMetadata = metadata,
+            HasPreviewId = post.VideoPostInfo.PreviewId.HasValue,
+            ObjectName = metadata.ObjectName,
+            BlogId = post.BlogId,
+            VideoMetadataId = metadata.Id,
+            PostId = metadata.PostId,
+        };
+
+        _context.Attach(post);
+
+        var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
+        post.ProcessState = ProcessState.Draft;
+        _context.Add(videoEvent);
+        await _context.SaveChangesAsync();
     }
 }

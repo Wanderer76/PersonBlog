@@ -74,7 +74,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
     private async Task ProcessPreviewAsync(ConvertVideoCommand @event, VideoConvertedResponse result, string url, FFProbeStream videoStream)
     {
         var snapshotFileId = GuidService.GetNewGuid();
-        var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
+        var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".jpg");
         try
         {
             await _ffmpegService.GeneratePreviewAsync(new Uri(url).AbsoluteUri, snapshotFileName);
@@ -126,7 +126,8 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
                 Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
                 AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
                 SegmentFileName = fileId.ToString(),
-                MasterName = fileMetadata.Id.ToString()
+                MasterName = fileMetadata.Id.ToString(),
+                EncodePreset = _videoPresets.EncodePreset
             };
 
             var progressCallBack = new AsyncProgress<double>((currentTime) =>

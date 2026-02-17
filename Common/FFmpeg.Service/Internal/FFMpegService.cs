@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace FFmpeg.Service.Internal
 {
-    internal class FFMpegService : IVideoConvertService
+    internal sealed class FFMpegService : IVideoConvertService
     {
         private readonly FFMpegOptions fFMpegOptions;
         public FFMpegService(FFMpegOptions configuration)
@@ -39,7 +39,7 @@ namespace FFmpeg.Service.Internal
                 filterComplexBuilder.Append($"[v{i}]");
             }
 
-            filterComplexBuilder.Append(";");
+            filterComplexBuilder.Append(';');
             var mapVideoParamsBuilder = new StringBuilder();
             var mapAudioParamsBuilder = new StringBuilder();
             var mapVariantsBuilder = new StringBuilder();
@@ -62,11 +62,10 @@ namespace FFmpeg.Service.Internal
                 else 
                     filterComplexBuilder.Append($"[v{i + 1}]scale=w={height}:h={width}[v{i}out];");
 
-
                     string bufsize = rate.Replace("M", "0M").Replace("k", "k");
                 mapVideoParamsBuilder.Append($"-map \"[v{i}out]\" -c:v:{i} {fFMpegOptions.DefaultEncoder} " +
-                    $"-b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset medium" +
-                    $" -g 48 -sc_threshold 0 -keyint_min 48 -pix_fmt yuv420p ");
+                    $"-b:v:{i} {rate} -maxrate:v:{i} {rate} -minrate:v:{i} {rate} -bufsize:v:{i} {bufsize} -preset {options.EncodePreset}" +
+                    $" -g 48 -sc_threshold 0 -keyint_min 48 " /*+ "-pix_fmt yuv420p "*/);
                 if (inputAudio != null)
                 {
                     mapAudioParamsBuilder.Append($"-map 0:a -c:a:{i} aac -b:a:{i} {ab} -ac 2 ");

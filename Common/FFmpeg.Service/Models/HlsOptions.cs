@@ -7,5 +7,6 @@
         public required IReadOnlyList<string> AudioBitrates { get; set; }
         public required string SegmentFileName { get; set; }
         public string MasterName { get; set; } = "master";
+        public string EncodePreset { get; set; } = "fast";
     }
 }

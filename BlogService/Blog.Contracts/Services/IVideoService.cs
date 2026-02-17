@@ -5,10 +5,16 @@ using Shared.Utils;
 namespace Blog.Contracts.Services;
 public interface IVideoService
 {
+    [Obsolete("", true)]
     Task<Result<FileMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk);
+    [Obsolete("", true)]
+
     Task<Result<UploadVideoProgress>> CreateUploadVideoMetadata(CreateUploadVideoProgressRequest uploadVideoChunk);
+    [Obsolete("", true)]
     Task<Result<UploadVideoProgress>> GetUploadVideoMetadata(Guid fileId);
-    Task<Result> CreateFileMetadataAsync(InitiateUploadRequest initiateUploadRequest);
+    Task<Result> InitVideoUploadAsync(InitiateUploadRequest initiateUploadRequest);
+    Task CompleteUploadAsync(Guid postId);
+
 }
 public class InitiateUploadRequest
 {

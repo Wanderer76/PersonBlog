@@ -1,7 +1,7 @@
 ﻿using Blog.Contracts.Models.Post;
-using Blog.Service.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Recommendation.Service.Models;
 using System.Text.Encodings.Web;
 
 namespace Gateway.API.Controllers

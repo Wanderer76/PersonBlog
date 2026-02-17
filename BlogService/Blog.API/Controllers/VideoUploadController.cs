@@ -2,7 +2,6 @@
 using Blog.Contracts.Events;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
-using Blog.Domain.Events;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
@@ -23,8 +22,7 @@ public sealed class VideoUploadController(
 
     [HttpPost("initiate")]
     [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult<MultipartUploadSession>> InitiateUpload(
-    [FromBody] InitiateUploadRequest request)
+    public async Task<ActionResult<MultipartUploadSession>> InitiateUpload([FromBody] InitiateUploadRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var objectName = $"{request.PostId}/{request.ObjectName}";
@@ -34,8 +32,7 @@ public sealed class VideoUploadController(
             request.Size);
 
         request.ObjectName = objectName;
-        var metadata = await videoService.CreateFileMetadataAsync(request);
-
+        _ = await videoService.InitVideoUploadAsync(request);
         return Ok(session);
     }
 
@@ -69,32 +66,7 @@ public sealed class VideoUploadController(
             request.UploadId,
             request.Parts);
 
-        var metadata = await context.Get<VideoFile>()
-            .Where(x => x.PostId == request.PostId)
-            .FirstAsync();
-
-
-        var post = await context.Get<Post>()
-            .Include(x => x.VideoPostInfo)
-            .FirstAsync(x => x.Id == metadata.PostId);
-
-        var videoCreateEvent = new ConvertVideoCommand
-        {
-            VideoMetadata = metadata,
-            HasPreviewId = post.VideoPostInfo.PreviewId.HasValue,
-            ObjectName = metadata.ObjectName,
-            BlogId = user.BlogId,
-            VideoMetadataId = metadata.Id,
-            PostId = metadata.PostId,
-        };
-
-        context.Attach(post);
-
-        var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
-        post.ProcessState = ProcessState.Draft;
-        context.Add(videoEvent);
-        await context.SaveChangesAsync();
-
+        await videoService.CompleteUploadAsync(request.PostId);
         return Ok(eTag);
     }
 
@@ -156,7 +128,6 @@ public class ResumeUploadResponse
     public List<int> MissingParts { get; set; } = new();
     public int Progress { get; set; }
 }
-
 
 public class GenerateUrlRequest
 {
