@@ -163,32 +163,32 @@ public class PostController : BaseApiController
         return Ok();
     }
 
-    [HttpGet("uploadProgress")]
-    [Authorize]
-    public async Task<ActionResult<UploadVideoProgress>> GetPostVideoUploadProgress(Guid fileId)
-    {
-        throw new NotImplementedException();
-        var result = await _videoService.GetUploadVideoMetadata(fileId);
-        if (result.IsSuccess)
-        {
-            return Ok(result.Value);
-        }
+    //[HttpGet("uploadProgress")]
+    //[Authorize]
+    //public async Task<ActionResult<UploadVideoProgress>> GetPostVideoUploadProgress(Guid fileId)
+    //{
+    //    throw new NotImplementedException();
+    //    var result = await _videoService.GetUploadVideoMetadata(fileId);
+    //    if (result.IsSuccess)
+    //    {
+    //        return Ok(result.Value);
+    //    }
 
-        return BadRequest(result.Errors);
-    }
+    //    return BadRequest(result.Errors);
+    //}
 
-    [HttpPost("uploadProgress")]
-    [Authorize]
-    public async Task<ActionResult<UploadVideoProgress>> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
-    {
-        var result = await _videoService.CreateUploadVideoMetadata(request);
-        if (result.IsSuccess)
-        {
-            return Ok(result.Value);
-        }
+    //[HttpPost("uploadProgress")]
+    //[Authorize]
+    //public async Task<ActionResult<UploadVideoProgress>> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
+    //{
+    //    var result = await _videoService.CreateUploadVideoMetadata(request);
+    //    if (result.IsSuccess)
+    //    {
+    //        return Ok(result.Value);
+    //    }
 
-        return BadRequest(result.Errors);
-    }
+    //    return BadRequest(result.Errors);
+    //}
 
     //[HttpPost("uploadChunk")]
     //public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)

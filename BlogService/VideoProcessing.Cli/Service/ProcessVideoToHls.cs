@@ -5,7 +5,6 @@ using FFmpeg.Service.Models;
 using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
-using Shared.Models;
 using Shared.Services;
 using Shared.Utils;
 
@@ -87,7 +86,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
             result.PreviewId = new Shared.Models.FileMetadata
             {
-                CreatedAt  =DateTimeService.Now(),
+                CreatedAt = DateTimeService.Now(),
                 ContentType = "image/png",
                 FileExtension = ".png",
                 Id = snapshotFileId,
@@ -122,9 +121,9 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
             var hlsOptions = new HlsOptions
             {
-                Resolutions = presets.Select(x => x.GetResolution()).ToArray(),
-                Bitrates = presets.Select(x => x.VideoBitrate).ToArray(),
-                AudioBitrates = presets.Select(x => x.AudioBitrate).ToArray(),
+                Resolutions = [.. presets.Select(x => x.GetResolution())],
+                Bitrates = [.. presets.Select(x => x.VideoBitrate)],
+                AudioBitrates = [.. presets.Select(x => x.AudioBitrate)],
                 SegmentFileName = fileId.ToString(),
                 MasterName = fileMetadata.Id.ToString(),
                 EncodePreset = _videoPresets.EncodePreset
@@ -142,10 +141,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             foreach (var file in Directory.GetFiles(dir))
             {
                 using var fileStream = new FileStream(file, FileMode.Open);
-                using var copyStream = new MemoryStream();
-                await fileStream.CopyToAsync(copyStream);
-                copyStream.Position = 0;
-                var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{Path.GetFileName(file)}", copyStream);
+                var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{Path.GetFileName(file)}", fileStream);
             }
 
             foreach (string folder in Directory.EnumerateDirectories(dir))
@@ -153,10 +149,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
                 foreach (var file in Directory.EnumerateFiles(folder))
                 {
                     using var fileStream = new FileStream(file, FileMode.Open);
-                    using var copyStream = new MemoryStream();
-                    await fileStream.CopyToAsync(copyStream);
-                    copyStream.Position = 0;
-                    var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/')}", copyStream);
+                    var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/')}", fileStream);
                 }
             }
         }

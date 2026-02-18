@@ -17,7 +17,7 @@ namespace Blog.Service.Services.Implementation;
 internal class DefaultProfilePostV2Service(
     IReadWriteRepository<IBlogEntity> repository,
     IFileStorageFactory fileStorageFactory,
-    IPostService postService,
+    //IPostService postService,
     ISubscriptionLevelService subscriptionLevelService,
     ICategoryService categoryService)
     : IProfilePostV2Service
@@ -43,7 +43,7 @@ internal class DefaultProfilePostV2Service(
     public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()
     {
         var subscriptions = await subscriptionLevelService.GetAllSubscriptionsAsync();
-        var visibility = await postService.GetPostVisibilityListAsync();
+        var visibility = Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName()));
         var categories = await categoryService.GetAllCategoriesAsync();
         return new CreatePostModelViewModel(subscriptions, visibility, categories);
     }

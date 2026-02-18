@@ -24,7 +24,7 @@ internal sealed class DefaultVideoService : IVideoService
         _cacheService = cacheService;
         _fileStorageFactory = fileStorageFactory;
     }
-
+    [Obsolete("", true)]
     public async Task<Result<UploadVideoProgress>> CreateUploadVideoMetadata(CreateUploadVideoProgressRequest uploadVideoChunk)
     {
         var isExits = await _context.Get<Post>()
@@ -47,6 +47,7 @@ internal sealed class DefaultVideoService : IVideoService
         return await _cacheService.GetOrAddDataAsync(progress, () => Task.FromResult(progress), LifeTimeInMinutes);
     }
 
+    [Obsolete("", true)]
     public async Task<Result<FileMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
     {
         var progress = await GetUploadVideoMetadata(uploadVideoChunk.FileId);
@@ -96,7 +97,8 @@ internal sealed class DefaultVideoService : IVideoService
         await _context.SaveChangesAsync();
         return metadata;
     }
-
+    
+    [Obsolete("", true)]
     public async Task<Result<UploadVideoProgress>> GetUploadVideoMetadata(Guid fileId)
     {
         var data = await _cacheService.GetCachedDataAsync<UploadVideoProgress>(new UploadVideoProgress(fileId));
