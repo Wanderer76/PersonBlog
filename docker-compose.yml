@@ -74,33 +74,33 @@ services:
       - redis
     networks:
       - backend      
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
-      - xpack.security.enabled=false
-    volumes:
-      - ../es_data:/usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-      - "9300:9300"
-    networks:
-      - backend      
-
-  tokenizer-app:
-    build:
-      context: .
-      dockerfile: TokenizerService/Dockerfile
-    ports:
-      - "8000:8000"
-    environment:
-      - ENVIRONMENT=development
-    volumes:
-      - ./TokenizerService:/app
-    networks:
-      - backend      
+  #elasticsearch:
+  #  image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+  #  container_name: elasticsearch
+  #  environment:
+  #    - discovery.type=single-node
+  #    - ES_JAVA_OPTS=-Xms1g -Xmx1g
+  #    - xpack.security.enabled=false
+  #  volumes:
+  #    - ../es_data:/usr/share/elasticsearch/data
+  #  ports:
+  #    - "9200:9200"
+  #    - "9300:9300"
+  #  networks:
+  #    - backend      
+#
+  #tokenizer-app:
+  #  build:
+  #    context: .
+  #    dockerfile: TokenizerService/Dockerfile
+  #  ports:
+  #    - "8000:8000"
+  #  environment:
+  #    - ENVIRONMENT=development
+  #  volumes:
+  #    - ./TokenizerService:/app
+  #  networks:
+  #    - backend      
   #auth-app:
   #  container_name: auth-app
   #  depends_on: [rabbitMq]

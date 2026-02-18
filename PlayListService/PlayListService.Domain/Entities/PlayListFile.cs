@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PlayListService.Domain.Entities;
-public sealed class PlayListFile : FileMetadata, IPlayListEntity
+public sealed class PlayListFile : BaseFileMetadataEntity, IPlayListEntity
 {
     public Guid PlaylistId { get; set; }
 

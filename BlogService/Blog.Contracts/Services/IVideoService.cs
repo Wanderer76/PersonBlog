@@ -6,7 +6,7 @@ namespace Blog.Contracts.Services;
 public interface IVideoService
 {
     [Obsolete("", true)]
-    Task<Result<FileMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk);
+    Task<Result<BaseFileMetadataEntity>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk);
     [Obsolete("", true)]
 
     Task<Result<UploadVideoProgress>> CreateUploadVideoMetadata(CreateUploadVideoProgressRequest uploadVideoChunk);

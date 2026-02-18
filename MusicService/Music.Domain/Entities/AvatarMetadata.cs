@@ -3,7 +3,7 @@ using Shared.Services;
 
 namespace Music.Domain.Entities
 {
-    public class AvatarMetadata : FileMetadata, IMusicEntity
+    public class AvatarMetadata : BaseFileMetadataEntity, IMusicEntity
     {
         public AvatarMetadata() { }
 

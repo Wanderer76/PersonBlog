@@ -120,12 +120,8 @@ const ProfilePage = () => {
     }
 
     async function handleRemove(id) {
-        const url = `profile/api/Post/delete/${id}`;
-        const response = await API.delete(url, {
-            headers: {
-                Authorization: JwtTokenService.getFormatedTokenForHeader()
-            }
-        });
+        const url = `profile/api/ProfilePostV2/remove/${id}`;
+        const response = await API.post(url);
         if (response.status === 200) {
             setPosts(posts.filter(x => x.id !== id))
         }

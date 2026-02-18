@@ -59,6 +59,7 @@ const ChannelPage = () => {
     useEffect(() => {
         const loadVideos = async () => {
             try {
+                alert('неиспользуемый метод')
                 const response = await API.get(
                     `/video/api/Channel/posts/${channelId}?page=${page}&size=${pageSize}`
                 );

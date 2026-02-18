@@ -84,7 +84,7 @@ public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
             var objectName = await _storage.PutFileAsync(@event.BlogId, $"{@event.PostId}/{snapshotFileId.ToString()}", copyStream);
 
-            result.PreviewId = new Shared.Models.FileMetadata
+            result.PreviewId = new Shared.Models.BaseFileMetadataEntity
             {
                 CreatedAt = DateTimeService.Now(),
                 ContentType = "image/png",

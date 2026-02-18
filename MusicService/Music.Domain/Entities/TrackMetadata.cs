@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Music.Domain.Entities
 {
-    public class TrackMetadata : FileMetadata, IMusicEntity
+    public class TrackMetadata : BaseFileMetadataEntity, IMusicEntity
     {
         public FileProcessState ProcessState { get; set; }
         public Guid TrackId { get;  set; }

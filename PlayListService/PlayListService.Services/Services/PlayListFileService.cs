@@ -32,7 +32,7 @@ public sealed class PlayListFileService : IDisposable
         return url;
     }
 
-    public async Task<FileMetadata> UploadThumbnailAsync(Guid playlistId, Guid creatorId, FileMetadata fileMetadata, Stream input)
+    public async Task<BaseFileMetadataEntity> UploadThumbnailAsync(Guid playlistId, Guid creatorId, BaseFileMetadataEntity fileMetadata, Stream input)
     {
         var id = GuidService.GetNewGuid();
         var file = new PlayListFile
@@ -52,7 +52,7 @@ public sealed class PlayListFileService : IDisposable
         return file;
     }
 
-    public async Task<FileMetadata> UploadThumbnailWithoutPlayListAsync(Guid creatorId, FileMetadata fileMetadata, Stream input)
+    public async Task<BaseFileMetadataEntity> UploadThumbnailWithoutPlayListAsync(Guid creatorId, BaseFileMetadataEntity fileMetadata, Stream input)
     {
         var id = GuidService.GetNewGuid();
         var file = new PlayListFile

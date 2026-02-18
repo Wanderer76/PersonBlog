@@ -2,7 +2,7 @@
 
 namespace Blog.Domain.Entities;
 
-public sealed class PostFile : FileMetadata, IBlogEntity
+public sealed class PostFile : BaseFileMetadataEntity, IBlogEntity
 {
     public Guid PostId { get; set; }
 }

@@ -3,7 +3,7 @@ using Shared.Services;
 
 namespace Music.Domain.Entities
 {
-    public class ThumbnailMetadata : FileMetadata, IMusicEntity
+    public class ThumbnailMetadata : BaseFileMetadataEntity, IMusicEntity
     {
         public Guid TrackId { get; set; }
 

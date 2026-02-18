@@ -1,10 +1,7 @@
 ﻿using Authentication.Contract.Constants;
-using Blog.API.Models;
 using Blog.Contracts.Models;
-using Blog.Contracts.Models.File;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
-using Blog.Domain.Entities;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
@@ -20,36 +17,14 @@ public class PostController : BaseApiController
 {
     private readonly IPostService _postService;
     private readonly IUserPostService _userPostService;
-    private readonly IVideoService _videoService;
-    private readonly ISubscriptionLevelService _subscriptionLevelService;
-    private readonly ICategoryService _categoryService;
-    private readonly ICurrentUserService _currentUserService;
     public PostController(
         ILogger<PostController> logger,
         IPostService postService,
-        IUserPostService userPostService,
-        IVideoService videoService,
-        ISubscriptionLevelService subscriptionLevelService,
-        ICurrentUserService currentUserService,
-        ICategoryService categoryService)
+        IUserPostService userPostService)
         : base(logger)
     {
         _postService = postService;
         _userPostService = userPostService;
-        _videoService = videoService;
-        _subscriptionLevelService = subscriptionLevelService;
-        _currentUserService = currentUserService;
-        _categoryService = categoryService;
-    }
-
-    [HttpGet("manifest/{postId:guid}")]
-    [Produces(typeof(PostFileMetadataModel))]
-    public async Task<ActionResult<PostFileMetadataModel>> GetVideoFileMetadataByPostIdAsync(Guid postId)
-    {
-        var result = await _postService.GetVideoFileMetadataByPostIdAsync(postId);
-        if (result.IsSuccess)
-            return Ok(result.Value);
-        else return BadRequest(result.Error);
     }
 
     [HttpGet("detail/{postId:guid}")]
@@ -83,77 +58,6 @@ public class PostController : BaseApiController
         return Ok();
     }
 
-    [HttpGet("list")]
-    [Obsolete]
-    public async Task<ActionResult<PostPagedListViewModel>> GetBlogPostPagedList(Guid blogId, int page, int limit)
-    {
-        var result = await _postService.GetPostsByBlogIdPagedAsync(blogId, page, limit);
-        return Ok(result);
-    }
-
-    [HttpGet("create")]
-    [Obsolete]
-    public async Task<ActionResult<CreatePostModelViewModel>> GetCreatePostModel()
-    {
-        var subscriptionLevels = await _subscriptionLevelService.GetAllSubscriptionsAsync();
-        var visibilityList = await _postService.GetPostVisibilityListAsync();
-        var categoryList = await _categoryService.GetAllCategoriesAsync();
-        return Ok(new CreatePostModelViewModel(subscriptionLevels, visibilityList, categoryList));
-    }
-
-    //[HttpPost("create")]
-    //[Authorize]
-    //[Obsolete]
-    //public async Task<ActionResult<Guid>> AddPostToBlog([FromForm] PostCreateRequest form)
-    //{
-    //    var user = await _currentUserService.GetCurrentUserAsync();
-    //    var result = await _postService.CreatePostAsync(new PostCreateDto
-    //    {
-    //        UserId = user.UserId,
-    //        Type = PostType.Video,
-    //        Text = form.VideoPostData.Description?.Trim(),
-    //        Title = form.Title.Trim(),
-    //        Visibility = form.Visibility,
-    //        Thumbnail = form.VideoPostData.Thumbnail,
-    //        Categories = form.VideoPostData.Categories ?? []
-    //    });
-    //    if (result.IsSuccess)
-    //    {
-    //        return Ok(result.Value);
-    //    }
-    //    else
-    //    {
-    //        return BadRequest(result.Error);
-    //    }
-    //}
-
-    [HttpGet("edit/{postId:guid}")]
-    [Authorize]
-    public async Task<ActionResult<PostEditViewModel>> EditPost(Guid postId)
-    {
-        var result = await _postService.GetPostUpdateModelAsync(postId);
-        if (result.IsSuccess)
-            return Ok(result.Value);
-        return BadRequest(result.Errors);
-    }
-
-    [HttpPost("edit")]
-    [Authorize]
-    public async Task<ActionResult<PostModel>> EditPost([FromForm] PostEditForm form)
-    {
-        var userId = HttpContext.GetUserFromContext();
-
-        var result = await _postService.UpdatePostAsync(new PostEditDto
-        (
-            form.Id,
-            userId,
-            form.VideoPostData.Description,
-            form.Title,
-            form.VideoPostData.Thumbnail,
-            form.VideoPostData.Categories ?? []
-        ));
-        return Ok(result);
-    }
 
     [HttpDelete("delete/{id:guid}")]
     [Authorize]
@@ -161,64 +65,6 @@ public class PostController : BaseApiController
     {
         await _postService.RemovePostByIdAsync(id);
         return Ok();
-    }
-
-    //[HttpGet("uploadProgress")]
-    //[Authorize]
-    //public async Task<ActionResult<UploadVideoProgress>> GetPostVideoUploadProgress(Guid fileId)
-    //{
-    //    throw new NotImplementedException();
-    //    var result = await _videoService.GetUploadVideoMetadata(fileId);
-    //    if (result.IsSuccess)
-    //    {
-    //        return Ok(result.Value);
-    //    }
-
-    //    return BadRequest(result.Errors);
-    //}
-
-    //[HttpPost("uploadProgress")]
-    //[Authorize]
-    //public async Task<ActionResult<UploadVideoProgress>> CreatePostVideoUploadProgress(CreateUploadVideoProgressRequest request)
-    //{
-    //    var result = await _videoService.CreateUploadVideoMetadata(request);
-    //    if (result.IsSuccess)
-    //    {
-    //        return Ok(result.Value);
-    //    }
-
-    //    return BadRequest(result.Errors);
-    //}
-
-    //[HttpPost("uploadChunk")]
-    //public async Task<ActionResult> UploadVideoChunk([FromForm] UploadVideoChunkForm uploadVideoChunk)
-    //{
-    //    try
-    //    {
-    //        var metadata = await _videoService.GetOrCreateVideoMetadata(uploadVideoChunk.ToUploadVideoChunkModel());
-    //        using var data = uploadVideoChunk.ChunkData.OpenReadStream();
-    //        await _postService.UploadVideoChunkAsync(new UploadVideoChunkDto
-    //        {
-    //            ChunkNumber = uploadVideoChunk.ChunkNumber,
-    //            TotalChunkCount = uploadVideoChunk.TotalChunkCount,
-    //            ChunkData = data,
-    //            PostId = uploadVideoChunk.PostId
-    //        });
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        return BadRequest();
-    //    }
-    //    return Ok();
-
-    //}
-
-    [HttpGet("hasView")]
-    [Produces(typeof(bool))]
-    public async Task<ActionResult<bool>> CheckForViewAsync(Guid? userId, string? ipAddress)
-    {
-        var result = await _postService.CheckForViewAsync(userId, ipAddress);
-        return Ok(result);
     }
 
     [HttpPost("commonByIds")]

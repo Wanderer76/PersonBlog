@@ -4,7 +4,7 @@ using Shared.Services;
 
 namespace Blog.Domain.Entities;
 
-public sealed class VideoFile : FileMetadata, IBlogEntity
+public sealed class VideoFile : BaseFileMetadataEntity, IBlogEntity
 {
     public VideoResolution Resolution { get; set; }
     public double Duration { get; set; }

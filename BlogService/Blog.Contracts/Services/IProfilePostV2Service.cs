@@ -1,34 +1,25 @@
 ﻿using Blog.Contracts.Models;
 using Blog.Contracts.Models.Category;
+using Blog.Contracts.Models.Post;
 using Blog.Domain.Entities;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Shared.Models;
 using Shared.Utils;
-using System.ComponentModel.DataAnnotations;
 
 namespace Blog.Contracts.Services;
 public interface IProfilePostV2Service
 {
-    Task<PagedListViewModel<UserPostInfoDto>> GetCurrentUserPostsAsync(
-      Guid blogId,
-      int page,
-      int pageSize,
-      PostType postType);
-
+    Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(Guid blogId, int page, int pageSize, PostType postType);
     Task<CreatePostModelViewModel> GetPostCreateModelAsync();
+    Task<Result<UserPostInfoModel>> CreatePostAsync(PostCreateCommand command);
+    Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(Guid requestedBlogId, int page, int pageSize, PostType postType);
+    Task<Result> RemovePostAsync(Guid postId);
+    Task<Result<PostEditViewModel>> GetPostEditViewModelAsync(Guid postId);
 
-    Task<Result<UserPostInfoDto>> CreatePostAsync(
-        PostCreateCommand command,
-        Guid blogId);
+    Task<Result> UpdatePostAsync(PostUpdateRequest updateRequest);
 
-    Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(
-        Guid currentBlogId,
-        Guid requestedBlogId,
-        int page,
-        int pageSize,
-        PostType postType);
 }
-
 
 public class PostCreateRequest
 {
@@ -38,6 +29,25 @@ public class PostCreateRequest
     public TextPostCreateForm? TextPostData { get; set; }
     public VideoPostCreateForm? VideoPostData { get; set; }
 }
+
+public sealed class PostUpdateRequest
+{
+    public Guid Id { get; }
+    public string? Description { get; }
+    public string Title { get; }
+    public FileMetadataModel? Preview { get; }
+    public List<int> Categories { get; }
+
+    public PostUpdateRequest(Guid id, string? description, string title, FileMetadataModel? previewId, List<int> categories)
+    {
+        Id = id;
+        Description = description?.Trim();
+        Title = title.Trim();
+        Preview = previewId;
+        Categories = categories;
+    }
+}
+
 
 public sealed class VideoPostCreateForm
 {
@@ -51,7 +61,7 @@ public sealed class TextPostCreateForm
     public string Text { get; set; }
     public IFormFileCollection? Files { get; set; }
 }
-public class UserPostInfoDto
+public class UserPostInfoModel
 {
     public Guid Id { get; set; }
     public Guid BlogId { get; set; }
@@ -64,13 +74,13 @@ public class UserPostInfoDto
 
     public TextInfoDto? TextInfo { get; set; }
     public VideoInfoDto? VideoInfo { get; set; }
-    public DateTimeOffset CreatedAt { get;  set; }
+    public DateTimeOffset CreatedAt { get; set; }
 }
+
 public record CreatePostModelViewModel(
     IEnumerable<SubscriptionLevelModel> SubscriptionLevels,
     IEnumerable<SelectItem<PostVisibility>> Visibility,
     IEnumerable<CategoryModel> CategoryList);
-
 
 public record PostCreateCommand(
     PostType Type,
@@ -79,12 +89,7 @@ public record PostCreateCommand(
     string? Description,
     string? TextContent,
     IReadOnlyList<int>? CategoryIds,
-    IReadOnlyList<PostFileUpload>? TextFiles,
-    PostFileUpload? Thumbnail);
+    IReadOnlyList<FileMetadataModel>? TextFiles,
+    FileMetadataModel? Thumbnail);
 
-// Модель загрузки файла (без IFormFile)
-public record PostFileUpload(
-    Stream ContentStream,
-    string FileName,
-    long Length,
-    string ContentType);
+public record PostFileUpload(Stream ContentStream, string FileName, long Length, string ContentType);

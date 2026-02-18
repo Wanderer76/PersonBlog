@@ -1,4 +1,6 @@
-﻿using Blog.Contracts.Models;
+﻿using Blog.Contracts.Events;
+using Blog.Contracts.Models;
+using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Infrastructure.Services;
@@ -7,34 +9,30 @@ using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Blog.Service.Services.Implementation;
+
 internal class DefaultProfilePostV2Service(
     IReadWriteRepository<IBlogEntity> repository,
     IFileStorageFactory fileStorageFactory,
-    //IPostService postService,
+    ICurrentUserService currentUserService,
     ISubscriptionLevelService subscriptionLevelService,
     ICategoryService categoryService)
     : IProfilePostV2Service
 {
-    public async Task<PagedListViewModel<UserPostInfoDto>> GetCurrentUserPostsAsync(
+    public async Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(
             Guid blogId, int page, int pageSize, PostType postType)
     {
         var query = BuildBasePostQuery(blogId, postType);
         var totalCount = await query.CountAsync();
         var posts = await ApplyIncludes(query, postType)
-            .OrderByDescending(x=>x.CreatedAt)
+            .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
         var dtos = await MapToUserPostInfoDtosAsync(posts, blogId, postType);
-        return new PagedListViewModel<UserPostInfoDto>(
+        return new PagedListViewModel<UserPostInfoModel>(
             (int)Math.Ceiling((double)totalCount / pageSize),
             pageSize,
             dtos);
@@ -42,14 +40,16 @@ internal class DefaultProfilePostV2Service(
 
     public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()
     {
-        var subscriptions = await subscriptionLevelService.GetAllSubscriptionsAsync();
         var visibility = Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName()));
+        var subscriptions = await subscriptionLevelService.GetAllSubscriptionsAsync();
         var categories = await categoryService.GetAllCategoriesAsync();
         return new CreatePostModelViewModel(subscriptions, visibility, categories);
     }
 
-    public async Task<Result<UserPostInfoDto>> CreatePostAsync(PostCreateCommand command, Guid blogId)
+    public async Task<Result<UserPostInfoModel>> CreatePostAsync(PostCreateCommand command)
     {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var blogId = user.BlogId;
         var postId = GuidService.GetNewGuid();
         var categories = command.CategoryIds != null && command.CategoryIds.Any()
             ? await categoryService.GetCategoriesByIdsAsync(command.CategoryIds)
@@ -75,12 +75,13 @@ internal class DefaultProfilePostV2Service(
         return await MapToUserPostInfoDtoAsync(post, blogId, storage);
     }
 
-    public async Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(
-        Guid currentBlogId, Guid requestedBlogId, int page, int pageSize, PostType postType)
+    public async Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(Guid requestedBlogId, int page, int pageSize, PostType postType)
     {
         var query = BuildBasePostQuery(requestedBlogId, postType);
 
-        // Показываем черновики только владельцу блога
+        var user = await currentUserService.GetCurrentUserAsync();
+        var currentBlogId = user.BlogId;
+
         if (requestedBlogId != currentBlogId)
         {
             query = query.Where(x => x.ProcessState == ProcessState.Complete);
@@ -99,7 +100,6 @@ internal class DefaultProfilePostV2Service(
             dtos);
     }
 
-    // Вспомогательные методы (инкапсулируют сложную логику)
     private IQueryable<Post> BuildBasePostQuery(Guid blogId, PostType postType) =>
         repository.Get<Post>()
             .Where(x => !x.IsDelete && x.BlogId == blogId && x.Type == postType);
@@ -112,7 +112,7 @@ internal class DefaultProfilePostV2Service(
                 .Include(x => x.VideoPostInfo).ThenInclude(x => x.PreviewFile)
             : query.Include(x => x.TextPostInfo);
 
-    private async Task<List<UserPostInfoDto>> MapToUserPostInfoDtosAsync(
+    private async Task<List<UserPostInfoModel>> MapToUserPostInfoDtosAsync(
         List<Post> posts, Guid blogId, PostType postType)
     {
         using var storage = fileStorageFactory.CreateFileStorage();
@@ -120,10 +120,10 @@ internal class DefaultProfilePostV2Service(
         return [.. (await Task.WhenAll(tasks))];
     }
 
-    private async Task<UserPostInfoDto> MapToUserPostInfoDtoAsync(
+    private async Task<UserPostInfoModel> MapToUserPostInfoDtoAsync(
         Post post, Guid blogId, IFileStorage storage)
     {
-        return new UserPostInfoDto
+        return new UserPostInfoModel
         {
             Id = post.Id,
             BlogId = post.BlogId,
@@ -234,5 +234,150 @@ internal class DefaultProfilePostV2Service(
             post.VideoPostInfo.PreviewFile = previewFile;
             post.VideoPostInfo.PreviewId = previewFile.Id;
         }
+    }
+
+    public async Task<Result> RemovePostAsync(Guid postId)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        var post = await repository.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+            return Result.Failure(new Error("postId", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+        {
+            return Result.Failure(new Error("postId", "Пост не принадлежит пользователю"));
+        }
+        repository.Attach(post);
+        post.Delete();
+        repository.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
+        repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Delete,
+            Description = post.VideoPostInfo.Description,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
+        await repository.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result<PostEditViewModel>> GetPostEditViewModelAsync(Guid postId)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        var post = await repository.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .ThenInclude(x => x.PreviewFile)
+            .Include(x => x.VideoPostInfo.PostCategories)
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+            return Result<PostEditViewModel>.Failure(new Error("postId", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+        {
+            return Result<PostEditViewModel>.Failure(new Error("postId", "Пост не принадлежит пользователю"));
+        }
+        using var storage = fileStorageFactory.CreateFileStorage();
+
+        return new PostEditViewModel(
+            id: post.Id,
+            title: post.Title,
+            description: post.VideoPostInfo.Description,
+            previewUrl: await storage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo!.PreviewFile!.ObjectName),
+            visibility: post.Visibility,
+            paymentSubscriptionId: post.PaymentSubscriptionId,
+            categories: post.VideoPostInfo.PostCategories.Select(x => x.CategoryId).ToList()
+            );
+
+    }
+
+    public async Task<Result> UpdatePostAsync(PostUpdateRequest updateRequest)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        var post = await repository.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .Include(x => x.VideoPostInfo.PreviewFile)
+            .Include(x => x.VideoPostInfo.PostCategories)
+            .FirstOrDefaultAsync(x => x.Id == updateRequest.Id);
+
+        if (post == null)
+            return Result.Failure(new Error("id", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+        {
+            return Result.Failure(new Error("id", "Пост не принадлежит пользователю"));
+        }
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+
+        repository.Attach(post);
+
+        post.VideoPostInfo.Description = updateRequest.Description;
+        post.Title = updateRequest.Title;
+
+        var categoriesToRemove = updateRequest.Categories
+            .Except(post.VideoPostInfo.PostCategories.Select(x => x.CategoryId))
+            .ToList();
+
+        foreach (var category in post.VideoPostInfo.PostCategories.Where(x => categoriesToRemove.Contains(x.CategoryId)))
+        {
+            repository.Remove(category);
+        }
+
+        var newCategories = await repository.Get<Category>()
+            .Where(x => updateRequest.Categories.Contains(x.Id))
+            .ToListAsync();
+
+        foreach (var i in newCategories)
+        {
+            post.AddCategory(i);
+        }
+
+        if (updateRequest.Preview != null)
+        {
+            var preview = post.VideoPostInfo.PreviewFile!;
+            repository.Remove(preview);
+            var fileId = GuidService.GetNewGuid();
+            var newThumbnail = new PostFile
+            {
+                Id = fileId,
+                ContentType = updateRequest.Preview.ContentType,
+                CreatedAt = DateTimeService.Now(),
+                FileExtension = updateRequest.Preview.FileExtension,
+                Length = updateRequest.Preview.Length,
+                Name = updateRequest.Preview.Name,
+                ObjectName = $"{post.Id}/{fileId}",
+                PostId = post.Id,
+            };
+            repository.Add(newThumbnail);
+
+            await storage.PutFileAsync(post.BlogId, newThumbnail.ObjectName, updateRequest.Preview.ContentStream);
+            post.VideoPostInfo.PreviewId = newThumbnail.Id;
+            await storage.RemoveFileAsync(post.BlogId, preview.ObjectName);
+        }
+
+        repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Update,
+            Description = post.VideoPostInfo.Description,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
+
+        await repository.SaveChangesAsync();
+
+        return Result.Success();
     }
 }

@@ -143,7 +143,7 @@ public class PlayListController : BaseApiController
     {
         var user = await _currentUserService.GetCurrentUserAsync();
 
-        var result = await _playListFileService.UploadThumbnailWithoutPlayListAsync(user.UserId, new FileMetadata
+        var result = await _playListFileService.UploadThumbnailWithoutPlayListAsync(user.UserId, new BaseFileMetadataEntity
         {
             Id = GuidService.GetNewGuid(),
             ContentType = thumbnail.ContentType,

@@ -26,7 +26,7 @@ namespace Music.API.Controllers
         public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadForm form)
         {
             var avatar = form.Avatar;
-            var metadata = new Shared.Models.FileMetadata
+            var metadata = new Shared.Models.BaseFileMetadataEntity
             {
                 Id = GuidService.GetNewGuid(),
                 ContentType = avatar.ContentType,

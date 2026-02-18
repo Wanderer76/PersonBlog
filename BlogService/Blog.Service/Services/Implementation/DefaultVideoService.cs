@@ -48,7 +48,7 @@ internal sealed class DefaultVideoService : IVideoService
     }
 
     [Obsolete("", true)]
-    public async Task<Result<FileMetadata>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
+    public async Task<Result<BaseFileMetadataEntity>> GetOrCreateVideoMetadata(UploadVideoChunkModel uploadVideoChunk)
     {
         var progress = await GetUploadVideoMetadata(uploadVideoChunk.FileId);
 

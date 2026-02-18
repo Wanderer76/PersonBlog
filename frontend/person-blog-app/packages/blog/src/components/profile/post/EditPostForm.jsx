@@ -24,7 +24,7 @@ const EditPostForm = () => {
   });
 
   const [videoInfo, setVideoInfo] = useState({
-    objectName: ""
+    objectName: null
   });
 
   const [createModel, setCreateModel] = useState(null);
@@ -37,23 +37,22 @@ const EditPostForm = () => {
       try {
         setIsLoading(true);
         const [formConfig, postData] = await Promise.all([
-          API.get("/profile/api/Post/create"),
-          API.get(`/profile/api/Post/edit/${id}`)
+          API.get("/profile/api/ProfilePostV2/create"),
+          API.get(`/profile/api/ProfilePostV2/edit/${id}`)
         ]);
 
-        const previewData = await API.get(`/profile/api/Post/manifest/${id}`);
 
         setCreateModel(formConfig.data);
         setFormData({
           title: postData.data.title || "",
           description: postData.data.description || "",
           visibility: postData.data.visibility ?? 1,
-          thumbnailUrl: previewData.data?.previewUrl || ""
+          thumbnailUrl: postData.data?.previewUrl || ""
         });
 
-        setVideoInfo({
-          objectName: previewData.data?.objectName || ""
-        });
+        // setVideoInfo({
+        //   objectName: previewData.data?.objectName || ""
+        // });
 
       } catch (err) {
         console.error("Ошибка загрузки данных:", err);
@@ -109,10 +108,10 @@ const EditPostForm = () => {
       payload.append('visibility', formData.visibility);
 
       if (formData.thumbnailFile) {
-        payload.append("previewId", formData.thumbnailFile);
+        payload.append("preview", formData.thumbnailFile);
       }
 
-      const response = await API.post("/profile/api/Post/edit", payload, {
+      const response = await API.post("/profile/api/ProfilePostV2/edit", payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -169,10 +168,11 @@ const EditPostForm = () => {
           onChange={handleThumbnailChange}
         />
 
-        <div className={styles.formGroup}>
-          <label>Видео</label>
-          <div className={styles.videoPreview}>
-            {videoInfo.objectName ? (
+        {videoInfo.objectName &&
+          <div className={styles.formGroup}>
+            <label>Видео</label>
+            <div className={styles.videoPreview}>
+
               <VideoPlayer
                 key={id}
                 path={{
@@ -181,15 +181,9 @@ const EditPostForm = () => {
                   objectName: videoInfo.objectName
                 }}
               />
-            ) : (
-              <div className={styles.cameraIcon}>
-                <span>🎥</span>
-                <p>Видео не доступно</p>
-              </div>
-            )}
+            </div>
           </div>
-        </div>
-
+        }
         <DescriptionTextarea
           value={formData.description}
           onChange={handleInputChange}

@@ -81,7 +81,7 @@ internal sealed class CrudPlayListService : IPlayListService
                 return (await _playListFileService.UploadThumbnailAsync(
                     playListId,
                     user.UserId,
-                    new FileMetadata
+                    new BaseFileMetadataEntity
                     {
                         Id = GuidService.GetNewGuid(),
                         ContentType = request.Thumbnail.ContentType,
