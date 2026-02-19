@@ -77,9 +77,12 @@ public class PlaylistHttpApiClient : IPlayListService
         return Result<IReadOnlyList<PlayListListItem>>.Failure(errors);
     }
 
-    public Task<IReadOnlyList<PlayListListItem>> GetUserPlayLists()
+    public async Task<IReadOnlyList<PlayListListItem>> GetUserPlayLists()
     {
-        throw new NotImplementedException();
+        var result = await _client.GetAsync($"PlayList/my/list");
+        if (result.IsSuccessStatusCode)
+            return (await result.Content.ReadFromJsonAsync<List<PlayListListItem>>())!;
+        return [];
     }
 
     public async Task<Result> RemovePlayListAsync(Guid id)

@@ -68,10 +68,18 @@ public class PostController : BaseApiController
     }
 
     [HttpPost("commonByIds")]
-    [Produces(typeof(PostCommonModel))]
+    [Produces(typeof(IReadOnlyList<PostCommonModel>))]
     public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModel([FromBody] List<Guid> ids)
     {
         return Ok(await _postService.GetPostCommonModelAsync(ids));
+    }
+
+    [HttpPost("commonWithExcludeIds")]
+    [Produces(typeof(IReadOnlyList<PostCommonModel>))]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModelByExcludeIds([FromBody] List<Guid> excludeIds)
+    {
+        return Ok(await _postService.GetPostCommonModelWithExcludeIdsAsync(excludeIds));
     }
 
     [HttpGet("my/list")]

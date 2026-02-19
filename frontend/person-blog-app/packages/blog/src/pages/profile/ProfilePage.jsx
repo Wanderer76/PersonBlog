@@ -75,7 +75,7 @@ const ProfilePage = () => {
 
     useEffect(() => {
         if (blogId.current) {
-            API.get(`/video/api/PlayList/list?blogId=${blogId.current}`).then(response => {
+            API.get(`/video/api/PlayList/my/list`).then(response => {
                 if (response.status === 200) {
                     setPlayLists(response.data)
                 }
@@ -97,7 +97,7 @@ const ProfilePage = () => {
     }
 
     async function loadPosts() {
-        if (blogId.current) {
+        if (blogId.current && hasMore) {
             const url = `/profile/api/ProfilePostV2/my?page=${page}&pageSize=${pageSize}`;
             await API.get(url).then(response => {
                 if (response.status === 200) {
@@ -109,7 +109,7 @@ const ProfilePage = () => {
                             ['totalPostsCount']: result.totalPostsCount
                         }
                     ))
-                    setHasMore(result.posts.length >= pageSize);
+                    setHasMore(result.totalPageCount > page);
                 }
                 if (response.status === 401) {
                     JwtTokenService.refreshToken();
@@ -173,7 +173,7 @@ const ProfilePage = () => {
                     <article className="playlist-card">
                         <div className="playlist-cover" onClick={(e) => { e.preventDefault(); navigate(`/playlist/${playlist.id}`); }}>
                             <img src={playlist.thumbnailUrl} alt="Обложка плейлиста" />
-                            <span className="playlist-badge video-count">{playlist.posts.length} видео</span>
+                            <span className="playlist-badge video-count">{playlist.postCount} видео</span>
                             {/* <span class="playlist-badge privacy-status">Приватный</span> */}
                         </div>
                         <div className="playlist-info">
@@ -200,7 +200,6 @@ const ProfilePage = () => {
         <div className="profileContainer">
             <div className="profileHeader">
                 <div className="avatarSection">
-
                     <button className="btn btnSecondary" onClick={() => {
                         if (blogId.current) {
                             navigate('blog/edit')
@@ -290,8 +289,6 @@ const CreatePostCard = function ({ post, lastPostRef, navigate, handleRemove }) 
             }
         });
     }
-    // }
-    console.log(post)
     return (
 
         <div className="postCard" ref={lastPostRef ? lastPostRef : null}>

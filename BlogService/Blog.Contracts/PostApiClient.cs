@@ -19,11 +19,18 @@ public class PostApiClient
     {
         return await _cacheService.GetOrAddDataAsync(new PostCommonCacheKey(ids.GetHashCode()), async () =>
         {
-            var result = await httpClient.PostAsJsonAsync($"Post/commonByIds", ids );
+            var result = await httpClient.PostAsJsonAsync($"Post/commonByIds", ids);
             if (result.IsSuccessStatusCode)
                 return (await result.Content.ReadFromJsonAsync<List<PostCommonModel>>())!;
             return [];
-        },1);
+        }, 1);
+    }
+    public async Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludeIds)
+    {
+        var result = await httpClient.PostAsJsonAsync($"Post/commonWithExcludeIds", excludeIds);
+        if (result.IsSuccessStatusCode)
+            return (await result.Content.ReadFromJsonAsync<List<PostCommonModel>>())!;
+        return [];
     }
 }
 

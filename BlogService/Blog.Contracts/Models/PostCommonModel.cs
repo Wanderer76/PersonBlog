@@ -14,7 +14,7 @@ public class PostCommonModelV2
     public Guid BlogId {  get; set; }
     public string Title { get; set; } = null!;
     public PostTypeModel PostType { get; set; }
-    public string? PreviewObjectName { get; set; }
+    public string? PreviewUrl { get; set; }
     public string? Text { get; set; }
 }
 

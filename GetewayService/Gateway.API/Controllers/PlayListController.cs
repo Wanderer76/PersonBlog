@@ -16,11 +16,13 @@ public class PlayListController : BaseApiController
 {
     private readonly IPlayListService _playListService;
     private readonly BlogApiClient blogApiClient;
+    private readonly PostApiClient postApiClient;
 
-    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService, BlogApiClient blogApiClient) : base(logger)
+    public PlayListController(ILogger<BaseApiController> logger, IPlayListService playListService, BlogApiClient blogApiClient, PostApiClient postApiClient) : base(logger)
     {
         _playListService = playListService;
         this.blogApiClient = blogApiClient;
+        this.postApiClient = postApiClient;
     }
 
     [HttpGet("item/{id:guid}")]
@@ -52,17 +54,15 @@ public class PlayListController : BaseApiController
 
         return Ok(result.Value);
     }
-    
+
     [HttpGet("availableVideos")]
     [Produces(typeof(IReadOnlyList<PostCommonModel>))]
-    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAllPlayLists()
+    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAvailablePostToPlayList(Guid playListId)
     {
-        var result = await blogApiClient.GetCurrentUserPostListAsync();
+        var posts = (await _playListService.GetPlayListPostPagedAsync(playListId, 1, int.MaxValue)).Items.Select(x => x.Id);
+        var result = await postApiClient.GetCurrentUserPostCommonModelWithExcludeIdsAsync(posts);
 
-        if (result.IsFailure)
-            return BadRequest(result.Errors.ToValidationProblem());
-
-        return Ok(result.Value);
+        return Ok(result);
     }
 
     [HttpPost("create")]
@@ -119,13 +119,21 @@ public class PlayListController : BaseApiController
     }
 
     [HttpPost("removeVideo")]
-    [AuthFilter(Roles.User,Roles.Blogger)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult> RemoveVideoFromPlayList([FromBody] PlayListItemRemoveRequest form)
     {
         var result = await _playListService.RemoveVideoAsync(form);
         if (result.IsFailure)
             return BadRequest(result.Errors.ToValidationProblem());
         return Ok();
+    }
+
+    [HttpGet("my/list")]
+    [AuthFilter(Roles.User, Roles.Blogger)]
+    public async Task<ActionResult> CurrentUserPlayLists()
+    {
+        var result = await _playListService.GetUserPlayLists();
+        return Ok(result);
     }
 }
 

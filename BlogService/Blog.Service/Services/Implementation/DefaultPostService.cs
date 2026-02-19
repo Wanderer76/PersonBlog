@@ -7,6 +7,7 @@ using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
@@ -45,7 +46,7 @@ internal class DefaultPostService : IPostService
     {
         var post = await _context.Get<Post>()
             .Where(x => x.Id == id)
-            .Include(x=>x.VideoPostInfo)
+            .Include(x => x.VideoPostInfo)
             .FirstOrDefaultAsync();
         if (post != null)
         {
@@ -88,8 +89,8 @@ internal class DefaultPostService : IPostService
             var post = await _context.Get<Post>()
             .Include(x => x.VideoPostInfo)
             .ThenInclude(x => x.VideoFile)
-            .Include(x=>x.VideoPostInfo)
-            .ThenInclude(x=>x.PreviewFile)
+            .Include(x => x.VideoPostInfo)
+            .ThenInclude(x => x.PreviewFile)
             .Include(x => x.Blog)
             .FirstAsync(x => x.Id == postId);
 
@@ -247,6 +248,8 @@ internal class DefaultPostService : IPostService
 
         var posts = await _context.Get<Post>()
             .Where(x => postIds.Contains(x.Id))
+            .Include(x => x.VideoPostInfo)
+            .Include(x => x.VideoPostInfo.PreviewFile)
             .ToListAsync();
 
         var result = posts.Select(async post =>
@@ -254,9 +257,9 @@ internal class DefaultPostService : IPostService
             return new PostCommonModel
             {
                 Id = post.Id,
-                Description = "post.Description",
+                Description = post.VideoPostInfo.Description,
                 Title = post.Title,
-                PreviewObjectName = "string.IsNullOrWhiteSpace(post.PreviewId) ? null : await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId)"
+                PreviewObjectName = post.VideoPostInfo.PreviewId.HasValue ? await fileStorage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName) : null
             };
         });
 
@@ -270,20 +273,49 @@ internal class DefaultPostService : IPostService
         var posts = await _context.Get<Post>()
             .Where(x => x.IsDelete == false)
             .Where(x => x.BlogId == user.BlogId)
+            .Include(x => x.VideoPostInfo)
+            .Include(x => x.VideoPostInfo.PreviewFile)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
 
         using var storage = _fileStorageFactory.CreateFileStorage();
 
-        var result = posts.Select(async x => new PostCommonModel
+        var result = posts.Select(async post => new PostCommonModel
         {
-            Id = x.Id,
-            Description = "x.Description",
-            PreviewObjectName =" string.IsNullOrWhiteSpace(x.PreviewId) ? null : await storage.GetFileUrlAsync(x.BlogId, x.PreviewId)",
-            Title = x.Title
+            Id = post.Id,
+            Description = post.VideoPostInfo.Description,
+            Title = post.Title,
+            PreviewObjectName = post.VideoPostInfo.PreviewId.HasValue ? await storage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName) : null
         });
 
         return await Task.WhenAll(result);
 
+    }
+
+    public async Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludePostIds)
+    {
+        var user = await _userService.GetCurrentUserAsync();
+        var fileStorage = _fileStorageFactory.CreateFileStorage();
+
+        var posts = await _context.Get<Post>()
+            .Where(x=>x.BlogId == user.BlogId)
+            .Where(x => !excludePostIds.Contains(x.Id))
+            .Include(x => x.VideoPostInfo)
+            .Where(x=>x.IsDelete == false)
+            .Include(x => x.VideoPostInfo.PreviewFile)
+            .ToListAsync();
+
+        var result = posts.Select(async post =>
+        {
+            return new PostCommonModel
+            {
+                Id = post.Id,
+                Description = post.VideoPostInfo.Description,
+                Title = post.Title,
+                PreviewObjectName = post.VideoPostInfo.PreviewId.HasValue ? await fileStorage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName) : null
+            };
+        });
+
+        return await Task.WhenAll(result);
     }
 }

@@ -12,7 +12,7 @@ using Shared.Utils;
 
 namespace Blog.Service.Services.Implementation;
 
-internal class DefaultProfilePostV2Service(
+internal sealed class DefaultProfilePostV2Service(
     IReadWriteRepository<IBlogEntity> repository,
     IFileStorageFactory fileStorageFactory,
     ICurrentUserService currentUserService,
@@ -168,7 +168,7 @@ internal class DefaultProfilePostV2Service(
             Title = post.Title,
             PostType = (PostTypeModel)post.Type,
             Text = postType == PostType.Text ? post.TextPostInfo.Text : null,
-            PreviewObjectName = postType == PostType.Video && post.VideoPostInfo.PreviewFile != null
+            PreviewUrl = postType == PostType.Video && post.VideoPostInfo.PreviewFile != null
                 ? await storage.GetFileUrlAsync(blogId, post.VideoPostInfo.PreviewFile.ObjectName)
                 : null
         });

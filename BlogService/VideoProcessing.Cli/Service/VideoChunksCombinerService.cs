@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace VideoProcessing.Cli.Service;
 
+[Obsolete("Была добавлена multipart загрузка в s3, необходимость в этом сервисе отпала")]
 public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>
 {
     private readonly IFileStorage storage;
