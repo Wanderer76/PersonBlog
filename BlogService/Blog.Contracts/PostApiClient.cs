@@ -1,6 +1,8 @@
 ﻿using Blog.Contracts.Models;
 using Infrastructure.Services;
 using Shared.Services;
+using Shared.Utils;
+using System.Net.Http;
 using System.Net.Http.Json;
 
 namespace Blog.Contracts;
@@ -31,6 +33,15 @@ public class PostApiClient
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<List<PostCommonModel>>())!;
         return [];
+    }
+    public async Task<Result<IReadOnlyList<PostCommonModel>>> GetCurrentUserPostListAsync()
+    {
+        var result = await httpClient.GetAsync($"Post/my/list");
+        if (result.IsSuccessStatusCode)
+        {
+            return await result.Content.ReadFromJsonAsync<List<PostCommonModel>>();
+        }
+        return Result<IReadOnlyList<PostCommonModel>>.Success([]);
     }
 }
 

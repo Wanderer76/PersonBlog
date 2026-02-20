@@ -118,7 +118,7 @@ public class ProfilePostV2Controller(
                     .ToList()
                 : null,
             Thumbnail: request.Type == PostType.Video
-                ? request.VideoPostData!.Thumbnail!.ConvertToFileMetadata()
+                ? request.VideoPostData!.Thumbnail?.ConvertToFileMetadata()
                 : null
         );
     }

@@ -4,7 +4,6 @@ import { PostCard } from '../../features/post-management/components/PostCard/Pos
 import { Tabs } from '../../shared/ui/Tabs/Tabs';
 import { Button } from '../../shared/ui/Button/Button';
 import { useIntersectionObserver } from '../../shared/hooks/useIntersectionObserver';
-import { ProfileData } from '../../entities/profile/types';
 import { Post, PostsPageResponse } from '../../entities/post/types';
 import { Playlist } from '../../entities/playlist/types';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
@@ -14,6 +13,8 @@ import { getPlayList } from '@/lib/api/generated/play-list/play-list';
 import { JwtTokenService } from '@/shared/TokenStrorage';
 import { ProfileHeader } from '@/features/post-management/components/ProfileHeader/ProfileHeader';
 import { PlaylistCard } from '@/features/post-management/components/PlayListCars/PlaylistCard';
+import { getBlog } from '@/lib/api/generated/blog/blog';
+import { BlogModel } from '@/lib/api/generated/models';
 
 const PAGE_SIZE = 10;
 type ActivePanel = 'posts' | 'playlists';
@@ -21,17 +22,19 @@ type ActivePanel = 'posts' | 'playlists';
 export const ProfilePage = memo(() => {
     const navigate = useNavigate();
     const blogIdRef = useRef<string | null>(null);
-    
+
     // ✅ Флаг для отслеживания первой загрузки постов
     const hasLoadedInitialPosts = useRef(false);
 
     // State
-    const [profile, setProfile] = useState<ProfileData>({
+    const [profile, setProfile] = useState<BlogModel>({
         id: '',
         photoUrl: DefaultProfileIcon,
         name: null,
-        totalPostsCount: 0,
-        createdAt: null
+        description: '',
+        createdAt: undefined,
+        subscribersCount: 0,
+        userId: undefined
     });
     const [posts, setPosts] = useState<Post[]>([]);
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -49,13 +52,16 @@ export const ProfilePage = memo(() => {
     // Загрузка профиля
     useEffect(() => {
         const loadProfile = async () => {
+
+            const blogApi = getBlog();
+
             try {
-                const { data: hasBlogData } = await API.get(`/profile/api/Blog/hasUserBlog`);
+                const hasBlogData = await blogApi.getApiBlogHasUserBlog();
 
                 if (hasBlogData.hasBlog) {
-                    const { data: profileData } = await API.get('/profile/api/Blog/detail');
+                    const profileData = await blogApi.getApiBlogDetail();
                     setProfile(profileData);
-                    blogIdRef.current = profileData.id;
+                    blogIdRef.current = profileData.id!;
                     // ✅ Сбрасываем флаг при получении нового blogId
                     hasLoadedInitialPosts.current = false;
                     await loadPosts(page)
@@ -104,7 +110,7 @@ export const ProfilePage = memo(() => {
             if (!hasLoadedInitialPosts.current && page === 1) {
                 hasLoadedInitialPosts.current = true;
                 loadPosts(1, true);
-            } 
+            }
             // Пагинация
             else if (page > 1) {
                 loadPosts(page, false);

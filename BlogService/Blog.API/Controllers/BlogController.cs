@@ -107,7 +107,4 @@ public sealed class BlogController(
     }
 }
 
-public sealed class HasBlogResponse
-{
-    public bool HasBlog { get; set; }
-}
+

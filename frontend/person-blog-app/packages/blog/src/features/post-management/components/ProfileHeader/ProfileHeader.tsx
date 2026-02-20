@@ -1,13 +1,13 @@
 import { memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ProfileData } from '../../../../entities/profile/types';
-import { Button } from '../../../../shared/ui/Button/Button';
+import { Button } from '@/shared/ui/Button/Button';
 import { getLocalDateTime } from '@/shared/LocalDate';
 import DefaultProfileIcon from '@/defaultProfilePic.png';
 import './ProfileHeader.css';
+import { BlogModel } from '@/lib/api/generated/models';
 
 interface ProfileHeaderProps {
-  profile: ProfileData;
+  profile: BlogModel;
   hasBlog: boolean;
   onLogout: () => void;
   onEditBlog: () => void;
@@ -55,7 +55,7 @@ export const ProfileHeader = memo(({
               </time>
             )}
             <span className="posts-count">
-              📝 Постов: {profile.totalPostsCount}
+              📝 Постов: {profile.totalPostsCount ?? 0}
             </span>
           </div>
         </div>
