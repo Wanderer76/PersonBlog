@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import SideBar from "../../components/sidebar/SideBar";
 import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 import styles from './LikedPage.module.css';
-import { getLocalDate } from "../../scripts/LocalDate";
+import { getLocalDate } from "../../shared/LocalDate";
 import { useState } from "react";
 import API from "../../lib/api/client";
 

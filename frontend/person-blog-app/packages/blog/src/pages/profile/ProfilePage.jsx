@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { JwtTokenService } from "../../scripts/TokenStrorage";
+import { JwtTokenService } from "../../shared/TokenStrorage.js";
 import API from "../../lib/api/client";
 import './ProfilePage.css';
 import { useNavigate } from "react-router-dom";
 import DefaultProfileIcon from '../../defaultProfilePic.png'
-import { getLocalDateTime, secondsToHumanReadable } from "../../scripts/LocalDate";
+import { getLocalDateTime, secondsToHumanReadable } from "../../shared/LocalDate";
 
 
 const ProfilePage = () => {

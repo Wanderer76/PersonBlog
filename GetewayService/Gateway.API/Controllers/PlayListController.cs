@@ -130,6 +130,7 @@ public class PlayListController : BaseApiController
 
     [HttpGet("my/list")]
     [AuthFilter(Roles.User, Roles.Blogger)]
+    [Produces(typeof(IReadOnlyList<PlayListListItem>))]
     public async Task<ActionResult> CurrentUserPlayLists()
     {
         var result = await _playListService.GetUserPlayLists();

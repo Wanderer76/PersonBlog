@@ -15,6 +15,7 @@ export * from './getApiCommentsListParams';
 export * from './getApiConferenceChatMessagesConferenceIdParams';
 export * from './getApiConferenceRoomJoinLinkParams';
 export * from './getApiConferenceRoomJoinParams';
+export * from './getApiPlayListAvailableVideosParams';
 export * from './getApiPlayListListParams';
 export * from './getApiSearchSearchByTitleParams';
 export * from './getApiSubscriberSubscriptionsParams';

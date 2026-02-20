@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getLocalDateTime } from "../../scripts/LocalDate";
+import { getLocalDateTime } from "../../shared/LocalDate";
 import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
 import logo from '../../defaultProfilePic.png';
 import API, { BaseApUrl } from "../../lib/api/client";
@@ -8,7 +8,7 @@ import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel }
 import './ConferencePage.css';
 import '../post/VideoPage.css';
 import SideBar from "../../components/sidebar/SideBar";
-import { getAccessToken, JwtTokenService } from "../../scripts/TokenStrorage";
+import { getAccessToken, JwtTokenService } from "../../shared/TokenStrorage.js";
 
 const ConferencePage = function () {
     const conferenceId = useParams();

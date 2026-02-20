@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import './Header.css';
-import { JwtTokenService } from "../../scripts/TokenStrorage";
+import { JwtTokenService } from "../../shared/TokenStrorage.js";
 import { useNavigate } from "react-router-dom";
 
 const Header = function () {

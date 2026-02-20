@@ -567,6 +567,16 @@
         "tags": [
           "PlayList"
         ],
+        "parameters": [
+          {
+            "name": "playListId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -798,28 +808,42 @@
         }
       }
     },
-    "/api/Post/post/{id}": {
+    "/api/PlayList/my/list": {
       "get": {
         "tags": [
-          "Post"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
+          "PlayList"
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlayListListItem"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlayListListItem"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlayListListItem"
+                  }
+                }
+              }
+            }
           }
-        },
-        "deprecated": true
+        }
       }
     },
     "/api/Profile/my": {
@@ -1328,6 +1352,9 @@
           "postCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "canEdit": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

@@ -1,6 +1,6 @@
 // src/lib/api/mutator.ts
 import axios, { type AxiosRequestConfig } from 'axios';
-import { JwtTokenService } from '../../scripts/TokenStrorage';
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
 
 let refreshTokenPromise: Promise<void> | null = null;
 

@@ -1,0 +1,88 @@
+.profileContainer {
+  padding: 30px 20px;
+}
+
+.postsSection {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.postsSection h2 {
+  margin: 0 0 30px 0;
+  color: #333;
+}
+
+.postsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.postSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding: 30px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.createPostBtn {
+  width: 200px;
+  height: 50px;
+}
+
+.panelsContainer {
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* ✅ Состояния загрузки и пустые состояния */
+.loadingSpinner {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+  color: #666;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}
+
+.noMore {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+  font-size: 14px;
+  grid-column: 1 / -1;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+  font-size: 16px;
+  grid-column: 1 / -1;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .profileContainer {
+    padding: 20px 15px;
+  }
+
+  .postsSection,
+  .postSectionHeader {
+    padding: 20px;
+  }
+
+  .postsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .createPostBtn {
+    width: 100%;
+  }
+}

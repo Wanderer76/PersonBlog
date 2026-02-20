@@ -12,4 +12,5 @@ export interface PlayListListItem {
   /** @nullable */
   thumbnailUrl?: string | null;
   postCount?: number;
+  canEdit?: boolean;
 }

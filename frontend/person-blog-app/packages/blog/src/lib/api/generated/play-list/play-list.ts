@@ -7,6 +7,7 @@
 import type {
   ChangePostPositionRequest,
   CreatePlayListRequest,
+  GetApiPlayListAvailableVideosParams,
   GetApiPlayListListParams,
   PlayListItemAddRequest,
   PlayListItemRemoveRequest,
@@ -38,10 +39,11 @@ const getApiPlayListItemId = (
       );
     }
   const getApiPlayListAvailableVideos = (
-    
+    params?: GetApiPlayListAvailableVideosParams,
  ) => {
       return customInstance<PostCommonModel[]>(
-      {url: `/api/PlayList/availableVideos`, method: 'GET'
+      {url: `/api/PlayList/availableVideos`, method: 'GET',
+        params
     },
       );
     }
@@ -93,7 +95,15 @@ const getApiPlayListItemId = (
     },
       );
     }
-  return {getApiPlayListItemId,getApiPlayListList,getApiPlayListAvailableVideos,postApiPlayListCreate,postApiPlayListAddVideo,postApiPlayListUpdatePositions,postApiPlayListRemovePlaylistId,postApiPlayListRemoveVideo}};
+  const getApiPlayListMyList = (
+    
+ ) => {
+      return customInstance<PlayListListItem[]>(
+      {url: `/api/PlayList/my/list`, method: 'GET'
+    },
+      );
+    }
+  return {getApiPlayListItemId,getApiPlayListList,getApiPlayListAvailableVideos,postApiPlayListCreate,postApiPlayListAddVideo,postApiPlayListUpdatePositions,postApiPlayListRemovePlaylistId,postApiPlayListRemoveVideo,getApiPlayListMyList}};
 export type GetApiPlayListItemIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['getApiPlayListItemId']>>>
 export type GetApiPlayListListResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['getApiPlayListList']>>>
 export type GetApiPlayListAvailableVideosResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['getApiPlayListAvailableVideos']>>>
@@ -102,3 +112,4 @@ export type PostApiPlayListAddVideoResult = NonNullable<Awaited<ReturnType<Retur
 export type PostApiPlayListUpdatePositionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['postApiPlayListUpdatePositions']>>>
 export type PostApiPlayListRemovePlaylistIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['postApiPlayListRemovePlaylistId']>>>
 export type PostApiPlayListRemoveVideoResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['postApiPlayListRemoveVideo']>>>
+export type GetApiPlayListMyListResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['getApiPlayListMyList']>>>

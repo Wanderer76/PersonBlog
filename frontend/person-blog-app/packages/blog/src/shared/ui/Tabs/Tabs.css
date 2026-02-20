@@ -1,0 +1,90 @@
+.tabsContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tabButtons {
+  display: flex;
+  gap: 20px;
+}
+
+.tabButton {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+  transition: 0.3s;
+  font-weight: 400;
+}
+
+.tabButton:hover {
+  color: #333;
+}
+
+.tabButton.active {
+  color: #333;
+  font-weight: 500;
+}
+
+.tabButton.active::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #ff7b00;
+}
+
+.tabButton:focus {
+  outline: none;
+}
+
+.tabButton:focus-visible {
+  outline: 2px solid #ff7b00;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.tabsAction {
+  display: flex;
+  align-items: center;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .tabsContainer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tabButtons {
+    justify-content: center;
+    width: 100%;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+  }
+
+  .tabsAction {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .tabsAction button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .tabButton {
+    font-size: 16px;
+    padding: 8px 12px;
+  }
+}

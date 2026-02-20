@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useSearchParams } from 'react-router-dom';
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import './App.css';
-import { JwtTokenService } from './scripts/TokenStrorage';
+import { JwtTokenService } from './shared/TokenStrorage.js';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
@@ -12,7 +12,7 @@ import LikedPage from './pages/liked/LikedPage';
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
 const AuthPage = lazy(() => import('./pages/auth/AuthPage'));
-const ProfilePage = lazy(() => import('./pages/profile/ProfilePage'));
+const ProfilePage = lazy(() => import('./widgets/ProfilePage/ProfilePage'));
 const VideoPage = lazy(() => import('./pages/post/VideoPage'));
 const ConferencePage = lazy(() => import('./pages/conference/ConferencePage'));
 const CreatePostForm = lazy(() => import('./components/profile/post/CreatePostForm'));

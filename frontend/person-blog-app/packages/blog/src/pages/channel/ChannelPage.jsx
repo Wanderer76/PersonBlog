@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import API from "../../lib/api/client";
 import styles from './ChannelPage.module.css';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
-import { getLocalDateTime } from "../../scripts/LocalDate";
+import { getLocalDateTime } from "../../shared/LocalDate";
 import SideBar from "../../components/sidebar/SideBar";
 
 const ChannelPage = () => {

@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { JwtTokenService } from '../../scripts/TokenStrorage';
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import API from "../../lib/api/client";
 import { useNavigate } from "react-router-dom";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
 import SideBar from "../../components/sidebar/SideBar";
 import styles from './HistoryPage.module.css';
-import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../scripts/LocalDate";
+import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../shared/LocalDate";
 import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 
 const HistoryPage = function (props) {

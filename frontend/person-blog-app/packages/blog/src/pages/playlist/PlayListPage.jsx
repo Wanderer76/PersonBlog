@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, memo } from "react";
-import { JwtTokenService } from '../../scripts/TokenStrorage';
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import API from "../../lib/api/client";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../../components/sidebar/SideBar";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './PlaylistPage.css';
-import { secondsToHumanReadable } from "../../scripts/LocalDate";
+import { secondsToHumanReadable } from "../../shared/LocalDate";
 import { getPlayList } from "@/lib/api/generated/play-list/play-list";
 
 // Вынесенные компоненты

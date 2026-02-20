@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { BaseApUrl } from "../../lib/api/client";
-import { saveAccessToken, saveRefreshToken } from "../../scripts/TokenStrorage";
+import { saveAccessToken, saveRefreshToken } from "../../shared/TokenStrorage.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 const SignUpForm = ({ onSwitchToSignIn }) => {

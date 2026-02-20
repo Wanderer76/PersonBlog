@@ -1,6 +1,6 @@
 // src/lib/api/client.ts
 import axios from 'axios';
-import { JwtTokenService } from '../../scripts/TokenStrorage';
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
 
 export const BaseApUrl = 'http://localhost:7892';
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getLocalDateTime } from "../../scripts/LocalDate";
+import { getLocalDateTime } from "../../shared/LocalDate";
 import API from "../../lib/api/client";
 
 const Comment = ({ comment, postId, depth }) => {

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import styles from './CreatePostForm.module.css';
 import API from "../../../lib/api/client";
 import { useNavigate } from "react-router-dom";
-import { DirectFileUploader, type InitiateUploadResponse } from "../../../service/DirectFileUploader";
+import { DirectFileUploader, type InitiateUploadResponse } from "../../../shared/DirectFileUploader";
 import {
   TitleInput,
   ThumbnailUpload,
