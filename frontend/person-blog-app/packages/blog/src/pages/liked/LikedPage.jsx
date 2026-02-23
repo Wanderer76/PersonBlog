@@ -38,7 +38,7 @@ const LikedPage = function () {
                                             watchTime: null,
                                             lastWatched: x.createdAt
                                         }
-                                        return <PostListItem item={data} navigate={() => navigate(`/video/${data.postId}?time=${data.watchTime}`)} key={x.id} />
+                                        return <PostListItem item={data} navigate={() => navigate(`/videoPage/${data.postId}?time=${data.watchTime}`)} key={x.id} />
                                     })}
                                 </div>
                             </div>

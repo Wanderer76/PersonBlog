@@ -33,7 +33,7 @@ public sealed class BlogApiClient
             content.Add(new StreamContent(form.PhotoUrl.OpenReadStream()), "PhotoUrl", form.PhotoUrl.FileName);
         }
 
-        var response = await _httpClient.PostAsync("create", content);
+        var response = await _httpClient.PostAsync("Blog/create", content);
         return await HandleResponseAsync<BlogModel>(response);
     }
 

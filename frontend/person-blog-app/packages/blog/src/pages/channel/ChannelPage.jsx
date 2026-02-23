@@ -149,7 +149,7 @@ const ChannelPage = () => {
                 key={video.id}
                 className={styles.videoCard}
                 ref={videos.length === index + 1 ? lastVideoRef : null}
-                onClick={() => video.state === 1 && navigate(`/video/${video.id}`)}
+                onClick={() => video.state === 1 && navigate(`/videoPage/${video.id}`)}
             >
                 <div className={styles.thumbnail}>
                     <img src={video.previewUrl} alt={video.title} />

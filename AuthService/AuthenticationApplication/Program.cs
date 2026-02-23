@@ -41,16 +41,16 @@ var app = builder.Build();
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
-    using (var scope = app.Services.CreateScope())
+   
+}
+using (var scope = app.Services.CreateScope())
+{
+    var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+    foreach (var initializer in initializers)
     {
-        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
-        foreach (var initializer in initializers)
-        {
-            initializer.Initialize();
-        }
+        initializer.Initialize();
     }
 }
-
 app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 app.UseRouting();
 app.UseHttpsRedirection();

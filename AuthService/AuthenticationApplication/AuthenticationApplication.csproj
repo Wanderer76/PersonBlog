@@ -7,6 +7,7 @@
 		<WarningsAsErrors>Nullable</WarningsAsErrors>
 		<UserSecretsId>78944eb7-5444-4d7b-be8e-3e2353ab19d5</UserSecretsId>
 		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..</DockerfileContext>
 		<!--<DockerfileContext>..\..</DockerfileContext>-->
 	</PropertyGroup>
 

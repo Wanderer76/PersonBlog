@@ -4,7 +4,7 @@ import styles from './SmallVideoCard.module.css';
 const SmallVideoCard = function (props) {
     return <div className={styles.video} onClick={(e) => {
         e.preventDefault();
-        props.navigate(`/video/${props.videoCardModel.postId}`);
+        props.navigate(`/videoPage/${props.videoCardModel.postId}`);
     }}>
         <img src={props.videoCardModel.previewUrl} className={styles.thumbnail} alt="Превью" />
         <div className={styles.info}>

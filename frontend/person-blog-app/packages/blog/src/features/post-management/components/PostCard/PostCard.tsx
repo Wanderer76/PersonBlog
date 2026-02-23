@@ -34,7 +34,7 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardPr
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isClickable) navigate(`/video/${post.id}`);
+    if (isClickable) navigate(`/videoPage/${post.id}`);
   };
 
   return (

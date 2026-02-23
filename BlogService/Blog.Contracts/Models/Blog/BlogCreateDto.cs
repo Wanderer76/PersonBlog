@@ -4,9 +4,13 @@ namespace Blog.Contracts.Models.Blog;
 
 public class BlogCreateRequest
 {
-    public string Title { get; }
-    public string? Description { get; }
-    public IFormFile? PhotoUrl { get; }
+    public string Title { get; set; }
+    public string? Description { get; set; }
+    public IFormFile? PhotoUrl { get; set; }
+    public BlogCreateRequest()
+    {
+
+    }
 
     public BlogCreateRequest(string title, string? description, IFormFile? photoUrl)
     {

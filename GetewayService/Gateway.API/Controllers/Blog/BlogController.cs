@@ -175,11 +175,8 @@ public sealed class BlogController : BaseApiController
     /// Создание нового блога
     /// </summary>
     [HttpPost("create")]
-    [AuthFilter(Roles.Blogger)]
     [ProducesResponseType(typeof(BlogModel), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+ 
     public async Task<ActionResult<BlogModel>> CreateBlog([FromForm] BlogCreateRequest form)
     {
         if (!ModelState.IsValid)

@@ -133,7 +133,7 @@ internal sealed class DefaultBlogService : IBlogService
     public async Task<bool> HasUserBlogAsync(Guid userId)
     {
         var isBlogAlreadyExists = await _context.Get<PersonBlog>()
-            .AllAsync(x => x.UserId == userId);
+            .AnyAsync(x => x.UserId == userId);
         return isBlogAlreadyExists;
     }
 }

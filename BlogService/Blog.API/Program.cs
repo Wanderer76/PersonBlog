@@ -77,21 +77,21 @@ builder.Services.AddHostedService<OutboxPublisherService>()
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
 {
-    using (var scope = app.Services.CreateScope())
-    {
-        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
-        foreach (var initializer in initializers)
-        {
-            initializer.Initialize();
-        }
-    }
+   
     app.UseSwagger();
     //app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 }
-
+using (var scope = app.Services.CreateScope())
+{
+    var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+    foreach (var initializer in initializers)
+    {
+        initializer.Initialize();
+    }
+}
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(policy => policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod());

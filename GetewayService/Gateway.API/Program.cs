@@ -75,7 +75,7 @@ var app = builder.Build();
 app.UseSerilogRequestLogger();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();

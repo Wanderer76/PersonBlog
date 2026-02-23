@@ -70,7 +70,7 @@ function App() {
             <Routes>
               {/* Публичные маршруты */}
               <Route path="/" element={<MainPage />} />
-              <Route path="/video/:postId" element={<VideoPage />} />
+              <Route path="/videoPage/:postId" element={<VideoPage />} />
               <Route path="/channel/:channelId" element={<ChannelPage />} />
               <Route path="/auth" element={
                 <PublicRoute>

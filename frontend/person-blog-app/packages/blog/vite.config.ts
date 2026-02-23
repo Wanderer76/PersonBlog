@@ -11,6 +11,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),  // или './' в зависимости от структуры
     },
-  },
+  }, define: {
+    'process.env.NODE_ENV': '"production"'
+  }
   // resolve: { dedupe: ['react', 'react-dom'] }
 })

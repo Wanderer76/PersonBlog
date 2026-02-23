@@ -81,7 +81,7 @@ const HistoryPage = function (props) {
                       watchTime: x.watchedTime,
                       lastWatched: x.lastWatched
                     }
-                    return <PostListItem item={data} navigate={() => navigate(`/video/${data.postId}?time=${data.watchTime}`)} key={x.id} />
+                    return <PostListItem item={data} navigate={() => navigate(`/videoPage/${data.postId}?time=${data.watchTime}`)} key={x.id} />
                   })}
                 </div>
               </div>

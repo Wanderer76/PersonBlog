@@ -210,7 +210,7 @@ const ConferencePage = function () {
                     <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                 </div>
                 <div className="video-actions">
-                    <button className="action-button" onClick={(e) => { navigate(`/video/${post.id}?time=${playerRef.current.currentTime()}`) }}>
+                    <button className="action-button" onClick={(e) => { navigate(`/videoPage/${post.id}?time=${playerRef.current.currentTime()}`) }}>
                         <span>📁</span> Отключится от конференции
                     </button>
                     <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href) }}>

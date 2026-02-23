@@ -35,7 +35,6 @@ public sealed class BlogController(
     }
 
     [HttpGet("hasBlog/{userId:guid}")]
-    [AuthFilter(Roles.Blogger)]
     [Produces<bool>]
     public async Task<ActionResult<bool>> GetBlogDetail(Guid userId)
     {

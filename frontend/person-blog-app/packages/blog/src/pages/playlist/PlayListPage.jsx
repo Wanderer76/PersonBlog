@@ -89,11 +89,11 @@ const PlaylistItem = memo(({ video, onRemove, index, isDragDisabled }) => {
                         src={video.previewObjectName}
                         alt="Превью"
                         className="thumbnail"
-                        onClick={() => navigate(`/video/${video.id}`)}
+                        onClick={() => navigate(`/videoPage/${video.id}`)}
                     />
                     <div
                         className="details"
-                        onClick={() => navigate(`/video/${video.id}`)}
+                        onClick={() => navigate(`/videoPage/${video.id}`)}
                     >
                         <h3 className="title">{video.title}</h3>
                         <div className="meta">
