@@ -13,11 +13,7 @@ export interface RegisterModel {
   /** @minLength 1 */
   passwordConfirm: string;
   /** @minLength 1 */
-  name: string;
-  /** @nullable */
-  birthdate?: string | null;
-  /** @minLength 1 */
-  email: string;
+  userName: string;
   /** @nullable */
   redirectUrl?: string | null;
 }

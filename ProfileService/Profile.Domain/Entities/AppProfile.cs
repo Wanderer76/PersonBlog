@@ -12,11 +12,11 @@ public class AppProfile : BaseEntity, IUserEntity
     [Required]
     public string Name { get; set; }
 
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; }
+    //[Required]
+    //[EmailAddress]
+    //public string Email { get; set; }
 
-    public DateTimeOffset? Birthdate { get; set; }
+    //public DateTimeOffset? Birthdate { get; set; }
 
     public Guid UserId { get; set; }
     public string? PhotoUrl { get; set; }
@@ -28,10 +28,8 @@ public class AppProfile : BaseEntity, IUserEntity
 
     public AppProfile() { }
 
-    internal AppProfile(DateTimeOffset? birthdate, string email, string name, Guid userId)
+    internal AppProfile(string name, Guid userId)
     {
-        Birthdate = birthdate;
-        Email = email;
         UserId = userId;
         IsDeleted = false;
         Name = string.IsNullOrEmpty(name) ? "anon" : name;
@@ -39,9 +37,9 @@ public class AppProfile : BaseEntity, IUserEntity
 
     }
 
-    public static AppProfile Create(DateTimeOffset? birthdate, string email, string name, Guid userId)
+    public static AppProfile Create(string name, Guid userId)
     {
-        return new AppProfile(birthdate, email, name, userId);
+        return new AppProfile(name, userId);
     }
 }
 

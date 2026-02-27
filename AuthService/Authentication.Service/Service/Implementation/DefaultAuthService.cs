@@ -3,7 +3,6 @@ using Authentication.Contract.Events;
 using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
-using AuthenticationApplication.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
@@ -98,14 +97,14 @@ internal class DefaultAuthService : IAuthService
         };
         _context.Add(user);
 
-        _context.Add(AppProfile.Create(registerModel.Email, registerModel.Name, userId));
+        //_context.Add(AppProfile.Create(registerModel.Email, registerModel.Name, userId));
 
         var profileCreateModel = new ProfileRegisterEvent
         (
-            registerModel.Name,
-            registerModel.Birthdate,
+            registerModel.UserName,
+            //registerModel.Birthdate,
             userId,
-            registerModel.Email,
+            //registerModel.Email,
             createdAt
         );
 
@@ -166,7 +165,7 @@ internal class DefaultAuthService : IAuthService
             .Include(x => x.UserContexts)
             .Where(x => x.Id == userId)
             .FirstAsync();
-        
+
         if (user == null)
         {
             return new Error("Пользователь не найден");
@@ -193,5 +192,23 @@ internal class DefaultAuthService : IAuthService
         }
 
         return true;
+    }
+
+    public async Task<Result<UserModel>> GetCurrentUserAsync(string? token)
+    {
+        var now = DateTimeService.Now();
+        var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
+        if (tokenRepr == null || tokenRepr != null && (tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now))
+            return UserModel.AnonymousUser();
+
+        var tokenData = tokenRepr!.Value;
+
+        var userRoles = await _context.Get<AppUserRole>()
+            .Where(x => x.AppUserId == tokenData.UserId)
+            .Select(x => x.UserRoleId)
+            .ToListAsync();
+
+        var model = new UserModel(tokenData.UserId, tokenData.Login, null, tokenData.BlogId, userRoles);
+        return model;
     }
 }

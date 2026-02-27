@@ -56,10 +56,9 @@ export const ProfilePage = memo(() => {
             const blogApi = getBlog();
 
             try {
-                const hasBlogData = await blogApi.getApiBlogHasUserBlog();
-
+                const hasBlogData = (await blogApi.getApiBlogHasUserBlog()).data;
                 if (hasBlogData.hasBlog) {
-                    const profileData = await blogApi.getApiBlogDetail();
+                    const profileData = (await blogApi.getApiBlogDetail()).data;
                     setProfile(profileData);
                     blogIdRef.current = profileData.id!;
                     // ✅ Сбрасываем флаг при получении нового blogId
@@ -123,7 +122,7 @@ export const ProfilePage = memo(() => {
         const loadPlaylists = async () => {
             if (!blogIdRef.current) return;
             try {
-                const data = await getPlayList().getApiPlayListMyList() as Playlist[];
+                const data = (await getPlayList().getApiPlayListMyList()).data as Playlist[];
                 setPlaylists(data);
             } catch (error) {
                 console.error('Failed to load playlists:', error);

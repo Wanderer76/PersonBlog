@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BaseApUrl } from "../../lib/api/client";
 import { saveAccessToken, saveRefreshToken } from "../../shared/TokenStrorage.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { getAuth } from "@/lib/api/generated/auth/auth.js";
 
 const SignUpForm = ({ onSwitchToSignIn }) => {
 
@@ -11,7 +12,7 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
     login: "",
     password: "",
     passwordConfirm: "",
-    name: null,
+    userName: null,
     // surname: null,
     // lastName: null,
     // birthdate: null,
@@ -45,31 +46,20 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
       return
     }
     try {
-      const url = BaseApUrl + '/auth/api/Auth/create';
-      const resonse = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body)
-      });
+      var authApi = getAuth();
 
-      if (resonse.status === 200) {
-        const data = await resonse.json();
-        saveAccessToken(data.accessToken);
-        saveRefreshToken(data.refreshToken);
-        if (data.authCode != null && registerForm.redirectUrl != null) {
-          const loginUrl = new URL(registerForm.redirectUrl);
-          loginUrl.searchParams.append('authCode', data.refreshToken);
-          window.location.href = loginUrl.toString()
-        }
-        else {
-          navigate("/");
-          window.location.reload();
-        }
+      const resonse = await authApi.postApiAuthCreate(body);
+      const data = resonse.data;
+      saveAccessToken(data.accessToken);
+      saveRefreshToken(data.refreshToken);
+      if (data.authCode != null && registerForm.redirectUrl != null) {
+        const loginUrl = new URL(registerForm.redirectUrl);
+        loginUrl.searchParams.append('authCode', data.refreshToken);
+        window.location.href = loginUrl.toString()
       }
       else {
-        console.log("error")
+        navigate("/");
+        window.location.reload();
       }
     } catch (e) {
       console.log(e)
@@ -81,20 +71,20 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
       <h2 className="auth-modal-title">Создать аккаунт</h2>
       <input className="auth-input"
         type="text"
-        placeholder="Юзернейм"
+        placeholder="Логин"
         value={registerForm.login}
         name="login"
         onChange={updateRegisterForm}
         required
       />
-      <input className="auth-input"
+      {/* <input className="auth-input"
         type="email"
         placeholder="Почта"
         value={registerForm.email}
         name="email"
         onChange={updateRegisterForm}
         required
-      />
+      /> */}
       <input className="auth-input"
         type="password"
         placeholder="Пароль"
@@ -114,8 +104,8 @@ const SignUpForm = ({ onSwitchToSignIn }) => {
       <input className="auth-input"
         type="text"
         placeholder="Имя"
-        value={registerForm.name}
-        name="name"
+        value={registerForm.userName}
+        name="userName"
         onChange={updateRegisterForm}
       />
       {/* <input className="auth-input"

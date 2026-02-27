@@ -30,8 +30,6 @@ internal class DefaultProfileService : IProfileService
         }
 
         var profile = AppProfile.Create(
-            birthdate: profileCreateModel.Birthdate,
-            email: profileCreateModel.Email,
             name: profileCreateModel.Name,
             userId: profileCreateModel.UserId
         );
@@ -77,8 +75,6 @@ internal class DefaultProfileService : IProfileService
             .FirstAsync(x => x.Id == profileEditModel.Id);
 
         _context.Attach(profile);
-        profile.Birthdate = profileEditModel.Birthdate;
-        profile.Email = profileEditModel.Email;
         profile.Name = profileEditModel.Name;
         profile.PhotoUrl = profileEditModel.PhotoUrl;
         await _cacheService.RemoveCachedDataAsync(new AppProfileCacheKey(profile.UserId));

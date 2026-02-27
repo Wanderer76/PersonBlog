@@ -1,30 +1,20 @@
-﻿using Authentication.Domain.Entities;
-using Authentication.Service.Models;
+﻿using Authentication.Service.Models;
+using Authentication.Service.Service;
 using AuthenticationApplication.Models;
-using AuthenticationApplication.Service;
 using Infrastructure.Models;
-using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Models;
-using Shared.Persistence;
-using Shared.Services;
 
 namespace AuthenticationApplication.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
-    private readonly ICurrentUserService _userSession;
-    private readonly IReadRepository<IAuthEntity> _readAuth;
-    public AuthController(ILogger<AuthController> logger, IAuthService authService, ICurrentUserService userSession, IReadRepository<IAuthEntity> readAuth)
+
+    public AuthController(ILogger<AuthController> logger, IAuthService authService)
     : base(logger)
     {
         _authService = authService;
-        _userSession = userSession;
-        _readAuth = readAuth;
     }
 
     [HttpPost("create")]
@@ -75,20 +65,7 @@ public class AuthController : BaseApiController
     [HttpGet("/me")]
     public async Task<ActionResult<UserModel>> GetCurrentUser()
     {
-        var now = DateTimeService.Now();
         var token = HttpContext!.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
-        var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
-        if (tokenRepr == null || tokenRepr != null && (tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now))
-            return UserModel.AnonymousUser();
-
-        var tokenData = tokenRepr!.Value;
-
-        var userRoles = await _readAuth.Get<AppUserRole>()
-            .Where(x => x.AppUserId == tokenData.UserId)
-            .Select(x => x.UserRoleId)
-            .ToListAsync();
-
-        var model = new UserModel(tokenData.UserId, tokenData.Login, null, tokenData.BlogId, userRoles);
-        return Ok(model);
+        return Ok(await _authService.GetCurrentUserAsync(token));
     }
 }

@@ -1,13 +1,23 @@
 // src/lib/api/mutator.ts
-import axios, { type AxiosRequestConfig } from 'axios';
+import axios, { AxiosResponse, type AxiosRequestConfig } from 'axios';
 import { JwtTokenService } from '../../shared/TokenStrorage.js';
+
+declare global {
+  interface ImportMetaEnv {
+    readonly VITE_API_BASE_URL: string;
+    readonly VITE_API_SWAGGER_URL: string;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
 
 let refreshTokenPromise: Promise<void> | null = null;
 
 // Функция с дженерик типом для Orval
-export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> => {
+export const customInstance = async <T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
   const instance = axios.create({
-    baseURL: 'http://localhost:7892/video',
+    baseURL:   `${import.meta.env.VITE_API_BASE_URL}/video`,
     withCredentials: false,
   });
 
@@ -48,7 +58,7 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<T> 
   );
 
   const res = await instance.request(config);
-    return res.data;
+  return res;
 };
 
 function redirectToAuth() {
