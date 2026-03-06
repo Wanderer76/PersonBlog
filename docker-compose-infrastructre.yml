@@ -12,7 +12,7 @@ services:
     networks:
       - backend      
   minio:
-    con tainer_name: fileStorage
+    container_name: fileStorage
     image: minio/minio
     command: server /data --console-address :9001
     ports:
@@ -26,8 +26,8 @@ services:
     networks:
       - backend
   database:
-    container_name: postgresDb
-    image: postgres:16.6
+    container_name: postgresDb11
+    image: registry.astralinux.ru/library/astra/ubi17-postgresql11@sha256:86bd8dcdbb506331831198b1d1d61b1505ca034179babe9cce432be9de34e3d0
     environment:
         - POSTGRES_USER=postgres
         - POSTGRES_DB=person_blog
