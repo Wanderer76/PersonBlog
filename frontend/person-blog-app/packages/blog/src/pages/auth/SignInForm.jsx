@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import API, { BaseApUrl } from "../../lib/api/client";
 import { redirect, useNavigate, useSearchParams } from "react-router-dom";
 import { saveAccessToken, saveRefreshToken } from "../../shared/TokenStrorage.js";
+import { getAuth } from "@/lib/api/generated/auth/auth.js";
 
 const SignInForm = ({ onSwitchToSignUp }) => {
 
@@ -9,9 +10,10 @@ const SignInForm = ({ onSwitchToSignUp }) => {
     const [authForm, setAuthForm] = useState({
         login: "",
         password: "",
-        redirectUrl: searchParams.get("redirect")
+        redirectUrl: searchParams.get("redirect") ?? '/'
     });
 
+    const authApi = getAuth();
     const navigate = useNavigate()
 
     function updateAuthForm(event) {
@@ -30,15 +32,9 @@ const SignInForm = ({ onSwitchToSignUp }) => {
             return
         }
         try {
-            const resonse = await API.post('video/api/Auth/login', JSON.stringify(body), {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
+            const resonse = await authApi.postApiAuthLogin(body)
             if (resonse.status === 200) {
                 const data = await resonse.data;
-
                 saveAccessToken(data.accessToken);
                 saveRefreshToken(data.refreshToken);
                 if (data.authCode != null && authForm.redirectUrl != null) {

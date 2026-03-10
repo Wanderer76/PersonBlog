@@ -14,11 +14,6 @@ public class AuthenticationClientOptions
 
 public static class AuthenticationContractExtensions
 {
-    public static void AddAuthenticationContract(this IServiceCollection services)
-    {
-
-    }
-
     public static void AddUserSessionServices(this IServiceCollection services, Action<AuthenticationClientOptions>? configureOptions = null)
     {
         var options = new AuthenticationClientOptions();

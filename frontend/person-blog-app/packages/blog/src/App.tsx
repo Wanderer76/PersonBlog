@@ -106,25 +106,4 @@ function App() {
   );
 }
 
-// Макет для вложенных маршрутов профиля
-const ProfileLayout = () => {
-  return (
-    <div className="profile-layout">
-      {/* Боковая панель профиля */}
-      <aside>
-        <nav>
-          <ul>
-            <li><Link to="/profile">Мой профиль</Link></li>
-            <li><Link to="/profile/post/create">Создать пост</Link></li>
-            <li><Link to="/profile/history">История просмотров</Link></li>
-          </ul>
-        </nav>
-      </aside>
-      <main>
-        <Outlet />
-      </main>
-    </div>
-  );
-};
-
 export default App;

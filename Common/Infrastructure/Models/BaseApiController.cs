@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Infrastructure.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Shared.Models;
@@ -23,6 +24,24 @@ namespace Infrastructure.Models
             Response.Headers["Content-Range"] = $"bytes {startPosition}-{sendSize}/{originalFileSize}";
             Response.Headers["Content-Length"] = $"{streamLength}";
             Response.ContentType = contentType;
+        }
+
+        protected ActionResult<T> ToActionResult<T>(Result<T> result)
+        {
+            if (result.IsSuccess) return Ok(result.Value);
+
+            return result.Errors.Any(e => e.Key == "NotFound")
+                ? NotFound(result.Errors)
+                : BadRequest(result.Errors.ToValidationProblem());
+        }
+
+        protected ActionResult ToActionResult(Result result)
+        {
+            if (result.IsSuccess) return Ok();
+
+            return result.Errors.Any(e => e.Key == "NotFound")
+                ? NotFound(result.Errors)
+                : BadRequest(result.Errors.ToValidationProblem());
         }
     }
 }

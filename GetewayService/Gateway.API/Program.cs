@@ -9,7 +9,6 @@ using Infrastructure.Middleware;
 using Microsoft.AspNetCore.HttpOverrides;
 using PlayListService.Contract;
 using Profile.Service;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 

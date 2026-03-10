@@ -13,10 +13,10 @@ namespace Blog.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public sealed class BlogController(
-    ILogger<BaseApiController> logger, 
-    IBlogService blogService, 
-    ISubscriptionLevelService subscriptionLevelService, 
-    ICurrentUserService currentUserService) 
+    ILogger<BaseApiController> logger,
+    IBlogService blogService,
+    ISubscriptionLevelService subscriptionLevelService,
+    ICurrentUserService currentUserService)
     : BaseApiController(logger)
 {
     [HttpPost("create")]
@@ -65,10 +65,7 @@ public sealed class BlogController(
     public async Task<IActionResult> CreateSubscriptionLevel()
     {
         var result = await subscriptionLevelService.GetAllSubscriptionsAsync();
-        return Ok(new
-        {
-            SubscriptionLevels = result
-        });
+        return Ok(new { SubscriptionLevels = result });
     }
 
     [HttpPost("subscriptionLevelCreate")]
@@ -105,5 +102,4 @@ public sealed class BlogController(
         return Ok(result);
     }
 }
-
 

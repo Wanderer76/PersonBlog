@@ -31,7 +31,6 @@ internal class Program
         builder.Services.AddUserSessionServices();
         builder.Services.AddCustomJwtAuthentication();
         builder.Services.AddAuthorization();
-        builder.Services.AddAuthenticationContract();
 
         var app = builder.Build();
 

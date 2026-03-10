@@ -1,12 +1,10 @@
 ﻿using Authentication.Contract.Constants;
-using Blog.Contracts.Events;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
 namespace Blog.API.Controllers;

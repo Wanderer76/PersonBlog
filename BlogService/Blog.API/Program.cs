@@ -21,7 +21,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddProfileServices();
-builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; });
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
@@ -92,6 +92,7 @@ using (var scope = app.Services.CreateScope())
         initializer.Initialize();
     }
 }
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(policy => policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod());
@@ -100,7 +101,6 @@ app.UseAuthorization();
 app.UseJwtMiddleware();
 app.MapControllers();
 app.MapDefaultEndpoints();
-
 
 app.Run();
 

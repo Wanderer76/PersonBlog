@@ -1,9 +1,9 @@
 ﻿namespace Shared.Utils;
 
-public class Error
+public sealed class Error
 {
-    public string Message { get; }
     public string Key { get; }
+    public string Message { get; }
 
     public Error(string message)
         : this("", message)
