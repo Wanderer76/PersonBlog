@@ -13,7 +13,10 @@
       <ProjectReference Include="..\..\Common\Shared\Shared.csproj" />
       <ProjectReference Include="..\..\NotificationService\Notification.Contract\Notification.Contract.csproj" />
       <ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
-      <ProjectReference Include="..\Blog.Contracts\Blog.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Events\" />
     </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@
 
 # Этот этап используется при запуске из VS в быстром режиме (по умолчанию для конфигурации отладки)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
 
@@ -10,31 +11,34 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["ViewReactingService/VideoReacting.API/VideoReacting.API.csproj", "ViewReactingService/VideoReacting.API/"]
-COPY ["ViewReactingService/VideoReacting.Persistence/VideoReacting.Persistence.csproj", "ViewReactingService/VideoReacting.Persistence/"]
-COPY ["ViewReactingService/ViewReacting.Domain/ViewReacting.Domain.csproj", "ViewReactingService/ViewReacting.Domain/"]
-COPY ["BlogService/Blog.Contracts/Blog.Contracts.csproj", "BlogService/Blog.Contracts/"]
+COPY ["ProfileService/Profile.API/Profile.API.csproj", "ProfileService/Profile.API/"]
+COPY ["AuthService/Authentication.Contract/Authentication.Contract.csproj", "AuthService/Authentication.Contract/"]
 COPY ["Common/MessageBus/MessageBus.csproj", "Common/MessageBus/"]
 COPY ["Common/Infrastructure/Infrastructure.csproj", "Common/Infrastructure/"]
 COPY ["Common/Shared/Shared.csproj", "Common/Shared/"]
 COPY ["Common/MessageBus.Shared/MessageBus.Shared.csproj", "Common/MessageBus.Shared/"]
-COPY ["ViewReactingService/VideoReacting.Service/VideoReacting.Service.csproj", "ViewReactingService/VideoReacting.Service/"]
-COPY ["BlogService/Blog.Service/Blog.Service.csproj", "BlogService/Blog.Service/"]
+COPY ["GetewayService/AspireTest/AspireTest.ServiceDefaults/AspireTest.ServiceDefaults.csproj", "GetewayService/AspireTest/AspireTest.ServiceDefaults/"]
+COPY ["ProfileService/Profile.Persistence/Profile.Persistence.csproj", "ProfileService/Profile.Persistence/"]
+COPY ["ProfileService/Profile.Domain/Profile.Domain.csproj", "ProfileService/Profile.Domain/"]
+COPY ["ProfileService/Profile.Service/Profile.Service.csproj", "ProfileService/Profile.Service/"]
+COPY ["BlogService/Blog.Contracts/Blog.Contracts.csproj", "BlogService/Blog.Contracts/"]
 COPY ["BlogService/Blog.Domain/Blog.Domain.csproj", "BlogService/Blog.Domain/"]
 COPY ["Common/FileStorage.Service/FileStorage.Service.csproj", "Common/FileStorage.Service/"]
+COPY ["NotificationService/Notification.Contract/Notification.Contract.csproj", "NotificationService/Notification.Contract/"]
+COPY ["BlogService/Blog.Service/Blog.Service.csproj", "BlogService/Blog.Service/"]
 COPY ["BlogService/Blog.Persistence/Blog.Persistence.csproj", "BlogService/Blog.Persistence/"]
-RUN dotnet restore "./ViewReactingService/VideoReacting.API/VideoReacting.API.csproj"
+RUN dotnet restore "./ProfileService/Profile.API/Profile.API.csproj"
 COPY . .
-WORKDIR "/src/ViewReactingService/VideoReacting.API"
-RUN dotnet build "./VideoReacting.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/ProfileService/Profile.API"
+RUN dotnet build "./Profile.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Этот этап используется для публикации проекта службы, который будет скопирован на последний этап
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./VideoReacting.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Profile.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Этот этап используется в рабочей среде или при запуске из VS в обычном режиме (по умолчанию, когда конфигурация отладки не используется)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "VideoReacting.API.dll"]
+ENTRYPOINT ["dotnet", "Profile.API.dll"]

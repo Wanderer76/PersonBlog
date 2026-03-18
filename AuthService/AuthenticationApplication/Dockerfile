@@ -6,6 +6,7 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
+RUN apt-get update && apt-get install -y nano
 
 # Этот этап используется для сборки проекта службы
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
@@ -17,10 +18,15 @@ COPY ["Common/MessageBus/MessageBus.csproj", "Common/MessageBus/"]
 COPY ["Common/Infrastructure/Infrastructure.csproj", "Common/Infrastructure/"]
 COPY ["Common/Shared/Shared.csproj", "Common/Shared/"]
 COPY ["Common/MessageBus.Shared/MessageBus.Shared.csproj", "Common/MessageBus.Shared/"]
+COPY ["BlogService/Blog.Domain/Blog.Domain.csproj", "BlogService/Blog.Domain/"]
+COPY ["Common/FileStorage.Service/FileStorage.Service.csproj", "Common/FileStorage.Service/"]
+COPY ["NotificationService/Notification.Contract/Notification.Contract.csproj", "NotificationService/Notification.Contract/"]
+COPY ["ProfileService/Profile.Domain/Profile.Domain.csproj", "ProfileService/Profile.Domain/"]
+COPY ["AuthService/Authentication.Contract/Authentication.Contract.csproj", "AuthService/Authentication.Contract/"]
+COPY ["GetewayService/AspireTest/AspireTest.ServiceDefaults/AspireTest.ServiceDefaults.csproj", "GetewayService/AspireTest/AspireTest.ServiceDefaults/"]
 COPY ["AuthService/Authentication.Domain/Authentication.Domain.csproj", "AuthService/Authentication.Domain/"]
 COPY ["AuthService/Authentication.Peristence/Authentication.Peristence.csproj", "AuthService/Authentication.Peristence/"]
 COPY ["AuthService/Authentication.Service/Authentication.Service.csproj", "AuthService/Authentication.Service/"]
-COPY ["AuthService/Authentication.Contract/Authentication.Contract.csproj", "AuthService/Authentication.Contract/"]
 RUN dotnet restore "./AuthService/AuthenticationApplication/AuthenticationApplication.csproj"
 COPY . .
 WORKDIR "/src/AuthService/AuthenticationApplication"

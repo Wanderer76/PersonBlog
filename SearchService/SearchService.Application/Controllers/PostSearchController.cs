@@ -6,11 +6,11 @@ using Shared.Utils;
 
 namespace SearchService.Application.Controllers
 {
-    public class PostSearchController : BaseController
+    public class PostSearchController : BaseApiController
     {
         private readonly ISearchService _searchService;
 
-        public PostSearchController(ILogger<BaseController> logger, ISearchService searchService) : base(logger)
+        public PostSearchController(ILogger<BaseApiController> logger, ISearchService searchService) : base(logger)
         {
             _searchService = searchService;
         }

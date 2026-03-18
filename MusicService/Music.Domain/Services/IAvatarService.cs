@@ -5,6 +5,6 @@ namespace Music.Domain.Services
 {
     public interface IAvatarService
     {
-        Task<Result<Guid>> UploadAvatarAsync(FileMetadata fileMetadata,Stream stream);
+        Task<Result<Guid>> UploadAvatarAsync(BaseFileMetadataEntity fileMetadata,Stream stream);
     }
 }

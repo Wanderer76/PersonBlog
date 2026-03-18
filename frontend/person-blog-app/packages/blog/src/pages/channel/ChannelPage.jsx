@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import styles from './ChannelPage.module.css';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
-import { getLocalDateTime } from "../../scripts/LocalDate";
+import { getLocalDateTime } from "../../shared/LocalDate";
 import SideBar from "../../components/sidebar/SideBar";
 
 const ChannelPage = () => {
@@ -59,6 +59,7 @@ const ChannelPage = () => {
     useEffect(() => {
         const loadVideos = async () => {
             try {
+                alert('неиспользуемый метод')
                 const response = await API.get(
                     `/video/api/Channel/posts/${channelId}?page=${page}&size=${pageSize}`
                 );
@@ -148,7 +149,7 @@ const ChannelPage = () => {
                 key={video.id}
                 className={styles.videoCard}
                 ref={videos.length === index + 1 ? lastVideoRef : null}
-                onClick={() => video.state === 1 && navigate(`/video/${video.id}`)}
+                onClick={() => video.state === 1 && navigate(`/videoPage/${video.id}`)}
             >
                 <div className={styles.thumbnail}>
                     <img src={video.previewUrl} alt={video.title} />

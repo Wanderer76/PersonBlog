@@ -10,4 +10,8 @@
     <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\" />
+  </ItemGroup>
+
 </Project>

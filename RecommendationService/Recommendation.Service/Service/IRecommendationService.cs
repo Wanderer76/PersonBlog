@@ -1,4 +1,4 @@
-﻿using Blog.Service.Models;
+﻿using Recommendation.Service.Models;
 
 namespace Recommendation.Service.Service
 {

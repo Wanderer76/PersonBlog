@@ -1,7 +1,6 @@
 using Authentication.Contract;
 using Blog.API.HostedServices;
 using Blog.API.Saga;
-using Blog.Contracts;
 using Blog.Contracts.Events;
 using Blog.Domain.Events.Handlers;
 using Blog.Persistence;
@@ -22,14 +21,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddProfileServices();
-builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; });
 builder.Services.AddProfilePersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddBlogContract();
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddVideoConvertSaga()
@@ -79,18 +77,20 @@ builder.Services.AddHostedService<OutboxPublisherService>()
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
 {
-    using (var scope = app.Services.CreateScope())
-    {
-        var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
-        foreach (var initializer in initializers)
-        {
-            initializer.Initialize();
-        }
-    }
-    app.UseCustomSwagger(app.Configuration);
+   
+    app.UseSwagger();
+    //app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
+}
+using (var scope = app.Services.CreateScope())
+{
+    var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+    foreach (var initializer in initializers)
+    {
+        initializer.Initialize();
+    }
 }
 
 app.UseHttpsRedirection();
@@ -101,7 +101,6 @@ app.UseAuthorization();
 app.UseJwtMiddleware();
 app.MapControllers();
 app.MapDefaultEndpoints();
-
 
 app.Run();
 

@@ -8,7 +8,7 @@ using Music.Domain.Services;
 
 namespace Music.API.Controllers
 {
-    public class TrackController : BaseController
+    public class TrackController : BaseApiController
     {
         private readonly ITrackService _trackService;
         private readonly IGenreService _genreService;
@@ -45,7 +45,7 @@ namespace Music.API.Controllers
             {
                 return Ok();
             }
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
 
@@ -75,7 +75,7 @@ namespace Music.API.Controllers
             {
                 return Ok(result.Value);
             }
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
         [HttpPost("uploadTrackThumbnail")]
@@ -95,7 +95,7 @@ namespace Music.API.Controllers
             {
                 return Ok(result.Value);
             }
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
         private bool IsValidMp3File(IFormFile file)

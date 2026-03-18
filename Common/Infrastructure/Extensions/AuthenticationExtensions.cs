@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Infrastructure.Extensions
 {
@@ -11,7 +12,7 @@ namespace Infrastructure.Extensions
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
-                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
                         //ValidateIssuer = true,
                         //ValidateAudience = true,
@@ -24,6 +25,4 @@ namespace Infrastructure.Extensions
                 });
         }
     }
-
-   
 }

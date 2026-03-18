@@ -1,10 +1,11 @@
-﻿using Blog.Domain.Events;
+﻿using Blog.Contracts.Events;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 
 namespace VideoProcessing.Cli.Service;
 
+[Obsolete("Была добавлена multipart загрузка в s3, необходимость в этом сервисе отпала")]
 public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand>
 {
     private readonly IFileStorage storage;
@@ -25,7 +26,7 @@ public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand
         {
             var chunks = new List<(long Number, int Size, string ObjectName)>();
 
-            await foreach (var chunk in storage.GetAllBucketObjects(@event.PostId, new VideoChunkUploadingInfo { FileId = @event.VideoMetadataId })
+            await foreach (var chunk in storage.GetAllBucketObjects(@event.PostId, new ChunkUploadingInfo(@event.VideoMetadataId, default))
                 .Where(x => x.Headers != null && x.Headers.Count > 0))
             {
                 chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.Objectname));
@@ -51,10 +52,10 @@ public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand
                 PostId = @event.PostId,
             };
 
-            foreach (var chunk in chunks)
-            {
-                await storage.RemoveFileAsync(@event.PostId, chunk.ObjectName);
-            }
+            //foreach (var chunk in chunks)
+            //{
+            //    await storage.RemoveFileAsync(@event.PostId, chunk.ObjectName);
+            //}
             return response;
         }
         catch (Exception e)

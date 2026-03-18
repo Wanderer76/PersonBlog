@@ -4,7 +4,7 @@ namespace Gateway.API.Services
 {
     public static class ManifestServiceExtensions
     {
-        public static async Task<string> ProcessManifestAsync(this IFileStorage storage, Guid blogId, string file)
+        public static async Task<string> ProcessHLSManifestAsync(this IFileStorage storage, Guid blogId, string file)
         {
             var manifestStream = new MemoryStream();
             await storage.ReadFileAsync(blogId, $"{file}", manifestStream);

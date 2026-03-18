@@ -1,0 +1,341 @@
+﻿using Blog.Contracts;
+using Blog.Contracts.Models;
+using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using PlayListService.Domain.Entities;
+using PlayListService.Services.Models;
+using Shared.Models;
+using Shared.Persistence;
+using Shared.Services;
+using Shared.Utils;
+
+namespace PlayListService.Services.Services;
+
+internal sealed class CrudPlayListService : IPlayListService
+{
+    private readonly IReadWriteRepository<IPlayListEntity> _repository;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly PlayListFileService _playListFileService;
+    private readonly PostApiClient postApiClient;
+    private readonly BlogApiClient blogApiClient;
+
+    public CrudPlayListService(IReadWriteRepository<IPlayListEntity> repository, ICurrentUserService currentUserService, PlayListFileService playListFileService, PostApiClient postApiClient, BlogApiClient blogApiClient)
+    {
+        _repository = repository;
+        _currentUserService = currentUserService;
+        _playListFileService = playListFileService;
+        this.postApiClient = postApiClient;
+        this.blogApiClient = blogApiClient;
+    }
+
+    public async Task<Result<PlayListListItem>> CreatePlayListAsync(CreatePlayListRequest request)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+
+        using var transaction = await _repository.BeginTransactionAsync();
+        var playListId = GuidService.GetNewGuid();
+
+        var thumbnailId = await GetThumbnailFileId(request, user, playListId);
+
+        var newPlayList = PlayList.Create(
+            id: playListId,
+            createdAt: DateTimeService.Now(),
+            title: request.Title,
+            userId: user.UserId,
+            thumbnailId: thumbnailId,
+            playListItems: request.PostIds
+            );
+
+        if (newPlayList.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(newPlayList.Errors!);
+        }
+
+        _repository.Add(newPlayList.Value);
+        await _repository.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return new PlayListListItem
+        {
+            Id = newPlayList.Value.Id,
+            PostCount = newPlayList.Value.PlayListItems.Count,
+            Title = request.Title,
+            ThumbnailUrl = await _playListFileService.GetThumbnailAsync(newPlayList.Value)
+        };
+    }
+
+    private async Task<Guid?> GetThumbnailFileId(CreatePlayListRequest request, UserModel user, Guid playListId)
+    {
+        if (request.ThumbnailId.HasValue)
+        {
+            var existFile = await _repository.Get<PlayListFile>()
+                .FirstAsync(x => x.Id == request.ThumbnailId.Value);
+
+            _repository.Attach(existFile);
+            existFile.PlaylistId = playListId;
+            return request.ThumbnailId.Value;
+        }
+        else
+        {
+            if (request.Thumbnail != null)
+            {
+                return (await _playListFileService.UploadThumbnailAsync(
+                    playListId,
+                    user.UserId,
+                    new BaseFileMetadataEntity
+                    {
+                        Id = GuidService.GetNewGuid(),
+                        ContentType = request.Thumbnail.ContentType,
+                        CreatedAt = DateTimeService.Now(),
+                        FileExtension = Path.GetExtension(request.Thumbnail.FileName),
+                        Length = request.Thumbnail.Length,
+                        Name = request.Thumbnail.Name,
+                    },
+                    request.Thumbnail.OpenReadStream())).Id;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    public async Task<Result<PlayListListItem>> GetPlayListAsync(Guid id)
+    {
+        var playlist = await _repository.Get<PlayList>()
+            .Include(x => x.PlayListItems)
+            .Where(x => x.Id == id && x.IsDelete == false)
+            .FirstOrDefaultAsync();
+
+        if (playlist == null)
+        {
+            return new Error(nameof(id), "Not found");
+        }
+        var user = await _currentUserService.GetCurrentUserAsync();
+
+        return Result<PlayListListItem>.Success(new PlayListListItem
+        {
+            Id = playlist.Id,
+            PostCount = playlist.PlayListItems.Count,
+            ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
+            Title = playlist.Title,
+            CanEdit = playlist.UserId == user.UserId
+        });
+    }
+
+    public async Task<Result<PlayListListItem>> AddVideoAsync(PlayListItemAddRequest playListItems)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+
+        var playlist = await _repository.Get<PlayList>()
+            .Where(x => x.Id == playListItems.PlayListId && x.IsDelete == false)
+            .Include(x => x.PlayListItems)
+            .FirstAsync();
+
+        if (user.UserId != playlist.UserId)
+        {
+            return new Error("Нельзя добавить пост не в свой плейлист");
+        }
+
+        var now = DateTimeService.Now();
+        _repository.Attach(playlist);
+        foreach (var playListItem in playListItems.PostsToAdd)
+        {
+            var isAdded = playlist.AddVideo(playListItem, now);
+            if (isAdded.IsFailure)
+            {
+                return Result<PlayListListItem>.Failure(isAdded.Errors!);
+            }
+        }
+
+        await _repository.SaveChangesAsync();
+        return new PlayListListItem
+        {
+            Id = playlist.Id,
+            PostCount = playlist.PlayListItems.Count,
+            ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
+            Title = playlist.Title,
+        };
+    }
+
+    public async Task<Result<PlayListListItem>> RemoveVideoAsync(PlayListItemRemoveRequest request)
+    {
+        var playlist = await _repository.Get<PlayList>()
+            .Where(x => x.IsDelete == false)
+            .Where(x => x.Id == request.PlayListId)
+            .Include(x => x.PlayListItems)
+            .FirstAsync();
+
+        if (playlist == null)
+        {
+            return Result<PlayListListItem>.Failure(new Error(nameof(request.PlayListId), "Не найден плейлист"));
+        }
+
+        var user = await _currentUserService.GetCurrentUserAsync();
+
+        if (user.UserId != playlist.UserId)
+        {
+            return Result<PlayListListItem>.Failure(new Error(""));
+        }
+        _repository.Attach(playlist);
+        playlist.RemoveVideo(request.PostId);
+        await _repository.SaveChangesAsync();
+        return Result<PlayListListItem>.Success(new PlayListListItem
+        {
+            Id = playlist.Id,
+            PostCount = playlist.PlayListItems.Count,
+            ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
+            Title = playlist.Title,
+        });
+    }
+
+    public async Task<Result<PlayListListItem>> ChangePostPositionAsync(ChangePostPositionRequest changePostPositionRequest)
+    {
+        var playlist = await _repository.Get<PlayList>()
+            .Where(x => x.Id == changePostPositionRequest.PlaylistId)
+            .Include(x => x.PlayListItems.OrderBy(x => x.Position))
+            .FirstAsync();
+        if (playlist == null)
+        {
+            return Result<PlayListListItem>.Failure(new Error(nameof(changePostPositionRequest.PlaylistId), "Не найден плейлист"));
+        }
+
+        var user = await _currentUserService.GetCurrentUserAsync();
+
+        if (user.UserId != playlist.UserId)
+        {
+            return Result<PlayListListItem>.Failure(new Error(""));
+        }
+
+        _repository.Attach(playlist);
+
+        var result = playlist.ChangeVideoPosition(changePostPositionRequest.PostId, changePostPositionRequest.Destination);
+        if (result.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(result.Errors!);
+        }
+        await _repository.SaveChangesAsync();
+
+
+        return Result<PlayListListItem>.Success(new PlayListListItem
+        {
+            Id = playlist.Id,
+            PostCount = playlist.PlayListItems.Count,
+            ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
+            Title = playlist.Title,
+        });
+    }
+
+    public async Task<Result> RemovePlayListAsync(Guid id)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+        var playList = await _repository.Get<PlayList>()
+            .FirstAsync(x => x.Id == id);
+        if (playList.UserId != user.UserId)
+        {
+            return Result.Failure(new Error("", "Нельзя удалить чужой плейлист"));
+        }
+        _repository.Attach(playList);
+        playList.RemovePlayList();
+        await _repository.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<PagedListViewModel<PostCommonModel>> GetPlayListPostPagedAsync(Guid playListId, int page, int pageSize)
+    {
+        var query = _repository.Get<PlayList>()
+            .Where(x => x.Id == playListId)
+            .SelectMany(x => x.PlayListItems)
+            .Where(x => x.IsDelete == false);
+
+        var totalPostCount = await query.CountAsync();
+
+        var posts = await query
+            .OrderBy(x => x.Position)
+            .Select(x => x.PostId)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var items = posts.Count == 0 ? [] : await postApiClient.GetPostCommonModelAsync(posts);
+        return new PagedListViewModel<PostCommonModel>((int)Math.Ceiling((decimal)totalPostCount / pageSize), pageSize, items);
+    }
+
+    public async Task<IReadOnlyList<PlayListListItem>> GetUserPlayLists()
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+        var playLists = await _repository.Get<PlayList>()
+            .Where(x => x.UserId == user.UserId)
+            .Where(x => x.IsDelete == false)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.Title,
+                PlayListItemsCount = x.PlayListItems.Count(),
+                x.ThumbnailId,
+            })
+            .ToListAsync();
+
+        var result = playLists.Select(async x => new PlayListListItem
+        {
+            Id = x.Id,
+            PostCount = x.PlayListItemsCount,
+            Title = x.Title,
+            ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(user.UserId, x.ThumbnailId.Value)
+        });
+
+        return await Task.WhenAll(result);
+    }
+
+    public async Task<Result<IReadOnlyList<PlayListListItem>>> GetPlayListsByBlogIdAsync(Guid blogId)
+    {
+        var blog = await blogApiClient.GetBlogDetailsAsync(blogId);
+        if (blog.IsFailure)
+        {
+            return Result<IReadOnlyList<PlayListListItem>>.Failure(blog.Errors);
+        }
+
+        var playLists = await _repository.Get<PlayList>()
+            .Where(x => x.UserId == blog.Value.UserId)
+            .Where(x => x.IsDelete == false)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new
+            {
+                x.Id,
+                x.Title,
+                PlayListItemsCount = x.PlayListItems.Count,
+                x.ThumbnailId,
+            })
+            .ToListAsync();
+
+        var result = playLists.Select(async x => new PlayListListItem
+        {
+            Id = x.Id,
+            PostCount = x.PlayListItemsCount,
+            Title = x.Title,
+            ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(blog.Value.UserId, x.ThumbnailId.Value)
+        });
+        return await Task.WhenAll(result);
+    }
+}
+
+public class PlayListItemAddRequest
+{
+    public required Guid PlayListId { get; set; }
+
+    public required List<Guid> PostsToAdd { get; set; }
+}
+
+public class ChangePostPositionRequest
+{
+    public required Guid PlaylistId { get; set; }
+    public required Guid PostId { get; set; }
+    public required int Destination { get; set; }
+}
+
+public class PlayListItemRemoveRequest
+{
+    public required Guid PlayListId { get; set; }
+    public required Guid PostId { get; set; }
+}
+

@@ -1,5 +1,5 @@
-using Blog.Domain.Services.Models;
-using Blog.Service.Models.Blog;
+using Blog.Contracts.Models;
+using Blog.Contracts.Models.Blog;
 using Gateway.API.Api;
 using Gateway.API.Services;
 using Infrastructure.Models;
@@ -13,7 +13,7 @@ namespace Gateway.API.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class VideoController : BaseController
+public class VideoController : BaseApiController
 {
     private const string HLSType = "application/x-mpegURL";
     private readonly IFileStorage storage;
@@ -30,17 +30,18 @@ public class VideoController : BaseController
 
 
     [HttpGet("{blogId}/{postId}/{*file}")]
+    [ResponseCache(NoStore = false, Duration = 6000, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid blogId, Guid postId, string file)
     {
         if (file.EndsWith("playlist.m3u8"))
         {
-            var key = new FileCacheKey(file);
-            var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
-            if (playlistParsed == null)
-            {
-                playlistParsed = await storage.ProcessManifestAsync(blogId, file);
-                await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
-            }
+            //var key = new FileCacheKey(file);
+            //var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
+            //if (playlistParsed == null)
+            //{
+            var playlistParsed = await storage.ProcessHLSManifestAsync(blogId, file);
+            //await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
+            //}
 
             return Content(playlistParsed, HLSType);
         }
@@ -61,8 +62,8 @@ public class VideoController : BaseController
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
             var hasUser = HttpContext.TryGetUserFromContext(out var userId);
 
-            var post = _httpClientFactory.GetPostDetailViewAsync(HttpContext, postId);
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
+            var post = _httpClientFactory.GetPostDetailViewAsync(HttpContext, postId);
             var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.Value?.Id);
 
             await Task.WhenAll(post, userInfo).ConfigureAwait(false);

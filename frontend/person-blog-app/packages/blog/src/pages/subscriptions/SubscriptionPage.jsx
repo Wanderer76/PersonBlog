@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import { Link } from "react-router-dom";
 import styles from "./SubscriptionPage.module.css";
 import SideBar from "../../components/sidebar/SideBar";

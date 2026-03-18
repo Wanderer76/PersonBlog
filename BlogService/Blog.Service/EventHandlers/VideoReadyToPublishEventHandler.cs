@@ -1,7 +1,6 @@
 ﻿using Blog.Contracts.Events;
+using Blog.Contracts.Models.Post;
 using Blog.Domain.Entities;
-using Blog.Domain.Events;
-using Blog.Service.Models.Post;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
@@ -26,10 +25,11 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
 
     private async Task<Post> PrepareToPublish(VideoReadyToPublishEvent @event)
     {
-        var fileMetadata = await _repository.Get<VideoMetadata>()
+        var fileMetadata = await _repository.Get<VideoFile>()
                         .FirstAsync(x => x.Id == @event.VideoMetadataId);
 
         var post = await _repository.Get<Post>()
+            .Include(x=>x.VideoPostInfo)
             .FirstAsync(x => x.Id == @event.PostId);
 
         _repository.Attach(fileMetadata);
@@ -38,16 +38,18 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
         if (@event.Error != null)
         {
             fileMetadata.ErrorMessage = @event.Error;
-            fileMetadata.ProcessState = ProcessState.Error;
+            post.ProcessState = ProcessState.Error;
         }
         else
         {
             if (@event.PreviewId != null)
-                post.PreviewId = @event.PreviewId;
+            {
+                post.VideoPostInfo.PreviewId = @event.PreviewId;
+            }
             fileMetadata.ObjectName = @event.ObjectName;
             fileMetadata.Duration = @event.Duration;
-            fileMetadata.ProcessState = ProcessState.Complete;
-            post.VideoFileId = fileMetadata.Id;
+            post.ProcessState = ProcessState.Complete;
+            post.VideoPostInfo.VideoFileId = fileMetadata.Id;
         }
         var postUpdateEvent = new PostUpdateEvent
         {
@@ -55,7 +57,7 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
             PostId = post.Id,
             ViewCount = post.ViewCount,
             CreatedAt = post.CreatedAt,
-            Description = post.Description,
+            Description = post.VideoPostInfo.Description,
             Title = post.Title,
             UpdateType = UpdateType.Create
         };

@@ -8,12 +8,12 @@ using Shared.Services;
 
 namespace Music.API.Controllers
 {
-    public class ArtistController : BaseController
+    public class ArtistController : BaseApiController
     {
         private readonly IArtistService _artistService;
         private readonly IAvatarService _avatarService;
         private readonly IArtistSearchService _artistSearchService;
-        public ArtistController(ILogger<BaseController> logger, IArtistService artistService, IAvatarService avatarService, IArtistSearchService artistSearchService)
+        public ArtistController(ILogger<BaseApiController> logger, IArtistService artistService, IAvatarService avatarService, IArtistSearchService artistSearchService)
             : base(logger)
         {
             _artistService = artistService;
@@ -26,7 +26,7 @@ namespace Music.API.Controllers
         public async Task<IActionResult> UploadAvatar([FromForm] AvatarUploadForm form)
         {
             var avatar = form.Avatar;
-            var metadata = new Shared.Models.FileMetadata
+            var metadata = new Shared.Models.BaseFileMetadataEntity
             {
                 Id = GuidService.GetNewGuid(),
                 ContentType = avatar.ContentType,
@@ -43,7 +43,7 @@ namespace Music.API.Controllers
             }
             else
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
         }
 
@@ -61,7 +61,7 @@ namespace Music.API.Controllers
             }
             else
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
         }
 
@@ -77,7 +77,7 @@ namespace Music.API.Controllers
             }
             else
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
         }
 
@@ -91,7 +91,7 @@ namespace Music.API.Controllers
                 return Ok(result.Value);
             }
 
-            return BadRequest(result.Error);
+            return BadRequest(result.Errors);
         }
 
 

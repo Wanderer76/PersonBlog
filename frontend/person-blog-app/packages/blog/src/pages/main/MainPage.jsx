@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import './MainPage.css';
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import SideBar from "../../components/sidebar/SideBar";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
+import { getRecommendation } from "@/lib/api/generated/recommendation/recommendation";
+import { getSearch } from "@/lib/api/generated/search/search";
 
 const MainPage = function () {
     const [videos, setVideos] = useState([]);
@@ -16,13 +18,18 @@ const MainPage = function () {
 
     const fetchVideos = useCallback(async () => {
         try {
+
+            const reco = getRecommendation();
+            const sear = getSearch();
             setIsLoading(true);
             const endpoint = activeSearchQuery
                 ? `/video/api/Search/searchByTitle?title=${activeSearchQuery}&page=${page}&limit=${limit}`
                 : `/video/recommendations?page=${page}&limit=${limit}`;
 
-            const response = await API.get(endpoint);
-
+            const response = activeSearchQuery
+            ? await sear.getApiSearchSearchByTitle({title:activeSearchQuery,page:page,limit:limit})
+            : await reco.getRecommendations({page,limit})
+            
             if (response.status === 200) {
                 setVideos(prev =>
                     page === 1 ? response.data : [...prev, ...response.data]

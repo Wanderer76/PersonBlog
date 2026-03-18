@@ -2,9 +2,9 @@ import { useNavigate } from "react-router-dom";
 import SideBar from "../../components/sidebar/SideBar";
 import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 import styles from './LikedPage.module.css';
-import { getLocalDate } from "../../scripts/LocalDate";
+import { getLocalDate } from "../../shared/LocalDate";
 import { useState } from "react";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 
 const LikedPage = function () {
     const [likedList, setLikedList] = useState([]);
@@ -38,7 +38,7 @@ const LikedPage = function () {
                                             watchTime: null,
                                             lastWatched: x.createdAt
                                         }
-                                        return <PostListItem item={data} navigate={() => navigate(`/video/${data.postId}?time=${data.watchTime}`)} key={x.id} />
+                                        return <PostListItem item={data} navigate={() => navigate(`/videoPage/${data.postId}?time=${data.watchTime}`)} key={x.id} />
                                     })}
                                 </div>
                             </div>

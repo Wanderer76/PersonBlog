@@ -1,16 +1,16 @@
-﻿using Blog.Service.Models;
-using Blog.Service.Models.Post;
+﻿using Blog.Contracts.Models.Post;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using Recommendation.Service.Models;
 using System.Text.Encodings.Web;
 
 namespace Gateway.API.Controllers
 {
-    public class SearchController : BaseController
+    public class SearchController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public SearchController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public SearchController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }

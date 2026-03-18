@@ -1,94 +1,56 @@
-﻿using Authentication.Domain.Entities;
-using Authentication.Service.Models;
+﻿using Authentication.Service.Models;
+using Authentication.Service.Service;
 using AuthenticationApplication.Models;
-using AuthenticationApplication.Service;
 using Infrastructure.Models;
-using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Models;
-using Shared.Persistence;
-using Shared.Services;
 
 namespace AuthenticationApplication.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : BaseController
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
-    private readonly ICurrentUserService _userSession;
-    private readonly IReadRepository<IAuthEntity> _readAuth;
-    public AuthController(ILogger<AuthController> logger, IAuthService authService, ICurrentUserService userSession, IReadRepository<IAuthEntity> readAuth)
+
+    public AuthController(ILogger<AuthController> logger, IAuthService authService)
     : base(logger)
     {
         _authService = authService;
-        _userSession = userSession;
-        _readAuth = readAuth;
     }
 
     [HttpPost("create")]
-    [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> CreateUser([FromBody] RegisterModel registerModel)
+    [Produces(typeof(AuthCodeResponse))]
+    public async Task<Result<AuthCodeResponse>> CreateUser([FromBody] RegisterModel registerModel)
     {
         var response = await _authService.Register(registerModel);
         if (response.IsSuccess)
         {
-            return Ok(response.Value);
+            var authResult = await _authService.Authenticate(new LoginPasswordModel(registerModel.Login, registerModel.Password));
+            return authResult;
         }
         else
-        {
-            return BadRequest(response.Error);
-        }
+            return Result<AuthCodeResponse>.Failure(response.Errors);
     }
 
     [HttpPost("login")]
-    [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> Login(LoginPasswordModel loginModel)
+    [Produces(typeof(Result<AuthCodeResponse>))]
+    public async Task<Result<AuthCodeResponse>> Login([FromBody] LoginPasswordModel loginModel)
     {
         var response = await _authService.Authenticate(loginModel);
-        if (response.IsSuccess)
-        {
-            return Ok(response.Value);
-        }
-        else
-        {
-            return BadRequest(response.Error);
-        }
+        return response;
     }
 
     [HttpPost("refresh")]
     [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> Refresh(string refreshToken)
+    public async Task<Result<AuthResponse>> Refresh(string refreshToken)
     {
         var response = await _authService.Refresh(refreshToken);
-        if (response.IsSuccess)
-        {
-            return Ok(response.Value);
-        }
-        else
-        {
-            return Unauthorized(response.Error);
-        }
+        return response;
     }
 
     [HttpGet("/me")]
     public async Task<ActionResult<UserModel>> GetCurrentUser()
     {
-        var now = DateTimeService.Now();
         var token = HttpContext!.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
-        var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
-        if (tokenRepr == null || tokenRepr != null && (tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now))
-            return UserModel.AnonymousUser();
-
-        var tokenData = tokenRepr!.Value;
-
-        var userRoles = await _readAuth.Get<AppUserRole>()
-            .Where(x => x.AppUserId == tokenData.UserId)
-            .Select(x => x.UserRoleId)
-            .ToListAsync();
-
-        var model = new UserModel(tokenData.UserId, tokenData.Login, null, tokenData.BlogId, userRoles);
-        return Ok(model);
+        return Ok(await _authService.GetCurrentUserAsync(token));
     }
 }

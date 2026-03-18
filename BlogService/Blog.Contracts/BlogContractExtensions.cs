@@ -1,17 +1,23 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Infrastructure.Middleware;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Blog.Contracts
+namespace Blog.Contracts;
+
+public static class BlogContractExtensions
 {
-    public static class BlogContractExtensions
+    public static void AddBlogContract(this IServiceCollection services, IConfiguration configuration)
     {
-        public static void AddBlogContract(this IServiceCollection services)
-        {
+        services.AddTransient<HeaderClientHandler>();
 
-        }
+        services.AddHttpClient<BlogApiClient>(x =>
+        {
+            x.BaseAddress = new Uri(configuration["AppUrls:Blog"]!);
+        }).AddHttpMessageHandler<HeaderClientHandler>();
+
+        services.AddHttpClient<PostApiClient>(x =>
+        {
+            x.BaseAddress = new Uri(configuration["AppUrls:Blog"]!);
+        }).AddHttpMessageHandler<HeaderClientHandler>();
     }
 }

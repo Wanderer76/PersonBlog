@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { JwtTokenService } from '../../scripts/TokenStrorage';
-import API from "../../scripts/apiMethod";
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
+import API from "../../lib/api/client";
 import { useNavigate } from "react-router-dom";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
 import SideBar from "../../components/sidebar/SideBar";
 import styles from './HistoryPage.module.css';
-import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../scripts/LocalDate";
+import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../shared/LocalDate";
 import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 
 const HistoryPage = function (props) {
@@ -81,7 +81,7 @@ const HistoryPage = function (props) {
                       watchTime: x.watchedTime,
                       lastWatched: x.lastWatched
                     }
-                    return <PostListItem item={data} navigate={() => navigate(`/video/${data.postId}?time=${data.watchTime}`)} key={x.id} />
+                    return <PostListItem item={data} navigate={() => navigate(`/videoPage/${data.postId}?time=${data.watchTime}`)} key={x.id} />
                   })}
                 </div>
               </div>

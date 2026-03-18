@@ -2,13 +2,14 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import './VideoPage.css';
 import React, { useEffect, useRef, useState } from 'react';
-import API, { BaseApUrl } from '../../scripts/apiMethod';
-import { getLocalDateTime } from '../../scripts/LocalDate';
+import API, { BaseApUrl } from '../../lib/api/client';
+import { getLocalDateTime } from '../../shared/LocalDate';
 import logo from '../../defaultProfilePic.png';
-import { JwtTokenService } from '../../scripts/TokenStrorage';
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import SmallVideoCard from '../../components/VideoCards/SmallVideoCard';
 import SideBar from '../../components/sidebar/SideBar';
 import CommentsList from '../../components/comment/Comment';
+import { getVideo } from '@/lib/api/generated/video/video';
 
 const VideoPage = function (props) {
     const searchParams = useParams();
@@ -23,6 +24,7 @@ const VideoPage = function (props) {
     const limit = 40;
     const navigate = useNavigate();
     const nextThresholdRef = useRef(30);
+    const lastCallTimeRef = useRef(0);
 
     const [post, setPostData] = useState({
         id: null,
@@ -50,7 +52,7 @@ const VideoPage = function (props) {
     const [blog, setBlog] = useState({
     });
 
-    function getUrl(blogId,postId, objectName) {
+    function getUrl(blogId, postId, objectName) {
         if (postId !== null && objectName !== null)
             return `${BaseApUrl}/video/Video/${blogId}/${postId}/${objectName}`;
     }
@@ -160,45 +162,58 @@ const VideoPage = function (props) {
     }
 
     async function setView(player) {
-
-        if (!JwtTokenService.isAuth())
-            return;
+        if (!JwtTokenService.isAuth()) return;
 
         const duration = player.duration();
-        var interval = Math.round(duration / 10);
+        if (!duration || duration <= 0) return;
 
-        if (duration <= 60) {
-            interval = duration * 0.5;
+        // Минимальный интервал между вызовами (в секундах)
+        const minInterval = duration <= 60 ? Math.max(2, duration * 0.1) : 5;
+
+        const now = Date.now();
+        const timeSinceLastCall = (now - lastCallTimeRef.current) / 1000;
+
+        // Пропускаем вызов, если прошло меньше минимального интервала
+        if (timeSinceLastCall < minInterval) {
+            return;
         }
 
-        const currentWathcedTime = player.currentTime();
-        const currentPercent = (currentWathcedTime / duration) * 100;
+        const currentWatchedTime = player.currentTime();
+        const currentPercent = (currentWatchedTime / duration) * 100;
+
         const sendViewData = async () => {
             try {
-                await API.post('/video/Video/setView', {
+                await getVideo().postVideoSetView({
                     postId: post.id,
-                    time: currentWathcedTime,
-                    isComplete: currentWathcedTime >= duration * 0.85,
-                });
+                    time: currentWatchedTime,
+                    isComplete: currentWatchedTime >= duration * 0.85,
+                })
+                // await API.post('/video/Video/setView', {
+                //     postId: post.id,
+                //     time: currentWatchedTime,
+                //     isComplete: currentWatchedTime >= duration * 0.85,
+                // });
             } catch (e) {
                 console.error("Ошибка при отправке данных просмотра:", e);
             }
         };
-        console.log(currentPercent)
-        console.log(nextThresholdRef.current)
-        if (currentPercent >= nextThresholdRef.current) {
-            await sendViewData()
 
+
+        if (currentPercent >= nextThresholdRef.current) {
+            sendViewData();
+            lastCallTimeRef.current = now; // Обновляем время последнего вызова
+
+            // Обновляем порог
             if (nextThresholdRef.current === 30) {
                 nextThresholdRef.current = 40;
             } else {
                 nextThresholdRef.current += 10;
             }
+
             if (nextThresholdRef.current > 100) {
-                return
+                nextThresholdRef.current = Infinity; // Больше не вызывать
             }
         }
-
     }
 
     async function setViewEnd(player) {
@@ -238,12 +253,14 @@ const VideoPage = function (props) {
             return;
         const currentWathcedTime = player.currentTime();
         const duration = player.duration();
-        watchedTime.current = currentWathcedTime;
-        await API.post('/video/Video/setView', {
-            postId: post.id,
-            time: currentWathcedTime,
-            isComplete: currentWathcedTime >= duration * 0.85
-        });
+        if (watchedTime.current != currentWathcedTime) {
+            watchedTime.current = currentWathcedTime;
+            await API.post('/video/Video/setView', {
+                postId: post.id,
+                time: currentWathcedTime,
+                isComplete: currentWathcedTime >= duration * 0.85
+            });
+        }
     }
 
     if (isLoading) {
@@ -313,7 +330,7 @@ const VideoPage = function (props) {
             <VideoPlayer key={post.id} className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
-                    url: getUrl(blog.id,post.id, post.videoData.objectName),
+                    url: getUrl(blog.id, post.id, post.videoData.objectName),
                     label: '',
                     postId: post.id,
                     blogId: blog.id,
@@ -329,9 +346,7 @@ const VideoPage = function (props) {
 }
 
 async function createConference(postId, navigate) {
-    const response = await API.post(`video/api/ConferenceRoom/createConferenceToPost?postId=${postId}`, null, {
-        headers: { Authorization: JwtTokenService.getFormatedTokenForHeader() }
-    });
+    const response = await API.post(`video/api/ConferenceRoom/createConferenceToPost?postId=${postId}`, null);
 
     if (response.status === 200) {
         navigate(`/conference/${response.data.id}`)

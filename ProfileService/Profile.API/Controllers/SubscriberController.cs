@@ -10,7 +10,7 @@ namespace Profile.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class SubscriberController : BaseController
+    public class SubscriberController : BaseApiController
     {
         private readonly ISubscribeService _subscribeService;
 

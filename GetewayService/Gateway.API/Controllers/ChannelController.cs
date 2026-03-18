@@ -1,16 +1,16 @@
-﻿using Blog.Domain.Services.Models.Playlist;
-using Blog.Service.Models.Blog;
-using Blog.Service.Models.Post;
+﻿using Blog.Contracts.Models.Blog;
+using Blog.Contracts.Models.Post;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
+using PlayListService.Services.Models;
 using Profile.Domain.Models;
 
 namespace Gateway.API.Controllers
 {
-    public class ChannelController : BaseController
+    public class ChannelController : BaseApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public ChannelController(ILogger<BaseController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        public ChannelController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
         }
@@ -19,9 +19,9 @@ namespace Gateway.API.Controllers
         public async Task<IActionResult> GetChannelInfo(Guid channelId)
         {
             using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = await client.GetFromJsonAsync<BlogModel>($"api/Blog/blog/{channelId}");
-            var hasSubscription = await _httpClientFactory.CreateClient("Reacting")
-                .GetFromJsonAsync<HasSubscriptionModel>($"Subscriber/hasSubscription/{channelId}");
+            var blog = (await client.GetFromJsonAsync<BlogModel>($"api/Blog/blog/{channelId}"))!;
+            var hasSubscription = (await _httpClientFactory.CreateClient("Reacting")
+                .GetFromJsonAsync<HasSubscriptionModel>($"Subscriber/hasSubscription/{channelId}"))!;
             return Ok(new
             {
                 blog.Name,
@@ -29,7 +29,7 @@ namespace Gateway.API.Controllers
                 blog.PhotoUrl,
                 blog.CreatedAt,
                 blog.Id,
-                blog.ProfileId,
+                blog.UserId,
                 blog.SubscribersCount,
                 IsSubscribed = hasSubscription.HasSubscription
             });
@@ -47,7 +47,7 @@ namespace Gateway.API.Controllers
         public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
         {
             using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListViewModel>>($"api/PlayList/list?blogId={channelId}");
+            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListListItem>>($"api/PlayList/list?blogId={channelId}");
             return Ok(blog);
         }
     }

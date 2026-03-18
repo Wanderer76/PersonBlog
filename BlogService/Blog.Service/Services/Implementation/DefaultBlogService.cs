@@ -1,6 +1,8 @@
 ﻿using Blog.Contracts.Events;
+using Blog.Contracts.Models.Blog;
+using Blog.Contracts.Services;
 using Blog.Domain.Entities;
-using Blog.Service.Models.Blog;
+using Blog.Service.Models;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -23,7 +25,7 @@ internal sealed class DefaultBlogService : IBlogService
         _currentUserService = currentUserService;
     }
 
-    public async Task<Result<BlogModel>> CreateBlogAsync(BlogCreateDto model)
+    public async Task<Result<BlogModel>> CreateBlogAsync(BlogCreateRequest model)
     {
         var currentUser = await _currentUserService.GetCurrentUserAsync();
         var isBlogAlreadyExists = await _context.Get<PersonBlog>()
@@ -61,7 +63,7 @@ internal sealed class DefaultBlogService : IBlogService
         }
         else
         {
-            return blogResult.Error!;
+            return Result<BlogModel>.Failure(blogResult.Errors!);
         }
     }
 
@@ -107,7 +109,7 @@ internal sealed class DefaultBlogService : IBlogService
         return await blog.ToBlogModel(storage);
     }
 
-    public Task<BlogModel> UpdateBlogAsync(BlogEditDto model)
+    public Task<BlogModel> UpdateBlogAsync(BlogEditRequest model)
     {
         throw new NotImplementedException();
     }
@@ -128,11 +130,11 @@ internal sealed class DefaultBlogService : IBlogService
         return await blog.ToBlogUserInfoViewModel(hasSubscription, storage);
     }
 
-    public async Task<Guid?> HasUserBlogAsync(Guid userId)
+    public async Task<bool> HasUserBlogAsync(Guid userId)
     {
         var isBlogAlreadyExists = await _context.Get<PersonBlog>()
-                        .FirstOrDefaultAsync(x => x.UserId == userId);
-        return isBlogAlreadyExists?.Id;
+            .AnyAsync(x => x.UserId == userId);
+        return isBlogAlreadyExists;
     }
 }
 

@@ -1,28 +1,18 @@
-﻿namespace Infrastructure.Services
+﻿namespace Infrastructure.Services;
+
+public interface IFileStorage : IDisposable
 {
-    public interface IFileStorage : IDisposable
-    {
-        [Obsolete]
-        Task<string> PutFileAsync(Guid userId, Guid id, Stream input);
-        [Obsolete]
-        Task<string> PutFileInBucketAsync(Guid bucketId, Guid id, Stream input);
-        Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input);
-        Task<string> PutTempFileAsync(Guid bucketId, string objectName, Stream input);
-        Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, VideoChunkUploadingInfo options);
-        Task<string> GetFileUrlAsync(Guid bucketId, string objectName);
+    Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input);
+    Task ReadFileAsync(Guid bucketId, string objectName, Stream output);
+    Task<string> GetFileUrlAsync(Guid bucketId, string objectName);
+    Task RemoveFileAsync(Guid bucketId, string objectName);
+    Task RemoveBucketAsync(string bucketId);
 
-        [Obsolete]
-        Task<string> GetUrlToUploadFileAsync(Guid userId, Guid fileId);
-        Task ReadFileAsync(Guid bucketId, string objectName, Stream output);
-        Task<long> ReadFileByChunksAsync(Guid bucketId, string objectName, long offset, long length, Stream output);
-        Task RemoveFileAsync(Guid bucketId, string objectName);
-        Task RemoveBucketAsync(string bucketId);
-        IAsyncEnumerable<(string Objectname, IDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, VideoChunkUploadingInfo options);
-    }
+    Task CreateTempBucketAsync(Guid bucketId);
 
-    public class VideoChunkUploadingInfo
-    {
-        public Guid FileId { get; set; }
-        public long ChunkNumber { get; set; }
-    }
+    Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options);
+    Task<long> ReadFileByChunksAsync(Guid bucketId, string objectName, long offset, long length, Stream output);
+    IAsyncEnumerable<(string Objectname, IReadOnlyDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, ChunkUploadingInfo options);
 }
+
+public sealed record ChunkUploadingInfo(Guid FileId, long ChunkNumber);

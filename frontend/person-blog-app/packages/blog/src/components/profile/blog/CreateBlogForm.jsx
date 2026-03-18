@@ -1,7 +1,8 @@
 import React, { useRef, useState } from "react";
 import styles from '../post/CreatePostForm.module.css';
-import API from "../../../scripts/apiMethod";
+import API from "../../../lib/api/client";
 import { useNavigate } from "react-router-dom";
+import { getBlog } from "@/lib/api/generated/blog/blog";
 
 const CreateBlogForm = function () {
     const [blogForm, setBlogForm] = useState({
@@ -32,7 +33,7 @@ const CreateBlogForm = function () {
     }
 
     async function sendForm() {
-        const url = "/profile/api/Blog/create";
+        const url = "/video/api/Blog/create";
         let formData = new FormData();
 
         // Append all form fields

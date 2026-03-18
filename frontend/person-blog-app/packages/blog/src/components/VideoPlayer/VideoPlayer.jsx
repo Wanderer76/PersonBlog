@@ -4,7 +4,7 @@ import 'video.js/dist/video-js.css';
 import './qualitySelector/plugin.js';
 import 'hls.js';
 import './Player.css';
-import { BaseApUrl } from '../../scripts/apiMethod.js';
+import { BaseApUrl } from '../../lib/api/client.js';
 
 // Fetch the link to playlist.m3u8 of the video you want to play
 export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay, onEnded }) => {

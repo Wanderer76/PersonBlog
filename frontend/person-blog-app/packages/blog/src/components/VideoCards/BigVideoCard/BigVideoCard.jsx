@@ -10,7 +10,7 @@ const BigVideoCard = React.forwardRef(function ({ videoCardModel }, ref) {
         <div ref={ref} className={styles.videoCard}>
             <div
                 className={styles.thumbnailContainer}
-                onClick={() => navigate(`/video/${videoCardModel.postId}`)}
+                onClick={() => navigate(`/videoPage/${videoCardModel.postId}`)}
             >
                 <img
                     src={videoCardModel.previewUrl}

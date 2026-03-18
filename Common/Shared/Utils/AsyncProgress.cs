@@ -1,20 +1,15 @@
-﻿namespace Shared.Utils
+﻿namespace Shared.Utils;
+
+public sealed class AsyncProgress<T>(Func<T, Task> progressCallback)
 {
-    public class AsyncProgress<T>
+    private readonly Func<T, Task> _callback = progressCallback;
+
+    public Task InvokeAsync(T value)
     {
-        private readonly Func<T, Task> _callback;
-        public AsyncProgress(Func<T, Task> progressCallback)
-        {
-            _callback = progressCallback;
-        }
-
-        public Task InvokeAsync(T value)
-        {
-            return _callback(value);
-        }
-
-        public static implicit operator Func<T, Task>(AsyncProgress<T> progress) => progress._callback;
-
-        public static implicit operator AsyncProgress<T>(Func<T, Task> func) => new(func);
+        return _callback(value);
     }
+
+    public static implicit operator Func<T, Task>(AsyncProgress<T> progress) => progress._callback;
+
+    public static implicit operator AsyncProgress<T>(Func<T, Task> func) => new(func);
 }

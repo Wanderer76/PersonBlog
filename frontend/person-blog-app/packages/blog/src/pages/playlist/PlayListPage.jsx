@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, memo } from "react";
-import { JwtTokenService } from '../../scripts/TokenStrorage';
-import API from "../../scripts/apiMethod";
+import { JwtTokenService } from '../../shared/TokenStrorage.js';
+import API from "../../lib/api/client";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../../components/sidebar/SideBar";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './PlaylistPage.css';
-import { secondsToHumanReadable } from "../../scripts/LocalDate";
+import { secondsToHumanReadable } from "../../shared/LocalDate";
+import { getPlayList } from "@/lib/api/generated/play-list/play-list";
 
 // Вынесенные компоненты
 const AddVideoModal = memo(({
@@ -30,7 +31,7 @@ const AddVideoModal = memo(({
                         {availableVideos.map(video => (
                             <VideoOption
                                 key={video.id}
-                                video={video}
+                                item={video}
                                 isSelected={selectedVideos.some(v => v.id === video.id)}
                                 onToggle={onToggleSelection}
                             />
@@ -55,15 +56,15 @@ const AddVideoModal = memo(({
     );
 });
 
-const VideoOption = memo(({ video, isSelected, onToggle }) => (
+const VideoOption = memo(({ item, isSelected, onToggle }) => (
     <div
         className={`video-option ${isSelected ? 'selected' : ''}`}
-        onClick={() => onToggle(video)}
+        onClick={() => onToggle(item)}
     >
-        <img src={video.previewUrl} alt="Превью" />
+        <img src={item.previewObjectName} alt="Превью" />
         <div className="video-info">
-            <h4>{video.title}</h4>
-            <p>{video.viewCount} просмотров</p>
+            <h4>{item.title}</h4>
+            <p>{item.viewCount} просмотров</p>
         </div>
         <div className="selection-checkbox">
             {isSelected ? '✓' : ''}
@@ -85,14 +86,14 @@ const PlaylistItem = memo(({ video, onRemove, index, isDragDisabled }) => {
                 >
                     <span className="position-badge">{video.position}</span>
                     <img
-                        src={video.previewUrl}
+                        src={video.previewObjectName}
                         alt="Превью"
                         className="thumbnail"
-                        onClick={() => navigate(`/video/${video.id}`)}
+                        onClick={() => navigate(`/videoPage/${video.id}`)}
                     />
                     <div
                         className="details"
-                        onClick={() => navigate(`/video/${video.id}`)}
+                        onClick={() => navigate(`/videoPage/${video.id}`)}
                     >
                         <h3 className="title">{video.title}</h3>
                         <div className="meta">
@@ -136,23 +137,19 @@ const PlaylistPage = () => {
     const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
 
     const fetchPlaylistData = useCallback(async () => {
-        const response = await API.get(`profile/api/Playlist/item/${playlistId}`);
-        if (response.status === 200) {
-            const videosWithPositions = response.data.posts.map((video, index) => ({
+        const response = await getPlayList().getApiPlayListItemId(playlistId);
+            const videosWithPositions = response.postPage.items.map((video, index) => ({
                 ...video,
                 position: index + 1
             }));
-            setPlaylist({ ...response.data, posts: videosWithPositions });
-        }
+            setPlaylist({ ...response.playList, posts: videosWithPositions });
     }, [playlistId]);
 
     const fetchAvailableVideos = useCallback(async () => {
-        const response = await API.get(`profile/api/Playlist/availableVideos?playlistId=${playlistId}`);
-        if (response.status === 200) {
-            setAvailableVideos(response.data);
-            setSelectedVideos([]);
-        }
-    }, [playlistId]);
+        const response = await getPlayList().getApiPlayListAvailableVideos(playlistId);
+        setAvailableVideos(response);
+        setSelectedVideos([]);
+    }, []);
 
     useEffect(() => {
         fetchPlaylistData();
@@ -216,13 +213,10 @@ const PlaylistPage = () => {
 
     const addVideos = useCallback(async () => {
         if (selectedVideos.length === 0) return;
-
-        const response = await API.post("profile/api/Playlist/addVideo", {
-            playlistId: playlistId,
-            items: selectedVideos.map(video => ({
-                postId: video.id,
-                position: video.position
-            }))
+ 
+        const response = await getPlayList().postApiPlayListAddVideo({
+            playListId: playlistId,
+            postsToAdd: selectedVideos.map(x => x.id)
         });
 
         if (response.status === 200) {

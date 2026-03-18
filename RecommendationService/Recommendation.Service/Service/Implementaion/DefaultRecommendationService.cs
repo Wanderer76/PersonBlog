@@ -1,8 +1,10 @@
 ﻿using Blog.Domain.Entities;
-using Blog.Service.Models;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using Recommendation.Service.Models;
 using Shared.Persistence;
+using StackExchange.Redis;
 using System.Collections.Concurrent;
 
 namespace Recommendation.Service.Service.Implementaion
@@ -21,13 +23,48 @@ namespace Recommendation.Service.Service.Implementaion
 
         public async Task<IEnumerable<VideoCardModel>> GetRecommendationsAsync(int page, int limit)
         {
+            var posts = await _context.Get<Post>()
+                .Where(x => !x.IsDelete && x.Type == PostType.Video)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PostCategories)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.VideoFile)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PreviewFile)
+                .OrderByDescending(x => x.CreatedAt)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .ToListAsync();
+
+            var blogs = await _context.Get<PersonBlog>()
+                .Where(x => posts.Select(p => p.BlogId).Distinct().Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id, x => x);
+
+            using var storage = _fileStorageFactory.CreateFileStorage();
+
+            var result = posts.Select(async x =>
+            {
+                return new VideoCardModel
+                {
+                    BlogId = x.BlogId,
+                    BlogLogo = null,
+                    BlogName = blogs[x.BlogId].Title,
+                    Title = x.Title,
+                    PostId = x.Id,
+                    PreviewUrl = x.VideoPostInfo.PreviewFile == null
+                        ? null
+                        : await storage.GetFileUrlAsync(x.BlogId, x.VideoPostInfo.PreviewFile.ObjectName),
+                    VideoId = x.Id,
+                    ViewCount = x.ViewCount
+                };
+
+            });
+
+            return await Task.WhenAll(result);
             var newestPosts = await _context.Get<Post>()
-                .Include(x => x.VideoFile)
+                //.Include(x => x.VideoFile)
                 .Where(x => x.Type == PostType.Video)
                 .Where(x => x.Visibility == PostVisibility.Public)
-                .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
-                .Where(x => x.IsDeleted == false)
-                .Where(x => x.PreviewId != null)
+                //.Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
+                .Where(x => x.IsDelete == false)
+                //.Where(x => x.PreviewId != null)
                 .OrderByDescending(x => x.CreatedAt)
                 .Skip((page - 1) * limit)
                 .Take(limit)
@@ -35,45 +72,45 @@ namespace Recommendation.Service.Service.Implementaion
                 {
                     x.Id,
                     x.Title,
-                    x.Description,
-                    x.PreviewId,
+                    //x.Description,
+                    //x.PreviewId,
                     x.Blog.PhotoUrl,
                     BlogId = x.Blog.Id,
                     BlogName = x.Blog.Title,
-                    VideoId = x.VideoFile.Id,
+                    //VideoId = x.VideoFile.Id,
                     x.ViewCount
                 })
                 .ToListAsync();
 
-            var postMetadata = new ConcurrentDictionary<Guid, (string? PreviewUrl, string? ProfileUrl)>();
+            //var postMetadata = new ConcurrentDictionary<Guid, (string? PreviewUrl, string? ProfileUrl)>();
 
-            var tasks = newestPosts
-                .Select(post => Task.Run(async () =>
-                {
-                    using var fileStorage = _fileStorageFactory.CreateFileStorage();
-                    var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId) : null;
-                    var profileUrl = post.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PhotoUrl) : null;
-                    postMetadata.TryAdd(post.Id, (previewUrl, profileUrl));
-                }))
-                .ToList();
+            //var tasks = newestPosts
+            //    .Select(post => Task.Run(async () =>
+            //    {
+            //        using var fileStorage = _fileStorageFactory.CreateFileStorage();
+            //        var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PreviewId) : null;
+            //        var profileUrl = post.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PhotoUrl) : null;
+            //        postMetadata.TryAdd(post.Id, (previewUrl, profileUrl));
+            //    }))
+            //    .ToList();
 
-            await Task.WhenAll(tasks);
+            //await Task.WhenAll(tasks);
 
-            return newestPosts.Select(post =>
-            {
-                var postPreviews = postMetadata.TryGetValue(post.Id, out var postPreview);
-                return new VideoCardModel
-                {
-                    PostId = post.Id,
-                    BlogLogo = postPreview.ProfileUrl,
-                    PreviewUrl = postPreview.PreviewUrl,
-                    BlogName = post.BlogName,
-                    Title = post.Title,
-                    VideoId = post.VideoId,
-                    BlogId = post.BlogId,
-                    ViewCount = post.ViewCount
-                };
-            }).ToList();
+            //return newestPosts.Select(post =>
+            //{
+            //    var postPreviews = postMetadata.TryGetValue(post.Id, out var postPreview);
+            //    return new VideoCardModel
+            //    {
+            //        PostId = post.Id,
+            //        BlogLogo = postPreview.ProfileUrl,
+            //        PreviewUrl = postPreview.PreviewUrl,
+            //        BlogName = post.BlogName,
+            //        Title = post.Title,
+            //        VideoId = post.VideoId,
+            //        BlogId = post.BlogId,
+            //        ViewCount = post.ViewCount
+            //    };
+            //}).ToList();
         }
 
         public async Task<IEnumerable<VideoCardModel>> GetRecommendationsAsync(int page, int pageSize, Guid? currentPostId)
@@ -86,66 +123,66 @@ namespace Recommendation.Service.Service.Implementaion
 
         public async Task<IEnumerable<VideoCardModel>> GetRecommendationsAsync(List<Guid> postIds)
         {
+            return [];
+            //var cachedValues = (await _cacheService.GetCachedDataAsync<VideoCardModel>(postIds.Select(x => new VideoCardModelCacheKey(x)))).ToList();
 
-            var cachedValues = (await _cacheService.GetCachedDataAsync<VideoCardModel>(postIds.Select(x => new VideoCardModelCacheKey(x)))).ToList();
+            //var notCachedValues = postIds.Except(cachedValues.Select(x => x.PostId)).ToList();
 
-            var notCachedValues = postIds.Except(cachedValues.Select(x => x.PostId)).ToList();
+            //var newestPosts = await _context.Get<Post>()
+            //               .Include(x => x.VideoFile)
+            //               .Where(x => notCachedValues.Contains(x.Id))
+            //               .Where(x => x.Type == PostType.Video)
+            //               .Where(x => x.Visibility == PostVisibility.Public)
+            //               .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
+            //               .Where(x => x.IsDelete == false)
+            //               .Where(x => x.PreviewId != null)
+            //               .OrderByDescending(x => x.CreatedAt)
+            //               .Select(x => new
+            //               {
+            //                   x.Id,
+            //                   x.Title,
+            //                   x.Description,
+            //                   x.PreviewId,
+            //                   x.Blog.PhotoUrl,
+            //                   BlogId = x.Blog.Id,
+            //                   BlogName = x.Blog.Title,
+            //                   VideoId = x.VideoFile.Id,
+            //                   x.ViewCount
+            //               })
+            //               .ToListAsync();
 
-            var newestPosts = await _context.Get<Post>()
-                           .Include(x => x.VideoFile)
-                           .Where(x => notCachedValues.Contains(x.Id))
-                           .Where(x => x.Type == PostType.Video)
-                           .Where(x => x.Visibility == PostVisibility.Public)
-                           .Where(x => x.VideoFile.ProcessState == ProcessState.Complete)
-                           .Where(x => x.IsDeleted == false)
-                           .Where(x => x.PreviewId != null)
-                           .OrderByDescending(x => x.CreatedAt)
-                           .Select(x => new
-                           {
-                               x.Id,
-                               x.Title,
-                               x.Description,
-                               x.PreviewId,
-                               x.Blog.PhotoUrl,
-                               BlogId = x.Blog.Id,
-                               BlogName = x.Blog.Title,
-                               VideoId = x.VideoFile.Id,
-                               x.ViewCount
-                           })
-                           .ToListAsync();
+            //var postMetadata = new ConcurrentDictionary<Guid, (string? PreviewUrl, string? ProfileUrl)>();
 
-            var postMetadata = new ConcurrentDictionary<Guid, (string? PreviewUrl, string? ProfileUrl)>();
+            //var tasks = newestPosts
+            //    .Select(post => Task.Run(async () =>
+            //    {
+            //        using var fileStorage = _fileStorageFactory.CreateFileStorage();
+            //        var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId) : null;
+            //        var profileUrl = post.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PhotoUrl) : null;
+            //        postMetadata.TryAdd(post.Id, (previewUrl, profileUrl));
+            //    }))
+            //    .ToList();
 
-            var tasks = newestPosts
-                .Select(post => Task.Run(async () =>
-                {
-                    using var fileStorage = _fileStorageFactory.CreateFileStorage();
-                    var previewUrl = post.PreviewId != null ? await fileStorage.GetFileUrlAsync(post.Id, post.PreviewId) : null;
-                    var profileUrl = post.PhotoUrl != null ? await fileStorage.GetFileUrlAsync(post.BlogId, post.PhotoUrl) : null;
-                    postMetadata.TryAdd(post.Id, (previewUrl, profileUrl));
-                }))
-                .ToList();
+            //await Task.WhenAll(tasks);
 
-            await Task.WhenAll(tasks);
-
-            foreach (var post in newestPosts)
-            {
-                var postPreviews = postMetadata.TryGetValue(post.Id, out var postPreview);
-                var model = new VideoCardModel
-                {
-                    PostId = post.Id,
-                    BlogLogo = postPreview.ProfileUrl,
-                    PreviewUrl = postPreview.PreviewUrl,
-                    BlogName = post.BlogName,
-                    Title = post.Title,
-                    VideoId = post.VideoId,
-                    BlogId = post.BlogId,
-                    ViewCount = post.ViewCount
-                };
-                await _cacheService.SetCachedDataAsync(new VideoCardModelCacheKey(model.PostId), model, TimeSpan.FromMinutes(30));
-                cachedValues.Add(model);
-            }
-            return cachedValues;
+            //foreach (var post in newestPosts)
+            //{
+            //    var postPreviews = postMetadata.TryGetValue(post.Id, out var postPreview);
+            //    var model = new VideoCardModel
+            //    {
+            //        PostId = post.Id,
+            //        BlogLogo = postPreview.ProfileUrl,
+            //        PreviewUrl = postPreview.PreviewUrl,
+            //        BlogName = post.BlogName,
+            //        Title = post.Title,
+            //        VideoId = post.VideoId,
+            //        BlogId = post.BlogId,
+            //        ViewCount = post.ViewCount
+            //    };
+            //    await _cacheService.SetCachedDataAsync(new VideoCardModelCacheKey(model.PostId), model, TimeSpan.FromMinutes(30));
+            //    cachedValues.Add(model);
+            //}
+            //return cachedValues;
         }
     }
 }

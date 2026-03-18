@@ -1,7 +1,7 @@
-﻿namespace FFmpeg.Service.Models
+﻿namespace FFmpeg.Service.Models;
+
+public sealed class HlsVideoPresets
 {
-    public class HlsVideoPresets
-    {
-        public List<VideoPreset> VideoPresets { get;set; }
-    }
+    public List<VideoPreset> VideoPresets { get; set; } = [];
+    public string EncodePreset { get; set; } = "ultrafast"; //medium
 }

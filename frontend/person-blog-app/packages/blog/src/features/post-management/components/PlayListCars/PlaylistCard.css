@@ -1,0 +1,104 @@
+.playlistCard {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+}
+
+.playlistCard:hover {
+  transform: translateY(-3px);
+}
+
+.playlistCover {
+  position: relative;
+  aspect-ratio: 16/9;
+  background: #222;
+  cursor: pointer;
+}
+
+.playlistCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playlistBadge {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.videoCount {
+  composes: playlistBadge;
+  bottom: 10px;
+  left: 10px;
+}
+
+.privacyStatus {
+  composes: playlistBadge;
+  top: 10px;
+  right: 10px;
+}
+
+.playlistInfo {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.playlistTitle {
+  color: #333;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+.playlistDescription {
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.playlistStats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #888;
+  font-size: 12px;
+}
+
+.playlistActions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Адаптивность */
+@media (max-width: 480px) {
+  .playlistActions {
+    flex-direction: column;
+  }
+
+  .playlistActions button {
+    width: 100%;
+  }
+}

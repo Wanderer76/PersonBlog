@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getLocalDate, secondsToHumanReadable } from "../../../scripts/LocalDate";
+import { getLocalDate, secondsToHumanReadable } from "../../../shared/LocalDate";
 import styles from './PostListItem.module.css';
 
 // item  = {

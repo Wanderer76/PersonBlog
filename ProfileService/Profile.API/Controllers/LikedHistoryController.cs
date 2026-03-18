@@ -4,10 +4,10 @@ using Profile.Domain.Services;
 
 namespace Profile.API.Controllers
 {
-    public class LikedHistoryController : BaseController
+    public class LikedHistoryController : BaseApiController
     {
         private readonly IViewHistoryService _viewHistoryService;
-        public LikedHistoryController(ILogger<BaseController> logger, IViewHistoryService viewHistoryService) : base(logger)
+        public LikedHistoryController(ILogger<BaseApiController> logger, IViewHistoryService viewHistoryService) : base(logger)
         {
             _viewHistoryService = viewHistoryService;
         }
@@ -18,7 +18,7 @@ namespace Profile.API.Controllers
             var result = await _viewHistoryService.GetUserLikedHistoryListAsync(userId);
             if (result.IsFailure)
             {
-                return BadRequest(result.Error);
+                return BadRequest(result.Errors);
             }
 
             return Ok(result.Value);

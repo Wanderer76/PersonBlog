@@ -1,4 +1,4 @@
-﻿using Blog.Service.Models.File;
+﻿using Blog.Contracts.Models.File;
 
 namespace Blog.API.Models
 {

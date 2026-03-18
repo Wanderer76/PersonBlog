@@ -9,10 +9,10 @@ using Shared.Services;
 
 namespace Music.API.Controllers
 {
-    public class TrackSearchController : BaseController
+    public class TrackSearchController : BaseApiController
     {
         private readonly ITrackSearchService _trackSearchService;
-        public TrackSearchController(ILogger<BaseController> logger, ITrackSearchService trackSearchService) : base(logger)
+        public TrackSearchController(ILogger<BaseApiController> logger, ITrackSearchService trackSearchService) : base(logger)
         {
             _trackSearchService = trackSearchService;
         }

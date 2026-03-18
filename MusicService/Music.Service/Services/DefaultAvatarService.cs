@@ -19,7 +19,7 @@ namespace Music.Service.Services
             _fileStorageFactory = fileStorageFactory;
         }
 
-        public async Task<Result<Guid>> UploadAvatarAsync(FileMetadata fileMetadata, Stream stream)
+        public async Task<Result<Guid>> UploadAvatarAsync(BaseFileMetadataEntity fileMetadata, Stream stream)
         {
             var avatarMetadata = new AvatarMetadata(
                 GuidService.GetNewGuid(),

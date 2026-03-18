@@ -1,6 +1,6 @@
-﻿using Blog.Domain.Services.Models;
-using Blog.Service.Models.Blog;
-using Blog.Service.Models.File;
+﻿using Blog.Contracts.Models;
+using Blog.Contracts.Models.Blog;
+using Blog.Contracts.Models.File;
 using Infrastructure.Extensions;
 using Profile.Domain.Models;
 using Shared.Utils;
@@ -20,7 +20,7 @@ namespace Gateway.API.Api
             var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<PostFileMetadataModel>($"{PostManifest}/{postId}");
             if (result == null)
             {
-                return Result<PostFileMetadataModel>.Failure(new("404", "Не удалось найти данные"));
+                return Result<PostFileMetadataModel>.Failure(new Error("404", "Не удалось найти данные"));
             }
             return Result<PostFileMetadataModel>.Success(result!);
         }
@@ -33,13 +33,13 @@ namespace Gateway.API.Api
                     .GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
                 if (result == null)
                 {
-                    return Result<PostDetailViewModel>.Failure(new("404", "Не удалось найти данные"));
+                    return Result<PostDetailViewModel>.Failure(new Error("404", "Не удалось найти данные"));
                 }
                 return Result<PostDetailViewModel>.Success(result!);
             }
             catch (Exception ex)
             {
-                return Result<PostDetailViewModel>.Failure(new(ex.Message));
+                return Result<PostDetailViewModel>.Failure(new Error(ex.Message));
             }
         }
 
@@ -50,13 +50,13 @@ namespace Gateway.API.Api
                 var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<BlogUserInfoViewModel>($"{CommonBlog}/{postId}");
                 if (result == null)
                 {
-                    return Result<BlogUserInfoViewModel>.Failure(new("404", "Не удалось найти данные"));
+                    return Result<BlogUserInfoViewModel>.Failure(new Error("404", "Не удалось найти данные"));
                 }
                 return Result<BlogUserInfoViewModel>.Success(result!);
             }
             catch (Exception ex)
             {
-                return Result<BlogUserInfoViewModel>.Failure(new(ex.Message));
+                return Result<BlogUserInfoViewModel>.Failure(new Error(ex.Message));
             }
         }
 
@@ -73,7 +73,7 @@ namespace Gateway.API.Api
                 }
                 catch (Exception ex)
                 {
-                    return Result<ReactionHistoryViewItem>.Failure(new(ex.Message));
+                    return Result<ReactionHistoryViewItem>.Failure(new Error(ex.Message));
                 }
             }
             return Result<ReactionHistoryViewItem>.Success(new());

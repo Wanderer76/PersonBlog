@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Conference.API.Controllers
 {
-    public class ConferenceRoomController : BaseController
+    public class ConferenceRoomController : BaseApiController
     {
         private readonly ILogger<ConferenceRoomController> _logger;
         private readonly IConferenceRoomService _conferenceRoomService;

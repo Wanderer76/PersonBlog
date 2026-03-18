@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
 {
-    public class HealthController : BaseController
+    public class HealthController : BaseApiController
     {
-        public HealthController(ILogger<BaseController> logger) : base(logger)
+        public HealthController(ILogger<BaseApiController> logger)
+            : base(logger)
         {
         }
 

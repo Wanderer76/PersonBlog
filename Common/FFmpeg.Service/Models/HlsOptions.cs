@@ -2,10 +2,11 @@
 {
     public class HlsOptions
     {
-        public required IReadOnlyList<string> Resolutions { get; set; }
-        public required IReadOnlyList<string> Bitrates { get; set; }
-        public required IReadOnlyList<string> AudioBitrates { get; set; }
-        public required string SegmentFileName { get; set; }
-        public string MasterName { get; set; } = "master";
+        public required IReadOnlyList<string> Resolutions { get; init; }
+        public required IReadOnlyList<string> Bitrates { get; init; }
+        public required IReadOnlyList<string> AudioBitrates { get; init; }
+        public required string SegmentFileName { get; init; }
+        public required string MasterName { get; init; } = "master";
+        public required string EncodePreset { get; init; } = "fast";
     }
 }

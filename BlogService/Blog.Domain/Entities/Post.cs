@@ -1,87 +1,106 @@
-﻿using Shared.Services;
+﻿using Infrastructure.Interface;
+using Shared.Services;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Blog.Domain.Entities
+namespace Blog.Domain.Entities;
+
+public sealed class Post : IBlogEntity, ISoftDelete
 {
-    public class Post : IBlogEntity
+    [Key]
+    public Guid Id { get; private set; }
+    public Guid BlogId { get; private set; }
+    public PostType Type { get; set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+    [Required]
+    public string Title { get; set; }
+    public Guid? PaymentSubscriptionId { get; set; }
+    public int ViewCount { get; set; } = 0;
+    public int LikeCount { get; set; } = 0;
+    public int DislikeCount { get; set; } = 0;
+    public PostVisibility Visibility { get; set; }
+    public ProcessState ProcessState { get; set; }
+
+    public VideoPostInfo VideoPostInfo { get; set; }
+    public TextPostInfo TextPostInfo { get; set; }
+    public bool IsDelete { get; private set; }
+    public DateTimeOffset? DeleteDateTime { get; private set; }
+
+    [ForeignKey(nameof(BlogId))]
+    public PersonBlog Blog { get; set; }
+
+    public Guid? BanMessageId { get; private set; }
+    public BanMessage? BanMessage { get; private set; }
+
+    private Post() { }
+
+    public Post(Guid id, Guid blogId, PostType type, string? description, string title, Guid? paymentSubscriptionId, PostVisibility visibility, IEnumerable<int> categories, string? text)
     {
-        [Key]
-        public Guid Id { get; private set; }
-        public Guid BlogId { get; private set; }
-
-        public PostType Type { get; set; }
-
-        public DateTimeOffset CreatedAt { get; private set; }
-
-        [Required]
-        public string Title { get; set; }
-        public string? Description { get; set; }
-        public bool IsDeleted { get; set; }
-
-
-        public string? PreviewId { get; set; }
-        public Guid? VideoFileId { get; set; }
-        public Guid? PaymentSubscriptionId { get; set; }
-
-        public int ViewCount { get; set; }
-        public int LikeCount { get; set; }
-        public int DislikeCount { get; set; }
-
-        public PostVisibility Visibility { get; set; }
-
-
-        [ForeignKey(nameof(VideoFileId))]
-        public VideoMetadata? VideoFile { get; set; }
-
-        [ForeignKey(nameof(BlogId))]
-        public PersonBlog Blog { get; set; }
-
-        public List<PostCategory> PostCategories { get; private set; } = [];
-
-        public Guid? BanMessageId { get; private set; }
-        public BanMessage? BanMessage { get; private set; }
-        private Post() { }
-
-        public Post(Guid id, Guid blogId, PostType type, string? description, string title, Guid? paymentSubscriptionId, PostVisibility visibility, IEnumerable<Category> categories)
+        Id = id;
+        BlogId = blogId;
+        Type = type;
+        CreatedAt = DateTimeService.Now();
+        IsDelete = false;
+        Title = title;
+        PaymentSubscriptionId = paymentSubscriptionId;
+        Visibility = visibility;
+        if (type == PostType.Video)
         {
-            Id = id;
-            BlogId = blogId;
-            Type = type;
-            CreatedAt = DateTimeService.Now();
-            Description = description;
-            IsDeleted = false;
-            Title = title;
-            PaymentSubscriptionId = paymentSubscriptionId;
-            Visibility = visibility;
-            PostCategories = categories.Select(x => new PostCategory(Id, x.Id)).ToList();
-        }
-
-        public void AddCategory(Category categories)
-        {
-            if(!PostCategories.Any(x=>x.CategoryId == categories.Id))
+            VideoPostInfo = new VideoPostInfo
             {
-                PostCategories.Add(new PostCategory(Id, categories.Id));
-            }
+                Id = id,
+                PostCategories = categories.Select(x => new PostCategory(Id, x)).ToList(),
+                Description = description,
+            };
         }
-
-
-        public void SetPostBanned(BanMessage message)
+        else
         {
-            BanMessageId = message.Id;
-            BanMessage = message;
-        }
-
-        public void RestorePostFromBan()
-        {
-            BanMessageId = null;
-            BanMessage = null;
+            TextPostInfo = new TextPostInfo(id, text.Trim(), []);
         }
     }
 
-    public enum PostType
+    public void AddCategory(Category categories)
     {
-        Text,
-        Video
+        if (!VideoPostInfo.PostCategories.Any(x => x.CategoryId == categories.Id))
+        {
+            VideoPostInfo.PostCategories.Add(new PostCategory(Id, categories.Id));
+        }
     }
+
+    public void SetPostBanned(BanMessage message)
+    {
+        BanMessageId = message.Id;
+        BanMessage = message;
+    }
+
+    public void RestorePostFromBan()
+    {
+        BanMessageId = null;
+        BanMessage = null;
+    }
+
+    public void Delete()
+    {
+        IsDelete = true;
+        DeleteDateTime = DateTimeService.Now();
+    }
+}
+
+public enum PostType
+{
+    Text,
+    Video
+}
+public enum ProcessState
+{
+    Draft,
+    Complete,
+    Load,
+    Error
+}
+
+public static class ProcessStateExtensions
+{
+    public static bool IsComplete(this ProcessState state) { return state == ProcessState.Complete; }
+    public static bool IsProcessComplete(this Post file) { return file.ProcessState.IsComplete(); }
 }

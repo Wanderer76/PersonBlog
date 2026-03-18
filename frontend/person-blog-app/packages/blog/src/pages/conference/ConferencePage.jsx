@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getLocalDateTime } from "../../scripts/LocalDate";
+import { getLocalDateTime } from "../../shared/LocalDate";
 import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
 import logo from '../../defaultProfilePic.png';
-import API, { BaseApUrl } from "../../scripts/apiMethod";
+import API, { BaseApUrl } from "../../lib/api/client";
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
 import './ConferencePage.css';
 import '../post/VideoPage.css';
 import SideBar from "../../components/sidebar/SideBar";
-import { getAccessToken, JwtTokenService } from "../../scripts/TokenStrorage";
+import { getAccessToken, JwtTokenService } from "../../shared/TokenStrorage.js";
 
 const ConferencePage = function () {
     const conferenceId = useParams();
@@ -210,7 +210,7 @@ const ConferencePage = function () {
                     <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
                 </div>
                 <div className="video-actions">
-                    <button className="action-button" onClick={(e) => { navigate(`/video/${post.id}?time=${playerRef.current.currentTime()}`) }}>
+                    <button className="action-button" onClick={(e) => { navigate(`/videoPage/${post.id}?time=${playerRef.current.currentTime()}`) }}>
                         <span>📁</span> Отключится от конференции
                     </button>
                     <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href) }}>

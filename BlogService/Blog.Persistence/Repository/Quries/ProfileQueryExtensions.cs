@@ -27,7 +27,7 @@ namespace Blog.Persistence.Repository.Quries
 
             var postQuery = context.Get<Post>()
                 .Where(x => x.BlogId == blogId)
-                .Where(x => x.IsDeleted == false);
+                .Where(x => x.IsDelete == false);
 
             if (!canAccessPrivate)
             {
@@ -40,7 +40,7 @@ namespace Blog.Persistence.Repository.Quries
             var posts = await postQuery
                 .Where(x => canAccessPrivate || x.Visibility == PostVisibility.Public)
                 .OrderByDescending(x => x.CreatedAt)
-                .Include(x => x.VideoFile)
+                .Include(x => x.VideoPostInfo)
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .ToListAsync();

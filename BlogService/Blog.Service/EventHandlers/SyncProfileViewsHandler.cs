@@ -1,6 +1,6 @@
 ﻿using Blog.Contracts.Events;
+using Blog.Contracts.Models;
 using Blog.Domain.Entities;
-using Blog.Domain.Services.Models;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +28,7 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
         var ipAddress = @event.Message.RemoteIp;
 
         var post = await _context.Get<Post>()
+            .Include(x=>x.VideoPostInfo)
             .FirstAsync(x => x.Id == @event.Message.PostId);
 
         var existView = await _context.Get<PostViewer>()
@@ -70,7 +71,7 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
             BlogId = post.BlogId,
             PostId = post.Id,
             CreatedAt = post.CreatedAt,
-            Description = post.Description,
+            Description = post.VideoPostInfo.Description,
             Title = post.Title,
             UpdateType = UpdateType.Update,
             ViewCount = post.ViewCount,

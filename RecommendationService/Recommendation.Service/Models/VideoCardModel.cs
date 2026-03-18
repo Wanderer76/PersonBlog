@@ -1,7 +1,6 @@
-﻿using Blog.Domain.Entities;
-using Shared.Services;
+﻿using Shared.Services;
 
-namespace Blog.Service.Models
+namespace Recommendation.Service.Models
 {
     public class VideoCardModel 
     {
@@ -29,5 +28,4 @@ namespace Blog.Service.Models
             return $"{nameof(VideoCardModel)}:{postId}";
         }
     }
-
 }

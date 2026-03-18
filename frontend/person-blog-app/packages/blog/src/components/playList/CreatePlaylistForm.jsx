@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import API from "../../scripts/apiMethod";
+import API from "../../lib/api/client";
 import styles from './CreatePlaylistForm.module.css';
 
 const CreatePlaylistForm = () => {
@@ -23,7 +23,7 @@ const CreatePlaylistForm = () => {
     }, []);
 
     const fetchAvailableVideos = async () => {
-        const response = await API.get("profile/api/Playlist/availableVideos");
+        const response = await API.get("video/api/Playlist/availableVideos");
         if (response.status === 200) {
             setAvailableVideos(response.data);
         }
@@ -180,7 +180,7 @@ const CreatePlaylistForm = () => {
                                     .filter(v => !selectedVideos.some(sv => sv.id === v.id))
                                     .map(video => (
                                         <div key={video.id} className={styles.videoItem}>
-                                            <img src={video.previewUrl} alt={video.title} />
+                                            <img src={video.previewObjectName} alt={video.title} />
                                             <div className={styles.videoInfo}>
                                                 <h4>{video.title}</h4>
                                                 <p>{video.viewCount} просмотров</p>
@@ -222,7 +222,7 @@ const CreatePlaylistForm = () => {
                                                                 className={`${styles.videoItem} ${styles.selected}`}
                                                             >
                                                                 <span className={styles.positionBadge}>{video.position}</span>
-                                                                <img src={video.previewUrl} alt={video.title} />
+                                                                <img src={video.previewObjectName} alt={video.title} />
                                                                 <div className={styles.videoInfo}>
                                                                     <h4>{video.title}</h4>
                                                                     <p>{video.viewCount} просмотров</p>

@@ -5,17 +5,18 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Authentication.Service.Models
+namespace Authentication.Service.Models;
+
+public class AuthResponse
 {
-    public class AuthResponse
-    {
-        [JsonPropertyName("accessToken")]
-        public string AccessToken { get; set; } = null!;
+    [JsonPropertyName("accessToken")]
+    public string AccessToken { get; set; } = null!;
 
-        [JsonPropertyName("refreshToken")]
-        public string RefreshToken { get; set; } = null!;
+    [JsonPropertyName("refreshToken")]
+    public string RefreshToken { get; set; } = null!;
+}
 
-        [JsonPropertyName("authCode")]
-        public string AuthCode { get; set; } = null!;
-    }
+public class AuthCodeResponse
+{
+    public string AuthCode { get; set; } = null!;
 }

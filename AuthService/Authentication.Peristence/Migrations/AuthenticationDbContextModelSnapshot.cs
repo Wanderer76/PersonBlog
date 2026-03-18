@@ -34,10 +34,6 @@ namespace Authentication.Peristence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -87,10 +83,10 @@ namespace Authentication.Peristence.Migrations
                         new
                         {
                             Id = new Guid("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2025, 12, 19, 10, 32, 20, 830, DateTimeKind.Unspecified).AddTicks(281), new TimeSpan(0, 0, 0, 0, 0)),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 2, 27, 5, 58, 21, 279, DateTimeKind.Unspecified).AddTicks(871), new TimeSpan(0, 0, 0, 0, 0)),
                             LastAuthenticate = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Login = "admin",
-                            Password = "CZB/81yNwZ0=;iiFKYtT4M2RJ9teZbF6Ki/XVt3rSFv34NcyvoLCSoPA="
+                            Password = "O0VWS+HeCMg=;R6kqABwX+gHnnmjHT+tNt3Rpb3AbqUItP5EqBkKML8s="
                         });
                 });
 
@@ -194,12 +190,7 @@ namespace Authentication.Peristence.Migrations
                     b.Property<Guid>("ContextId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AppUserId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("UserId", "ContextType", "ContextId");
-
-                    b.HasIndex("AppUserId");
 
                     b.ToTable("UserContexts", "Authentication");
                 });
@@ -279,9 +270,13 @@ namespace Authentication.Peristence.Migrations
 
             modelBuilder.Entity("Authentication.Domain.Entities.UserContext", b =>
                 {
-                    b.HasOne("Authentication.Domain.Entities.AppUser", null)
+                    b.HasOne("Authentication.Domain.Entities.AppUser", "AppUser")
                         .WithMany("UserContexts")
-                        .HasForeignKey("AppUserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
                 });
 
             modelBuilder.Entity("Authentication.Domain.Entities.AppUser", b =>

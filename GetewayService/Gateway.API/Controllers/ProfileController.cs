@@ -2,19 +2,20 @@
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models.Profile;
+using PlayListService.Contract;
+using PlayListService.Services.Services;
 using Profile.Service.HttpClients;
-using System.Net.Http;
-using System.Text.Json;
 
 namespace Gateway.API.Controllers
 {
-    public class ProfileController : BaseController
+    public class ProfileController : BaseApiController
     {
         private readonly ProfileHttpClient _profileHttpClient;
-        public ProfileController(ILogger<BaseController> logger, ProfileHttpClient profileHttpClient) : base(logger)
+        private readonly IPlayListService _playlistHttpApiClient;
+        public ProfileController(ILogger<BaseApiController> logger, ProfileHttpClient profileHttpClient, IPlayListService playlistHttpApiClient) : base(logger)
         {
             _profileHttpClient = profileHttpClient;
+            _playlistHttpApiClient = playlistHttpApiClient;
         }
 
         [HttpGet("my")]
@@ -30,6 +31,13 @@ namespace Gateway.API.Controllers
             {
                 return Forbid();
             }
+        }
+
+        [HttpGet("playLists")]
+        [AuthFilter(Roles.User)]
+        public async Task<IActionResult> GetUserPlayLists()
+        {
+            return Ok(await _playlistHttpApiClient.GetUserPlayLists());
         }
     }
 }
