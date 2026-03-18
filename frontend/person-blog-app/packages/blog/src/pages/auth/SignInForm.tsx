@@ -3,8 +3,6 @@ import React, { useState, FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getAuth } from "@/lib/api/generated/auth/auth.js";
 import './AuthPage.css';
-import { AuthResponse } from "@/lib/api/generated/models/authResponse.js";
-import { JwtTokenService, saveAccessToken, saveRefreshToken } from "@/shared/TokenStrorage";
 
 interface SignInFormProps {
     onSwitchToSignUp: () => void;
@@ -47,10 +45,10 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
         setError(null);
 
         try {
-            const returnUrl = getSafeRedirectUrl(searchParams.get("redirect") || searchParams.get("returnUrl"));
+            const returnUrl = getSafeRedirectUrl(searchParams.get("redirectUri"));
 
             // Шаг 1: Логин → получаем authCode
-            const loginResponse = await authApi.postApiAuthLogin({ login, password, redirectUrl: returnUrl });
+            const loginResponse = await authApi.postApiAuthLogin({ login, password });
 
             if (loginResponse.status !== 200 || !loginResponse.data) {
                 throw new Error('Invalid login response');
@@ -58,27 +56,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
 
             const loginData = loginResponse.data;
 
-            // // Проверяем, что сервер вернул authCode
-            // if (!loginData.authCode) {
-            //     // Если бэкенд вернул токены сразу — сохраняем их (фолбэк)
-            //     if (loginData.accessToken) {
-            //         saveAccessToken(loginData.accessToken);
-            //         if (loginData.refreshToken) {
-            //             saveRefreshToken(loginData.refreshToken);
-            //         }
-            //         navigate(returnUrl, { replace: true });
-            //         return;
-            //     }
-            //     throw new Error('Server did not return authCode or tokens');
-            // }
-
-
-            // Шаг 2: Обмен authCode на токены
-            const tokenData = await JwtTokenService.exchangeCodeForTokens(loginData.authCode!);
-
-            // Шаг 4: Редирект на целевую страницу
-            if(JwtTokenService.isAuth())
-            navigate(returnUrl, { replace: true });
+            navigate(`${returnUrl}?code=${loginData.authCode}&state=${searchParams.get("state")}`, { replace: true });
 
         } catch (e: any) {
             console.error("Auth flow error:", e);

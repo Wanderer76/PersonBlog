@@ -32,7 +32,6 @@ public class OAuthController : BaseApiController
     [HttpGet("authorize")]
     public async Task<RedirectResponse> Authorize(string clientId, string redirectUri, string response_type, string state, string returnUrl)
     {
-        // Валидация клиента
         //var client = await _repository.Get<Client>()
         //    .FirstOrDefaultAsync(c => c.ClientId == clientId && c.RedirectUri == redirectUri);
         //if (client == null) return BadRequest("Invalid Client");

@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 const OAuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
   useEffect(() => {
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -14,20 +13,19 @@ const OAuthCallback = () => {
 
     if (error) {
       console.error('OAuth error:', error);
-      navigate('/auth?error=access_denied');
+      JwtTokenService.redirectToAuth(searchParams.get('return_url') || '/');
       return;
     }
 
     if (!code || !state) {
-      navigate('/auth');
+      JwtTokenService.redirectToAuth(searchParams.get('return_url') || '/');
       return;
     }
 
     const handleCallback = async () => {
       try {
         await JwtTokenService.exchangeCodeForTokens(code, state);
-        
-        // Успех: редирект на главную или return_url
+        // Успех: редирект на лавную или return_url
         const returnUrl = searchParams.get('return_url') || '/';
         navigate(returnUrl, { replace: true });
       } catch (err) {
