@@ -8,10 +8,12 @@ import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
 import ChannelPage from './pages/channel/ChannelPage';
 import CreateBlogForm from './components/profile/blog/CreateBlogForm';
 import LikedPage from './pages/liked/LikedPage';
+import AuthPage from './pages/auth/AuthPage.js';
+import OAuthCallback from './pages/callback/OAuthCallback.js';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
-const AuthPage = lazy(() => import('./pages/auth/AuthPage'));
+
 const ProfilePage = lazy(() => import('./widgets/ProfilePage/ProfilePage'));
 const VideoPage = lazy(() => import('./pages/post/VideoPage'));
 const ConferencePage = lazy(() => import('./pages/conference/ConferencePage'));
@@ -27,7 +29,7 @@ interface PrivateRouteProps {
 
 const PrivateRoute = ({ redirectPath = '/auth' }: PrivateRouteProps) => {
   const isAuthenticated = JwtTokenService.isAuth();
-  return isAuthenticated ? <Outlet /> : <Navigate to={redirectPath} replace />;
+  return isAuthenticated ? <Outlet /> : <button onClick={async () => await JwtTokenService.redirectToAuth(window.location.origin)} />;
 };
 // Публичный маршрут (если нужно ограничить доступ к auth)
 // Публичный маршрут
@@ -72,11 +74,8 @@ function App() {
               <Route path="/" element={<MainPage />} />
               <Route path="/videoPage/:postId" element={<VideoPage />} />
               <Route path="/channel/:channelId" element={<ChannelPage />} />
-              <Route path="/auth" element={
-                <PublicRoute>
-                  <AuthPage />
-                </PublicRoute>
-              } />
+                  <Route path="/auth" element={<AuthPage />} />
+                  <Route path="/callback" element={<OAuthCallback />} />                
 
               {/* Приватные маршруты */}
               <Route element={<PrivateRoute />}>

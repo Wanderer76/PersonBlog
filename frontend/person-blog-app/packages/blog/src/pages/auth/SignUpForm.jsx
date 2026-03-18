@@ -3,7 +3,7 @@ import { BaseApUrl } from "../../lib/api/client";
 import { saveAccessToken, saveRefreshToken } from "../../shared/TokenStrorage.js";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getAuth } from "@/lib/api/generated/auth/auth.js";
-
+import './AuthPage.css';
 const SignUpForm = ({ onSwitchToSignIn }) => {
 
   const [searchParams] = useSearchParams();

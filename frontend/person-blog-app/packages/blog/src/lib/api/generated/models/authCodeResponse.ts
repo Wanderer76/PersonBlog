@@ -5,9 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface AuthResponse {
+export interface AuthCodeResponse {
   /** @nullable */
-  accessToken?: string | null;
-  /** @nullable */
-  refreshToken?: string | null;
+  authCode?: string | null;
 }

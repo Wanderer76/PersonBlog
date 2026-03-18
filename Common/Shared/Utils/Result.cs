@@ -1,5 +1,8 @@
 ﻿
 using Shared.Utils;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 public sealed class Result<TValue, TError> where TError : class
 {
@@ -70,9 +73,11 @@ public sealed class Result
     public static Result Failure(string message) => new([new Error(message)]);
 }
 
-public sealed class Result<TValue>
+public  class Result<TValue>
 {
+    [JsonPropertyName("value")]
     private readonly TValue? _value;
+    [JsonPropertyName("errors")]
     private readonly IReadOnlyList<Error> _errors;
 
     private Result(TValue value)
@@ -80,17 +85,25 @@ public sealed class Result<TValue>
         _value = value;
         _errors = [];
     }
+
     private Result(IReadOnlyList<Error> error)
     {
-        _value = default(TValue);
+        _value = default;
         _errors = error;
+    }
+
+    [JsonConstructor]
+    private Result(TValue value, IReadOnlyList<Error> errors)
+    {
+        _value = value;
+        _errors = errors;
     }
 
     public TValue Value
     {
         get
         {
-            if (_errors.Count == 0)
+            if (IsSuccess)
                 return _value;
             else
                 throw new InvalidOperationException("there is no value for failure");
@@ -101,7 +114,10 @@ public sealed class Result<TValue>
         get => _errors;
     }
 
+    [JsonIgnore]
     public bool IsFailure => _errors.Count > 0;
+
+    [JsonIgnore]
     public bool IsSuccess => !IsFailure;
 
     public static Result<TValue> Success(TValue value) => new(value);
@@ -114,4 +130,73 @@ public sealed class Result<TValue>
         => Failure(error);
     public static explicit operator Result<TValue>(Error[] error)
         => Failure(error);
+}
+
+
+public class ResultConverter<TValue> : JsonConverter<Result<TValue>>
+{
+    private readonly FieldInfo? _valueField;
+    private readonly FieldInfo? _errorsField;
+    private readonly ConstructorInfo? _constructor;
+
+    public ResultConverter()
+    {
+        var type = typeof(Result<TValue>);
+        _valueField = type.GetField("_value", BindingFlags.NonPublic | BindingFlags.Instance);
+        _errorsField = type.GetField("_errors", BindingFlags.NonPublic | BindingFlags.Instance);
+        _constructor = type.GetConstructor(
+            BindingFlags.NonPublic | BindingFlags.Instance,
+            [typeof(TValue), typeof(IReadOnlyList<Error>)]
+        );
+    }
+
+    public override Result<TValue> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var doc = JsonDocument.ParseValue(ref reader);
+        var root = doc.RootElement;
+
+        TValue? value = default;
+        IReadOnlyList<Error> errors = [];
+
+        if (root.TryGetProperty("value", out var valueProp) && valueProp.ValueKind != JsonValueKind.Null)
+        {
+            value = valueProp.Deserialize<TValue>(options);
+        }
+
+        if (root.TryGetProperty("errors", out var errorsProp) && errorsProp.ValueKind == JsonValueKind.Array)
+        {
+            var errorList = new List<Error>();
+            foreach (var item in errorsProp.EnumerateArray())
+            {
+                var error = item.Deserialize<Error>(options);
+                if (error != null) errorList.Add(error);
+            }
+            errors = errorList;
+        }
+
+        if (_constructor != null)
+        {
+            return (Result<TValue>)_constructor.Invoke([value, errors]);
+        }
+
+        var fallback = (Result<TValue>)Activator.CreateInstance(typeToConvert, true)!;
+        _valueField?.SetValue(fallback, value);
+        _errorsField?.SetValue(fallback, errors);
+        return fallback;
+    }
+
+    public override void Write(Utf8JsonWriter writer, Result<TValue> value, JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+
+        writer.WritePropertyName("value");
+        var fieldValue = _valueField?.GetValue(value);
+        JsonSerializer.Serialize(writer, fieldValue, options);
+
+        writer.WritePropertyName("errors");
+        var fieldErrors = _errorsField?.GetValue(value);
+        JsonSerializer.Serialize(writer, fieldErrors, options);
+
+        writer.WriteEndObject();
+    }
 }

@@ -7,9 +7,9 @@ namespace Authentication.Service.Service;
 
 public interface IAuthService
 {
-    Task<Result<AuthResponse,Error>> Authenticate(LoginPasswordModel loginModel);
-    Task<Result<AuthResponse,Error>> Register(RegisterModel registerModel);
-    Task<Result<AuthResponse,Error>> Refresh(string refreshToken);
+    Task<Result<AuthCodeResponse>> Authenticate(LoginPasswordModel loginModel);
+    Task<Result> Register(RegisterModel registerModel);
+    Task<Result<AuthResponse>> Refresh(string refreshToken);
     Task<bool> ValidateToken(string token);
     Task<Result<UserModel>> GetCurrentUserAsync(string? token);
     ValueTask Logout();

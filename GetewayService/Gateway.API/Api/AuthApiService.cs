@@ -10,30 +10,23 @@ namespace Gateway.API.Api
     {
         private const string ClientName = "Auth";
 
-        public static async Task<Result<AuthResponse>> CreateUserAsync(this IHttpClientFactory httpClientFactory, RegisterModel registerModel)
+        public static async Task<Result<AuthCodeResponse>> CreateUserAsync(this IHttpClientFactory httpClientFactory, RegisterModel registerModel)
         {
             var response = await httpClientFactory.CreateClient(ClientName).PostAsJsonAsync("Auth/create", registerModel);
             if (response.IsSuccessStatusCode)
             {
-                return (await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream()))!;
+                return (await response.Content.ReadFromJsonAsync< Result<AuthCodeResponse>>())!;
             }
             return new Error(await response.Content.ReadAsStringAsync());
         }
 
-        public static async Task<Result<AuthResponse>> AuthenticateAsync(this IHttpClientFactory httpClientFactory, LoginPasswordModel loginModel)
+        public static async Task<Result<AuthCodeResponse>> AuthenticateAsync(this IHttpClientFactory httpClientFactory, LoginPasswordModel loginModel)
         {
             var client = httpClientFactory.CreateClient(ClientName);
-            //foreach (var i in HttpContext.Request.Headers)
-            //{
-            //    client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
-            //}
             var response = await client.PostAsJsonAsync("Auth/login", loginModel);
-            if (response.IsSuccessStatusCode)
-            {
-                return (await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream()))!;
-            }
-            return new Error(await response.Content.ReadAsStringAsync());
+            return (await response.Content.ReadFromJsonAsync<Result<AuthCodeResponse>>())!;
         }
+
         public static async Task<Guid> UpdateSessionAsync(this IHttpClientFactory httpClientFactory, HttpContext context)
         {
             var client = httpClientFactory.CreateClient(ClientName);

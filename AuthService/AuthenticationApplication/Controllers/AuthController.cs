@@ -18,48 +18,33 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("create")]
-    [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> CreateUser([FromBody] RegisterModel registerModel)
+    [Produces(typeof(AuthCodeResponse))]
+    public async Task<Result<AuthCodeResponse>> CreateUser([FromBody] RegisterModel registerModel)
     {
         var response = await _authService.Register(registerModel);
         if (response.IsSuccess)
         {
-            return Ok(response.Value);
+            var authResult = await _authService.Authenticate(new LoginPasswordModel(registerModel.Login, registerModel.Password));
+            return authResult;
         }
         else
-        {
-            return BadRequest(response.Error);
-        }
+            return Result<AuthCodeResponse>.Failure(response.Errors);
     }
 
     [HttpPost("login")]
-    [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> Login(LoginPasswordModel loginModel)
+    [Produces(typeof(Result<AuthCodeResponse>))]
+    public async Task<Result<AuthCodeResponse>> Login([FromBody] LoginPasswordModel loginModel)
     {
         var response = await _authService.Authenticate(loginModel);
-        if (response.IsSuccess)
-        {
-            return Ok(response.Value);
-        }
-        else
-        {
-            return BadRequest(response.Error);
-        }
+        return response;
     }
 
     [HttpPost("refresh")]
     [Produces(typeof(AuthResponse))]
-    public async Task<IActionResult> Refresh(string refreshToken)
+    public async Task<Result<AuthResponse>> Refresh(string refreshToken)
     {
         var response = await _authService.Refresh(refreshToken);
-        if (response.IsSuccess)
-        {
-            return Ok(response.Value);
-        }
-        else
-        {
-            return Unauthorized(response.Error);
-        }
+        return response;
     }
 
     [HttpGet("/me")]

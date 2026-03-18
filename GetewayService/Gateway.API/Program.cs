@@ -6,6 +6,7 @@ using Gateway.API;
 using Gateway.API.Services;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using PlayListService.Contract;
 using Profile.Service;
@@ -15,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.AddServiceDefaults();
 builder.Host.AddSerilogLogger(builder.Configuration);
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new ResultConverterFactory());
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

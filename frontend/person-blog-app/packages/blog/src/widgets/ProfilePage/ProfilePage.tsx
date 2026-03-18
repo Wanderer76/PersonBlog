@@ -155,7 +155,7 @@ export const ProfilePage = memo(() => {
 
     const handleLogout = () => {
         JwtTokenService.cleanAuth();
-        navigate('/auth');
+        navigate('/');
     };
 
     const handleEditBlog = () => {

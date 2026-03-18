@@ -1,18 +1,25 @@
 using Authentication.Contract;
 using Authentication.Peristence;
 using Authentication.Service;
+using Authentication.Service.Models;
 using Authentication.Service.Service;
 using AuthenticationApplication.HostedServices;
 using Blog.Contracts.Events;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
+using Infrastructure.Services;
 using MessageBus;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new ResultConverterFactory());
+
+    });
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 builder.Services.AddAuthenticationPersistence(builder.Configuration);
@@ -40,7 +47,7 @@ var app = builder.Build();
 {
     app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
-   
+
 }
 using (var scope = app.Services.CreateScope())
 {

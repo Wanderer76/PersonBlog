@@ -5,10 +5,13 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  AuthCodeResponse,
   AuthResponse,
+  GetApiAuthAuthorizeParams,
   LoginPasswordModel,
   PostApiAuthRefreshParams,
-  RegisterModel
+  RegisterModel,
+  TokenRequest
 } from '.././models';
 
 import { customInstance } from '../../mutator';
@@ -19,7 +22,7 @@ import { customInstance } from '../../mutator';
 const postApiAuthCreate = (
     registerModel: RegisterModel,
  ) => {
-      return customInstance<AuthResponse>(
+      return customInstance<AuthCodeResponse>(
       {url: `/api/Auth/create`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: registerModel
@@ -29,7 +32,7 @@ const postApiAuthCreate = (
   const postApiAuthLogin = (
     loginPasswordModel: LoginPasswordModel,
  ) => {
-      return customInstance<AuthResponse>(
+      return customInstance<AuthCodeResponse>(
       {url: `/api/Auth/login`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: loginPasswordModel
@@ -45,16 +48,28 @@ const postApiAuthCreate = (
     },
       );
     }
-  const getApiAuthSession = (
-    
+  const getApiAuthAuthorize = (
+    params?: GetApiAuthAuthorizeParams,
  ) => {
       return customInstance<void>(
-      {url: `/api/Auth/session`, method: 'GET'
+      {url: `/api/Auth/authorize`, method: 'GET',
+        params
     },
       );
     }
-  return {postApiAuthCreate,postApiAuthLogin,postApiAuthRefresh,getApiAuthSession}};
+  const postApiAuthToken = (
+    tokenRequest: TokenRequest,
+ ) => {
+      return customInstance<void>(
+      {url: `/api/Auth/token`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: tokenRequest
+    },
+      );
+    }
+  return {postApiAuthCreate,postApiAuthLogin,postApiAuthRefresh,getApiAuthAuthorize,postApiAuthToken}};
 export type PostApiAuthCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['postApiAuthCreate']>>>
 export type PostApiAuthLoginResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['postApiAuthLogin']>>>
 export type PostApiAuthRefreshResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['postApiAuthRefresh']>>>
-export type GetApiAuthSessionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['getApiAuthSession']>>>
+export type GetApiAuthAuthorizeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['getApiAuthAuthorize']>>>
+export type PostApiAuthTokenResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['postApiAuthToken']>>>

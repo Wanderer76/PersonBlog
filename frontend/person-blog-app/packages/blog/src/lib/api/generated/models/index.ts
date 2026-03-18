@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './authCodeResponse';
 export * from './authResponse';
 export * from './blogCreateRequest';
 export * from './blogModel';
@@ -13,6 +14,7 @@ export * from './changePostPositionRequest';
 export * from './commentCreateRequest';
 export * from './createMessageForm';
 export * from './createPlayListRequest';
+export * from './getApiAuthAuthorizeParams';
 export * from './getApiChannelPostsChannelIdParams';
 export * from './getApiCommentsListParams';
 export * from './getApiConferenceChatMessagesConferenceIdParams';
@@ -31,6 +33,7 @@ export * from './playListItemRemoveRequest';
 export * from './playListListItem';
 export * from './playListWithPostsViewModel';
 export * from './postApiAuthRefreshParams';
+export * from './postApiAuthTokenParams';
 export * from './postApiBlogCreateBody';
 export * from './postApiConferenceRoomCreateConferenceToPostParams';
 export * from './postCommonModel';
@@ -42,3 +45,4 @@ export * from './registerModel';
 export * from './setViewRequest';
 export * from './subscriptionCreateDto';
 export * from './subscriptionLevelModel';
+export * from './tokenRequest';

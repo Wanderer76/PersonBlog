@@ -40,17 +40,19 @@ const Header = function () {
             </form>
  */}
             {/* Правая секция: Авторизация / Профиль */}
-            <div className="right-section">
-                {!JwtTokenService.isAuth() ? (
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/auth'); }} className="auth-button">
-                        Войти
-                    </a>
-                ) : (
-                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('/profile'); }} className="profile-button">
-                        <div className="avatar">F</div>
-                    </a>
-                )}
-            </div>
+            {!window.location.href.includes('auth') &&
+                <div className="right-section">
+                    {!JwtTokenService.isAuth() ? (
+                        <a href="#" onClick={async (e) => { e.preventDefault(); await JwtTokenService.redirectToAuth(window.location.origin); }} className="auth-button">
+                            Войти
+                        </a>
+                    ) : (
+                        <a href="#" onClick={(e) => { e.preventDefault(); navigate('/profile'); }} className="profile-button">
+                            <div className="avatar">F</div>
+                        </a>
+                    )}
+                </div>
+            }
         </nav>
     );
 };
