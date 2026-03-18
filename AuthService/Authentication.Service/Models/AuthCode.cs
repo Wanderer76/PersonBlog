@@ -1,8 +1,7 @@
 ﻿using Shared.Services;
 
-namespace Authentication.Contract.Models;
-
-public sealed class AuthCode
+namespace Authentication.Service.Models;
+internal sealed class AuthCode
 {
     public string Code { get; set; } = null!;
     public Guid UserId { get; set; }

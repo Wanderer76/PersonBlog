@@ -30,8 +30,6 @@ const MainPage = function () {
             ? await sear.getApiSearchSearchByTitle({title:activeSearchQuery,page:page,limit:limit})
             : await reco.getRecommendations({page,limit})
             
-            await API.get(endpoint);
-
             if (response.status === 200) {
                 setVideos(prev =>
                     page === 1 ? response.data : [...prev, ...response.data]

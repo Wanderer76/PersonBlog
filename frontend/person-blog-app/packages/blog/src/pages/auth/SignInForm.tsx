@@ -46,16 +46,13 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
 
         try {
             const returnUrl = getSafeRedirectUrl(searchParams.get("redirectUri"));
-
             // Шаг 1: Логин → получаем authCode
             const loginResponse = await authApi.postApiAuthLogin({ login, password });
 
             if (loginResponse.status !== 200 || !loginResponse.data) {
                 throw new Error('Invalid login response');
             }
-
             const loginData = loginResponse.data;
-
             navigate(`${returnUrl}?code=${loginData.authCode}&state=${searchParams.get("state")}`, { replace: true });
 
         } catch (e: any) {

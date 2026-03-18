@@ -1,6 +1,5 @@
 ﻿using Authentication.Contract.Constants;
 using Authentication.Contract.Events;
-using Authentication.Contract.Models;
 using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using AuthenticationApplication.Models;
@@ -51,11 +50,10 @@ internal class DefaultAuthService : IAuthService
 
             var blogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId;
 
-            var response = await _tokenService.GenerateTokenAsync(user);
-            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromMilliseconds(10));
+            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromMinutes(10));
             await _context.SaveChangesAsync();
 
-            var authCode = GenerateRandomCode();
+            var authCode =  RandomCodeGenerator.GenerateRandomCode();
 
             await _cacheService.SetCachedDataAsync(AuthCode.GetCacheKey(authCode), new AuthCode
             {
@@ -70,16 +68,6 @@ internal class DefaultAuthService : IAuthService
         catch (Exception ex)
         {
             return new Error(ex.Message);
-        }
-    }
-
-    private string GenerateRandomCode()
-    {
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            var bytes = new byte[32];
-            rng.GetBytes(bytes);
-            return Convert.ToBase64String(bytes).Replace("+", "-").Replace("/", "_");
         }
     }
 
@@ -113,8 +101,6 @@ internal class DefaultAuthService : IAuthService
             },
         };
         _context.Add(user);
-
-        //_context.Add(AppProfile.Create(registerModel.Email, registerModel.Name, userId));
 
         var profileCreateModel = new ProfileRegisterEvent
         (

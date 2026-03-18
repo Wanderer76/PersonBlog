@@ -21,7 +21,6 @@ const OAuthCallback = () => {
       JwtTokenService.redirectToAuth(searchParams.get('return_url') || '/');
       return;
     }
-
     const handleCallback = async () => {
       try {
         await JwtTokenService.exchangeCodeForTokens(code, state);
@@ -31,7 +30,7 @@ const OAuthCallback = () => {
       } catch (err) {
         console.error('Token exchange failed:', err);
         JwtTokenService.cleanAuth();
-        navigate('/auth?error=token_exchange_failed');
+        JwtTokenService.redirectToAuth(searchParams.get('return_url') || '/')
       }
     };
 

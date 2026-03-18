@@ -10,6 +10,7 @@ public static class AuthServiceExtensions
     public static void AddAuthServices(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, DefaultAuthService>();
+        services.AddScoped<IOAuthService, DefaultOAuthService>();
         services.AddScoped<ITokenService, DefaultTokenService>();
     }
 }
