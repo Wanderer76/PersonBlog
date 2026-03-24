@@ -1,5 +1,4 @@
 ﻿using Authentication.Service.Models;
-using AuthenticationApplication.Models;
 using Shared.Models;
 using Shared.Utils;
 using System.Text.Json;
@@ -10,7 +9,7 @@ namespace Gateway.API.Api
     {
         private const string ClientName = "Auth";
 
-        public static async Task<Result<AuthCodeResponse>> CreateUserAsync(this IHttpClientFactory httpClientFactory, RegisterModel registerModel)
+        public static async Task<Result<AuthCodeResponse>> CreateUserAsync(this IHttpClientFactory httpClientFactory, RegisterRequest registerModel)
         {
             var response = await httpClientFactory.CreateClient(ClientName).PostAsJsonAsync("Auth/create", registerModel);
             if (response.IsSuccessStatusCode)

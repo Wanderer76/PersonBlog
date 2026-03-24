@@ -1,6 +1,3 @@
 ﻿namespace Authentication.Domain.Entities;
 
-public interface IAuthEntity
-{
-    
-}
+public interface IAuthEntity;

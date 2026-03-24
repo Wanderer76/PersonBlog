@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AuthenticationApplication.Models;
+namespace Authentication.Service.Models;
 
 public class LoginPasswordModel
 {

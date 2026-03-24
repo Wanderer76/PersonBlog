@@ -14,5 +14,5 @@ public class AppUser : IAuthEntity
     public DateTimeOffset LastAuthenticate { get; set; }
 
     public List<AppUserRole> AppUserRoles { get; set; } = [];
-    public List<UserContext> UserContexts { get; private set; } = [];
+    public List<UserContext> UserContexts { get; set; } = [];
 }

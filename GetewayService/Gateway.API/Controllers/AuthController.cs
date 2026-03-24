@@ -1,5 +1,4 @@
 ﻿using Authentication.Service.Models;
-using AuthenticationApplication.Models;
 using Gateway.API.Api;
 using Infrastructure.Extensions;
 using Infrastructure.Models;
@@ -19,7 +18,7 @@ namespace Gateway.API.Controllers
 
         [HttpPost("create")]
         [Produces(typeof(AuthCodeResponse))]
-        public async Task<IActionResult> CreateUser([FromBody] RegisterModel registerModel)
+        public async Task<IActionResult> CreateUser([FromBody] RegisterRequest registerModel)
         {
             var result = await _httpClientFactory.CreateUserAsync(registerModel);
             if (result.IsFailure)

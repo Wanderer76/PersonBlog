@@ -2,7 +2,6 @@
 using Authentication.Contract.Events;
 using Authentication.Domain.Entities;
 using Authentication.Service.Models;
-using AuthenticationApplication.Models;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
@@ -11,7 +10,7 @@ using Shared.Services;
 using Shared.Utils;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-[assembly: InternalsVisibleTo("AuthTests")]
+[assembly: InternalsVisibleTo("AuthTests",AllInternalsVisible =true)]
 
 namespace Authentication.Service.Service.Implementation;
 
@@ -71,7 +70,7 @@ internal class DefaultAuthService : IAuthService
         }
     }
 
-    public async Task<Result> Register(RegisterModel registerModel)
+    public async Task<Result> Register(RegisterRequest registerModel)
     {
         var isUserExists = await _context.Get<AppUser>()
             .Where(x => x.Login.Equals(registerModel.Login))

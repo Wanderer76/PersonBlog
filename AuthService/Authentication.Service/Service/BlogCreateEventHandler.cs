@@ -24,7 +24,7 @@ namespace Authentication.Service.Service
         {
             var user = await _repository.Get<AppUser>()
                 .Include(x => x.AppUserRoles)
-                .Include(x=>x.UserContexts)
+                .Include(x => x.UserContexts)
                 .FirstAsync(x => x.Id == @event.Message.UserId);
 
             if (user.UserContexts.Any(x => x.ContextType == UserContextType.Blog))
@@ -34,15 +34,19 @@ namespace Authentication.Service.Service
 
             if (!user.AppUserRoles.Any(x => x.UserRoleId == Roles.BloggerRoleId))
             {
-                _repository.Add(new AppUserRole
+                var blogRole = new AppUserRole
                 {
                     UserRoleId = Roles.BloggerRoleId,
                     AppUserId = @event.Message.UserId
-                });
+                };
+                user.AppUserRoles.Add(blogRole);
+                _repository.Add(blogRole);
             }
 
-            _repository.Add(new UserContext(user.Id,UserContextType.Blog,@event.Message.BlogId));
-            
+            var blogUserContext = new UserContext(user.Id, UserContextType.Blog, @event.Message.BlogId);
+            user.UserContexts.Add(blogUserContext);
+            _repository.Add(blogUserContext);
+
             await _repository.SaveChangesAsync();
 
             var token = await _repository.Get<Token>()
@@ -52,7 +56,7 @@ namespace Authentication.Service.Service
 
             if (token != null)
             {
-                await _cacheService.SetCachedDataAsync(new BlacklistTokenCacheKey(token.Id), token.ToTokenModel(@event.Message.BlogId), (token.ExpiredAt - token.CreatedAt));
+                await _cacheService.SetCachedDataAsync(new BlacklistTokenCacheKey(token.Id), token.ToTokenModel(user), (token.ExpiredAt - token.CreatedAt));
             }
         }
     }

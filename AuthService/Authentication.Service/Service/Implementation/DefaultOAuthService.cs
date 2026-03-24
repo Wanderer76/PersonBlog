@@ -55,7 +55,7 @@ internal class DefaultOAuthService : IOAuthService
 
     public async Task<Result<RedirectResponse>> GenerateAuthCodeAsync(string clientId, string redirectUri, string response_type, string state, string returnUrl)
     {
-
+            
         //var client = await _repository.Get<Client>()
         //    .FirstOrDefaultAsync(c => c.ClientId == clientId && c.RedirectUri == redirectUri);
         //if (client == null) return BadRequest("Invalid Client");

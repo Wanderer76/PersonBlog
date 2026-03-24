@@ -21,7 +21,7 @@ public class Token : IAuthEntity
     public AppUser AppUser { get; set; } = null!;
 }
 
-public class TokenTypes
+public static class TokenTypes
 {
     public const string Access = "access";
     public const string Refresh = "refresh";
@@ -29,20 +29,6 @@ public class TokenTypes
 
 public static class TokenExtensions
 {
-    public static TokenModel ToTokenModel(this Token token, Guid? blogId = null)
-    {
-        return new TokenModel
-        {
-            Id = token.Id,
-            CreatedAt = token.CreatedAt,
-            ExpiredAt = token.ExpiredAt,
-            Login = token.Login,
-            RoleId = token.RoleId,
-            UserId = token.AppUserId,
-            Type = token.TokenType,
-            BlogId = blogId ?? Guid.Empty
-        };
-    }
     public static TokenModel ToTokenModel(this Token token, AppUser user)
     {
         return new TokenModel

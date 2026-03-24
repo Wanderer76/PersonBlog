@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AuthenticationApplication.Models;
+namespace Authentication.Service.Models;
 
-public class RegisterModel
+public class RegisterRequest
 {
     [Required] public string Login { get; set; } = null!;
     [Required] public string Password { get; set; } = null!;

@@ -1,7 +1,6 @@
 ﻿using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using Shared;
-using Shared.Utils;
 
 namespace Authentication.Service.Service
 {

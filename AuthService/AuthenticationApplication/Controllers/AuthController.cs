@@ -1,6 +1,5 @@
 ﻿using Authentication.Service.Models;
 using Authentication.Service.Service;
-using AuthenticationApplication.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
@@ -19,7 +18,7 @@ public class AuthController : BaseApiController
 
     [HttpPost("create")]
     [Produces(typeof(AuthCodeResponse))]
-    public async Task<Result<AuthCodeResponse>> CreateUser([FromBody] RegisterModel registerModel)
+    public async Task<Result<AuthCodeResponse>> CreateUser([FromBody] RegisterRequest registerModel)
     {
         var response = await _authService.Register(registerModel);
         if (response.IsSuccess)

@@ -1,4 +1,4 @@
-﻿namespace AuthenticationApplication.Models.Requests;
+﻿namespace Authentication.Service.Models.Requests;
 
 public class ProfileCreateRequest
 {
