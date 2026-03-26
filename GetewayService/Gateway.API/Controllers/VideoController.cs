@@ -28,7 +28,6 @@ public class VideoController : BaseApiController
         _cache = cache;
     }
 
-
     [HttpGet("{blogId}/{postId}/{*file}")]
     [ResponseCache(NoStore = false, Duration = 6000, Location = ResponseCacheLocation.Client)]
     public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid blogId, Guid postId, string file)

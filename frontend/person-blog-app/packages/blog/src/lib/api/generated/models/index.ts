@@ -42,6 +42,7 @@ export * from './postReportForm';
 export * from './postVideoSetReactionPostIdParams';
 export * from './problemDetails';
 export * from './registerModel';
+export * from './registerRequest';
 export * from './setViewRequest';
 export * from './subscriptionCreateDto';
 export * from './subscriptionLevelModel';

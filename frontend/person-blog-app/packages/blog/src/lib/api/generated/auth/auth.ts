@@ -10,7 +10,7 @@ import type {
   GetApiAuthAuthorizeParams,
   LoginPasswordModel,
   PostApiAuthRefreshParams,
-  RegisterModel,
+  RegisterRequest,
   TokenRequest
 } from '.././models';
 
@@ -20,12 +20,12 @@ import { customInstance } from '../../mutator';
 
   export const getAuth = () => {
 const postApiAuthCreate = (
-    registerModel: RegisterModel,
+    registerRequest: RegisterRequest,
  ) => {
       return customInstance<AuthCodeResponse>(
       {url: `/api/Auth/create`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: registerModel
+      data: registerRequest
     },
       );
     }

@@ -36,7 +36,7 @@ public class ProfilePostV2Controller(
 
     [HttpPost("create")]
     [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult<UserPostInfoModel>> CreatePost([FromForm] PostCreateRequest request)
+    public async Task<ActionResult<UserPostInfoModel>> CreatePost([FromForm] VideoPostCreateRequest request)
     {
 
         var command = MapToCommand(request);
@@ -87,9 +87,9 @@ public class ProfilePostV2Controller(
     public async Task<ActionResult> EditPost(PostEditDto postEditDto)
     {
         var result = await profilePostService.UpdatePostAsync(new PostUpdateRequest(
-            postEditDto.Id, 
-            postEditDto.Description, 
-            postEditDto.Title, 
+            postEditDto.Id,
+            postEditDto.Description,
+            postEditDto.Title,
             postEditDto.Preview?.ConvertToFileMetadata(),
             postEditDto.Categories ?? []
             ));
@@ -103,23 +103,14 @@ public class ProfilePostV2Controller(
         }
     }
 
-    private PostCreateCommand MapToCommand(PostCreateRequest request)
-    {
-        return new PostCreateCommand(
-            Type: request.Type,
+    private static PostCreateCommand MapToCommand(VideoPostCreateRequest request) => new(
+            Type: PostType.Video,
             Title: request.Title,
             Visibility: request.Visibility,
-            Description: request.Type == PostType.Video ? request.VideoPostData?.Description : null,
-            TextContent: request.Type == PostType.Text ? request.TextPostData?.Text.Trim() : null,
+            Description: request.VideoPostData.Description,
+            TextContent: null,
             CategoryIds: request.VideoPostData?.Categories,
-            TextFiles: request.Type == PostType.Text
-                ? request.TextPostData?.Files?.Where(f => f.Length > 0)
-                    .Select(f => f.ConvertToFileMetadata())
-                    .ToList()
-                : null,
-            Thumbnail: request.Type == PostType.Video
-                ? request.VideoPostData!.Thumbnail?.ConvertToFileMetadata()
-                : null
+            TextFiles: null,
+            Thumbnail: request.VideoPostData!.Thumbnail?.ConvertToFileMetadata()
         );
-    }
 }

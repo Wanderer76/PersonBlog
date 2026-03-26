@@ -21,13 +21,11 @@ public interface IProfilePostV2Service
 
 }
 
-public class PostCreateRequest
+public class VideoPostCreateRequest
 {
-    public string Title { get; set; }
-    public PostType Type { get; set; }
+    public string Title { get; set; } = null!;
     public PostVisibility Visibility { get; set; }
-    public TextPostCreateForm? TextPostData { get; set; }
-    public VideoPostCreateForm? VideoPostData { get; set; }
+    public VideoPostCreateForm VideoPostData { get; set; } = null!;
 }
 
 public sealed class PostUpdateRequest
@@ -48,7 +46,6 @@ public sealed class PostUpdateRequest
     }
 }
 
-
 public sealed class VideoPostCreateForm
 {
     public IFormFile? Thumbnail { get; set; }
@@ -58,7 +55,7 @@ public sealed class VideoPostCreateForm
 
 public sealed class TextPostCreateForm
 {
-    public string Text { get; set; }
+    public string Text { get; set; } = null!;
     public IFormFileCollection? Files { get; set; }
 }
 public class UserPostInfoModel
@@ -71,7 +68,6 @@ public class UserPostInfoModel
     public Guid? PaymentSubscriptionId { get; set; }
     public PostVisibility Visibility { get; set; }
     public string Title { get; set; } = default!;
-
     public TextInfoDto? TextInfo { get; set; }
     public VideoInfoDto? VideoInfo { get; set; }
     public DateTimeOffset CreatedAt { get; set; }

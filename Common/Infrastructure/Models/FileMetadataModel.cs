@@ -12,7 +12,6 @@ public sealed class FileMetadataModel
     public Stream ContentStream {  get; init; } = null!;
 }
 
-
 public static class FileMetadataModelExtensions
 {
     public static FileMetadataModel ConvertToFileMetadata(this IFormFile formFile)

@@ -2,7 +2,7 @@
 
 namespace Blog.API.Models
 {
-    public class PostEditForm : PostCreateRequest
+    public class PostEditForm : VideoPostCreateRequest
     {
         public Guid Id { get; set; }
     }

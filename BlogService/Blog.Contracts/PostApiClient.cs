@@ -1,12 +1,10 @@
 ﻿using Blog.Contracts.Models;
 using Infrastructure.Services;
 using Shared.Services;
-using Shared.Utils;
-using System.Net.Http;
 using System.Net.Http.Json;
 
 namespace Blog.Contracts;
-public class PostApiClient
+public sealed class PostApiClient
 {
     private readonly HttpClient httpClient;
     private readonly ICacheService _cacheService;
