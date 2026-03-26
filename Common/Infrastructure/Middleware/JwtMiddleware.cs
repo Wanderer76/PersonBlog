@@ -15,11 +15,16 @@ namespace Infrastructure.Middleware
         private readonly RequestDelegate _next;
         private readonly IConfiguration _configuration;
         private readonly ICacheService _cacheService;
-        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration, ICacheService cacheService)
+        private readonly ICurrentUserService _currentUserService;
+        private readonly IJwtTokenService _jwtTokenService;
+
+        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration, ICacheService cacheService, ICurrentUserService currentUserService, IJwtTokenService jwtTokenService)
         {
             _next = requestDelegate;
             _configuration = configuration;
             _cacheService = cacheService;
+            _currentUserService = currentUserService;
+            _jwtTokenService = jwtTokenService;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -28,7 +33,7 @@ namespace Infrastructure.Middleware
 
             if (requestToken != null)
             {
-                var token = JwtUtils.GetTokenRepresentaion(requestToken);
+                var token = _jwtTokenService.GetTokenModel(requestToken);
                 if (token.IsFailure)
                 {
                     context.Response.ContentType = "application/json";
@@ -42,9 +47,9 @@ namespace Infrastructure.Middleware
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.StartAsync();
                 }
-                var currentUser = await _cacheService.GetCachedDataAsync<UserModel>(new SessionKey(token.Value.UserId));
+                var currentUser = await _currentUserService.GetCurrentUserAsync();
 
-                if(currentUser == null)
+                if (currentUser == null)
                 {
                     context.Response.ContentType = "application/json";
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;

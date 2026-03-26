@@ -2,7 +2,6 @@
 using Authentication.Service.Service.Implementation;
 using Microsoft.Extensions.DependencyInjection;
 
-
 namespace Authentication.Service;
 
 public static class AuthServiceExtensions

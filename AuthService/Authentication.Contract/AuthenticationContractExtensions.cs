@@ -31,7 +31,8 @@ public static class AuthenticationContractExtensions
             var httpUserService = new CurrentUserHttpClientService(httpClient);
             var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
             var cacheService = sp.GetRequiredService<ICacheService>();
-            return new HttpContextCachedUserService(contextAccessor, cacheService, httpUserService);
+            var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
+            return new HttpContextCachedUserService(contextAccessor, cacheService, httpUserService, jwtTokenService);
         });
 
         services.AddHttpContextAccessor();

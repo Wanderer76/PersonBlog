@@ -9,6 +9,7 @@ namespace Infrastructure.Extensions
     {
         public static void AddCustomJwtAuthentication(this IServiceCollection services)
         {
+            services.AddSingleton<IJwtTokenService, DefauleJWtTokenService>();
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

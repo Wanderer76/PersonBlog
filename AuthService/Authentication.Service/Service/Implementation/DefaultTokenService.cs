@@ -1,28 +1,30 @@
 ﻿using Authentication.Domain.Entities;
 using Authentication.Service.Models;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared;
 using Shared.Persistence;
 using Shared.Services;
-using Shared.Utils;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("AuthTests")]
 
 namespace Authentication.Service.Service.Implementation;
 
-internal class DefaultTokenService : ITokenService
+internal sealed class DefaultTokenService : ITokenService
 {
     private readonly IReadWriteRepository<IAuthEntity> _context;
+    private readonly IJwtTokenService _jwtTokenService;
 
-    public DefaultTokenService(IReadWriteRepository<IAuthEntity> context)
+    public DefaultTokenService(IReadWriteRepository<IAuthEntity> context, IJwtTokenService jwtTokenService)
     {
         _context = context;
+        _jwtTokenService = jwtTokenService;
     }
 
     public bool Validate(string token)
     {
-        var tokenRepresentation = JwtUtils.GetTokenRepresentaion(token);
+        var tokenRepresentation = GetTokenRepresentation(token);
         if (tokenRepresentation.IsFailure)
         {
             return false;
@@ -45,7 +47,7 @@ internal class DefaultTokenService : ITokenService
 
         var accessTokenModel = accessToken.ToTokenModel(user);
         var refreshTokenModel = refreshToken.ToTokenModel(user);
-        var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessTokenModel, refreshTokenModel);
+        var (jwtAccess, jwtRefresh) = _jwtTokenService.GetJwtTokens(accessTokenModel, refreshTokenModel);
         return new AuthResponse
         {
             AccessToken = jwtAccess,
@@ -97,11 +99,7 @@ internal class DefaultTokenService : ITokenService
 
     public Result<TokenModel> GetTokenRepresentation(string token)
     {
-        var result = JwtUtils.GetTokenRepresentaion(token);
-        if (result.IsFailure)
-            return result;
-
-        return result.Value;
+        return _jwtTokenService.GetTokenModel(token);
     }
 
     public AuthResponse GenerateToken(AppUser user, Dictionary<string, string> claims)
@@ -119,7 +117,7 @@ internal class DefaultTokenService : ITokenService
         {
             Id = tokenId,
             CreatedAt = DateTimeService.Now(),
-            ExpiredAt = DateTimeOffset.UtcNow.AddMonths(1),
+            ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(AuthOptions.LIFETIME),
             BlogId = blogId,
             Login = login,
             RoleId = roleId,
@@ -131,14 +129,15 @@ internal class DefaultTokenService : ITokenService
         {
             Id = tokenId,
             CreatedAt = DateTimeService.Now(),
-            ExpiredAt = DateTimeService.Now().AddYears(4),
+            ExpiredAt = DateTimeService.Now().AddDays(1),
             BlogId = blogId,
             Login = login,
             RoleId = roleId,
             UserId = userId,
             Type = TokenTypes.Refresh,
         };
-        var (jwtAccess, jwtRefresh) = JwtUtils.GetJwtTokens(accessModel, refreshModel);
+        var (jwtAccess, jwtRefresh) = _jwtTokenService.GetJwtTokens(accessModel, refreshModel);
+
         return new AuthResponse
         {
             AccessToken = jwtAccess,

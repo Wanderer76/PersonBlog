@@ -9,7 +9,6 @@ namespace Authentication.Service.Service
         Task ClearUserToken(string token);
         bool Validate(string token);
         Task<AuthResponse> GenerateTokenAsync(AppUser user);
-        AuthResponse GenerateToken(AppUser user,Dictionary<string, string> claims);
         Result<TokenModel> GetTokenRepresentation(string token);
     }
 }

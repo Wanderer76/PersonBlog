@@ -12,17 +12,19 @@ namespace Authentication.Contract.Services
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly ICurrentUserService _currentUserService;
         private readonly ICacheService _cacheService;
-        public HttpContextCachedUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService, ICurrentUserService currentUserService)
+        private readonly IJwtTokenService _jwtTokenService;
+        public HttpContextCachedUserService(IHttpContextAccessor contextAccessor, ICacheService cacheService, ICurrentUserService currentUserService, IJwtTokenService jwtTokenService)
         {
             _contextAccessor = contextAccessor;
             _cacheService = cacheService;
             _currentUserService = currentUserService;
+            _jwtTokenService = jwtTokenService;
         }
 
         public async Task<UserModel> GetCurrentUserAsync()
         {
             var token = _contextAccessor.HttpContext!.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
-            var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
+            var tokenRepr = token == null ? null : _jwtTokenService.GetTokenModel(token);
             if (tokenRepr == null || tokenRepr.IsFailure)
                 return UserModel.AnonymousUser();
 

@@ -1,10 +1,8 @@
-﻿using Authentication.Domain.Entities;
+﻿using Authentication.Contract.Constants;
+using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using Authentication.Service.Service;
 using Authentication.Service.Service.Implementation;
-using Authentication.Test.Mocks;
-using AuthenticationApplication.Models;
-using Common;
 using Infrastructure.Services;
 using MockQueryable.Moq;
 using Moq;
@@ -13,195 +11,298 @@ using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
-using Xunit;
 
-namespace AuthTests
+namespace AuthTests;
+
+public class AuthenticationTest
 {
-    [TestCaseOrderer(
-    ordererTypeName: "Infrastructure.Test.PriorityOrderer",
-    ordererAssemblyName: "Infrastructure.Test")]
-    public class AuthenticationTest : IClassFixture<AuthDbSeedMock>
+    private readonly Mock<IReadWriteRepository<IAuthEntity>> _repoMock = new();
+    private readonly Mock<ITokenService> _tokenServiceMock = new();
+    private readonly Mock<ICurrentUserService> _userSessionMock = new();
+    private readonly Mock<ICacheService> _cacheServiceMock = new();
+    private readonly DefaultAuthService _authService;
+
+    public AuthenticationTest()
     {
-        private readonly Mock<IReadWriteRepository<IAuthEntity>> _repoMock = new();
-        private readonly Mock<ITokenService> _tokenServiceMock = new();
-        private readonly Mock<ICurrentUserService> _userSessionMock = new();
-        private readonly Mock<ICacheService> _cacheServiceMock = new();
-        private readonly AuthDbSeedMock _dbSeedMock;
-        private readonly DefaultAuthService _authService;
-        public AuthenticationTest()
+        _authService = new DefaultAuthService(
+            _repoMock.Object,
+            _tokenServiceMock.Object,
+            _userSessionMock.Object,
+            _cacheServiceMock.Object);
+    }
+
+    [Fact]
+    public async Task Authenticate_Fails_IfUserNotFound()
+    {
+        // Arrange
+        var users = new List<AppUser>().BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+
+        // Act
+        var result = await _authService.Authenticate(new LoginPasswordModel("notfound", "pass"));
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.NotEmpty(result.Errors);
+        Assert.Contains("Пользователь не найден", result.Errors.First().Message);
+    }
+
+    [Fact]
+    public async Task Authenticate_Fails_IfPasswordInvalid()
+    {
+        // Arrange
+        var user = new AppUser
         {
-            //_profileApiClient = new Mock<IProfileApiAsyncClient>();
-            //_profileApiClient.Setup(x => x.CreateProfileAsync(It.IsAny<ProfileCreateRequest>())).ReturnsAsync(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
-            //_dbSeedMock = dbSeedMock;
-            //_context = new DefaultRepository<AuthenticationDbContext, IAuthEntity>(AuthDbSeedMock.Context);
-            //_tokenService = new DefaultTokenService(_context);
-            _authService = new DefaultAuthService(_repoMock.Object, _tokenServiceMock.Object, _userSessionMock.Object, _cacheServiceMock.Object);
-        }
-        [Fact]
-        public async Task Authenticate_Fails_IfUserNotFound()
+            Id = Guid.NewGuid(),
+            Login = "test",
+            Password = PasswordHasher.GetHash("correct"),
+            AppUserRoles = new List<AppUserRole>(),
+            UserContexts = new List<UserContext>()
+        };
+        var users = new List<AppUser> { user }.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+        _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+
+        // Act
+        var result = await _authService.Authenticate(new LoginPasswordModel("test", "wrong"));
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.NotEmpty(result.Errors);
+        Assert.Contains("Неверный логин/пароль", result.Errors.First().Message);
+    }
+
+    [Fact]
+    public async Task Authenticate_Succeeds_WithValidCredentials()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var user = new AppUser
         {
-            var users = new List<AppUser>().BuildMockDbSet();
-            _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+            Id = userId,
+            Login = "test",
+            Password = PasswordHasher.GetHash("correct"),
+            AppUserRoles = new List<AppUserRole>(),
+            UserContexts = new List<UserContext>()
+        };
+        var users = new List<AppUser> { user }.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+        _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        _cacheServiceMock.Setup(x => x.SetCachedDataAsync(It.IsAny<ICacheKey>(), It.IsAny<object>(), It.IsAny<TimeSpan>()))
+            .Returns(Task.CompletedTask);
 
-            var result = await _authService.Authenticate(new LoginPasswordModel("notfound", "pass"));
-            Assert.False(result.IsSuccess);
-            Assert.NotNull(result.Error);
-        }
+        // Act
+        var result = await _authService.Authenticate(new LoginPasswordModel("test", "correct"));
 
-        [Fact]
-        public async Task Authenticate_Fails_IfPasswordInvalid()
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.NotNull(result.Value.AuthCode);
+        _repoMock.Verify(x => x.SaveChangesAsync(), Times.Once);
+        _cacheServiceMock.Verify(x => x.SetCachedDataAsync(It.IsAny<SessionKey>(), It.IsAny<UserModel>(), It.IsAny<TimeSpan>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Register_Fails_IfUserExists()
+    {
+        // Arrange
+        var users = new List<AppUser> { new AppUser { Login = "existing" } }.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+
+        // Act
+        var result = await _authService.Register(new RegisterRequest
         {
-            var user = new AppUser { Login = "test", Password = "hash" };
-            var users = new List<AppUser> { user }.BuildMockDbSet();
+            Login = "existing",
+            Password = "112312",
+            PasswordConfirm = "112312",
+            UserName = "test"
+        });
 
-            _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Пользователь с таким логином уже существует", result.Errors.First().Message);
+    }
 
-            var result = await _authService.Authenticate(new LoginPasswordModel("test", "wrong"));
+    [Fact]
+    public async Task Register_CreatesUser_Successfully()
+    {
+        // Arrange
+        var userList = new List<AppUser>();
+        var users = userList.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
 
-            Assert.False(result.IsSuccess);
-            Assert.NotNull(result.Error);
-        }
-
-        [Fact]
-        public async Task Authenticate_Succeeds_WithValidCredentials()
+        var regModel = new RegisterRequest
         {
-            var user = new AppUser { Id = Guid.NewGuid(), Login = "test", Password = PasswordHasher.GetHash("correct"), AppUserRoles = new() };
-            var users = new List<AppUser> { user }.BuildMockDbSet();
+            Login = "newuser",
+            Password = "pass",
+            PasswordConfirm = "pass",
+            UserName = "test",
+        };
 
-            _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
-
-            _tokenServiceMock.Setup(x => x.GenerateTokenAsync(user)).ReturnsAsync(new AuthResponse());
-
-            var result = await _authService.Authenticate(new LoginPasswordModel("test", "correct"));
-
-            Assert.True(result.IsSuccess);
-            Assert.NotNull(result.Value);
-            _repoMock.Verify(x => x.SaveChangesAsync(), Times.Once);
-        }
-
-        [Fact]
-        public async Task Register_Fails_IfUserExists()
-        {
-            var users = new List<AppUser> { new AppUser { Login = "existing" } }.BuildMockDbSet();
-            _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
-
-            var result = await _authService.Register(new RegisterModel { Login = "existing", Email = "" });
-
-            Assert.False(result.IsSuccess);
-        }
-
-        /// <summary>
-        /// не проходит из-за мока, нужен inmemoryDbset
-        /// </summary>
-        /// <returns></returns>
-        [Fact]
-        public async Task Register_CreatesUser_AndAuthenticates()
-        {
-            var userList = new List<AppUser>();
-            var users = userList.BuildMockDbSet();
-            _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
-            var regModel = new RegisterModel
+        _repoMock.Setup(x => x.Add(It.IsAny<IAuthEntity>()))
+            .Callback((IAuthEntity entity) =>
             {
-                Login = "newuser",
-                Password = "pass",
-                Name = "N",
-                Birthdate = new DateTimeOffset(1990, 1, 1, 0, 0, 0, TimeSpan.Zero),
-                Email = "test@mail.com"
-            };
+                if (entity is AppUser user)
+                {
+                    userList.Add(user);
+                }
+            });
 
-            _tokenServiceMock.Setup(x => x.GenerateTokenAsync(It.IsAny<AppUser>()))
-                             .ReturnsAsync(new AuthResponse());
-            _repoMock.Setup(x => x.Add(It.IsAny<IAuthEntity>()))
-                     .Callback((IAuthEntity entity) =>
-                     {
-                         if (entity is AppUser user)
-                         {
-                             userList.Add(user);
-                         }
-                     });
+        _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
 
-            _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        // Act
+        var result = await _authService.Register(regModel);
 
-            var result = await _authService.Register(regModel);
+        // Assert
+        Assert.True(result.IsSuccess);
+        _repoMock.Verify(x => x.Add(It.IsAny<AppUser>()), Times.Once);
+        _repoMock.Verify(x => x.SaveChangesAsync(), Times.AtLeastOnce);
+        Assert.Single(userList);
+        Assert.Equal("newuser", userList[0].Login);
+    }
 
-            Assert.True(result.IsSuccess);
-            _repoMock.Verify(x => x.Add(It.IsAny<AppUser>()), Times.Once);
-            _repoMock.Verify(x => x.SaveChangesAsync(), Times.AtLeastOnce);
-        }
+    [Fact]
+    public async Task Logout_DeletesTokens_IfUserIdPresent()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        _userSessionMock.Setup(x => x.GetCurrentUserAsync())
+            .ReturnsAsync(new UserModel(userId, "test", null, Guid.Empty, []));
 
-        [Fact]
-        public async Task Logout_DeletesTokens_IfUserIdPresent()
+        var tokens = new List<Token>().BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<Token>()).Returns(tokens.Object);
+        _cacheServiceMock.Setup(x => x.RemoveCachedDataAsync(It.IsAny<SessionKey>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _authService.Logout();
+
+        // Assert
+        _repoMock.Verify(x => x.Get<Token>(), Times.Once);
+        _cacheServiceMock.Verify(x => x.RemoveCachedDataAsync(It.IsAny<SessionKey>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Logout_DoesNothing_IfNoUserId()
+    {
+        // Arrange
+        _userSessionMock.Setup(x => x.GetCurrentUserAsync())
+            .ReturnsAsync(new UserModel(Guid.Empty, null, null, Guid.Empty, []));
+
+        // Act
+        await _authService.Logout();
+
+        // Assert
+        _repoMock.Verify(x => x.Get<Token>(), Times.Never);
+        _cacheServiceMock.Verify(x => x.RemoveCachedDataAsync(It.IsAny<SessionKey>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Refresh_Fails_IfTokenInvalid()
+    {
+        // Arrange
+        _tokenServiceMock.Setup(x => x.GetTokenRepresentation("t"))
+            .Returns(Result<TokenModel>.Failure(new Error("Invalid token")));
+
+        // Act
+        var result = await _authService.Refresh("t");
+
+        // Assert
+        Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Refresh_Fails_IfTokenNotRefresh()
+    {
+        // Arrange
+        _tokenServiceMock.Setup(x => x.GetTokenRepresentation("t"))
+            .Returns(Result<TokenModel>.Success(new TokenModel { Type = TokenTypes.Access, UserId = Guid.NewGuid() }));
+
+        // Act
+        var result = await _authService.Refresh("t");
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Не верный тип токена", result.Errors.First().Message);
+    }
+
+    [Fact]
+    public async Task Refresh_Succeeds_AndGeneratesToken()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var user = new AppUser
         {
-            var userId = Guid.NewGuid();
-            _userSessionMock.Setup(x => x.GetCurrentUserAsync()).ReturnsAsync(new Shared.Models.UserModel(userId, null, null, null, []));
+            Id = userId,
+            Login = "test",
+            AppUserRoles = new List<AppUserRole>(),
+            UserContexts = new List<UserContext>()
+        };
 
-            var tokens = new List<Token>().BuildMockDbSet();
-            _repoMock.Setup(x => x.Get<Token>()).Returns(tokens.Object);
+        var users = new List<AppUser> { user }.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
 
-            await _authService.Logout();
+        _tokenServiceMock.Setup(x => x.GetTokenRepresentation("t"))
+            .Returns(Result<TokenModel>.Success(new TokenModel { Type = TokenTypes.Refresh, UserId = userId }));
 
-            _repoMock.Verify(x => x.Get<Token>(), Times.Once);
-        }
+        _tokenServiceMock.Setup(x => x.GenerateTokenAsync(user))
+            .ReturnsAsync((new AuthResponse()));
 
-        [Fact]
-        public async Task Logout_DoesNothing_IfNoUserId()
+        _tokenServiceMock.Setup(x => x.ClearUserToken("t"))
+            .Returns(Task.CompletedTask);
+
+        var tokens = new List<Token> { new Token { AppUserId = userId, TokenType = TokenTypes.Refresh } }.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<Token>()).Returns(tokens.Object);
+
+        _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        _cacheServiceMock.Setup(x => x.SetCachedDataAsync(It.IsAny<ICacheKey>(), It.IsAny<object>(), It.IsAny<TimeSpan>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _authService.Refresh("t");
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        _repoMock.Verify(x => x.SaveChangesAsync(), Times.Once);
+        _tokenServiceMock.Verify(x => x.ClearUserToken("t"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserAsync_ReturnsAnonymous_WhenTokenNull()
+    {
+        // Act
+        var result = await _authService.GetCurrentUserAsync(null);
+
+        // Assert
+        Assert.NotNull(result.Value);
+        Assert.True(result.Value.IsAnonymous);
+    }
+
+    [Fact]
+    public async Task GetCurrentUserAsync_ReturnsUser_WhenTokenValid()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var tokenData = new TokenModel
         {
-            _userSessionMock.Setup(x => x.GetCurrentUserAsync())
-                            .ReturnsAsync(new UserModel(null, null, null, null, []));
+            UserId = userId,
+            Login = "test",
+            BlogId = Guid.NewGuid(),
+            ExpiredAt = DateTimeService.Now().AddHours(1)
+        };
 
-            await _authService.Logout();
+        _tokenServiceMock.Setup(x => x.Validate("token")).Returns(true);
+        _tokenServiceMock.Setup(x => x.GetTokenRepresentation("token")).Returns(Result<TokenModel>.Success(tokenData));
 
-            _repoMock.Verify(x => x.Get<Token>(), Times.Never);
-        }
+        var userRoles = new List<AppUserRole> { new() { UserRoleId = Roles.UserRoleId } }.BuildMockDbSet();
+        _repoMock.Setup(x => x.Get<AppUserRole>()).Returns(userRoles.Object);
 
-        [Fact]
-        public async Task Refresh_Fails_IfTokenNotRefresh()
-        {
-            _tokenServiceMock.Setup(x => x.GetTokenRepresentation("t"))
-                             .Returns(new TokenModel { Type = TokenTypes.Access });
+        // Act
+        var result = await _authService.GetCurrentUserAsync("token");
 
-            var result = await _authService.Refresh("t");
-
-            Assert.False(result.IsSuccess);
-            Assert.Equal("Не верный тип токена", result.Error!.Message);
-        }
-
-        [Fact]
-        public async Task Refresh_Succeeds_AndGeneratesToken()
-        {
-            var userId = Guid.NewGuid();
-            var user = new AppUser { Id = userId, AppUserRoles = new() };
-
-            var users = new List<AppUser> { user }.BuildMockDbSet();
-            _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
-
-            _tokenServiceMock.Setup(x => x.GetTokenRepresentation("t"))
-                             .Returns(new TokenModel { Type = TokenTypes.Refresh, UserId = userId });
-
-            _tokenServiceMock.Setup(x => x.GenerateTokenAsync(user))
-                             .ReturnsAsync(new AuthResponse());
-
-            var result = await _authService.Refresh("t");
-
-            Assert.True(result.IsSuccess);
-            _repoMock.Verify(x => x.SaveChangesAsync(), Times.Once);
-        }
-
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public async Task ValidateToken_Returns_Correctly(bool isValid)
-        {
-            _tokenServiceMock.Setup(x => x.Validate("token")).Returns(isValid);
-
-            var result = await _authService.ValidateToken("token");
-
-            Assert.Equal(isValid, result);
-
-            if (!isValid)
-                _tokenServiceMock.Verify(x => x.ClearUserToken("token"), Times.Once);
-            else
-                _tokenServiceMock.Verify(x => x.ClearUserToken(It.IsAny<string>()), Times.Never);
-        }
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.IsAnonymous);
+        Assert.Equal(userId, result.Value.UserId);
     }
 }

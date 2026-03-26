@@ -177,26 +177,10 @@ internal class DefaultAuthService : IAuthService
         return response;
     }
 
-    public async Task<bool> ValidateToken(string token)
-    {
-        if (!_tokenService.Validate(token))
-        {
-            var repr = JwtUtils.GetTokenRepresentaion(token);
-            if (repr.IsSuccess)
-            {
-                await _cacheService.RemoveCachedDataAsync(new SessionKey(JwtUtils.GetTokenRepresentaion(token).Value.UserId));
-            }
-            await _tokenService.ClearUserToken(token);
-            return false;
-        }
-
-        return true;
-    }
-
     public async Task<Result<UserModel>> GetCurrentUserAsync(string? token)
     {
         var now = DateTimeService.Now();
-        var tokenRepr = token == null ? null : JwtUtils.GetTokenRepresentaion(token);
+        var tokenRepr = token == null ? null : _tokenService.GetTokenRepresentation(token);
         if (tokenRepr == null || tokenRepr != null && (tokenRepr.IsFailure || tokenRepr?.Value?.ExpiredAt <= now))
             return UserModel.AnonymousUser();
 
