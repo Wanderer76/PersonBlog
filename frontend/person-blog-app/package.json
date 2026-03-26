@@ -6,11 +6,13 @@
     "packages/blog",
     "packages/admin",
     "packages/music",
+    "packages/auth",
     "packages/shared"
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:blog\" \"npm run dev:admin\" \"npm run dev:music\"",
     "dev:blog": "npm run dev -w=blog",
+    "dev:auth": "npm run dev -w=auth",
     "dev:admin": "npm run dev -w=admin",
     "dev:music": "npm run dev -w=music",
     "build": "npm run build -w=blog && npm run build -w=admin",

@@ -74,7 +74,6 @@ function App() {
               <Route path="/" element={<MainPage />} />
               <Route path="/videoPage/:postId" element={<VideoPage />} />
               <Route path="/channel/:channelId" element={<ChannelPage />} />
-                  <Route path="/auth" element={<AuthPage />} />
                   <Route path="/callback" element={<OAuthCallback />} />                
 
               {/* Приватные маршруты */}

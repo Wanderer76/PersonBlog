@@ -15,6 +15,9 @@ public class AuthenticationDbContext : BaseDbContext
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<AuthEvent> AuthEvents { get; set; }
     public DbSet<UserContext> UserContexts { get; set; }
+
+    public DbSet<Client> Clients { get; set; }
+
     public AuthenticationDbContext(DbContextOptions<AuthenticationDbContext> options) : base(options)
     {
     }
@@ -101,6 +104,11 @@ public class AuthenticationDbContext : BaseDbContext
         {
             var entity = modelBuilder.Entity<UserContext>();
             entity.HasKey(x => new { x.UserId, x.ContextType, x.ContextId });
+        }
+        {
+            var entity = modelBuilder.Entity<Client>();
+            entity.HasKey(x => x.ClientId);
+            entity.HasIndex(x => new {x.ClientId,x.RedirectUri}).IsUnique();
         }
     }
 }

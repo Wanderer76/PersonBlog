@@ -68,7 +68,6 @@ builder.Services.AddHttpClient("Comments", x =>
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 
-
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();

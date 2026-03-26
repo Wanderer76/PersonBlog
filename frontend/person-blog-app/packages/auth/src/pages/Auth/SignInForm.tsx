@@ -1,8 +1,9 @@
-// src/components/auth/SignInForm.tsx
-import React, { useState, FormEvent } from "react";
+// src/pages/Auth/SignInForm.tsx
+import React, { useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getAuth } from "@/lib/api/generated/auth/auth.js";
 import './AuthPage.css';
+import { getAuth } from "../../lib/api/generated/auth/auth";
+import { buildAuthRedirectUrl, validateRedirectUri } from "../../utils/validation";
 
 interface SignInFormProps {
     onSwitchToSignUp: () => void;
@@ -11,49 +12,39 @@ interface SignInFormProps {
 const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-
     const [formData, setFormData] = useState({ login: "", password: "" });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const authApi = getAuth();
 
-    // Валидация редиректа (защита от open redirect)
-    const getSafeRedirectUrl = (url: string | null): string => {
-        if (!url) return '/';
-        if (url.startsWith('/') && !url.startsWith('//')) return url;
-        try {
-            const parsed = new URL(url);
-            if (parsed.origin === window.location.origin) {
-                return parsed.pathname + parsed.search;
-            }
-        } catch { }
-        return '/';
-    };
-
-    // Обработчик отправки формы
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        setError(null);
 
         const { login, password } = formData;
+
+        // Валидация
         if (!login.trim() || !password.trim()) {
             setError("Введите логин и пароль");
             return;
         }
 
         setIsLoading(true);
-        setError(null);
 
         try {
-            const returnUrl = getSafeRedirectUrl(searchParams.get("redirectUri"));
-            // Шаг 1: Логин → получаем authCode
+            // Шаг 1: Аутентификация → получаем authCode
             const loginResponse = await authApi.postApiAuthLogin({ login, password });
 
             if (loginResponse.status !== 200 || !loginResponse.data) {
                 throw new Error('Invalid login response');
             }
-            const loginData = loginResponse.data;
-            navigate(`${returnUrl}?code=${loginData.authCode}&state=${searchParams.get("state")}`, { replace: true });
+
+            const { authCode } = loginResponse.data;
+            const state = searchParams.get("state");
+            const redirectUri = searchParams.get("redirectUri")!;
+            const redirectUrl = buildAuthRedirectUrl(redirectUri, authCode!, state);
+            window.location.href = redirectUrl;
 
         } catch (e: any) {
             console.error("Auth flow error:", e);
@@ -73,20 +64,29 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
     };
 
     return (
-        <div className="auth-card">
-            <h2 className="auth-modal-title">Вход через единый аккаунт</h2>
-
-            {error && (
-                <div className="auth-error" role="alert">
-                    {error}
-                    <button type="button" className="auth-error-close" onClick={() => setError(null)}>×</button>
-                </div>
-            )}
-
+        <div className="auth-form-container auth-sign-in-container">
             <form className="auth-form" onSubmit={handleSubmit}>
+                <h2 className="auth-modal-title">Вход через единый аккаунт</h2>
+
+                {error && (
+                    <div className="auth-error" role="alert">
+                        {error}
+                        <button
+                            type="button"
+                            className="auth-error-close"
+                            onClick={() => setError(null)}
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
+
                 <div className="auth-field">
-                    <label className="auth-label">Логин</label>
+                    <label className="auth-label" htmlFor="signin-login">
+                        Логин
+                    </label>
                     <input
+                        id="signin-login"
                         className="auth-input"
                         type="text"
                         name="login"
@@ -100,8 +100,11 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
                 </div>
 
                 <div className="auth-field">
-                    <label className="auth-label">Пароль</label>
+                    <label className="auth-label" htmlFor="signin-password">
+                        Пароль
+                    </label>
                     <input
+                        id="signin-password"
                         className="auth-input"
                         type="password"
                         name="password"
@@ -114,23 +117,34 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
                     />
                 </div>
 
-                <a className="auth-forgot-link" href="/auth/forgot-password">Забыли пароль?</a>
+                <a className="auth-forgot-link" href="/auth/forgot-password">
+                    Забыли пароль?
+                </a>
 
-                <button className="auth-submit-btn" type="submit" disabled={isLoading}>
+                <button
+                    className="auth-submit-btn"
+                    type="submit"
+                    disabled={isLoading}
+                >
                     {isLoading ? "Вход..." : "Войти"}
                 </button>
+
+                <div className="auth-switch">
+                    <span>Нет аккаунта?</span>
+                    <button
+                        type="button"
+                        className="auth-link-button"
+                        onClick={onSwitchToSignUp}
+                        disabled={isLoading}
+                    >
+                        Зарегистрироваться
+                    </button>
+                </div>
+
+                <div className="auth-footer">
+                    <small>🔒 Единый вход для всех приложений</small>
+                </div>
             </form>
-
-            <div className="auth-switch">
-                <span>Нет аккаунта? </span>
-                <button type="button" className="auth-link-button" onClick={onSwitchToSignUp} disabled={isLoading}>
-                    Зарегистрироваться
-                </button>
-            </div>
-
-            <div className="auth-footer">
-                <small>🔒 Единый вход для всех приложений</small>
-            </div>
         </div>
     );
 };

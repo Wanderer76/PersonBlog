@@ -58,7 +58,6 @@ namespace Gateway.API.Controllers
             }
         }
 
-
         [HttpGet("authorize")]
         public async Task<IActionResult> Authorize(string clientId, string redirectUri, string response_type, string state, string returnUrl)
         {

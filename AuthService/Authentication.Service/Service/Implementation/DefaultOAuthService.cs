@@ -55,17 +55,16 @@ internal class DefaultOAuthService : IOAuthService
 
     public async Task<Result<RedirectResponse>> GenerateAuthCodeAsync(string clientId, string redirectUri, string response_type, string state, string returnUrl)
     {
-            
-        //var client = await _repository.Get<Client>()
-        //    .FirstOrDefaultAsync(c => c.ClientId == clientId && c.RedirectUri == redirectUri);
-        //if (client == null) return BadRequest("Invalid Client");
+        var authClient = await _repository.Get<Client>()
+            .FirstOrDefaultAsync(c => c.ClientId == "auth");
+        if (authClient == null) return Result<RedirectResponse>.Failure(new Error("Клиент не найден"));
 
         var user = await _currentUserService.GetCurrentUserAsync();
 
         if (user.IsAnonymous)
         {
             var queryString = BuildAuthQueryString(clientId, redirectUri, response_type, state, returnUrl);
-            return new RedirectResponse($"/auth{queryString}");
+            return new RedirectResponse($"{authClient.RedirectUri}{queryString}");
         }
         var code = RandomCodeGenerator.GenerateRandomCode();
         await _cacheService.SetCachedDataAsync(AuthCode.GetCacheKey(code), new AuthCode

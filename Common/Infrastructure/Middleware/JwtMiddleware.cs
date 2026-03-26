@@ -3,6 +3,7 @@ using Infrastructure.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Shared;
 using Shared.Models;
 using Shared.Services;
@@ -15,15 +16,13 @@ namespace Infrastructure.Middleware
         private readonly RequestDelegate _next;
         private readonly IConfiguration _configuration;
         private readonly ICacheService _cacheService;
-        private readonly ICurrentUserService _currentUserService;
         private readonly IJwtTokenService _jwtTokenService;
 
-        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration, ICacheService cacheService, ICurrentUserService currentUserService, IJwtTokenService jwtTokenService)
+        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration, ICacheService cacheService, IJwtTokenService jwtTokenService)
         {
             _next = requestDelegate;
             _configuration = configuration;
             _cacheService = cacheService;
-            _currentUserService = currentUserService;
             _jwtTokenService = jwtTokenService;
         }
 
@@ -47,6 +46,7 @@ namespace Infrastructure.Middleware
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.StartAsync();
                 }
+                var _currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
                 var currentUser = await _currentUserService.GetCurrentUserAsync();
 
                 if (currentUser == null)
