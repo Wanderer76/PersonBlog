@@ -1,7 +1,16 @@
-﻿using Blog.Contracts.Models;
+﻿using Amazon.Runtime.Internal;
+using Authentication.Contract.Constants;
+using Blog.Contracts.Models;
+using Blog.Contracts.Services;
+using Blog.Domain.Entities;
+using Infrastructure.Middleware;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Mvc;
 using Shared.Services;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Threading;
 
 namespace Blog.Contracts;
 public sealed class PostApiClient
@@ -40,6 +49,37 @@ public sealed class PostApiClient
             return await result.Content.ReadFromJsonAsync<List<PostCommonModel>>();
         }
         return Result<IReadOnlyList<PostCommonModel>>.Success([]);
+    }
+
+    [HttpGet("create")]
+    public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()
+    {
+        var model = await httpClient.GetFromJsonAsync<CreatePostModelViewModel>("ProfilePostV2/create");
+        return model!;
+    }
+
+    [HttpPost("createTextPost")]
+    public async Task<Result<UserPostInfoModel>> CreateTextPostAsync([FromForm] TextPostCreateForm request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Text) && request.Media == null)
+            return Result<UserPostInfoModel>.Failure(new Shared.Utils.Error("no content"));
+
+        using var formData = new MultipartFormDataContent();
+        formData.Add(new StringContent(request.Title), "Title");
+        formData.Add(new StringContent(request.Text), "Text");
+        formData.Add(new StringContent(request.Visibility.ToString()), "Visibility");
+
+        if (request.Media != null)
+        {
+            foreach (var file in request.Media)
+            {
+                var streamContent = new StreamContent(file.OpenReadStream());
+                streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+                formData.Add(streamContent, "Media", file.FileName);
+            }
+        }
+        var response = await httpClient.PostAsync($"ProfilePostV2/createTextPost", formData);
+        return await response.Content.ReadFromJsonAsync<UserPostInfoModel>();
     }
 }
 

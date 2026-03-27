@@ -44,7 +44,7 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<Axi
             .catch((refreshError) => {
               refreshTokenPromise = null;
               JwtTokenService.cleanAuth();
-              redirectToAuth();
+              JwtTokenService.redirectToAuth();
               return Promise.reject(refreshError);
             });
         }

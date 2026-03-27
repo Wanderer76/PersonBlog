@@ -55,7 +55,7 @@ public sealed class Post : IBlogEntity, ISoftDelete
         }
         else
         {
-            TextPostInfo = new TextPostInfo(id, text.Trim(), []);
+            TextPostInfo = new TextPostInfo(id, text, []);
         }
     }
 

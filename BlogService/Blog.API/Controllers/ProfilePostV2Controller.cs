@@ -103,6 +103,23 @@ public class ProfilePostV2Controller(
         }
     }
 
+    [HttpPost("createTextPost")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<IActionResult> CreateTextPost([FromForm] TextPostCreateForm textPostCreateForm)
+    {
+        var postCreateResult = await profilePostService.CreatePostAsync(new PostCreateCommand(
+            PostType.Text,
+            textPostCreateForm.Title,
+            textPostCreateForm.Visibility,
+            null,
+            textPostCreateForm.Text,
+            [],
+            textPostCreateForm.Media?.Select(x => x.ConvertToFileMetadata()).ToList(),
+            null));
+
+        return Ok(postCreateResult);
+    }
+
     private static PostCreateCommand MapToCommand(VideoPostCreateRequest request) => new(
             Type: PostType.Video,
             Title: request.Title,

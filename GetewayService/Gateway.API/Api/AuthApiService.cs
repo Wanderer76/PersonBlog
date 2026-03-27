@@ -14,7 +14,7 @@ namespace Gateway.API.Api
             var response = await httpClientFactory.CreateClient(ClientName).PostAsJsonAsync("Auth/create", registerModel);
             if (response.IsSuccessStatusCode)
             {
-                return (await response.Content.ReadFromJsonAsync< Result<AuthCodeResponse>>())!;
+                return (await response.Content.ReadFromJsonAsync<Result<AuthCodeResponse>>())!;
             }
             return new Error(await response.Content.ReadAsStringAsync());
         }
@@ -46,11 +46,7 @@ namespace Gateway.API.Api
                 client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
             }
             var response = await client.PostAsync($"Auth/refresh?refreshToken={refreshToken}", null);
-            if (response.IsSuccessStatusCode)
-            {
-                return (await JsonSerializer.DeserializeAsync<AuthResponse>(response.Content.ReadAsStream()))!;
-            }
-            return new Error(await response.Content.ReadAsStringAsync());
+            return (await response.Content.ReadFromJsonAsync<Result<AuthResponse>>())!;
         }
     }
 }

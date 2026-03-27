@@ -64,7 +64,7 @@ internal sealed class DefaultProfilePostV2Service(
             paymentSubscriptionId: null,
             visibility: command.Visibility,
             categories: categories.Select(c => c.Id).ToList(),
-            text: command.TextContent?.Trim());
+            text: command.TextContent);
 
         using var storage = fileStorageFactory.CreateFileStorage();
         await ProcessPostFilesAsync(post, command, blogId, postId, storage);
@@ -104,7 +104,7 @@ internal sealed class DefaultProfilePostV2Service(
         repository.Get<Post>()
             .Where(x => !x.IsDelete && x.BlogId == blogId && x.Type == postType);
 
-    private IQueryable<Post> ApplyIncludes(IQueryable<Post> query, PostType postType) =>
+    private static IQueryable<Post> ApplyIncludes(IQueryable<Post> query, PostType postType) =>
         postType == PostType.Video
             ? query
                 .Include(x => x.VideoPostInfo).ThenInclude(x => x.PostCategories)
@@ -175,8 +175,7 @@ internal sealed class DefaultProfilePostV2Service(
         return (await Task.WhenAll(tasks)).ToList();
     }
 
-
-    private async Task ProcessPostFilesAsync(
+    private static async Task ProcessPostFilesAsync(
         Post post,
         PostCreateCommand command,
         Guid blogId,
@@ -208,7 +207,7 @@ internal sealed class DefaultProfilePostV2Service(
                     FileExtension = Path.GetExtension(file.FileName)
                 });
             }
-            post.TextPostInfo = new TextPostInfo(postId, command.TextContent ?? string.Empty, files);
+            post.TextPostInfo.UpdateFiles(files);
         }
 
         if (command.Type == PostType.Video && command.Thumbnail != null && command.Thumbnail.Length > 0)

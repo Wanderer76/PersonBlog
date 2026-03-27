@@ -94,9 +94,9 @@ const CreatePostForm = () => {
     else if (name === 'thumbnail' && files?.[0]) {
       const file = files[0];
       setPostForm(prev => ({
-      ...prev,
-      videoPostData: { ...prev.videoPostData, thumbnail: file }
-    }));
+        ...prev,
+        videoPostData: { ...prev.videoPostData, thumbnail: file }
+      }));
     } else {
       setPostForm(prev => ({ ...prev, [name]: value }));
     }
@@ -145,16 +145,12 @@ const CreatePostForm = () => {
       postForm.videoPostData.categories.forEach(categoryId => {
         formData.append('videoPostData[categories][]', categoryId.toString());
       });
-console.log('Тип:', typeof postForm.videoPostData.thumbnail);
-console.log('Это файл:', postForm.videoPostData.thumbnail instanceof File);
-console.log('Значение:', postForm.videoPostData.thumbnail);
+      console.log('Тип:', typeof postForm.videoPostData.thumbnail);
+      console.log('Это файл:', postForm.videoPostData.thumbnail instanceof File);
+      console.log('Значение:', postForm.videoPostData.thumbnail);
       // Превью: добавляем файл только если это экземпляр File
-     if (postForm.videoPostData.thumbnail && postForm.videoPostData.thumbnail instanceof File)  {
-          formData.append(
-    'videoPostData.thumbnail',
-    postForm.videoPostData.thumbnail,
-    postForm.videoPostData.thumbnail.name
-  );
+      if (postForm.videoPostData.thumbnail && postForm.videoPostData.thumbnail instanceof File) {
+        formData.append('videoPostData.thumbnail', postForm.videoPostData.thumbnail, postForm.videoPostData.thumbnail.name);
       }
 
       // ВАЖНО: Не устанавливаем заголовок 'Content-Type' вручную!

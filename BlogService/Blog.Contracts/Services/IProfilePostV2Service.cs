@@ -6,6 +6,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Shared.Models;
 using Shared.Utils;
+using System.ComponentModel.DataAnnotations;
 
 namespace Blog.Contracts.Services;
 public interface IProfilePostV2Service
@@ -55,9 +56,14 @@ public sealed class VideoPostCreateForm
 
 public sealed class TextPostCreateForm
 {
-    public string Text { get; set; } = null!;
-    public IFormFileCollection? Files { get; set; }
+    [Required]
+    public string Title { get; set; } = null!;
+    public string? Text { get; set; }
+
+    public PostVisibility Visibility { get; set; }
+    public IFormFileCollection? Media { get; set; }
 }
+
 public class UserPostInfoModel
 {
     public Guid Id { get; set; }
