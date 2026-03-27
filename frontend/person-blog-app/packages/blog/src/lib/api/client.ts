@@ -34,11 +34,9 @@ API.interceptors.response.use(
           .catch((refreshError) => {
             refreshTokenPromise = null;
             JwtTokenService.cleanAuth();
-            redirectToAuth();
             return Promise.reject(refreshError);
           });
       }
-
       await refreshTokenPromise;
       return API(originalRequest);
     }

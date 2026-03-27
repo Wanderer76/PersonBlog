@@ -12,8 +12,9 @@ namespace Gateway.API.Controllers.Blog;
 public class TextPostController : BaseApiController
 {
     private readonly PostApiClient postApiClient;
-    public TextPostController(ILogger<BaseApiController> logger) : base(logger)
+    public TextPostController(ILogger<BaseApiController> logger, PostApiClient postApiClient) : base(logger)
     {
+        this.postApiClient = postApiClient;
     }
 
     [HttpGet("create")]

@@ -5,7 +5,7 @@ import { useState } from 'react';
 // Общий компонент для ввода названия
 export const TitleInput = ({ value, onChange, placeholder }) => (
     <div className={styles.formGroup}>
-        <label>Название</label>
+        <label>Заголовок</label>
         <input
             className={styles.modalContent}
             type="text"

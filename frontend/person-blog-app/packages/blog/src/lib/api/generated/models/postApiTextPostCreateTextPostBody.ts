@@ -10,5 +10,5 @@ export type PostApiTextPostCreateTextPostBody = {
   Title: string;
   Text?: string;
   Visibility?: PostVisibility;
-  Media?: Blob[];
+  Media?: File[];
 };

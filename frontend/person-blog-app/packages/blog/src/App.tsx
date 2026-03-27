@@ -10,6 +10,7 @@ import CreateBlogForm from './components/profile/blog/CreateBlogForm';
 import LikedPage from './pages/liked/LikedPage';
 import AuthPage from './pages/auth/AuthPage.js';
 import OAuthCallback from './pages/callback/OAuthCallback.js';
+import CreateTextPostForm from './components/profile/post/CreateTextPostForm.js';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -92,6 +93,7 @@ function App() {
                   <Route path="blog/create" element={<CreateBlogForm />} />
                   <Route path="history" element={<HistoryPage />} />
                   <Route path="playList/create" element={<CreatePlaylistForm />} />
+                  <Route path="textPost/create" element={<CreateTextPostForm />} />
                 </Route>
               </Route>
               <Route path='playlist/:playlistId' element={<PlaylistPage />} />

@@ -54,7 +54,7 @@ namespace Gateway.API.Controllers
             }
             else
             {
-                return Unauthorized(response.Errors);
+                return BadRequest(response.Errors);
             }
         }
 

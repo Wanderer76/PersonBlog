@@ -17,7 +17,7 @@ import { getBlog } from '@/lib/api/generated/blog/blog';
 import { BlogModel } from '@/lib/api/generated/models';
 
 const PAGE_SIZE = 10;
-type ActivePanel = 'posts' | 'playlists';
+type ActivePanel = 'posts' | 'playlists' | 'text';
 
 export const ProfilePage = memo(() => {
     const navigate = useNavigate();
@@ -165,14 +165,15 @@ export const ProfilePage = memo(() => {
     // Tab configuration
     const tabItems = [
         { id: 'posts', label: 'Мои публикации' },
-        { id: 'playlists', label: 'Плейлисты' }
+        { id: 'playlists', label: 'Плейлисты' },
+        { id: 'text', label: 'Посты' }
     ];
 
     const getRightAction = () => {
         if (activePanel === 'posts') {
             return (
                 <Button onClick={() => navigate('post/create')}>
-                    Создать пост
+                    Создать видео
                 </Button>
             );
         }
@@ -180,6 +181,13 @@ export const ProfilePage = memo(() => {
             return (
                 <Button onClick={() => navigate('playList/create')}>
                     Создать плейлист
+                </Button>
+            );
+        }
+        if (activePanel === 'text') {
+            return (
+                <Button onClick={() => navigate('textPost/create')}>
+                    Создать пост
                 </Button>
             );
         }
@@ -256,6 +264,9 @@ export const ProfilePage = memo(() => {
                             )}
                         </>
                     )}
+                    {
+                        activePanel === 'text' && <></>
+                    }
                 </div>
             </section>
         </div>
