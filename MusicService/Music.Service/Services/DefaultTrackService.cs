@@ -131,7 +131,6 @@ namespace Music.Service.Services
             return Result.Success();
         }
 
-
         public async Task<Result<PagedListViewModel<TrackViewItem>>> GetTrackPagedListAsync(int page, int size)
         {
             var totalCount = await _repository.Get<Track>().CountAsync();
@@ -169,7 +168,7 @@ namespace Music.Service.Services
                 return new TrackViewItem(track.Id, track.Title, thumbnail, track.AlbumId, trackFileInfo, artists, false);
             }).ToListAsync();
 
-            return new PagedListViewModel<TrackViewItem>(totalCount / size, size, result);
+            return PagedListViewModel.Create(result, size, totalCount);
         }
 
         public async Task<Result> RemoveTrackAsync(Guid id)
@@ -221,7 +220,6 @@ namespace Music.Service.Services
                 : await _repository.Get<Artist>()
                 .Where(x => x.Name == audioFileMetadata.Artist)
                 .FirstOrDefaultAsync();
-
 
             await _tempTrackMetadataRepository.CreateTempMetadataAsync(trackMetadata);
             using var fileStorage = _fileStorageFactory.CreateFileStorage();

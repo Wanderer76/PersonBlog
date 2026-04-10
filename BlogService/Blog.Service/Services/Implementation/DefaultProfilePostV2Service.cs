@@ -32,10 +32,7 @@ internal sealed class DefaultProfilePostV2Service(
             .ToListAsync();
 
         var dtos = await MapToUserPostInfoDtosAsync(posts, blogId, postType);
-        return new PagedListViewModel<UserPostInfoModel>(
-            (int)Math.Ceiling((double)totalCount / pageSize),
-            pageSize,
-            dtos);
+        return PagedListViewModel.Create(dtos, pageSize, totalCount);
     }
 
     public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()

@@ -54,16 +54,16 @@ namespace Gateway.API.Controllers
         public async Task<IActionResult> SubscriptionsList(int page, int size)
         {
             var client = _httpClientFactory.CreateClient("Reacting");
-            var subscriptions = await client.GetFromJsonAsync<PagedViewModel<SubscribeViewModel>>($"Subscriber/subscriptions?page={page}&size={size}");
+            var subscriptions = await client.GetFromJsonAsync<PagedListViewModel<SubscribeViewModel>>($"Subscriber/subscriptions?page={page}&size={size}");
 
             if (subscriptions.Items.Count > 0)
             {
                 var blogs = await Task.WhenAll(subscriptions.Items
                     .Select(x => _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<BlogModel>($"api/Blog/blog/{x.BlogId}")));
-                return Ok(new PagedViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.TotalPostsCount, blogs));
+                return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, blogs));
             }
             else
-                return Ok(new PagedViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.TotalPostsCount, []));
+                return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, []));
         }
     }
 }

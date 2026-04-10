@@ -257,7 +257,7 @@ internal sealed class CrudPlayListService : IPlayListService
             .ToListAsync();
 
         var items = posts.Count == 0 ? [] : await postApiClient.GetPostCommonModelAsync(posts);
-        return new PagedListViewModel<PostCommonModel>((int)Math.Ceiling((decimal)totalPostCount / pageSize), pageSize, items);
+        return PagedListViewModel.Create(items, pageSize, totalPostCount);
     }
 
     public async Task<IReadOnlyList<PlayListListItem>> GetUserPlayLists()

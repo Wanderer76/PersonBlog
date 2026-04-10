@@ -37,7 +37,7 @@ namespace Profile.Service.Implementation
             return new HasSubscriptionModel(blogId, hasSubscription);
         }
 
-        public async Task<PagedViewModel<SubscribeViewModel>> GetUserSubscriptionListAsync(Guid userId, int page, int size)
+        public async Task<PagedListViewModel<SubscribeViewModel>> GetUserSubscriptionListAsync(Guid userId, int page, int size)
         {
             var totalCount = await _readWriteRepository.Get<SubscribedChanel>()
                 .Where(x => x.UserId == userId)
@@ -54,7 +54,7 @@ namespace Profile.Service.Implementation
 
             var pagesCount = Math.Ceiling(totalCount / (double)size);
 
-            return new PagedViewModel<SubscribeViewModel>(pagesCount == 0 ? 1 : (int)pagesCount, totalCount, blogs);
+            return new PagedListViewModel<SubscribeViewModel>(pagesCount == 0 ? 1 : (int)pagesCount, totalCount, blogs);
         }
 
         public async Task SubscribeToBlogAsync(Guid blogId)

@@ -53,7 +53,7 @@ namespace Profile.API.Controllers
 
         [HttpGet("subscriptions")]
         [Authorize]
-        [Produces<PagedViewModel<SubscribeViewModel>>]
+        [Produces<PagedListViewModel<SubscribeViewModel>>]
         public async Task<IActionResult> GetUserSubscriptionList(int page, int size)
         {
             try

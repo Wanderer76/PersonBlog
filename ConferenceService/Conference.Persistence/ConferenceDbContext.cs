@@ -76,11 +76,11 @@ namespace Conference.Persistence
         {
             _conferenceEntities = conferenceEntities;
         }
+        public IQueryable<TEntity> FromSqlRaw<TEntity>(string sql, params object[] parameters) where TEntity : class, IConferenceEntity => throw new NotImplementedException();
 
         IQueryable<TEntity> IReadRepository<IConferenceEntity>.Get<TEntity>()
         {
             return _conferenceEntities.Set<TEntity>();
         }
     }
-
 }

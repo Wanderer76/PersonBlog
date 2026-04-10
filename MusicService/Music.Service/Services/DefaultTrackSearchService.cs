@@ -92,7 +92,7 @@ namespace Music.Service.Services
                 })
                 .ToListAsync();
 
-            return new PagedListViewModel<TrackViewItem>((int)Math.Ceiling((double)count / size), size, items);
+            return PagedListViewModel.Create(items, size, count);
         }
     }
 }
