@@ -2,7 +2,6 @@
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -22,12 +21,10 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
     private readonly MessageBusSubscriptionInfo _subscriptionInfo;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
 
-    // Храним контекст подписки для корректного отключения
     private readonly ConcurrentDictionary<string, SubscriptionContext> _subscriptions = new();
 
     private static readonly JsonSerializerOptions _baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };
     private static readonly JsonSerializerOptions _deserializeOptions = new() { PropertyNameCaseInsensitive = true };
-
 
     public RabbitMqMessageBus(
         RabbitMqConnection config,
@@ -66,24 +63,17 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
 
     public async Task InitializeSubscriptionAsync(CancellationToken cancellationToken)
     {
-        // 1. Гарантируем, что основное соединение создано (опционально, можно отложить до первого использования)
         _ = await GetConnectionInternalAsync();
 
-        // 2. ВРЕМЕННОЕ соединение только для настройки топологии
         using var initConnection = await _factory.CreateConnectionAsync();
         using var initChannel = await initConnection.CreateChannelAsync(cancellationToken: cancellationToken);
-
-        // 3. Инициализируем все подписки из конфигурации
         foreach (var handlerConfig in _subscriptionInfo.Handlers)
         {
             await InitializeSubscriptionAsync(initChannel, handlerConfig, cancellationToken);
         }
     }
 
-    private async Task InitializeSubscriptionAsync(
-        IChannel initChannel,
-        HandlerInfo handlerConfig,
-        CancellationToken cancellationToken)
+    private async Task InitializeSubscriptionAsync(IChannel initChannel, HandlerInfo handlerConfig, CancellationToken cancellationToken)
     {
         try
         {
@@ -123,8 +113,10 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
                     cancellationToken: cancellationToken);
             }
 
-            // Запускаем консьюмер (использует ОСНОВНОЕ соединение!)
-            await StartConsumerAsync(handlerConfig.HandlerType, queueName);
+            var subscribeMethod = typeof(RabbitMqMessageBus).GetMethod(nameof(StartConsumerAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var genericSubscribe = subscribeMethod.MakeGenericMethod(handlerConfig.HandlerType);
+
+            await (Task)genericSubscribe.Invoke(this, [queueName])!;
         }
         catch (Exception ex)
         {
@@ -137,7 +129,7 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
 
     #region Consumer Management
 
-    private async Task StartConsumerAsync(Type handlerType, string queueName)
+    private async Task StartConsumerAsync<T>(string queueName)
     {
         // Проверяем, что подписка ещё не активна (защита от дублей)
         if (_subscriptions.ContainsKey(queueName))
@@ -152,7 +144,7 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
         await channel.BasicQosAsync(0, 10, false);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
-        consumer.ReceivedAsync += async (model, ea) => await ProcessMessageAsync(handlerType, channel, ea);
+        consumer.ReceivedAsync += async (model, ea) => await ProcessMessageAsync<T>(channel, ea);
 
         var consumerTag = await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
 
@@ -167,59 +159,41 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
         await channel.QueueBindAsync("errors", "error", "");
     }
 
-    private async Task ProcessMessageAsync(Type eventType, IChannel channel, BasicDeliverEventArgs ea)
+    private async Task ProcessMessageAsync<T>(IChannel channel, BasicDeliverEventArgs ea)
     {
         try
         {
-            // 🎯 Десериализуем сразу в конкретный тип, который известен из конфигурации очереди
-            var st = JsonSerializer.Deserialize<object>(ea.Body.Span, _deserializeOptions);
-            var baseEvent = JsonSerializer.Deserialize<BaseEvent>(ea.Body.Span, _deserializeOptions);
-
-            if (baseEvent == null)
+            // Десериализуем конкретное событие из EventData
+            var concreteEvent = JsonSerializer.Deserialize<BaseEvent<T>>(ea.Body.Span, _deserializeOptions);
+            if (concreteEvent == null)
             {
                 await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
                 return;
             }
 
-            var concreteEvent = JsonSerializer.Deserialize(baseEvent.EventData, eventType, _deserializeOptions);
-
             using var scope = _serviceScope.CreateScope();
 
             // 🔍 Находим все хендлеры для этого типа события: IEventHandler<TConcrete>
-            var handlerInterfaceType = typeof(IEventHandler<>).MakeGenericType(eventType);
-            var handlers = scope.ServiceProvider.GetServices(handlerInterfaceType);
+            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(concreteEvent.EventType);
 
             if (!handlers.Any())
             {
-                // Нет обработчиков — возвращаем в очередь (можно настроить стратегию)
-                await RejectMessageAsync(channel, ea.DeliveryTag, requeue: true);
+                // Нет обработчиков — не рекуеим, т.к. это системная ошибка
+                await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
                 return;
             }
 
-            // 🧩 Создаём типизированный контекст через рефлексию на дженерик-метод
-            var createMethod = typeof(MessageContext)
-                .GetMethod(nameof(MessageContext.Create), BindingFlags.Public | BindingFlags.Static)!;
+            Guid? correlationId = string.IsNullOrWhiteSpace(ea.BasicProperties.CorrelationId)
+            ? null
+            : Guid.Parse(ea.BasicProperties.CorrelationId);
 
-            var genericCreate = createMethod.MakeGenericMethod(eventType);
-            var context = genericCreate.Invoke(null, new object?[]
-            {
-            concreteEvent.CorrelationId,
-            concreteEvent, // уже в нужном типе
-            this
-            });
-
-            // 🚀 Вызываем Handle у каждого хендлера
-            var handleMethod = handlerInterfaceType.GetMethod(nameof(IEventHandler<BaseEvent>.Handle));
+            var context = MessageContext.Create(correlationId, concreteEvent.EventData, this);
 
             foreach (var handler in handlers)
             {
                 try
                 {
-                    if (handleMethod != null && context != null)
-                    {
-                        var task = handleMethod.Invoke(handler, new[] { context }) as Task;
-                        if (task != null) await task;
-                    }
+                    await handler.Handle(context);
                 }
                 catch (TargetInvocationException tie) when (tie.InnerException != null)
                 {
@@ -237,14 +211,15 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
 
             await channel.BasicAckAsync(ea.DeliveryTag, false);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // Критическая ошибка — не рекуеим, чтобы избежать зацикливания
             await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
+            // Логируем ex
         }
     }
 
-    private async Task PublishErrorAsync(IChannel channel, BaseEvent originalEvent, Exception error)
+    private async Task PublishErrorAsync<T>(IChannel channel, BaseEvent<T> originalEvent, Exception error)
     {
         try
         {
@@ -254,7 +229,6 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
                 Error = error.ToString(),
                 Timestamp = DateTimeService.Now()
             }));
-
             await channel.BasicPublishAsync("error", "", true, new BasicProperties(), errorBody);
         }
         catch { /* ignore DLQ errors to avoid infinite loops */ }
@@ -372,18 +346,6 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
 
     #endregion
 
-    #region IMessageSubscriber
-
-    /// <summary>
-    /// Публичный API для ручной подписки (если нужно вне конфигурации)
-    /// </summary>
-    public async Task SubscribeAsync<T>(string queueName)
-    {
-        await StartConsumerAsync(typeof(T), queueName);
-    }
-
-    #endregion
-
     #region IAsyncDisposable
 
     public async ValueTask DisposeAsync()
@@ -417,5 +379,4 @@ internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IM
     #endregion
 
     private record SubscriptionContext(IChannel Channel, AsyncEventingBasicConsumer Consumer, string ConsumerTag);
-
 }

@@ -2,22 +2,22 @@
 
 namespace MessageBus.Internal;
 
-internal class DefaultHostedService : IHostedService
+internal sealed class DefaultHostedService(IMessageSubscriber messageBus) : IHostedService, IAsyncDisposable
 {
-    private readonly RabbitMqMessageBus _messageBus;
-
-    public DefaultHostedService(RabbitMqMessageBus messageBus)
-    {
-        _messageBus = messageBus;
-    }
-
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await _messageBus.InitializeSubscriptionAsync(cancellationToken);
+        await messageBus.InitializeSubscriptionAsync(cancellationToken);
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public Task StopAsync(CancellationToken cancellationToken)
     {
-        await _messageBus.DisposeAsync(); // или отдельный метод Stop()
+        return Task.CompletedTask;
+    }
+    public async ValueTask DisposeAsync()
+    {
+        if (messageBus is IAsyncDisposable asyncDisposable)
+        {
+            await asyncDisposable.DisposeAsync();
+        }
     }
 }
