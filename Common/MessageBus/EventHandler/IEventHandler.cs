@@ -1,11 +1,7 @@
 ﻿using MessageBus.Models;
 namespace MessageBus.EventHandler;
 
-public interface IEventHandler
-{
-}
-
-public interface IEventHandler<in TEvent> : IEventHandler
+public interface IEventHandler<in TEvent>
 {
     Task Handle(IMessageContext<TEvent> @event);
 }

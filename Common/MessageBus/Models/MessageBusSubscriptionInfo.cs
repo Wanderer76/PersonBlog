@@ -47,7 +47,6 @@
         {
             func = message;
         }
-
     }
 
     public class HandlerInfo

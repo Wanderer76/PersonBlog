@@ -150,6 +150,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayListService.Persistence
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayListService.Contract", "PlayListService\PlayListService.Contract\PlayListService.Contract.csproj", "{4FCB85EA-575B-4E26-84AE-F478DD2C08EF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthGateway.API", "GetewayService\AuthGateway.API\AuthGateway.API.csproj", "{8145CD05-BA48-442B-A9FF-3A7A00148077}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -384,6 +386,10 @@ Global
 		{4FCB85EA-575B-4E26-84AE-F478DD2C08EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4FCB85EA-575B-4E26-84AE-F478DD2C08EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4FCB85EA-575B-4E26-84AE-F478DD2C08EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -446,6 +452,7 @@ Global
 		{849DC7EB-C0C8-480F-9125-4CC9386822D8} = {BFAE29AE-A8A1-4669-9207-D6134A707EA3}
 		{36285B1E-E797-4A6D-B155-714ECD7DA91D} = {BFAE29AE-A8A1-4669-9207-D6134A707EA3}
 		{4FCB85EA-575B-4E26-84AE-F478DD2C08EF} = {BFAE29AE-A8A1-4669-9207-D6134A707EA3}
+		{8145CD05-BA48-442B-A9FF-3A7A00148077} = {53B52AA1-42C2-4FA1-A9C0-E47EC0A7E18F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

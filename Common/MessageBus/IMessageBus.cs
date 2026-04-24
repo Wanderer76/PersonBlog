@@ -9,6 +9,10 @@ namespace MessageBus
         Task PublishAsync(BaseEvent message, MessageProperty? cfg = null);
     }
 
+    public interface IMessageSubscriber
+    {
+        Task SubscribeAsync<T>(string queueName);
+    }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
     public class EventPublishAttribute : Attribute
