@@ -20,7 +20,7 @@ public interface IMessageContext<out TMessage> : IMessagePublish
     public TMessage Message { get; }
 }
 
-internal sealed class MessageContext<TMessage> : IMessageContext<TMessage>
+file sealed class MessageContext<TMessage> : IMessageContext<TMessage>
 {
     public Guid? CorrelationId { get; }
     public TMessage Message { get; }
