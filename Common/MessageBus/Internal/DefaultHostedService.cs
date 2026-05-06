@@ -13,11 +13,9 @@ internal sealed class DefaultHostedService(IMessageSubscriber messageBus) : IHos
     {
         return Task.CompletedTask;
     }
-    public async ValueTask DisposeAsync()
+
+    public ValueTask DisposeAsync()
     {
-        if (messageBus is IAsyncDisposable asyncDisposable)
-        {
-            await asyncDisposable.DisposeAsync();
-        }
+        return messageBus.DisposeAsync();
     }
 }

@@ -13,14 +13,13 @@ using System.Text.Json;
 
 namespace MessageBus.Internal;
 
-internal sealed class RabbitMqMessageBus : IAsyncDisposable, IMessagePublish, IMessageSubscriber
+internal sealed class RabbitMqMessageBus :  IMessagePublish, IMessageSubscriber
 {
-    private readonly IConnectionFactory _factory;
+    private readonly ConnectionFactory _factory;
     private readonly IServiceScopeFactory _serviceScope;
     private readonly Lazy<Task<IConnection>> _connectionLazy;
     private readonly MessageBusSubscriptionInfo _subscriptionInfo;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
-
     private readonly ConcurrentDictionary<string, SubscriptionContext> _subscriptions = new();
 
     private static readonly JsonSerializerOptions _baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };

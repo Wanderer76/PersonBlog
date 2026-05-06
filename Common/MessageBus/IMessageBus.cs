@@ -9,7 +9,7 @@ public interface IMessagePublish
     Task PublishAsync(BaseEvent message, MessageProperty? cfg = null);
 }
 
-public interface IMessageSubscriber
+public interface IMessageSubscriber : IAsyncDisposable
 {
     Task InitializeSubscriptionAsync(CancellationToken cancellationToken);
 }
