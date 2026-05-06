@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Shared.Services;
 
-namespace Shared.Services
+public interface IDateTimeManager
 {
-    public static class DateTimeService
-    {
-        public static DateTimeOffset Now() => DateTimeOffset.UtcNow;
-    }
+    public static DateTimeOffset Now() => DateTimeService.Now();
+}
+
+public static class DateTimeService
+{
+    public static DateTimeOffset Now() => DateTimeOffset.UtcNow;
 }

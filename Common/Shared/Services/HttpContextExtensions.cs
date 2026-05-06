@@ -4,11 +4,13 @@ namespace Shared.Services
 {
     public static class HttpContextExtensions
     {
+        [Obsolete]
         public static Guid GetUserFromContext(this HttpContext context)
         {
             return Guid.Parse(context.User.Claims.First(x => x.Type == AppClaimTypes.UserId).Value);
         }
 
+        [Obsolete]
         public static bool TryGetUserFromContext(this HttpContext context, out Guid? userId)
         {
             var user = context.User.Claims.FirstOrDefault(x => x.Type == AppClaimTypes.UserId)?.Value;
