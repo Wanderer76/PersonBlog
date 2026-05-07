@@ -1,12 +1,11 @@
-﻿using Shared.Persistence;
+﻿namespace Shared.Services;
 
-namespace Shared.Services
+public interface IGuidManager
 {
-    public static class GuidService
-    {
-        public static Guid GetNewGuid()
-        {
-            return Guid.NewGuid();
-        }
-    }
+    Guid GetNewGuid() => GuidService.GetNewGuid();
+}
+
+public static class GuidService
+{
+    public static Guid GetNewGuid() => Guid.NewGuid();
 }

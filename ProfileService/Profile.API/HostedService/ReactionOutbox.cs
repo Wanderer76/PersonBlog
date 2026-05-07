@@ -1,11 +1,9 @@
 ﻿using Blog.Contracts.Events;
 using MessageBus;
 using MessageBus.Models;
-using MessageBus.Shared.Configs;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Shared.Persistence;
-using System.Text.Json;
 
 namespace Profile.API.HostedService;
 
@@ -42,8 +40,6 @@ public class ReactionOutbox : BackgroundService
                     await _messageBus.PublishAsync(message);
                     message.Processed();
                     await dbContext.SaveChangesAsync();
-
-
                 }
                 catch (Exception ex)
                 {

@@ -1,6 +1,5 @@
 ﻿using Blog.Contracts.Events;
 using Blog.Domain.Entities;
-using MessageBus;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,15 +23,6 @@ public sealed class VideoProcessSagaHandler :
 
     public async Task Handle(IMessageContext<VideoConvertedResponse> @event)
     {
-        //var saga = await _repository.Get<VideoProcessingSagaState>()
-        //    .Where(x => x.CorrelationId == @event.Message.VideoMetadataId)
-        //    .FirstOrDefaultAsync();
-        //if (saga == null)
-        //{
-        //    return;
-        //}
-        //_repository.Attach(saga);
-
         var message = @event.Message;
         var scope = _serviceProvider.CreateScope();
         var service = scope.ServiceProvider.GetRequiredKeyedService<IEventHandler<VideoReadyToPublishEvent>>(typeof(VideoReadyToPublishEvent).Name);

@@ -4,60 +4,59 @@ using MessageBus.Internal;
 using MessageBus.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 
-namespace MessageBus
+namespace MessageBus;
+
+public static class MessageBusServiceExtensions
 {
-    public static class MessageBusServiceExtensions
+    public static IMessageBusBuilder AddMessageBus(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IMessageBusBuilder AddMessageBus(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddSingleton<RabbitMqMessageBus>();
-            services.AddSingleton<IMessagePublish, RabbitMqMessageBus>(x => x.GetRequiredService<RabbitMqMessageBus>());
-          
-            var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
-                 .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
-                 .ToList();
+        services.AddSingleton<RabbitMqMessageBus>();
+        services.AddSingleton<IMessagePublish>(x => x.GetRequiredService<RabbitMqMessageBus>());
+        services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<RabbitMqMessageBus>());
 
-            services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
-            services.AddSingleton<RabbitMqConnection>(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
-            services.AddHostedService<DefaultHostedService>();
-            return new MessageBusBuilder(services);
-        }
+        var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
+             .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
+             .ToList();
 
-        public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> cfg)
-            where TEvent : class
-            where THandle : class, IEventHandler<TEvent>
-        {
-            builder.Services.AddKeyedScoped<IEventHandler<TEvent>, THandle>(typeof(TEvent).Name);
-            builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
-            {
-                sp.AddSubscription<TEvent>(cfg);
-            });
-
-            return builder;
-        }
-        public static IMessageBusBuilder AddMessage<TEvent>(this IMessageBusBuilder builder, Action<MessageInfo<TEvent>> cfg)
-          where TEvent : class
-        {
-            builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
-            {
-                sp.AddMessageInfo(cfg);
-            });
-
-            return builder;
-        }
+        services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
+        services.AddSingleton(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
+        services.AddHostedService<DefaultHostedService>();
+        return new MessageBusBuilder(services);
     }
 
-    file class MessageBusBuilder : IMessageBusBuilder
+    public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> cfg)
+        where TEvent : class
+        where THandle : class, IEventHandler<TEvent>
     {
-        private readonly IServiceCollection _services;
-
-        public MessageBusBuilder(IServiceCollection services)
+        builder.Services.AddKeyedScoped<IEventHandler<TEvent>, THandle>(typeof(TEvent).Name);
+        builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
         {
-            _services = services;
-        }
+            sp.AddSubscription<TEvent>(cfg);
+        });
 
-        public IServiceCollection Services => _services;
+        return builder;
     }
+    public static IMessageBusBuilder AddMessage<TEvent>(this IMessageBusBuilder builder, Action<MessageInfo<TEvent>> cfg)
+      where TEvent : class
+    {
+        builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
+        {
+            sp.AddMessageInfo(cfg);
+        });
+
+        return builder;
+    }
+}
+
+file class MessageBusBuilder : IMessageBusBuilder
+{
+    private readonly IServiceCollection _services;
+
+    public MessageBusBuilder(IServiceCollection services)
+    {
+        _services = services;
+    }
+
+    public IServiceCollection Services => _services;
 }

@@ -1,27 +1,30 @@
 ﻿using MessageBus.Models;
 
-namespace MessageBus
+namespace MessageBus;
+
+public interface IMessagePublish
 {
-    public interface IMessagePublish
-    {
-        Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null);
-        Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null);
-        Task PublishAsync(BaseEvent message, MessageProperty? cfg = null);
-    }
+    Task PublishAsync<T>(string exchangeName, string routingKey, T message, MessageProperty? cfg = null);
+    Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null);
+    Task PublishAsync(BaseEvent message, MessageProperty? cfg = null);
+}
 
+public interface IMessageSubscriber : IAsyncDisposable
+{
+    Task InitializeSubscriptionAsync(CancellationToken cancellationToken);
+}
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
-    public class EventPublishAttribute : Attribute
-    {
-        public string Exchange { get; set; }
-        public string RoutingKey { get; set; }
-    }
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
+public class EventPublishAttribute : Attribute
+{
+    public string Exchange { get; set; }
+    public string RoutingKey { get; set; }
+}
 
-    public class MessageProperty
-    {
-        public bool Persistence { get; set; } = true;
-        public string CorrelationId { get; set; }
-        public string RoutingKey { get; set; }
-        public string Exchange { get; set; }
-    }
+public class MessageProperty
+{
+    public bool Persistence { get; set; } = true;
+    public string CorrelationId { get; set; }
+    public string RoutingKey { get; set; }
+    public string Exchange { get; set; }
 }
