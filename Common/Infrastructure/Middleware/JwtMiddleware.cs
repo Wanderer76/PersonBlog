@@ -39,13 +39,12 @@ namespace Infrastructure.Middleware
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.StartAsync();
                 }
-                var blackList = await _cacheService.GetCachedDataAsync<TokenModel>(new BlacklistTokenCacheKey(token.Value.Id));
-                //if (token.Value.ExpiredAt <= DateTimeService.Now() || blackList != null)
-                //{
-                //    context.Response.ContentType = "application/json";
-                //    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                //    await context.Response.StartAsync();
-                //}
+                if (token.Value.ExpiredAt < DateTimeService.Now())
+                {
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    await context.Response.StartAsync();
+                }
                 var _currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
                 var currentUser = await _currentUserService.GetCurrentUserAsync();
 

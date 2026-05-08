@@ -28,8 +28,11 @@ namespace Authentication.Contract.Services
             if (tokenRepr == null || tokenRepr.IsFailure)
                 return UserModel.AnonymousUser();
 
+            if (tokenRepr.IsSuccess && tokenRepr.Value.ExpiredAt < DateTimeService.Now())
+                return UserModel.AnonymousUser();
+
             var key = new SessionKey(tokenRepr.Value.UserId);
-            var data = await _cacheService.GetOrAddDataAsync(key, _currentUserService.GetCurrentUserAsync);
+            var data = await _cacheService.GetOrAddDataAsync(key, _currentUserService.GetCurrentUserAsync, 1);
             return data;
         }
     }
