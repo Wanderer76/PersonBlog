@@ -23,7 +23,8 @@ public class EventPublishService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        // Gracefully stop the background task
+        return Task.CompletedTask;
     }
 
     private async Task PublishMessages(CancellationToken cancellationToken)
