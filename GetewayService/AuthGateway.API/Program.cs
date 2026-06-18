@@ -20,9 +20,11 @@ builder.Services.AddTransient<HeaderClientHandler>();
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddHttpClient("Auth", x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]!);
     x.Timeout = TimeSpan.FromSeconds(15);
-}).AddHttpMessageHandler<HeaderClientHandler>();
+})
+.AddHttpMessageHandler<HeaderClientHandler>()
+.AddStandardResilienceHandler();
 
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
