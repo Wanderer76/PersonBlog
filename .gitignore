@@ -13,7 +13,7 @@ obj/
 *.o
 *.obj
 *.out
-
+/ffmpeg
 # Dependencies
 node_modules/
 packages/
