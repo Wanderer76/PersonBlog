@@ -8,11 +8,13 @@ namespace Infrastructure.Extensions
     {
         public static void UseCustomSwagger(this IApplicationBuilder app,IConfiguration configuration)
         {
+            var pathPrefix = configuration.GetValue<string>("Config:PathPrefix");
+            
             app.UseSwagger(options =>
             {
-                var pathPrefix = configuration.GetValue<string>("Config:PathPrefix");
                 if (!string.IsNullOrEmpty(pathPrefix))
                 {
+                    options.RoutePrefix = $"{pathPrefix.TrimStart('/')}/swagger";
                     options.PreSerializeFilters.Add(
                         (doc, req) =>
                         {
@@ -21,6 +23,19 @@ namespace Infrastructure.Extensions
                                 new() {Url = pathPrefix}
                             };
                         });
+                }
+            });
+
+            app.UseSwaggerUI(options =>
+            {
+                if (!string.IsNullOrEmpty(pathPrefix))
+                {
+                    options.RoutePrefix = $"{pathPrefix.TrimStart('/')}/swagger";
+                    options.SwaggerEndpoint($"{pathPrefix}/swagger/v1/swagger.json", "API V1");
+                }
+                else
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
                 }
             });
 
