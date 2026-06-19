@@ -1,5 +1,6 @@
 ﻿using Authentication.Domain.Entities;
 using Authentication.Service.Models;
+using Authentication.Service.Models.Options;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared;
@@ -15,11 +16,13 @@ internal sealed class DefaultTokenService : ITokenService
 {
     private readonly IReadWriteRepository<IAuthEntity> _context;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly TokenOptions tokenOptions;
 
-    public DefaultTokenService(IReadWriteRepository<IAuthEntity> context, IJwtTokenService jwtTokenService)
+    public DefaultTokenService(IReadWriteRepository<IAuthEntity> context, IJwtTokenService jwtTokenService, TokenOptions tokenOptions)
     {
         _context = context;
         _jwtTokenService = jwtTokenService;
+        this.tokenOptions = tokenOptions;
     }
 
     public bool Validate(string token)
@@ -65,7 +68,7 @@ internal sealed class DefaultTokenService : ITokenService
             TokenType = TokenTypes.Access,
             Login = user.Login,
             CreatedAt = now,
-            ExpiredAt = now.AddMinutes(5),
+            ExpiredAt = now.AddMinutes(tokenOptions.AccessTokenExpiredInMinutes),
             RoleId = user.AppUserRoles.First().UserRoleId,
         };
         var refreshToken = new Token
@@ -75,7 +78,7 @@ internal sealed class DefaultTokenService : ITokenService
             TokenType = TokenTypes.Refresh,
             Login = user.Login,
             CreatedAt = now,
-            ExpiredAt = now.AddMinutes(60),
+            ExpiredAt = now.AddMinutes(tokenOptions.AccessTokenExpiredInMinutes),
             RoleId = user.AppUserRoles.First().UserRoleId
         };
         _context.Add(accessToken);
@@ -104,7 +107,7 @@ internal sealed class DefaultTokenService : ITokenService
 
     public AuthResponse GenerateToken(AppUser user, Dictionary<string, string> claims)
     {
-        CreateTokenForUser(user);
+        var (access, refresh) = CreateTokenForUser(user);
 
         var tokenId = claims.ContainsKey(AppClaimTypes.Id) ? Guid.Parse(claims[AppClaimTypes.Id]) : Guid.Empty;
         var blogId = claims.ContainsKey(AppClaimTypes.BlogId) ? Guid.Parse(claims[AppClaimTypes.BlogId]) : Guid.Empty;
@@ -115,9 +118,9 @@ internal sealed class DefaultTokenService : ITokenService
 
         var accessModel = new TokenModel
         {
-            Id = tokenId,
-            CreatedAt = DateTimeService.Now(),
-            ExpiredAt = DateTimeOffset.UtcNow.AddMinutes(AuthOptions.LIFETIME),
+            Id = access.Id,
+            CreatedAt = access.CreatedAt,
+            ExpiredAt = access.ExpiredAt,
             BlogId = blogId,
             Login = login,
             RoleId = roleId,
@@ -128,8 +131,8 @@ internal sealed class DefaultTokenService : ITokenService
         var refreshModel = new TokenModel
         {
             Id = tokenId,
-            CreatedAt = DateTimeService.Now(),
-            ExpiredAt = DateTimeService.Now().AddDays(1),
+            CreatedAt = refresh.CreatedAt,
+            ExpiredAt = refresh.ExpiredAt,
             BlogId = blogId,
             Login = login,
             RoleId = roleId,

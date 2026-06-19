@@ -2,6 +2,7 @@ using Authentication.Contract;
 using Authentication.Peristence;
 using Authentication.Service;
 using Authentication.Service.Models;
+using Authentication.Service.Models.Options;
 using Authentication.Service.Service;
 using AuthenticationApplication.HostedServices;
 using Blog.Contracts.Events;
@@ -25,7 +26,7 @@ builder.Services.AddCors();
 builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
-builder.Services.AddAuthServices();
+builder.Services.AddAuthServices(builder.Configuration.GetSection("TokenOptions").Get<TokenOptions>()!);
 builder.Services.AddHttpClient("Blog", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
