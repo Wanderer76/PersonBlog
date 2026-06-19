@@ -152,6 +152,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayListService.Contract", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthGateway.API", "GetewayService\AuthGateway.API\AuthGateway.API.csproj", "{8145CD05-BA48-442B-A9FF-3A7A00148077}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaProcessing.Contract", "BlogService\MediaProcessing.Contract\MediaProcessing.Contract.csproj", "{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -390,6 +392,10 @@ Global
 		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8145CD05-BA48-442B-A9FF-3A7A00148077}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -453,6 +459,7 @@ Global
 		{36285B1E-E797-4A6D-B155-714ECD7DA91D} = {BFAE29AE-A8A1-4669-9207-D6134A707EA3}
 		{4FCB85EA-575B-4E26-84AE-F478DD2C08EF} = {BFAE29AE-A8A1-4669-9207-D6134A707EA3}
 		{8145CD05-BA48-442B-A9FF-3A7A00148077} = {53B52AA1-42C2-4FA1-A9C0-E47EC0A7E18F}
+		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1} = {4C3204E5-80AA-444F-8BBE-2844F3C33A0A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

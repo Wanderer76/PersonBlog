@@ -1,4 +1,6 @@
+import { getAuth } from "@/lib/api/generated/auth/auth";
 import API, { BaseApUrl } from "../lib/api/client";
+import { AuthCodeResponse, AuthResponse } from "@/lib/api/generated/models";
 
 export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
@@ -162,13 +164,13 @@ export class JwtTokenService {
                 return 401;
             }
 
-            const response = await API.post(
-                `${BaseApUrl}/video/api/Auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`);
+            
+            const response = await getAuth().postApiAuthRefresh({refreshToken: encodeURIComponent(refreshToken)});
 
             if (response.status === 200) {
-                const data: RefreshTokenResponse = response.data;
-                saveAccessToken(data.accessToken);
-                saveRefreshToken(data.refreshToken);
+                const data: AuthResponse = response.data;
+                saveAccessToken(data.accessToken!);
+                saveRefreshToken(data.refreshToken!);
                 return response.status;
             }
 

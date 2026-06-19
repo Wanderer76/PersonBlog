@@ -4,7 +4,6 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using MessageBus;
 using MessageBus.Models;
-using VideoProcessing.Cli;
 using VideoProcessing.Cli.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +23,15 @@ builder.Services.AddMessageBus(builder.Configuration)
         };
     });
 
+builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
+
 var app = builder.Build();
+
+app.UseSwagger();
+//app.UseCustomSwagger(app.Configuration);
+app.UseSwaggerUI();
+app.UseRouting();
+app.MapControllers();
 app.MapDefaultEndpoints();
 app.Run();

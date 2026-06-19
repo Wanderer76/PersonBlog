@@ -10,7 +10,7 @@ using Shared.Utils;
 
 namespace VideoProcessing.Cli.Service;
 
-public class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
+public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 {
     private readonly IVideoConvertService _ffmpegService;
     private readonly IFileStorage _storage;

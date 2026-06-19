@@ -3,6 +3,7 @@ using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
+using FFmpeg.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
@@ -17,7 +18,8 @@ internal sealed class DefaultProfilePostV2Service(
     IFileStorageFactory fileStorageFactory,
     ICurrentUserService currentUserService,
     ISubscriptionLevelService subscriptionLevelService,
-    ICategoryService categoryService)
+    ICategoryService categoryService,
+    IImageConvertService imageConvertService)
     : IProfilePostV2Service
 {
     public async Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(
@@ -172,7 +174,7 @@ internal sealed class DefaultProfilePostV2Service(
         return (await Task.WhenAll(tasks)).ToList();
     }
 
-    private static async Task ProcessPostFilesAsync(
+    private async Task ProcessPostFilesAsync(
         Post post,
         PostCreateCommand command,
         Guid blogId,
@@ -187,10 +189,13 @@ internal sealed class DefaultProfilePostV2Service(
                 if (file.Length == 0) continue;
 
                 var fileId = GuidService.GetNewGuid();
+
+                var fileToUpload = await imageConvertService.ConvertImageToPngAsync(file!);
+
                 var objectName = await storage.PutFileAsync(
                     blogId,
                     $"{postId}/{fileId}",
-                    file.ContentStream);
+                    fileToUpload.Value.ContentStream);
 
                 files.Add(new PostFile
                 {
@@ -210,10 +215,13 @@ internal sealed class DefaultProfilePostV2Service(
         if (command.Type == PostType.Video && command.Thumbnail != null && command.Thumbnail.Length > 0)
         {
             var thumbId = GuidService.GetNewGuid();
+
+            var fileToUpload = await imageConvertService.ConvertImageToPngAsync(command.Thumbnail!);
+
             var objectName = await storage.PutFileAsync(
                 blogId,
                 $"{postId}/{thumbId}",
-                command.Thumbnail.ContentStream);
+                fileToUpload.Value.ContentStream);
 
             var previewFile = new PostFile
             {

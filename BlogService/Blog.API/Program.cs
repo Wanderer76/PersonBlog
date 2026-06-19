@@ -10,6 +10,7 @@ using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Infrastructure.Middleware;
+using MediaProcessing.Contract;
 using MessageBus;
 using MessageBus.Models;
 using Profile.Domain.Events;
@@ -28,6 +29,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddMediaProcessingContract(builder.Configuration);
 
 builder.Services.AddMessageBus(builder.Configuration)
     .AddVideoConvertSaga()
@@ -79,9 +81,8 @@ var app = builder.Build();
 
 //if (app.Environment.IsDevelopment())
 {
-   
-    app.UseSwagger();
-    //app.UseCustomSwagger(app.Configuration);
+
+    app.UseCustomSwagger(app.Configuration);
     app.UseSwaggerUI();
 }
 using (var scope = app.Services.CreateScope())

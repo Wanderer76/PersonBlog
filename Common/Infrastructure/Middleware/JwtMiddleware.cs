@@ -1,5 +1,6 @@
 ﻿using Infrastructure.Models;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -29,6 +30,7 @@ namespace Infrastructure.Middleware
         public async Task InvokeAsync(HttpContext context)
         {
             var requestToken = context.Request.Headers.Authorization.FirstOrDefault()?.Split(' ').Last();
+            var endpoint = context.GetEndpoint();
 
             if (requestToken != null)
             {
@@ -38,25 +40,31 @@ namespace Infrastructure.Middleware
                     context.Response.ContentType = "application/json";
                     context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     await context.Response.StartAsync();
+                    return;
                 }
-                if (token.Value.ExpiredAt < DateTimeService.Now())
+                if (endpoint.Metadata.GetMetadata<AuthFilterAttribute>() != null)
                 {
-                    context.Response.ContentType = "application/json";
-                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    await context.Response.StartAsync();
-                }
-                var _currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
-                var currentUser = await _currentUserService.GetCurrentUserAsync();
+                    if (token.Value.ExpiredAt < DateTimeService.Now())
+                    {
+                        context.Response.ContentType = "application/json";
+                        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        await context.Response.StartAsync();
+                        return;
+                    }
+                    var _currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
+                    var currentUser = await _currentUserService.GetCurrentUserAsync();
 
-                if (currentUser == null)
-                {
-                    context.Response.ContentType = "application/json";
-                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    await context.Response.StartAsync();
-                }
-                else
-                {
-                    context.Items.Add("userId", token.Value.UserId);
+                    if (currentUser == null)
+                    {
+                        context.Response.ContentType = "application/json";
+                        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        await context.Response.StartAsync();
+                        return;
+                    }
+                    else
+                    {
+                        context.Items.Add("userId", token.Value.UserId);
+                    }
                 }
             }
             await _next(context);

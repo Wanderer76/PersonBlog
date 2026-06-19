@@ -42,6 +42,7 @@ public sealed class BlogController : BaseApiController
     [ProducesResponseType(typeof(HasBlogResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [AuthFilter(Roles.User)]
     public async Task<ActionResult<HasBlogResponse>> HasUserBlog()
     {
         var user = await _currentUserService.GetCurrentUserAsync();

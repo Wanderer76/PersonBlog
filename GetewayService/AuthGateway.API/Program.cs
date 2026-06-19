@@ -49,7 +49,6 @@ app.MapDefaultEndpoints();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseJwtMiddleware();
 app.MapControllers();
 
 app.Run();

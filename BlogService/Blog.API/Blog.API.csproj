@@ -29,6 +29,7 @@
       <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
       <ProjectReference Include="..\Blog.Contracts\Blog.Contracts.csproj" />
       <ProjectReference Include="..\Blog.Service\Blog.Service.csproj" />
+      <ProjectReference Include="..\MediaProcessing.Contract\MediaProcessing.Contract.csproj" />
     </ItemGroup>
 
 </Project>

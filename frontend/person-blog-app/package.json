@@ -10,7 +10,7 @@
     "packages/shared"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:blog\" \"npm run dev:admin\" \"npm run dev:music\"",
+    "dev": "concurrently \"npm run dev:blog\" \"npm run dev:auth\"",
     "dev:blog": "npm run dev -w=blog",
     "dev:auth": "npm run dev -w=auth",
     "dev:admin": "npm run dev -w=admin",

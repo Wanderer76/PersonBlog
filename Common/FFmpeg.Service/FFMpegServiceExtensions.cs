@@ -11,6 +11,7 @@ namespace FFmpeg.Service
         public static void AddFFMpeg(this IServiceCollection service, IConfiguration configuration)
         {
             service.AddSingleton<IVideoConvertService, FFMpegService>();
+            service.AddSingleton<IImageConvertService, FFmpegImageConvertService>();
             service.AddSingleton<FFMpegOptions>(configuration.GetSection("FFMpegOptions:FFMpeg").Get<FFMpegOptions>()!);
             service.AddSingleton<HlsVideoPresets>(configuration.GetSection("FFMpegOptions:HlsVideoPresets").Get<HlsVideoPresets>()!);
         }
