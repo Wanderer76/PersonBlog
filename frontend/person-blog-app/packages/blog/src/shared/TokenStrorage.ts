@@ -99,7 +99,7 @@ export class JwtTokenService {
         });
 
         const response = await API.get(
-            `video/api/auth/authorize?${params.toString()}`,
+            `http://localhost:5078/api/Auth/authorize?${params.toString()}`,
         );
 
         if (response.status !== 200) {
@@ -126,7 +126,7 @@ export class JwtTokenService {
             throw new Error('Invalid OAuth state');
         }
 
-        const response = await API.post(`video/api/Auth/token`, {
+        const response = await API.post(`http://localhost:5078/api/Auth/token`, {
             grant_type: 'authorization_code',
             code: code,
             client_id: 'blog',
@@ -165,7 +165,7 @@ export class JwtTokenService {
             }
 
             
-            const response = await getAuth().postApiAuthRefresh({refreshToken: encodeURIComponent(refreshToken)});
+            const response = await API.post(`http://localhost:5078/api/Auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`);
 
             if (response.status === 200) {
                 const data: AuthResponse = response.data;
