@@ -16,7 +16,7 @@ let refreshTokenPromise: Promise<void> | null = null;
 // Функция с дженерик типом для Orval
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
   const instance = axios.create({
-    baseURL:   `${import.meta.env.VITE_API_BASE_URL}/video`,
+    baseURL:   `${import.meta.env.VITE_API_BASE_URL}/`,
     withCredentials: false,
   });
 

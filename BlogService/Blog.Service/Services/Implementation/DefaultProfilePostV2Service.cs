@@ -66,7 +66,12 @@ internal sealed class DefaultProfilePostV2Service(
             text: command.TextContent);
 
         using var storage = fileStorageFactory.CreateFileStorage();
-        await ProcessPostFilesAsync(post, command, blogId, postId, storage);
+        var processResult = await ProcessPostFilesAsync(post, command, blogId, postId, storage);
+
+        if (processResult.IsFailure)
+        {
+            return Result<UserPostInfoModel>.Failure(processResult.Errors);
+        }
 
         repository.Add(post);
         await repository.SaveChangesAsync();
@@ -174,7 +179,7 @@ internal sealed class DefaultProfilePostV2Service(
         return (await Task.WhenAll(tasks)).ToList();
     }
 
-    private async Task ProcessPostFilesAsync(
+    private async Task<Result> ProcessPostFilesAsync(
         Post post,
         PostCreateCommand command,
         Guid blogId,
@@ -191,6 +196,9 @@ internal sealed class DefaultProfilePostV2Service(
                 var fileId = GuidService.GetNewGuid();
 
                 var fileToUpload = await imageConvertService.ConvertImageToPngAsync(file!);
+
+                if (fileToUpload.IsFailure)
+                    return Result.Failure(fileToUpload.Errors);
 
                 var objectName = await storage.PutFileAsync(
                     blogId,
@@ -218,6 +226,9 @@ internal sealed class DefaultProfilePostV2Service(
 
             var fileToUpload = await imageConvertService.ConvertImageToPngAsync(command.Thumbnail!);
 
+            if (fileToUpload.IsFailure)
+                return Result.Failure(fileToUpload.Errors);
+
             var objectName = await storage.PutFileAsync(
                 blogId,
                 $"{postId}/{thumbId}",
@@ -238,6 +249,7 @@ internal sealed class DefaultProfilePostV2Service(
             post.VideoPostInfo.PreviewFile = previewFile;
             post.VideoPostInfo.PreviewId = previewFile.Id;
         }
+        return Result.Success();
     }
 
     public async Task<Result> RemovePostAsync(Guid postId)
