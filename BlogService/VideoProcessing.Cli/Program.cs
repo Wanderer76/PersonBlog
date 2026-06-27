@@ -12,8 +12,10 @@ builder.AddServiceDefaults();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddFFMpeg(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddMessageBus(builder.Configuration)
-    .AddSubscription<ConvertVideoCommand, ProcessVideoToHls>(x =>
+builder.Services.AddKafkaMessageBus(cfg =>
+{
+
+}).AddSubscription<ConvertVideoCommand, ProcessVideoToHls>(x =>
     {
         x.QueueName = "video-convert";
         x.Exchange = new ExchangeParam

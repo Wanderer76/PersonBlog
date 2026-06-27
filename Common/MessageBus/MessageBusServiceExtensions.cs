@@ -9,7 +9,7 @@ namespace MessageBus;
 
 public static class MessageBusServiceExtensions
 {
-    public static IMessageBusBuilder AddMessageBus(this IServiceCollection services, IConfiguration configuration)
+    public static IMessageBusBuilder AddRabbitMqMessageBus(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<RabbitMqMessageBus>();
         services.AddSingleton<IMessagePublish>(x => x.GetRequiredService<RabbitMqMessageBus>());
@@ -24,6 +24,26 @@ public static class MessageBusServiceExtensions
         services.AddHostedService<DefaultHostedService>();
         return new MessageBusBuilder(services);
     }
+
+    public static IMessageBusBuilder AddKafkaMessageBus(
+       this IServiceCollection services,
+       Action<KafkaConnection> configureConnection)
+    {
+        var connection = new KafkaConnection();
+        configureConnection(connection);
+        var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
+          .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
+          .ToList();
+        services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
+
+        services.AddSingleton(connection);
+        services.AddSingleton<IMessagePublish, KafkaMessageBus>();
+        services.AddSingleton<IMessageSubscriber>(sp => sp.GetRequiredService<KafkaMessageBus>());
+        services.AddHostedService<DefaultHostedService>();
+
+        return new MessageBusBuilder(services);
+    }
+
 
     public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> cfg)
         where TEvent : class

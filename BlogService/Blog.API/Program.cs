@@ -31,7 +31,10 @@ builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMediaProcessingContract(builder.Configuration);
 
-builder.Services.AddMessageBus(builder.Configuration)
+builder.Services.AddKafkaMessageBus(cfg =>
+{
+
+})
     .AddVideoConvertSaga()
     .AddSubscription<SubscribeCreateEvent, SubscribeHandlers>(x =>
     {

@@ -18,7 +18,7 @@ builder.Services.AddMusicRecommendationPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
 builder.Services.AddCustomJwtAuthentication();
-builder.Services.AddMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration)
     .AddSubscription<TrackCreateEvent, TrackCreateHandler>(cfg =>
     {
         cfg.QueueName = "recommendations-track-create";

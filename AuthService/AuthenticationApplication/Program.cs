@@ -33,7 +33,7 @@ builder.Services.AddHttpClient("Blog", x =>
 });
 builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration)
     .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "auth-blog";

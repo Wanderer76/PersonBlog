@@ -24,7 +24,7 @@ builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration)
     .AddSubscription<Profile.Domain.Events.VideoViewEvent, VideoViewEventHandler>(x =>
     {
         x.QueueName = QueueConstants.QueueName;

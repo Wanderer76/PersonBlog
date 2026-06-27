@@ -13,7 +13,7 @@ builder.Services.AddHttpClient("Blog", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
     x.Timeout = TimeSpan.FromSeconds(1);
 });
-builder.Services.AddMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration)
     .AddSubscription<PostUpdateEvent, PostCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "post-create-notifications";
