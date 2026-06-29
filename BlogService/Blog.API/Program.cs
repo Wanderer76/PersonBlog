@@ -68,7 +68,7 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
             Name = "blogs",
             RoutingKey = "post.unbanned"
         };
-    }); ;
+    });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

@@ -31,7 +31,7 @@ builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration
 builder.Services.AddFFMpegAudioExtractorService(builder.Configuration);
 builder.Services.AddHostedService<OutboxPublisherService>();
 builder.Services.AddMusicRecommendationServices(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
 //.AddSubscription<ListenHistoryEvent, ListenHistoryEventHandler>(cfg =>
 //{
 //    cfg.QueueName = "track-listened";

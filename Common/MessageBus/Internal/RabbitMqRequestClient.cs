@@ -1,4 +1,7 @@
-﻿using MessageBus.Models;
+﻿using Confluent.Kafka;
+using MessageBus.Configs;
+using MessageBus.Models;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
@@ -10,9 +13,13 @@ namespace MessageBus.Internal;
 
 internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
 {
+    private readonly ConnectionFactory _factory;
     private readonly Lazy<Task<IConnection>> _connectionLazy;
+    private readonly MessageBusSubscriptionInfo _subscriptionInfo;
+
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> _pendingRequests = new();
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedAttributes = new();
+    private readonly ConcurrentDictionary<string, SubscriptionContext> _subscriptions = new();
 
     private string? _replyQueueName;
     private IChannel? _replyChannel;
@@ -20,9 +27,29 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
 
     private static readonly JsonSerializerOptions _deserializeOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public RabbitMqRequestClient(Lazy<Task<IConnection>> connectionLazy)
+    public RabbitMqRequestClient(IOptions<MessageBusSubscriptionInfo> subscriptionInfo, RabbitMqConnection config)
     {
-        _connectionLazy = connectionLazy;
+        _factory = new ConnectionFactory
+        {
+            HostName = config.HostName,
+            Port = config.Port,
+            UserName = config.UserName,
+            Password = config.Password,
+        };
+        _subscriptionInfo = subscriptionInfo.Value;
+
+        _connectionLazy = new Lazy<Task<IConnection>>(async () =>
+        {
+            try
+            {
+                return await _factory.CreateConnectionAsync();
+            }
+            catch (Exception ex)
+            {
+                // Logger?.LogError(ex, "Failed to connect to RabbitMQ at {Host}:{Port}", config.HostName, config.Port);
+                throw;
+            }
+        }); ;
     }
 
     private async Task EnsureReplyQueueAsync()
@@ -121,11 +148,8 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
     {
         var type = typeof(TRequest);
         var attr = _cachedAttributes.GetOrAdd(type, t => t.GetCustomAttribute<EventPublishAttribute>(false));
-
-        if (attr == null || string.IsNullOrEmpty(attr.Exchange))
-            throw new InvalidOperationException($"EventPublishAttribute with Exchange is required for {type.Name}");
-
-        return await RequestAsync<TRequest, TResponse>(attr.Exchange, attr.RoutingKey, request, timeout, cancellationToken);
+        var handlerConfig = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+        return await RequestAsync<TRequest, TResponse>(handlerConfig?.Queue?.Exchange?.Name, handlerConfig?.Queue?.Exchange?.RoutingKey, request, timeout, cancellationToken);
     }
 
     public async ValueTask DisposeAsync()
@@ -141,4 +165,6 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
         }
         _initLock.Dispose();
     }
+    private record SubscriptionContext(IChannel Channel, AsyncEventingBasicConsumer Consumer, string ConsumerTag);
+
 }

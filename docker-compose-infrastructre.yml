@@ -10,7 +10,7 @@ services:
       - ./nginx/nginx-frontend-dev.conf:/etc/nginx/nginx-frontend.conf:ro
       - ../frontend/dist:/usr/share/nginx/html:ro
     networks:
-      - backend      
+      - backend
   minio:
     container_name: fileStorage
     image: minio/minio
@@ -26,7 +26,7 @@ services:
     networks:
       - backend
   database:
-    container_name: postgresDb11
+    container_name: postgresDb
     image: postgres:16.6
     environment:
         - POSTGRES_USER=postgres
@@ -37,7 +37,7 @@ services:
     volumes:
         - ../db:/var/lib/postgresql/data
     networks:
-      - backend        
+      - backend
   rabbitMq:
     image: rabbitmq:3.13-management
     container_name: rabbitMq
@@ -50,7 +50,7 @@ services:
     volumes:
       - ../rabbitMq:/var/lib/rabbitmq
     networks:
-      - backend      
+      - backend
   redis:
     image: redis:7.4.2
     container_name: redis
@@ -63,7 +63,7 @@ services:
     volumes:
     - ../redisdata:/data
     networks:
-      - backend    
+      - backend
   redis-insight:
     image: redislabs/redisinsight:latest
     container_name: redis_insight_container
@@ -71,10 +71,10 @@ services:
       - "5540:5540"
     volumes:
       - ../redis_insight_data:/db
-    # depends_on:
-      # - redis
+    depends_on:
+      - redis
     networks:
-      - backend      
+      - backend
 
 networks:
   backend:

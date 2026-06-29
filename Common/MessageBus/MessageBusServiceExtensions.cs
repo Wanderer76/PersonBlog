@@ -3,6 +3,7 @@ using MessageBus.EventHandler;
 using MessageBus.Internal;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
+using RabbitMQ.Client;
 
 namespace MessageBus;
 
@@ -20,7 +21,7 @@ public static class MessageBusServiceExtensions
 
         services.AddSingleton<IRequestClient, RabbitMqRequestClient>();
         services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
-
+      
         services.AddSingleton<RabbitMqConnection>(configuration);
         services.AddHostedService<DefaultHostedService>();
         return new MessageBusBuilder(services);
