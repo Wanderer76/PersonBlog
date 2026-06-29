@@ -1,6 +1,7 @@
 using Blog.Contracts.Events;
 using Infrastructure.Interface;
 using MessageBus;
+using MessageBus.Configs;
 using Search.Persistence;
 using Search.Service;
 using SearchService.Application.Consumers;
@@ -15,7 +16,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSearchService(builder.Configuration);
 builder.Services.AddSearchPersistence(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddSubscription<PostUpdateEvent, PostUpdateEventHandler>(cfg =>
     {
         cfg.QueueName = "post-search-sync";

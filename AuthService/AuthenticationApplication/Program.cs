@@ -10,6 +10,7 @@ using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Infrastructure.Services;
 using MessageBus;
+using MessageBus.Configs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +34,7 @@ builder.Services.AddHttpClient("Blog", x =>
 });
 builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "auth-blog";

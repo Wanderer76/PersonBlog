@@ -3,6 +3,7 @@ using FFmpeg.Service;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using MessageBus;
+using MessageBus.Configs;
 using MessageBus.Models;
 using VideoProcessing.Cli.Service;
 
@@ -12,7 +13,7 @@ builder.AddServiceDefaults();
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddFFMpeg(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddSubscription<ConvertVideoCommand, ProcessVideoToHls>(x =>
     {
         x.QueueName = "video-convert";

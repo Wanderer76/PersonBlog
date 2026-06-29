@@ -12,6 +12,7 @@ using Infrastructure.Interface;
 using Infrastructure.Middleware;
 using MediaProcessing.Contract;
 using MessageBus;
+using MessageBus.Configs;
 using MessageBus.Models;
 using Profile.Domain.Events;
 
@@ -31,7 +32,7 @@ builder.Services.AddCors();
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddMediaProcessingContract(builder.Configuration);
 
-builder.Services.AddRabbitMqMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddVideoConvertSaga()
     .AddSubscription<SubscribeCreateEvent, SubscribeHandlers>(x =>
     {

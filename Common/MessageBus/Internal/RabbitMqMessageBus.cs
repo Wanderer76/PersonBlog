@@ -196,7 +196,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
 
             var context = string.IsNullOrEmpty(replyTo)
             ? MessageContext.Create(correlationId, concreteEvent.EventData, this)
-            : MessageContext.CreateForReply(correlationId, concreteEvent.EventData, this, replyTo, requestCorrelationId);
+            : MessageContext.CreateForReply(correlationId, concreteEvent.EventData, this, replyTo, requestCorrelationId, requestClient);
 
             foreach (var handler in handlers)
             {

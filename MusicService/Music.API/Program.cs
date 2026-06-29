@@ -5,6 +5,7 @@ using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Infrastructure.Middleware;
 using MessageBus;
+using MessageBus.Configs;
 using Music.API.HostedServices;
 using Music.Contract.Events;
 using Music.Domain.EventHandlers;
@@ -30,7 +31,7 @@ builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration
 builder.Services.AddFFMpegAudioExtractorService(builder.Configuration);
 builder.Services.AddHostedService<OutboxPublisherService>();
 builder.Services.AddMusicRecommendationServices(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration);
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
 //.AddSubscription<ListenHistoryEvent, ListenHistoryEventHandler>(cfg =>
 //{
 //    cfg.QueueName = "track-listened";

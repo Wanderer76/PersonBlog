@@ -6,6 +6,7 @@ using Comments.Service.Extensions;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
+using MessageBus.Configs;
 using Profile.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +23,7 @@ builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration
 builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddProfileHttpClient(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddSubscription<UserCreateEvent, UserCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "comment-userprofile-create";

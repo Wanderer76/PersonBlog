@@ -1,5 +1,6 @@
 using Blog.Contracts.Events;
 using MessageBus;
+using MessageBus.Configs;
 using Notification.Domain.EventHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,7 +14,7 @@ builder.Services.AddHttpClient("Blog", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
     x.Timeout = TimeSpan.FromSeconds(1);
 });
-builder.Services.AddRabbitMqMessageBus(builder.Configuration)
+builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddSubscription<PostUpdateEvent, PostCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "post-create-notifications";

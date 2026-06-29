@@ -1,4 +1,5 @@
 ﻿using MessageBus.Models;
+using Shared.Services;
 
 namespace MessageBus.EventHandler;
 
@@ -16,12 +17,12 @@ public static class MessageContext
 {
     public static IMessageContext<T> Create<T>(Guid? correlationId, T message, IMessagePublish messagePublish)
     {
-        return new MessageContext<T>(correlationId, message, messagePublish, null, null);
+        return new MessageContext<T>(correlationId, message, messagePublish, null, null, null);
     }
 
-    public static IMessageContext<T> CreateForReply<T>(Guid? correlationId, T message, IMessagePublish messagePublish, string replyTo, string requestCorrelationId)
+    public static IMessageContext<T> CreateForReply<T>(Guid? correlationId, T message, IMessagePublish messagePublish, string replyTo, string requestCorrelationId, IRequestClient requestClient)
     {
-        return new MessageContext<T>(correlationId, message, messagePublish, replyTo, requestCorrelationId);
+        return new MessageContext<T>(correlationId, message, messagePublish, replyTo, requestCorrelationId, requestClient);
     }
 }
 
@@ -38,14 +39,18 @@ file sealed class MessageContext<TMessage> : IMessageContext<TMessage>
     private readonly IMessagePublish _publish;
     private readonly string? _replyTo;
     private readonly string? _requestCorrelationId;
+    private readonly IRequestClient requestClient;
 
-    internal MessageContext(Guid? correlationId, TMessage message, IMessagePublish publish, string? replyTo, string? requestCorrelationId)
+    IRequestClient IHave<IRequestClient>.Value => requestClient;
+
+    internal MessageContext(Guid? correlationId, TMessage message, IMessagePublish publish, string? replyTo, string? requestCorrelationId, IRequestClient requestClient)
     {
         CorrelationId = correlationId;
         Message = message;
         _publish = publish;
         _replyTo = replyTo;
         _requestCorrelationId = requestCorrelationId;
+        this.requestClient = requestClient;
     }
 
     public Task PublishAsync<T>(BaseEvent<T> message, MessageProperty? cfg = null)
@@ -67,9 +72,9 @@ file sealed class MessageContext<TMessage> : IMessageContext<TMessage>
         var baseEvent = BaseEvent<TResponse>.Create(response);
         var cfg = new MessageProperty
         {
-            Exchange = "", 
+            Exchange = "",
             RoutingKey = _replyTo,
-            CorrelationId = _requestCorrelationId, 
+            CorrelationId = _requestCorrelationId,
             Persistence = false
         };
 

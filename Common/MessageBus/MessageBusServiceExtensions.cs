@@ -2,14 +2,13 @@
 using MessageBus.EventHandler;
 using MessageBus.Internal;
 using MessageBus.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MessageBus;
 
 public static class MessageBusServiceExtensions
 {
-    public static IMessageBusBuilder AddRabbitMqMessageBus(this IServiceCollection services, IConfiguration configuration)
+    public static IMessageBusBuilder AddRabbitMqMessageBus(this IServiceCollection services, RabbitMqConnection configuration)
     {
         services.AddSingleton<RabbitMqMessageBus>();
         services.AddSingleton<IMessagePublish>(x => x.GetRequiredService<RabbitMqMessageBus>());
@@ -21,7 +20,8 @@ public static class MessageBusServiceExtensions
 
         services.AddSingleton<IRequestClient, RabbitMqRequestClient>();
         services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
-        services.AddSingleton(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
+
+        services.AddSingleton<RabbitMqConnection>(configuration);
         services.AddHostedService<DefaultHostedService>();
         return new MessageBusBuilder(services);
     }
