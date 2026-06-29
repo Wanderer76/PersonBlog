@@ -1,6 +1,7 @@
 ﻿using Blog.Contracts.Events;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
+using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace VideoProcessing.Cli.Service;
@@ -17,7 +18,7 @@ public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand
     public async Task Handle(IMessageContext<CombineFileChunksCommand> @event)
     {
         var response = await CombineChunks(@event.Message);
-        await @event.PublishAsync("video-event", "saga.chunks.response", response);
+        await @event.PublishAsync(BaseEvent<ChunksCombinedResponse>.Create(response));
     }
 
     private async Task<ChunksCombinedResponse> CombineChunks(CombineFileChunksCommand @event)

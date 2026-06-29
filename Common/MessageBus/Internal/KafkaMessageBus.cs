@@ -5,6 +5,7 @@ using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Shared.Services;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
@@ -20,7 +21,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedAttributes = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _consumers = new();
     private readonly ProducerBuilder<string, string> _producerBuilder;
-
+    private readonly IRequestClient _requestClient;
     private static readonly JsonSerializerOptions _deserializeOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -33,16 +34,20 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
     private const string ErrorTopicSuffix = ".error";
     private const string CorrelationIdHeader = "correlation-id";
 
+    IRequestClient IHave<IRequestClient>.Value => _requestClient;
+
     public KafkaMessageBus(
         KafkaConnection config,
         IServiceScopeFactory serviceScope,
-        IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
+        IOptions<MessageBusSubscriptionInfo> subscriptionInfo,
+        IRequestClient requestClient)
     {
         _config = config;
         _serviceScope = serviceScope;
         _subscriptionInfo = subscriptionInfo.Value;
 
         _producerBuilder = new ProducerBuilder<string, string>(BuildProducerConfig());
+        _requestClient = requestClient;
     }
 
     private ProducerConfig BuildProducerConfig()

@@ -19,6 +19,7 @@ public static class MessageBusServiceExtensions
              .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
              .ToList();
 
+        services.AddSingleton<IRequestClient, RabbitMqRequestClient>();
         services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
         services.AddSingleton(configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
         services.AddHostedService<DefaultHostedService>();
@@ -44,7 +45,6 @@ public static class MessageBusServiceExtensions
         return new MessageBusBuilder(services);
     }
 
-
     public static IMessageBusBuilder AddSubscription<TEvent, THandle>(this IMessageBusBuilder builder, Action<QueueParams> cfg)
         where TEvent : class
         where THandle : class, IEventHandler<TEvent>
@@ -57,6 +57,7 @@ public static class MessageBusServiceExtensions
 
         return builder;
     }
+
     public static IMessageBusBuilder AddMessage<TEvent>(this IMessageBusBuilder builder, Action<MessageInfo<TEvent>> cfg)
       where TEvent : class
     {
@@ -69,14 +70,7 @@ public static class MessageBusServiceExtensions
     }
 }
 
-file class MessageBusBuilder : IMessageBusBuilder
+file class MessageBusBuilder(IServiceCollection services) : IMessageBusBuilder
 {
-    private readonly IServiceCollection _services;
-
-    public MessageBusBuilder(IServiceCollection services)
-    {
-        _services = services;
-    }
-
-    public IServiceCollection Services => _services;
+    public IServiceCollection Services => services;
 }

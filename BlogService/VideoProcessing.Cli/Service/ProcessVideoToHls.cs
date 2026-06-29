@@ -5,6 +5,7 @@ using FFmpeg.Service.Models;
 using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
+using MessageBus.Models;
 using Shared.Services;
 using Shared.Utils;
 
@@ -28,10 +29,7 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
     public async Task Handle(IMessageContext<ConvertVideoCommand> @event)
     {
         var result = await HandleConversion(@event.Message);
-        await @event.PublishAsync("video-event", "saga.video.convert", result, new MessageProperty
-        {
-            CorrelationId = result.VideoMetadataId.ToString(),
-        });
+        await @event.PublishAsync(BaseEvent<VideoConvertedResponse>.Create(result), new() { CorrelationId = result.VideoMetadataId.ToString()});
     }
 
     private async Task<VideoConvertedResponse> HandleConversion(ConvertVideoCommand @event)

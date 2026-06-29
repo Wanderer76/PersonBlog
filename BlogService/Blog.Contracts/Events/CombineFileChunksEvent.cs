@@ -24,7 +24,7 @@ public class CombineFileChunksCommand
 }
 
 //[EntityName("video-events")]
-//[EventPublish(Exchange = "video-event", RoutingKey = "saga")]
+//[EventPublish(Exchange = "video-event", RoutingKey = "saga.chunks.response")]
 [Obsolete("Устаревший", true)]
 public class ChunksCombinedResponse
 {
@@ -47,7 +47,7 @@ public class ConvertVideoCommand
 }
 
 //[EntityName("video-events")]
-[EventPublish(Exchange = "video-event", RoutingKey = "saga")]
+[EventPublish(Exchange = "video-event", RoutingKey = "saga.video.convert")]
 public class VideoConvertedResponse
 {
     public Guid VideoMetadataId { get; set; }

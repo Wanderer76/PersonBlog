@@ -13,7 +13,7 @@ using System.Text.Json;
 
 namespace MessageBus.Internal;
 
-internal sealed class RabbitMqMessageBus :  IMessagePublish, IMessageSubscriber
+internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
 {
     private readonly ConnectionFactory _factory;
     private readonly IServiceScopeFactory _serviceScope;
@@ -21,6 +21,7 @@ internal sealed class RabbitMqMessageBus :  IMessagePublish, IMessageSubscriber
     private readonly MessageBusSubscriptionInfo _subscriptionInfo;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
     private readonly ConcurrentDictionary<string, SubscriptionContext> _subscriptions = new();
+    private readonly IRequestClient requestClient;
 
     private static readonly JsonSerializerOptions _baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };
     private static readonly JsonSerializerOptions _deserializeOptions = new() { PropertyNameCaseInsensitive = true };
@@ -28,7 +29,8 @@ internal sealed class RabbitMqMessageBus :  IMessagePublish, IMessageSubscriber
     public RabbitMqMessageBus(
         RabbitMqConnection config,
         IServiceScopeFactory serviceScope,
-        IOptions<MessageBusSubscriptionInfo> subscriptionInfo)
+        IOptions<MessageBusSubscriptionInfo> subscriptionInfo,
+        IRequestClient requestClient)
     {
         _factory = new ConnectionFactory
         {
@@ -54,7 +56,10 @@ internal sealed class RabbitMqMessageBus :  IMessagePublish, IMessageSubscriber
                 throw;
             }
         });
+        this.requestClient = requestClient;
     }
+
+    IRequestClient IHave<IRequestClient>.Value => requestClient;
 
     private Task<IConnection> GetConnectionInternalAsync() => _connectionLazy.Value;
 
@@ -186,7 +191,12 @@ internal sealed class RabbitMqMessageBus :  IMessagePublish, IMessageSubscriber
             ? null
             : Guid.Parse(ea.BasicProperties.CorrelationId);
 
-            var context = MessageContext.Create(correlationId, concreteEvent.EventData, this);
+            var replyTo = ea.BasicProperties.ReplyTo;
+            var requestCorrelationId = ea.BasicProperties.CorrelationId;
+
+            var context = string.IsNullOrEmpty(replyTo)
+            ? MessageContext.Create(correlationId, concreteEvent.EventData, this)
+            : MessageContext.CreateForReply(correlationId, concreteEvent.EventData, this, replyTo, requestCorrelationId);
 
             foreach (var handler in handlers)
             {
