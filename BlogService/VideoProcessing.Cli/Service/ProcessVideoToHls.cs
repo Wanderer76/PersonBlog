@@ -6,6 +6,8 @@ using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Models;
+using System.Diagnostics;
+using System.Net;
 using Shared.Services;
 using Shared.Utils;
 
@@ -45,10 +47,11 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             var dir = Path.Combine(_tempPath, @event.VideoMetadataId.ToString());
             var fileId = GuidService.GetNewGuid();
 
-            var inputUrl = new Uri(url).AbsoluteUri;
+            // Валидация URL для защиты от SSRF атак
+            var validatedInputUrl = ValidateUriForHls(url);
 
-            var videoStream = await _ffmpegService.GetVideoMediaInfoAsync(inputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток");
-            await ProcessHls(@event.BlogId, @event.VideoMetadata, dir, fileId, inputUrl, videoStream);
+            var videoStream = await _ffmpegService.GetVideoMediaInfoAsync(validatedInputUrl) ?? throw new ArgumentException("Не удалось найти видеопоток в видеофайле");
+            await ProcessHls(@event.BlogId, @event.VideoMetadata, dir, fileId, validatedInputUrl, videoStream);
             if (!@event.HasPreviewId)
             {
                 await ProcessPreviewAsync(@event, result, url, videoStream);
@@ -72,9 +75,13 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
     {
         var snapshotFileId = GuidService.GetNewGuid();
         var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".jpg");
+        
+        // Валидация URL для превью
+        var validatedPreviewUrl = ValidateUriForHls(url);
+        
         try
         {
-            await _ffmpegService.GeneratePreviewAsync(new Uri(url).AbsoluteUri, snapshotFileName);
+            await _ffmpegService.GeneratePreviewAsync(validatedPreviewUrl, snapshotFileName);
             
             using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
             using var copyStream = new MemoryStream();
@@ -258,7 +265,141 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
             }
         }
 
-        Console.WriteLine($"Folder {folderName} processed successfully");
+        Console.WriteLine($"Folder {folderName} processed successfully");      
+    }
+
+    /// <summary>
+    /// Валидирует URL для предотвращения SSRF атак.
+    /// Разрешает только HTTP/HTTPS схемы и блокирует доступ к внутренним IP-адресам.
+    /// </summary>
+    private static Uri ValidateUriForHls(string urlString)
+    {
+        // Базовая проверка на null или пустую строку
+        if (string.IsNullOrWhiteSpace(urlString))
+        {
+            throw new ArgumentException("URL не может быть пустым", nameof(urlString));
+        }
+
+        try
+        {
+            var uri = new Uri(urlString);
+            
+            // Разрешаем только HTTP и HTTPS для внешних URL, или bucket:// для внутренних S3/MinIO
+            if (!IsAllowedScheme(uri.Scheme))
+            {
+                throw new SecurityException($"Недопустимая схема URL: {uri.Scheme}. Разрешены: http, https, file");
+            }
+
+            // Для HTTP/HTTPS проверяем хост на безопасность (SSRF защита)
+            if (IsExternalUri(uri))
+            {
+                if (!IsValidExternalHost(uri.Host))
+                {
+                    throw new SecurityException($"Запрещенный доступ к внутреннему IP: {uri.Host}");
+                }
+            }
+
+            // Блокируем access к localhost и private ranges
+            if (IsPrivateIp(uri.Host))
+            {
+                throw new SecurityException("Доступ к локальным или приватным IP-адресам запрещён");
+            }
+
+            return uri;
+        }
+        catch (UriFormatException ex) when (ex.Message.Contains("invalid URI"))
+        {
+            // Более специфичное исключение для форматирования
+            throw new ArgumentException($"Некорректный формат URL: {urlString}", nameof(urlString));
+        }
+    }
+
+    /// <summary>
+    /// Проверяет, разрешена ли схема URL
+    /// </summary>
+    private static bool IsAllowedScheme(string scheme)
+    {
+        return ["http", "https", "file"].Contains(scheme.ToLowerInvariant());
+    }
+
+    /// <summary>
+    /// Проверяет, является ли это внешним URL (не bucket:// и не file://)
+    /// </summary>
+    private static bool IsExternalUri(string scheme)
+    {
+        var lowerScheme = scheme.ToLowerInvariant();
+        return !lowerScheme.Equals("file") && !lowerScheme.StartsWith("bucket");
+    }
+
+    /// <summary>
+    /// Проверяет, является ли хост разрешённым внешним доменом
+    /// </summary>
+    private static bool IsValidExternalHost(string host)
+    {
+        // Разрешаем только публичные домены без поддонов localhost/127.0.0.1
+        // В продакшене добавить whitelist разрешённых доменов
+        return !string.IsNullOrEmpty(host) && 
+               !host.StartsWith("localhost", StringComparison.OrdinalIgnoreCase) &&
+               !host.Contains(":") && // IPv4 с портом запрещаем
+               host.Length < 253;     // Максимальная длина DNS хоста
+    }
+
+    /// <summary>
+    /// Проверяет, является ли IP приватным (RFC 1918)
+    /// </summary>
+    private static bool IsPrivateIp(string host)
+    {
+        try
+        {
+            if (!IpHostLookup.TryParseAddress(host, out var ipAddresses))
+                return true; // Если не удалось解析, считаем приватным
+
+            foreach (var ip in ipAddresses)
+            {
+                // RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+                if (ip.IsLoopback || 
+                    ip.IsLinkLocalUnicast || 
+                    ip.IsSiteLocal ||
+                    IsPrivateRange(ip))
+                {
+                    return true;
+                }
+            }
+        }
+        catch
+        {
+            // Если не удалось解析, блокируем для безопасности
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Проверка на частные диапазоны IP (RFC 1918 и другие)
+    /// </summary>
+    private static bool IsPrivateRange(IpAddress ip)
+    {
+        // 0.0.0.0/8, 100.64.0.0/10 (CGNAT), 224.0.0.0/4 (multicast)
+        var octets = ip.Octets;
+        
+        if (octets.Length == 4 && octets[0] == 0) return true; // 0.0.0.0/8
+        if (octets.Length == 4 && octets[0] == 100 && octets[1] >= 64 && octets[1] <= 127) return true; // CGNAT
+        if (octets.Length == 4 && octets[0] >= 224 && octets[0] <= 239) return true; // Multicast
+
+        // IPv6 private ranges
+        if (ip is IPv6Address ipv6)
+        {
+            var segments = ipv6.Segments;
+            // fc00::/7 (unique local), fe80::/10 (link-local)
+            for (int i = 0; i < Math.Min(segments.Length, 2); i++)
+            {
+                if (segments[i] >= 0xfc && segments[i] <= 0xfd) return true;
+                if (i == 0 && segments[i] == 0xfe && (segments[1] & 0xc0) == 0x80) return true;
+            }
+        }
+
+        return false;
     }
 
     private static string GetRelativePath(string filePath)
