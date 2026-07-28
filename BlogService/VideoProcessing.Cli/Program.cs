@@ -24,6 +24,8 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
         };
     });
 
+builder.Services.AddScoped<VideoConversionService>();
+
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
