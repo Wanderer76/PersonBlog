@@ -103,27 +103,54 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         }
         catch (Exception exception) when (File.Exists(snapshotFileName))
         {
-            // Если файл превью был создан но не удалось загрузить в S3 — удаляем его
-            File.Delete(snapshotFileName);
-            throw; // Перезапускаем с полным стеком трассировки
+            try
+            {
+                // Если файл превью был создан но не удалось загрузить в S3 — удаляем его
+                File.Delete(snapshotFileName);
+            }
+            catch (IOException ioEx)
+            {
+                Console.WriteLine($"Не удалось удалить временный файл превью: {ioEx.Message}");
+            }
+            
+            // Перезапускаем с полным стеком трассировки
+            throw new OperationCanceledException($"Ошибка при создании превью: {exception.Message}", exception);
         }
         catch (Exception exception)
         {
-            // Для других ошибок оставляем временный файл — очистится при следующей попытке
-            Console.WriteLine($"Ошибка при генерации превью: {exception.Message}");
-            throw; // Перезапускаем с полным стеком трассировки
+            try
+            {
+                Console.WriteLine($"Ошибка при генерации превью: {exception.Message}");
+            }
+            catch { /* Ignore logging errors */ }
+            
+            // Перезапускаем с полным стеком трассировки, сохраняя оригинальное исключение внутри
+            throw new OperationCanceledException("Не удалось создать превью к видео", exception);
         }
         finally
         {
             if (File.Exists(snapshotFileName))
             {
-                try
+                // Пытаемся удалить файл с задержкой на случай lock-файла
+                var deleted = false;
+                for (var attempt = 0; attempt < 3 && !deleted; attempt++)
                 {
-                    File.Delete(snapshotFileName);
+                    try
+                    {
+                        File.Delete(snapshotFileName);
+                        deleted = true;
+                        Console.WriteLine($"Preview temp file deleted successfully");
+                    }
+                    catch (IOException ioEx) when (attempt < 2)
+                    {
+                        // Файл занят, пробуем снова с задержкой
+                        await Task.Delay(100 * (attempt + 1));
+                    }
                 }
-                catch (IOException)
+                
+                if (!deleted)
                 {
-                    // Если файл занят (lock от другой задачи), пропустим — очистится позже
+                    Console.WriteLine($"Не удалось удалить временный файл превью: {snapshotFileName}. Будет удалён при следующей попытке или перезапуске.");
                 }
             }
         }
@@ -195,19 +222,76 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         }
         finally
         {
-            // Удаление временной директории если она всё ещё существует
-            if (Directory.Exists(dir))
+            // Гарантированная очистка временной директории с повторными попытками
+            await CleanupDirectoryAsync(dir);
+        }
+    }
+
+    /// <summary>
+    /// Очищает временную директорию с повторными попытками при ошибках доступа
+    /// </summary>
+    private static async Task CleanupDirectoryAsync(string directoryPath)
+    {
+        if (string.IsNullOrWhiteSpace(directoryPath))
+            return;
+
+        var deleted = false;
+        for (var attempt = 0; attempt < 5 && !deleted; attempt++)
+        {
+            try
             {
-                try
+                if (!Directory.Exists(directoryPath))
                 {
-                    Directory.Delete(dir, true);
+                    Console.WriteLine($"Directory already cleaned: {directoryPath}");
+                    return;
                 }
-                catch (Exception)
+
+                // Сначала удаляем все файлы внутри
+                var filesToClean = Directory.GetFiles(directoryPath);
+                foreach (var file in filesToClean)
                 {
-                    // Если не удалось удалить — очистится при перезапуске процесса
-                    Console.WriteLine($"Не удалось очистить директорию: {dir}, будет удалена при следующей попытке");
+                    try
+                    {
+                        File.Delete(file);
+                    }
+                    catch (IOException ioEx) when (!TaskCanceledException.IsCancellationRequested(ioEx))
+                    {
+                        Console.WriteLine($"Не удалось удалить файл: {file} - {ioEx.Message}");
+                    }
+                }
+
+                // Удаляем поддиректории
+                var subDirectories = Directory.GetDirectories(directoryPath);
+                foreach (var subDir in subDirectories)
+                {
+                    try
+                    {
+                        Directory.Delete(subDir, true);
+                    }
+                    catch (IOException ioEx) when (!TaskCanceledException.IsCancellationRequested(ioEx))
+                    {
+                        Console.WriteLine($"Не удалось удалить директорию: {subDir} - {ioEx.Message}");
+                    }
+                }
+
+                // Удаляем корневую директорию
+                Directory.Delete(directoryPath);
+                deleted = true;
+                Console.WriteLine($"Temp directory cleaned successfully: {directoryPath}");
+            }
+            catch (IOException ioEx) when (!TaskCanceledException.IsCancellationRequested(ioEx))
+            {
+                if (attempt < 4)
+                {
+                    await Task.Delay(200 * (attempt + 1));
+                    Console.WriteLine($"Ретрайт очистки директории (попытка {attempt + 1}/{5}): {ioEx.Message}");
                 }
             }
+        }
+
+        if (!deleted && Directory.Exists(directoryPath))
+        {
+            Console.WriteLine($"⚠️ Не удалось очистить временную директорию: {directoryPath}. Будет удалена при следующей попытке или перезапуске сервиса.");
         }
     }
 

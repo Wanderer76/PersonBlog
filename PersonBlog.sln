@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Service", "BlogService
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli", "BlogService\VideoProcessing.Cli\VideoProcessing.Cli.csproj", "{F4D69B54-CFE8-4B00-8EB5-26438CB47440}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli.Tests", "BlogService\VideoProcessing.Cli.Tests\VideoProcessing.Cli.Tests.csproj", "{A5C8D3E2-9F4A-4B6C-8E7D-1F2A3B4C5D6E}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.API", "ConferenceService\Conference.API\Conference.API.csproj", "{7BF45497-4505-4748-B002-A7BC7AE710D6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Domain", "ConferenceService\Conference.Domain\Conference.Domain.csproj", "{A1E4BE5F-9677-4AB1-A39D-F3E38E51961A}"
