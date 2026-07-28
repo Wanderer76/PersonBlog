@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.11.35222.181
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11903.348
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{46B45E6F-2994-42A8-9FEB-69C8D854785E}"
 	ProjectSection(SolutionItems) = preProject
@@ -55,8 +55,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Service", "BlogService\Blog.Service\Blog.Service.csproj", "{CE4610A4-A2A9-43C4-ABD3-BA59AD868A04}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli", "BlogService\VideoProcessing.Cli\VideoProcessing.Cli.csproj", "{F4D69B54-CFE8-4B00-8EB5-26438CB47440}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli.Tests", "BlogService\VideoProcessing.Cli.Tests\VideoProcessing.Cli.Tests.csproj", "{A5C8D3E2-9F4A-4B6C-8E7D-1F2A3B4C5D6E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.API", "ConferenceService\Conference.API\Conference.API.csproj", "{7BF45497-4505-4748-B002-A7BC7AE710D6}"
 EndProject
