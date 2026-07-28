@@ -154,12 +154,19 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
             // Загружаем файлы в S3/MinIO с обработкой ошибок
             await UploadFilesToStorage(blogId, fileMetadata.PostId, dir, "*.ts");
-            
-            // Загружаем папки m3u8
-            foreach (var folder in Directory.EnumerateDirectories(dir))
+
+            // Загружаем папки m3u8 (используем EnumerateDirectories для lazy evaluation)
+            await foreach (var folder in Directory.EnumerateDirectories(dir))
             {
                 var folderName = Path.GetFileName(folder);
                 await UploadM3U8Folder(blogId, $"{fileMetadata.PostId}/{folderName}", folder);
+            }
+
+            // Отменяем отложенные операции при остановке/отмене задачи
+            if (!TaskScheduler.IsCurrent)
+            {
+                Directory.EnumerateDirectories(dir).ToList().ForEach(folder => 
+                    Directory.Delete(folder, true));
             }
         }
         catch (Exception exception)
@@ -181,15 +188,17 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         }
         finally
         {
+            // Удаление временной директории если она всё ещё существует
             if (Directory.Exists(dir))
             {
                 try
                 {
                     Directory.Delete(dir, true);
                 }
-                catch (IOException)
+                catch (Exception)
                 {
-                    // Если директория была удалена уже — пропустим
+                    // Если не удалось удалить — очистится при перезапуске процесса
+                    Console.WriteLine($"Не удалось очистить директорию: {dir}, будет удалена при следующей попытке");
                 }
             }
         }
@@ -197,6 +206,9 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
     private async Task UploadFilesToStorage(Guid blogId, Guid postId, string dir, string filter)
     {
+        var uploadedCount = 0;
+        var failedCount = 0;
+
         await foreach (var file in Directory.EnumerateFiles(dir, filter))
         {
             try
@@ -204,34 +216,49 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
                 using var fileStream = new FileStream(file, FileMode.Open);
                 var fileName = Path.GetFileName(file);
                 var objectName = $"{postId}/{fileName}";
+                
+                Console.WriteLine($"Uploading: {objectName}...");
                 await _storage.PutFileAsync(blogId, objectName, fileStream);
-                Console.WriteLine($"Uploaded: {objectName}");
+                uploadedCount++;
+                
+                // Небольшая задержка для rate limiting S3
+                if (uploadedCount % 10 == 0)
+                    await Task.Delay(100);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!TaskCanceledException.IsCancellationRequested(ex))
             {
+                failedCount++;
                 Console.WriteLine($"Ошибка при загрузке файла {file}: {ex.Message}");
-                // Ошибку не выбрасываем — попробуем продолжить с другими файлами
+                // Продолжаем с другими файлами, не выбрасывая исключение
             }
         }
+
+        Console.WriteLine($"Загрузка завершена: {uploadedCount} успешно, {failedCount} пропущено");
     }
 
-    private async Task UploadM3U8Folder(Guid blogId, string prefix, string folderPath)
+    private async Task UploadM3U8Folder(Guid blogId, string directoryPrefix, string directoryPath)
     {
-        await foreach (var file in Directory.EnumerateFiles(folderPath, "*.m3u8"))
+        var folderName = Path.GetFileName(directoryPath);
+        Console.WriteLine($"Processing m3u8 folder: {folderName}");
+
+        await foreach (var file in Directory.EnumerateFiles(directoryPath, "*.m3u8"))
         {
             try
             {
                 using var fileStream = new FileStream(file, FileMode.Open);
                 var relativeFileName = Path.GetFileName(file).Replace(Path.DirectorySeparatorChar, '/');
-                var objectName = $"{prefix}/{relativeFileName}";
+                var objectName = $"{directoryPrefix}/{relativeFileName}";
+                
+                Console.WriteLine($"Uploading m3u8: {objectName}...");
                 await _storage.PutFileAsync(blogId, objectName, fileStream);
-                Console.WriteLine($"Uploaded m3u8: {objectName}");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!TaskCanceledException.IsCancellationRequested(ex))
             {
                 Console.WriteLine($"Ошибка при загрузке m3u8 файла {file}: {ex.Message}");
             }
         }
+
+        Console.WriteLine($"Folder {folderName} processed successfully");
     }
 
     private static string GetRelativePath(string filePath)
