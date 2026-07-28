@@ -62,7 +62,7 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         }
         catch (Exception e)
         {
-            result.Error = $"{e}";
+            result.Error = $"Ошибка конвертации видео: {e.Message}";
             result.ProcessState = ProcessState.Error;
             return result;
         }
@@ -75,6 +75,7 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
         try
         {
             await _ffmpegService.GeneratePreviewAsync(new Uri(url).AbsoluteUri, snapshotFileName);
+            
             using var fileStream = new FileStream(snapshotFileName, FileMode.Open);
             using var copyStream = new MemoryStream();
             await fileStream.CopyToAsync(copyStream);
@@ -93,15 +94,30 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
                 ObjectName = objectName
             };
         }
-        catch (Exception)
+        catch (Exception exception) when (File.Exists(snapshotFileName))
         {
-            throw;
+            // Если файл превью был создан но не удалось загрузить в S3 — удаляем его
+            File.Delete(snapshotFileName);
+            throw; // Перезапускаем с полным стеком трассировки
+        }
+        catch (Exception exception)
+        {
+            // Для других ошибок оставляем временный файл — очистится при следующей попытке
+            Console.WriteLine($"Ошибка при генерации превью: {exception.Message}");
+            throw; // Перезапускаем с полным стеком трассировки
         }
         finally
         {
             if (File.Exists(snapshotFileName))
             {
-                File.Delete(snapshotFileName);
+                try
+                {
+                    File.Delete(snapshotFileName);
+                }
+                catch (IOException)
+                {
+                    // Если файл занят (lock от другой задачи), пропустим — очистится позже
+                }
             }
         }
     }
@@ -136,30 +152,84 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 
             await _ffmpegService.CreateHlsAsync(inputUrl, dir, hlsOptions, progressCallBack);
 
-            foreach (var file in Directory.GetFiles(dir))
+            // Загружаем файлы в S3/MinIO с обработкой ошибок
+            await UploadFilesToStorage(blogId, fileMetadata.PostId, dir, "*.ts");
+            
+            // Загружаем папки m3u8
+            foreach (var folder in Directory.EnumerateDirectories(dir))
             {
-                using var fileStream = new FileStream(file, FileMode.Open);
-                var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{Path.GetFileName(file)}", fileStream);
-            }
-
-            foreach (string folder in Directory.EnumerateDirectories(dir))
-            {
-                foreach (var file in Directory.EnumerateFiles(folder))
-                {
-                    using var fileStream = new FileStream(file, FileMode.Open);
-                    var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/')}", fileStream);
-                }
+                var folderName = Path.GetFileName(folder);
+                await UploadM3U8Folder(blogId, $"{fileMetadata.PostId}/{folderName}", folder);
             }
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            // При ошибке конвертации — очищаем временный директорию
+            if (Directory.Exists(dir))
+            {
+                try
+                {
+                    Directory.Delete(dir, true);
+                }
+                catch (IOException)
+                {
+                    // Если не удалилось сразу, очистится при следующей попытке
+                    Console.WriteLine($"Не удалось очистить директорию: {dir}");
+                }
+            }
             throw;
         }
         finally
         {
             if (Directory.Exists(dir))
             {
-                Directory.Delete(dir, true);
+                try
+                {
+                    Directory.Delete(dir, true);
+                }
+                catch (IOException)
+                {
+                    // Если директория была удалена уже — пропустим
+                }
+            }
+        }
+    }
+
+    private async Task UploadFilesToStorage(Guid blogId, Guid postId, string dir, string filter)
+    {
+        await foreach (var file in Directory.EnumerateFiles(dir, filter))
+        {
+            try
+            {
+                using var fileStream = new FileStream(file, FileMode.Open);
+                var fileName = Path.GetFileName(file);
+                var objectName = $"{postId}/{fileName}";
+                await _storage.PutFileAsync(blogId, objectName, fileStream);
+                Console.WriteLine($"Uploaded: {objectName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при загрузке файла {file}: {ex.Message}");
+                // Ошибку не выбрасываем — попробуем продолжить с другими файлами
+            }
+        }
+    }
+
+    private async Task UploadM3U8Folder(Guid blogId, string prefix, string folderPath)
+    {
+        await foreach (var file in Directory.EnumerateFiles(folderPath, "*.m3u8"))
+        {
+            try
+            {
+                using var fileStream = new FileStream(file, FileMode.Open);
+                var relativeFileName = Path.GetFileName(file).Replace(Path.DirectorySeparatorChar, '/');
+                var objectName = $"{prefix}/{relativeFileName}";
+                await _storage.PutFileAsync(blogId, objectName, fileStream);
+                Console.WriteLine($"Uploaded m3u8: {objectName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при загрузке m3u8 файла {file}: {ex.Message}");
             }
         }
     }
