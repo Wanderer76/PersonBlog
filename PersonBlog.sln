@@ -56,6 +56,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blog.Service", "BlogService
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli", "BlogService\VideoProcessing.Cli\VideoProcessing.Cli.csproj", "{F4D69B54-CFE8-4B00-8EB5-26438CB47440}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VideoProcessing.Cli.Test", "BlogService\VideoProcessing.Cli.Test\VideoProcessing.Cli.Test.csproj", "{5EA15BC0-556C-4BB1-A725-664A8FA260E6}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.API", "ConferenceService\Conference.API\Conference.API.csproj", "{7BF45497-4505-4748-B002-A7BC7AE710D6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Conference.Domain", "ConferenceService\Conference.Domain\Conference.Domain.csproj", "{A1E4BE5F-9677-4AB1-A39D-F3E38E51961A}"
@@ -396,6 +398,10 @@ Global
 		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B96109F-2100-45C2-A8BF-80F29AE9CAA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EA15BC0-556C-4BB1-A725-664A8FA260E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EA15BC0-556C-4BB1-A725-664A8FA260E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EA15BC0-556C-4BB1-A725-664A8FA260E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EA15BC0-556C-4BB1-A725-664A8FA260E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
