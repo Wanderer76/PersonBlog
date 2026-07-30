@@ -180,14 +180,20 @@ public sealed class VideoConversionService
 
             await _ffmpegService.CreateHlsAsync(inputUrl, dir, hlsOptions, progressCallBack);
 
-            // Загружаем файлы в S3/MinIO с обработкой ошибок
-            await UploadFilesToStorage(blogId, fileMetadata.PostId, dir, "*.ts");
-
-            // Загружаем папки m3u8 (используем EnumerateDirectories для lazy evaluation)
-            foreach (var folder in Directory.EnumerateDirectories(dir))
+            // Загружаем корневой master.m3u8
+            foreach (var file in Directory.GetFiles(dir))
             {
-                var folderName = Path.GetFileName(folder);
-                await UploadM3U8Folder(blogId, $"{fileMetadata.PostId}/{folderName}", folder);
+                using var fileStream = new FileStream(file, FileMode.Open);
+                var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{Path.GetFileName(file)}", fileStream);
+            }
+
+            foreach (string folder in Directory.EnumerateDirectories(dir))
+            {
+                foreach (var file in Directory.EnumerateFiles(folder))
+                {
+                    using var fileStream = new FileStream(file, FileMode.Open);
+                    var objectName = await _storage.PutFileAsync(blogId, $"{fileMetadata.PostId}/{GetRelativePath(file).Replace(Path.DirectorySeparatorChar, '/')}", fileStream);
+                }
             }
 
             // Отменяем отложенные операции при остановке/отмене задачи
@@ -220,6 +226,31 @@ public sealed class VideoConversionService
         {
             // Гарантированная очистка временной директории с повторными попытками
             await CleanupDirectoryAsync(dir);
+        }
+    }
+
+    private static string GetRelativePath(string filePath)
+    {
+        var directoryName = Path.GetDirectoryName(filePath);
+
+        if (directoryName != null)
+        {
+            string[] pathComponents = directoryName.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+
+            if (pathComponents.Length > 1)
+            {
+                string relativePath = string.Join(Path.DirectorySeparatorChar, pathComponents.Skip(pathComponents.Length - 1));
+                string fileName = Path.GetFileName(filePath);
+                return Path.Combine(relativePath, fileName);
+            }
+            else
+            {
+                return Path.GetFileName(filePath);
+            }
+        }
+        else
+        {
+            return Path.GetFileName(filePath);
         }
     }
 
@@ -291,12 +322,45 @@ public sealed class VideoConversionService
         }
     }
 
+    private async Task UploadM3U8MasterPlaylist(Guid blogId, Guid postId, string masterPlaylistPath)
+    {
+        try
+        {
+            using var fileStream = new FileStream(masterPlaylistPath, FileMode.Open, FileAccess.Read);
+            var objectName = $"{postId}/master.m3u8";
+
+            Console.WriteLine($"Uploading master playlist: {objectName}...");
+            await _storage.PutFileAsync(blogId, objectName, fileStream);
+        }
+        catch (Exception ex) when (!(ex is TaskCanceledException))
+        {
+            Console.WriteLine($"Ошибка при загрузке master.m3u8: {ex.Message}");
+        }
+    }
+
+    private async Task UploadM3U8Playlist(Guid blogId, Guid postId, string segmentName, string playlistPath)
+    {
+        try
+        {
+            using var fileStream = new FileStream(playlistPath, FileMode.Open, FileAccess.Read);
+            var objectName = $"{postId}/{segmentName}/playlist.m3u8";
+
+            Console.WriteLine($"Uploading playlist: {objectName}...");
+            await _storage.PutFileAsync(blogId, objectName, fileStream);
+        }
+        catch (Exception ex) when (!(ex is TaskCanceledException))
+        {
+            Console.WriteLine($"Ошибка при загрузке playlist.m3u8: {ex.Message}");
+        }
+    }
+
     private async Task UploadFilesToStorage(Guid blogId, Guid postId, string dir, string filter)
     {
         var uploadedCount = 0;
         var failedCount = 0;
 
-        foreach (var file in Directory.EnumerateFiles(dir, filter))
+        // Ищем файлы рекурсивно во всех поддиректориях (FFmpeg создает .ts файлы в папках по разрешениям)
+        foreach (var file in Directory.EnumerateFiles(dir, filter, SearchOption.AllDirectories))
         {
             try
             {
@@ -321,56 +385,5 @@ public sealed class VideoConversionService
         }
 
         Console.WriteLine($"Загрузка завершена: {uploadedCount} успешно, {failedCount} пропущено");
-    }
-
-    private async Task UploadM3U8Folder(Guid blogId, string directoryPrefix, string directoryPath)
-    {
-        var folderName = Path.GetFileName(directoryPath);
-        Console.WriteLine($"Processing m3u8 folder: {folderName}");
-
-        foreach (var file in Directory.EnumerateFiles(directoryPath, "*.m3u8"))
-        {
-            try
-            {
-                using var fileStream = new FileStream(file, FileMode.Open, FileAccess.Read);
-                var relativeFileName = Path.GetFileName(file).Replace(Path.DirectorySeparatorChar, '/');
-                var objectName = $"{directoryPrefix}/{relativeFileName}";
-
-                Console.WriteLine($"Uploading m3u8: {objectName}...");
-                await _storage.PutFileAsync(blogId, objectName, fileStream);
-            }
-            catch (Exception ex) when (!(ex is TaskCanceledException))
-            {
-                Console.WriteLine($"Ошибка при загрузке m3u8 файла {file}: {ex.Message}");
-            }
-        }
-
-        Console.WriteLine($"Folder {folderName} processed successfully");
-    }
-
-
-    private static string GetRelativePath(string filePath)
-    {
-        var directoryName = Path.GetDirectoryName(filePath);
-
-        if (directoryName != null)
-        {
-            string[] pathComponents = directoryName.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
-
-            if (pathComponents.Length > 1)
-            {
-                string relativePath = string.Join(Path.DirectorySeparatorChar, pathComponents.Skip(pathComponents.Length - 1));
-                string fileName = Path.GetFileName(filePath);
-                return Path.Combine(relativePath, fileName);
-            }
-            else
-            {
-                return Path.GetFileName(filePath);
-            }
-        }
-        else
-        {
-            return Path.GetFileName(filePath);
-        }
     }
 }
