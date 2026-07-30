@@ -46,7 +46,7 @@ public sealed class VideoConversionService
             }
 
             var videoStream = await _ffmpegService.GetVideoMediaInfoAsync(url) ?? throw new ArgumentException("Не удалось найти видеопоток в видеофайле");
-            
+
             if (!hasPreviewId)
             {
                 await ProcessPreviewAsync(command, result, url, videoStream);

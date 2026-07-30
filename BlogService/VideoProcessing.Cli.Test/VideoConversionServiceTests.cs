@@ -3,9 +3,11 @@ using Blog.Domain.Entities;
 using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using Infrastructure.Services;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using Shared.Models;
 using Shared.Services;
+using Shared.Utils;
 using VideoProcessing.Cli.Service;
 
 namespace VideoProcessing.Cli.Test;
@@ -144,7 +146,7 @@ public class VideoConversionServiceTests
                 It.Is<string>(url => url == testUrl),
                 It.IsAny<string>(),
                 It.IsAny<HlsOptions>(),
-                It.IsAny<AsyncProgress<double>>?()))
+                It.IsAny<AsyncProgress<double>>()))
             .Returns(Task.CompletedTask);
 
         // Setup for file upload
@@ -201,7 +203,7 @@ public class VideoConversionServiceTests
                 It.Is<string>(url => url == testUrl),
                 It.IsAny<string>(),
                 It.IsAny<HlsOptions>(),
-                It.IsAny<AsyncProgress<double>>?()))
+                It.IsAny<AsyncProgress<double>>()))
             .Returns(Task.CompletedTask);
 
         _mockStorage.Setup(s => s.PutFileAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Stream>()))
