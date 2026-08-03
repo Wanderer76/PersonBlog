@@ -52,6 +52,7 @@ public sealed class VideoProcessSagaHandler :
             ObjectName = message.ObjectName!,
             PreviewId = message.PreviewId?.Id,
             ProcessState = message.ProcessState,
+            Error = message.Error,
             CreatedAt = DateTimeService.Now()
         }, @event));
 

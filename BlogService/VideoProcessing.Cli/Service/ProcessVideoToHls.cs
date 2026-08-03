@@ -1,11 +1,6 @@
 ﻿using Blog.Contracts.Events;
-using FFmpeg.Service.Models;
-using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Models;
-using Shared.Models;
-using Infrastructure.Services;
-using FileStorage.Service;
 
 namespace VideoProcessing.Cli.Service;
 
@@ -13,9 +8,9 @@ public sealed class ProcessVideoToHls : IEventHandler<ConvertVideoCommand>
 {
     private readonly VideoConversionService _conversionService;
 
-    public ProcessVideoToHls(IVideoConvertService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+    public ProcessVideoToHls(VideoConversionService conversionService)
     {
-        _conversionService = new VideoConversionService(ffmpegService, storage, configuration, videoPresets);
+        _conversionService = conversionService;
     }
 
     public async Task Handle(IMessageContext<ConvertVideoCommand> @event)

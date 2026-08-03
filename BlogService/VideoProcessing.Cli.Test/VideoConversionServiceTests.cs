@@ -13,10 +13,9 @@ using VideoProcessing.Cli.Service;
 
 namespace VideoProcessing.Cli.Test;
 
-public class VideoConversionServiceTests
+public class VideoConversionServiceTests : IDisposable
 {
     private readonly Mock<IVideoConvertService> _mockFfmpegService;
-    private readonly Mock<IFileStorageFactory> _mockStorageFactory;
     private readonly Mock<IFileStorage> _mockStorage;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly HlsVideoPresets _videoPresets;
@@ -26,7 +25,6 @@ public class VideoConversionServiceTests
     public VideoConversionServiceTests()
     {
         _mockFfmpegService = new Mock<IVideoConvertService>();
-        _mockStorageFactory = new Mock<IFileStorageFactory>();
         _mockStorage = new Mock<IFileStorage>();
         _mockConfiguration = new Mock<IConfiguration>();
 
@@ -34,8 +32,6 @@ public class VideoConversionServiceTests
         Directory.CreateDirectory(_tempPath);
 
         _mockConfiguration.Setup(c => c["TempDir"]).Returns(_tempPath);
-        _mockStorageFactory.Setup(f => f.CreateFileStorage()).Returns(_mockStorage.Object);
-
         _videoPresets = new HlsVideoPresets
         {
             VideoPresets =
@@ -49,7 +45,7 @@ public class VideoConversionServiceTests
 
         _service = new VideoConversionService(
             _mockFfmpegService.Object,
-            _mockStorageFactory.Object,
+            _mockStorage.Object,
             _mockConfiguration.Object,
             _videoPresets);
     }
@@ -85,7 +81,7 @@ public class VideoConversionServiceTests
         var hasPreviewId = false;
 
         _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
-            .ReturnsAsync((string?)null);
+            .ReturnsAsync((string)null!);
 
         // Act
         var result = await _service.ProcessConversionAsync(command, postId, hasPreviewId);
@@ -148,6 +144,10 @@ public class VideoConversionServiceTests
                 It.IsAny<string>(),
                 It.IsAny<HlsOptions>(),
                 It.IsAny<AsyncProgress<double>>()))
+            .Callback<string, string, HlsOptions, AsyncProgress<double>?>((_, output, options, _) =>
+            {
+                File.WriteAllText(Path.Combine(output, $"{options.MasterName}.m3u8"), "#EXTM3U");
+            })
             .Returns(Task.CompletedTask);
 
         // Setup for file upload
@@ -195,6 +195,7 @@ public class VideoConversionServiceTests
         _mockFfmpegService.Setup(f => f.GeneratePreviewAsync(testUrl, It.IsAny<string>()))
             .Callback<string, string>((input, output) =>
             {
+                Assert.Equal(".png", Path.GetExtension(output));
                 Directory.CreateDirectory(Path.GetDirectoryName(output)!);
                 File.WriteAllText(output, "fake image content");
             })
@@ -205,6 +206,10 @@ public class VideoConversionServiceTests
                 It.IsAny<string>(),
                 It.IsAny<HlsOptions>(),
                 It.IsAny<AsyncProgress<double>>()))
+            .Callback<string, string, HlsOptions, AsyncProgress<double>?>((_, output, options, _) =>
+            {
+                File.WriteAllText(Path.Combine(output, $"{options.MasterName}.m3u8"), "#EXTM3U");
+            })
             .Returns(Task.CompletedTask);
 
         _mockStorage.Setup(s => s.PutFileAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Stream>()))
@@ -220,6 +225,7 @@ public class VideoConversionServiceTests
         Assert.NotNull(result.PreviewId);
         Assert.Equal(".png", result.PreviewId.FileExtension);
         Assert.Equal("image/png", result.PreviewId.ContentType);
+        Assert.False(Path.IsPathRooted(result.PreviewId.Name));
     }
 
     [Fact]
@@ -245,6 +251,33 @@ public class VideoConversionServiceTests
         Assert.NotNull(result);
         Assert.Equal(ProcessState.Error, result.ProcessState);
         Assert.Contains(expectedError, result.Error);
+    }
+
+    [Fact]
+    public async Task ProcessConversionAsync_WhenFfmpegProducesNoMasterPlaylist_ReturnsErrorState()
+    {
+        var command = CreateTestCommand();
+        var testUrl = "https://test.com/video.mp4";
+        var videoStream = new VideoMediaInfo("h264", 1080, 1920, "video", 120.5, 3_000_000);
+
+        _mockStorage.Setup(s => s.GetFileUrlAsync(command.BlogId, command.ObjectName))
+            .ReturnsAsync(testUrl);
+        _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
+            .ReturnsAsync(videoStream);
+        _mockFfmpegService.Setup(f => f.CreateHlsAsync(
+                testUrl,
+                It.IsAny<string>(),
+                It.IsAny<HlsOptions>(),
+                It.IsAny<AsyncProgress<double>>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.ProcessConversionAsync(command, command.PostId, hasPreviewId: true);
+
+        Assert.Equal(ProcessState.Error, result.ProcessState);
+        Assert.Contains("master HLS playlist", result.Error);
+        _mockStorage.Verify(
+            x => x.PutFileAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Stream>()),
+            Times.Never);
     }
 
     [Fact]

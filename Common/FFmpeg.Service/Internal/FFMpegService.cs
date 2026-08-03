@@ -48,7 +48,8 @@ namespace FFmpeg.Service.Internal
 
             var inputMedia = await GetStreams(input);
             var inputAudio = inputMedia.FirstOrDefault(x => x.CodecType == "audio");
-            var inputVideo = inputMedia.FirstOrDefault(x => x.CodecType == "video");
+            var inputVideo = inputMedia.FirstOrDefault(x => x.CodecType == "video")
+                ?? throw new InvalidOperationException("Input does not contain a video stream.");
 
             for (int i = 0; i < options.Resolutions.Count; i++)
             {
@@ -100,9 +101,9 @@ namespace FFmpeg.Service.Internal
             return desirialized ?? [];
         }
 
-        private static async Task<string> ExecuteCommand(string utilPath, string command, AsyncProgress<double>? onProgressChange = null)
+        private async Task<string> ExecuteCommand(string utilPath, string command, AsyncProgress<double>? onProgressChange = null)
         {
-            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            var processStartInfo = new ProcessStartInfo
             {
                 FileName = utilPath,
                 Arguments = command,
@@ -112,52 +113,82 @@ namespace FFmpeg.Service.Internal
                 CreateNoWindow = true,
             };
 
-            Process process = new Process { StartInfo = processStartInfo };
-
-            //process.OutputDataReceived += (sender, args) =>
-            //{
-            //    if (args.Data != null)
-            //    {
-            //        try
-            //        {
-            //            Console.WriteLine(args.Data);
-            //            var data = args.Data.Split(" ");
-            //            var timeStr = data.FirstOrDefault(x => x.StartsWith("time="));
-            //            if (timeStr != null)
-            //            {
-            //                var time = TimeSpan.Parse(timeStr.Split('=')[1]).TotalSeconds;
-            //            }
-            //        }catch(Exception e)
-            //        {
-            //            Console.WriteLine(e);
-            //        }
-            //    }
-            //};
-
-            process.ErrorDataReceived += async (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data) && onProgressChange != null)
-                {
-                    Console.Error.WriteLine($"Error: {e.Data}");
-                    if (e.Data.StartsWith("frame="))
-                    {
-                        var currentTime = GetCurrentTime(e.Data);
-                        await onProgressChange.InvokeAsync(currentTime.TotalSeconds);
-
-                    }
-                    //var data = e.Data.Split(" ");
-                    //var timeStr = data.FirstOrDefault(x => x.StartsWith("time="));
-                    //if (timeStr != null && timeStr != "time=N/A")
-                    //{
-                    //    var time = TimeSpan.Parse(timeStr.Split('=')[1]).TotalSeconds;
-                    //}
-                }
-            };
+            using var process = new Process { StartInfo = processStartInfo };
             process.Start();
-            process.BeginErrorReadLine();
-            await process.WaitForExitAsync();
 
-            return await process.StandardOutput.ReadToEndAsync();
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = ReadStandardErrorAsync(process.StandardError, onProgressChange);
+            using var timeoutCts = new CancellationTokenSource(
+                TimeSpan.FromSeconds(Math.Max(1, fFMpegOptions.CommandTimeoutSeconds)));
+
+            try
+            {
+                await process.WaitForExitAsync(timeoutCts.Token);
+            }
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            {
+                await TerminateProcessAsync(process);
+                throw new TimeoutException(
+                    $"Process '{Path.GetFileName(utilPath)}' exceeded the configured timeout of {fFMpegOptions.CommandTimeoutSeconds} seconds.");
+            }
+
+            var output = await outputTask;
+            var error = await errorTask;
+
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException(
+                    $"Process '{Path.GetFileName(utilPath)}' failed with exit code {process.ExitCode}: {error}");
+            }
+
+            return output;
+        }
+
+        private static async Task<string> ReadStandardErrorAsync(StreamReader reader, AsyncProgress<double>? onProgressChange)
+        {
+            var error = new StringBuilder();
+            while (await reader.ReadLineAsync() is { } line)
+            {
+                error.AppendLine(line);
+                Console.Error.WriteLine(line);
+
+                if (onProgressChange != null && line.StartsWith("frame=", StringComparison.Ordinal))
+                {
+                    var currentTime = GetCurrentTime(line);
+                    await onProgressChange.InvokeAsync(currentTime.TotalSeconds);
+                }
+            }
+
+            return error.ToString();
+        }
+
+        private static async Task TerminateProcessAsync(Process process)
+        {
+            try
+            {
+                if (!process.HasExited)
+                    process.Kill(entireProcessTree: true);
+            }
+            catch (InvalidOperationException)
+            {
+                // Process exited between HasExited and Kill.
+                return;
+            }
+            catch
+            {
+                // Preserve the timeout as the primary failure if the process cannot be killed.
+                return;
+            }
+
+            using var waitCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            try
+            {
+                await process.WaitForExitAsync(waitCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Do not let a stuck child process block the message handler indefinitely.
+            }
         }
         private static TimeSpan GetCurrentTime(string data)
         {

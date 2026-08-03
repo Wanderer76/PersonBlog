@@ -6,5 +6,6 @@
         public string FFMpegPath { get; set; } = "../ffmpeg/ffmpeg.exe";
         public string FFProbePath { get; set; } = "../ffmpeg/ffprobe.exe";
         public string TempPath { get; set; } = Path.GetTempPath();
+        public int CommandTimeoutSeconds { get; set; } = 7200;
     }
 }

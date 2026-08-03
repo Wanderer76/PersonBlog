@@ -11,17 +11,17 @@ using FileStorage.Service.Models;
 
 namespace VideoProcessing.Cli.Service;
 
-public sealed class VideoConversionService : IDisposable
+public sealed class VideoConversionService
 {
     private readonly IVideoConvertService _ffmpegService;
     private readonly IFileStorage _storage;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
 
-    public VideoConversionService(IVideoConvertService ffmpegService, IFileStorageFactory storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+    public VideoConversionService(IVideoConvertService ffmpegService, IFileStorage storage, IConfiguration configuration, HlsVideoPresets videoPresets)
     {
         _ffmpegService = ffmpegService;
-        _storage = storage.CreateFileStorage();
+        _storage = storage;
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
     }
@@ -72,7 +72,7 @@ public sealed class VideoConversionService : IDisposable
     private async Task ProcessPreviewAsync(ConvertVideoCommand command, VideoConvertedResponse result, string url)
     {
         var snapshotFileId = GuidService.GetNewGuid();
-        var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".jpg");
+        var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".png");
 
         try
         {
@@ -92,7 +92,7 @@ public sealed class VideoConversionService : IDisposable
                 FileExtension = ".png",
                 Id = snapshotFileId,
                 Length = copyStream.Length,
-                Name = snapshotFileName,
+                Name = Path.GetFileName(snapshotFileName),
                 ObjectName = objectName
             };
         }
@@ -136,7 +136,7 @@ public sealed class VideoConversionService : IDisposable
                         deleted = true;
                         Console.WriteLine($"Preview temp file deleted successfully");
                     }
-                    catch (IOException ioEx) when (attempt < 2)
+                    catch (IOException) when (attempt < 2)
                     {
                         // Файл занят, пробуем снова с задержкой
                         await Task.Delay(100 * (attempt + 1));
@@ -157,10 +157,12 @@ public sealed class VideoConversionService : IDisposable
         {
             Directory.CreateDirectory(dir);
 
-            var presets = (videoStream == null
-                ? _videoPresets.VideoPresets
-                : _videoPresets.VideoPresets.Where(x => x.Width <= videoStream.Width))
+            var presets = _videoPresets.VideoPresets
+                .Where(x => x.Width <= videoStream.Width)
                 .ToList();
+
+            if (presets.Count == 0)
+                throw new InvalidOperationException($"Не найден HLS-пресет для ширины видео {videoStream.Width}px.");
 
             var hlsOptions = new HlsOptions
             {
@@ -174,12 +176,18 @@ public sealed class VideoConversionService : IDisposable
 
             var progressCallBack = new AsyncProgress<double>((currentTime) =>
             {
-                var percent = Math.Min(100, currentTime / fileMetadata.Duration * 100);
+                var percent = videoStream.Duration <= 0
+                    ? 0
+                    : Math.Min(100, currentTime / videoStream.Duration * 100);
                 Console.WriteLine($"Percent : {percent}");
                 return Task.CompletedTask;
             });
 
             await _ffmpegService.CreateHlsAsync(inputUrl, dir, hlsOptions, progressCallBack);
+
+            var masterPlaylistPath = Path.Combine(dir, $"{hlsOptions.MasterName}.m3u8");
+            if (!File.Exists(masterPlaylistPath))
+                throw new InvalidOperationException("FFmpeg завершился без создания master HLS playlist.");
 
             // Загружаем корневой master.m3u8
             foreach (var file in Directory.GetFiles(dir))
@@ -206,7 +214,7 @@ public sealed class VideoConversionService : IDisposable
                 }
             }
         }
-        catch (Exception exception)
+        catch (Exception)
         {
             // При ошибке конвертации — очищаем временный директорию
             if (Directory.Exists(dir))
@@ -282,7 +290,7 @@ public sealed class VideoConversionService : IDisposable
                     {
                         File.Delete(file);
                     }
-                    catch (IOException ioEx) when (!(ioEx is TaskCanceledException))
+                    catch (IOException ioEx)
                     {
                         Console.WriteLine($"Не удалось удалить файл: {file} - {ioEx.Message}");
                     }
@@ -296,7 +304,7 @@ public sealed class VideoConversionService : IDisposable
                     {
                         Directory.Delete(subDir, true);
                     }
-                    catch (IOException ioEx) when (!(ioEx is TaskCanceledException))
+                    catch (IOException ioEx)
                     {
                         Console.WriteLine($"Не удалось удалить директорию: {subDir} - {ioEx.Message}");
                     }
@@ -307,7 +315,7 @@ public sealed class VideoConversionService : IDisposable
                 deleted = true;
                 Console.WriteLine($"Temp directory cleaned successfully: {directoryPath}");
             }
-            catch (IOException ioEx) when (!(ioEx is TaskCanceledException))
+            catch (IOException ioEx)
             {
                 if (attempt < 4)
                 {
@@ -388,8 +396,4 @@ public sealed class VideoConversionService : IDisposable
         Console.WriteLine($"Загрузка завершена: {uploadedCount} успешно, {failedCount} пропущено");
     }
 
-    public void Dispose()
-    {
-        _storage?.Dispose();
-    }
 }

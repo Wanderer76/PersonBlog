@@ -4,5 +4,5 @@ namespace FileStorage.Service;
 
 public interface IImageConvertService
 {
-    Task<Result<FileMetadataModel>> ConvertImageToPngAsync(FileMetadataModel image);
+    Task<Result<FileMetadataModel>> ConvertImageToPngAsync(FileMetadataModel image, CancellationToken cancellationToken = default);
 }

@@ -137,7 +137,7 @@ cd adminPanel
 |---|---:|
 | `auth-app` | 5179 |
 | `blog-app` | 5069 |
-| `videoprocess-app` | 5281 |
+| `videoprocess-app` | внутренний 8080 |
 | `playlist-app` | 5147 |
 | `gateway-app` | 5165 |
 | `profile-app` | 5153 |
