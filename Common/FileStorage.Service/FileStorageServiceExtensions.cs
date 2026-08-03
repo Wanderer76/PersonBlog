@@ -23,7 +23,7 @@ namespace FileStorage.Service
                     UseHttp = true,
                 });
             });
-            services.AddScoped<IMultipartFileUpload, S3FileStorage>();
+            services.AddScoped<IMultipartFileUpload, S3MultipartFileUploadService>();
         }
     }
 }

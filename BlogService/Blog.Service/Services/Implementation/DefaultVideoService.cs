@@ -155,7 +155,6 @@ internal sealed class DefaultVideoService : IVideoService
                   .Where(x => x.PostId == postId)
                   .FirstAsync();
 
-
         var post = await _context.Get<Post>()
             .Include(x => x.VideoPostInfo)
             .FirstAsync(x => x.Id == metadata.PostId);

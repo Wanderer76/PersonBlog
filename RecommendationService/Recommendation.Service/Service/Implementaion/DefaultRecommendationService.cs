@@ -1,11 +1,8 @@
 ﻿using Blog.Domain.Entities;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Recommendation.Service.Models;
 using Shared.Persistence;
-using StackExchange.Redis;
-using System.Collections.Concurrent;
 
 namespace Recommendation.Service.Service.Implementaion
 {

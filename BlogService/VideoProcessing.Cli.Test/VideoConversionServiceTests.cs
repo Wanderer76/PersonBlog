@@ -1,7 +1,8 @@
 using Blog.Contracts.Events;
 using Blog.Domain.Entities;
-using FFmpeg.Service;
 using FFmpeg.Service.Models;
+using FileStorage.Service;
+using FileStorage.Service.Models;
 using Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -108,7 +109,7 @@ public class VideoConversionServiceTests
             .ReturnsAsync(testUrl);
 
         _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
-            .ReturnsAsync((FFProbeStream?)null);
+            .ReturnsAsync((VideoMediaInfo?)null);
 
         // Act
         var result = await _service.ProcessConversionAsync(command, postId, hasPreviewId);
@@ -127,14 +128,14 @@ public class VideoConversionServiceTests
         var postId = Guid.NewGuid();
         var hasPreviewId = true; // Превью уже существует
         var testUrl = "https://test.com/video.mp4";
-        var videoStream = new FFProbeStream
-        {
-            Width = 1920,
-            Height = 1080,
-            Duration = 120.5,
-            CodecType = "video",
-            CodecName = "h264"
-        };
+        var videoStream = new VideoMediaInfo(
+            Width: 1920,
+            Height: 1080,
+            Duration: 120.5,
+            CodecType: "video",
+            CodecName: "h264",
+            BitRate: 32132132
+            );
 
         _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
             .ReturnsAsync(testUrl);
@@ -175,14 +176,14 @@ public class VideoConversionServiceTests
         var postId = Guid.NewGuid();
         var hasPreviewId = false;
         var testUrl = "https://test.com/video.mp4";
-        var videoStream = new FFProbeStream
-        {
-            Width = 1920,
-            Height = 1080,
-            Duration = 120.5,
-            CodecType = "video",
-            CodecName = "h264"
-        };
+        var videoStream = new VideoMediaInfo(
+            Width: 1920,
+            Height: 1080,
+            Duration: 120.5,
+            CodecType: "video",
+            CodecName: "h264",
+            BitRate: 32132132
+            );
 
         _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
             .ReturnsAsync(testUrl);

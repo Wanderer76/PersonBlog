@@ -1,5 +1,6 @@
 using Blog.Contracts.Events;
 using FFmpeg.Service;
+using FFmpeg.Service.Models;
 using FileStorage.Service;
 using Infrastructure.Extensions;
 using MessageBus;
@@ -11,7 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddFileStorage(builder.Configuration);
-builder.Services.AddFFMpeg(builder.Configuration);
+builder.Services.AddFFMpegVideoService(
+    builder.Configuration.GetSection("FFMpegOptions:FFMpeg").Get<FFMpegOptions>()!,
+    builder.Configuration.GetSection("FFMpegOptions:HlsVideoPresets").Get<HlsVideoPresets>()!
+);
+
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
     .AddSubscription<ConvertVideoCommand, ProcessVideoToHls>(x =>

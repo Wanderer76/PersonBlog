@@ -1,4 +1,4 @@
-﻿using FFmpeg.Service;
+﻿using FileStorage.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +19,4 @@ public class ConvertController(ILogger<BaseApiController> logger, IImageConvertS
     }
 }
 
-public class Files
-{
-    public IFormFile Image { get; set; }
-}
+public record Files(IFormFile Image);

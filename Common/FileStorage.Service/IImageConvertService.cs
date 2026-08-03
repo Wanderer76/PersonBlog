@@ -1,6 +1,6 @@
 ﻿using Infrastructure.Models;
 
-namespace FFmpeg.Service;
+namespace FileStorage.Service;
 
 public interface IImageConvertService
 {

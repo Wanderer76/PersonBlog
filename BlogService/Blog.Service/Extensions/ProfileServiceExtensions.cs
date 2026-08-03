@@ -6,7 +6,7 @@ namespace Blog.Service.Extensions
 {
     public static class ProfileServiceExtensions
     {
-        public static void AddProfileServices(this IServiceCollection services)
+        public static void AddBlogServices(this IServiceCollection services)
         {
             services.AddScoped<IPostService, DefaultPostService>();
             services.AddScoped<IProfilePostV2Service, DefaultProfilePostV2Service>();

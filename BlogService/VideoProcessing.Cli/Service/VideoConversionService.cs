@@ -1,16 +1,17 @@
 using Blog.Contracts.Events;
 using Blog.Domain.Entities;
-using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using Infrastructure.Services;
 using MessageBus;
 using System.Diagnostics;
 using Shared.Services;
 using Shared.Utils;
+using FileStorage.Service;
+using FileStorage.Service.Models;
 
 namespace VideoProcessing.Cli.Service;
 
-public sealed class VideoConversionService
+public sealed class VideoConversionService : IDisposable
 {
     private readonly IVideoConvertService _ffmpegService;
     private readonly IFileStorage _storage;
@@ -49,7 +50,7 @@ public sealed class VideoConversionService
 
             if (!hasPreviewId)
             {
-                await ProcessPreviewAsync(command, result, url, videoStream);
+                await ProcessPreviewAsync(command, result, url);
             }
 
             await ProcessHls(command.BlogId, command.VideoMetadata, dir, fileId, url, videoStream);
@@ -68,7 +69,7 @@ public sealed class VideoConversionService
         }
     }
 
-    private async Task ProcessPreviewAsync(ConvertVideoCommand command, VideoConvertedResponse result, string url, FFProbeStream videoStream)
+    private async Task ProcessPreviewAsync(ConvertVideoCommand command, VideoConvertedResponse result, string url)
     {
         var snapshotFileId = GuidService.GetNewGuid();
         var snapshotFileName = Path.Combine(_tempPath, snapshotFileId.ToString() + ".jpg");
@@ -150,7 +151,7 @@ public sealed class VideoConversionService
         }
     }
 
-    private async Task ProcessHls(Guid blogId, VideoFile fileMetadata, string dir, Guid fileId, string inputUrl, FFProbeStream videoStream)
+    private async Task ProcessHls(Guid blogId, VideoFile fileMetadata, string dir, Guid fileId, string inputUrl, VideoMediaInfo videoStream)
     {
         try
         {
@@ -385,5 +386,10 @@ public sealed class VideoConversionService
         }
 
         Console.WriteLine($"Загрузка завершена: {uploadedCount} успешно, {failedCount} пропущено");
+    }
+
+    public void Dispose()
+    {
+        _storage?.Dispose();
     }
 }

@@ -1,4 +1,6 @@
 ﻿using FFmpeg.Service.Models;
+using FileStorage.Service;
+using FileStorage.Service.Models;
 using Newtonsoft.Json;
 using Shared.Utils;
 using System.Diagnostics;
@@ -21,11 +23,11 @@ namespace FFmpeg.Service.Internal
             await ExecuteCommand(fFMpegOptions.FFMpegPath, args);
         }
 
-        public async Task<FFProbeStream?> GetVideoMediaInfoAsync(string input)
+        public async Task<VideoMediaInfo?> GetVideoMediaInfoAsync(string input)
         {
             var inputMedia = await GetStreams(input);
             var inputVideo = inputMedia.FirstOrDefault(x => x.CodecType == "video");
-            return inputVideo;
+            return inputVideo == null? null : new VideoMediaInfo(inputVideo.CodecName,inputVideo.Height, inputVideo.Width, inputVideo.CodecType, inputVideo.Duration, inputVideo.BitRate);
         }
 
         public async Task CreateHlsAsync(string input, string output, HlsOptions options, AsyncProgress<double>? callback)

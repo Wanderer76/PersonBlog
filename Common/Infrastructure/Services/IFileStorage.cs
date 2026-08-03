@@ -7,9 +7,7 @@ public interface IFileStorage : IDisposable
     Task<string> GetFileUrlAsync(Guid bucketId, string objectName);
     Task RemoveFileAsync(Guid bucketId, string objectName);
     Task RemoveBucketAsync(string bucketId);
-
     Task CreateTempBucketAsync(Guid bucketId);
-
     Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options);
     Task<long> ReadFileByChunksAsync(Guid bucketId, string objectName, long offset, long length, Stream output);
     IAsyncEnumerable<(string Objectname, IReadOnlyDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, ChunkUploadingInfo options);

@@ -3,7 +3,7 @@ using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
-using FFmpeg.Service;
+using FileStorage.Service;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;

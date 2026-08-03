@@ -7,13 +7,13 @@ using System.Text.Json;
 
 namespace FileStorage.Service.Service;
 
-internal class S3FileStorage : IMultipartFileUpload
+internal class S3MultipartFileUploadService : IMultipartFileUpload
 {
     private readonly IAmazonS3 _client;
     private const string SESSIONS_PREFIX = "__uploads__";
     private const int _minPartSize = 5 * 1024 * 1024; // 5MB minimum part size
 
-    public S3FileStorage(IAmazonS3 client)
+    public S3MultipartFileUploadService(IAmazonS3 client)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
     }
@@ -329,8 +329,6 @@ internal class S3FileStorage : IMultipartFileUpload
         }
     }
 }
-
-
 
 /*
 internal class S3FileStorage : IFileStorage

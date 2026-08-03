@@ -1,11 +1,11 @@
 ﻿using Blog.Contracts.Events;
-using FFmpeg.Service;
 using FFmpeg.Service.Models;
 using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Shared.Models;
 using Infrastructure.Services;
+using FileStorage.Service;
 
 namespace VideoProcessing.Cli.Service;
 

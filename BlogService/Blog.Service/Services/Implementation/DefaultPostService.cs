@@ -102,7 +102,7 @@ internal class DefaultPostService : IPostService
                     throw new ArgumentException();
                 }
             }
-            var fileStorage = _fileStorageFactory.CreateFileStorage();
+            using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
             var previewUrl = !post.VideoPostInfo.PreviewId.HasValue
                 ? null
@@ -244,7 +244,7 @@ internal class DefaultPostService : IPostService
 
     public async Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds)
     {
-        var fileStorage = _fileStorageFactory.CreateFileStorage();
+        using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
         var posts = await _context.Get<Post>()
             .Where(x => postIds.Contains(x.Id))
@@ -295,13 +295,13 @@ internal class DefaultPostService : IPostService
     public async Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludePostIds)
     {
         var user = await _userService.GetCurrentUserAsync();
-        var fileStorage = _fileStorageFactory.CreateFileStorage();
+        using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
         var posts = await _context.Get<Post>()
-            .Where(x=>x.BlogId == user.BlogId)
+            .Where(x => x.BlogId == user.BlogId)
             .Where(x => !excludePostIds.Contains(x.Id))
             .Include(x => x.VideoPostInfo)
-            .Where(x=>x.IsDelete == false)
+            .Where(x => x.IsDelete == false)
             .Include(x => x.VideoPostInfo.PreviewFile)
             .ToListAsync();
 

@@ -1,10 +1,10 @@
-﻿using FFmpeg.Service;
+﻿using FileStorage.Service;
 using Infrastructure.Models;
 using System.Net.Http.Headers;
 
 namespace MediaProcessing.Contract;
 
-public class ImageConverterService(HttpClient httpClient) : IImageConvertService
+public sealed class ImageConverterService(HttpClient httpClient) : IImageConvertService
 {
     public async Task<Result<FileMetadataModel>> ConvertImageToPngAsync(FileMetadataModel model)
     {

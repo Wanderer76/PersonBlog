@@ -1,4 +1,4 @@
-﻿namespace FFmpeg.Service.Models
+﻿namespace FileStorage.Service.Models
 {
     public class HlsOptions
     {
