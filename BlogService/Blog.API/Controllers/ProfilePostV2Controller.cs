@@ -91,7 +91,8 @@ public class ProfilePostV2Controller(
             postEditDto.Description,
             postEditDto.Title,
             postEditDto.Preview?.ConvertToFileMetadata(),
-            postEditDto.Categories ?? []
+            postEditDto.Categories ?? [],
+            postEditDto.Visibility
             ));
         if (result.IsSuccess)
         {

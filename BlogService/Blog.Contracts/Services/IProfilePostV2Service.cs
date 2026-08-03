@@ -36,14 +36,22 @@ public sealed class PostUpdateRequest
     public string Title { get; }
     public FileMetadataModel? Preview { get; }
     public List<int> Categories { get; }
+    public PostVisibility Visibility { get; }
 
-    public PostUpdateRequest(Guid id, string? description, string title, FileMetadataModel? previewId, List<int> categories)
+    public PostUpdateRequest(
+        Guid id,
+        string? description,
+        string title,
+        FileMetadataModel? previewId,
+        List<int> categories,
+        PostVisibility visibility)
     {
         Id = id;
         Description = description?.Trim();
         Title = title.Trim();
         Preview = previewId;
         Categories = categories;
+        Visibility = visibility;
     }
 }
 

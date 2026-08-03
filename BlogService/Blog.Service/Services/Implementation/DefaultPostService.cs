@@ -69,6 +69,39 @@ internal class DefaultPostService : IPostService
         await _context.SaveChangesAsync();
     }
 
+    public async Task<bool> CanAccessVideoAsync(Guid blogId, Guid postId)
+    {
+        var post = await _context.Get<Post>()
+            .Where(x => x.Id == postId && x.BlogId == blogId)
+            .Select(x => new
+            {
+                x.IsDelete,
+                x.Type,
+                x.ProcessState,
+                x.Visibility,
+                x.BanMessageId,
+                OwnerUserId = x.Blog.UserId
+            })
+            .FirstOrDefaultAsync();
+
+        if (post == null || post.IsDelete || post.Type != PostType.Video || post.ProcessState != ProcessState.Complete)
+        {
+            return false;
+        }
+
+        if (post.Visibility != PostVisibility.Private && !post.BanMessageId.HasValue)
+        {
+            return true;
+        }
+
+        var currentUser = await _userService.GetCurrentUserAsync();
+        var isOwner = !currentUser.IsAnonymous && currentUser.UserId == post.OwnerUserId;
+        var isModerator = currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any();
+
+        return (post.Visibility != PostVisibility.Private || isOwner)
+            && (!post.BanMessageId.HasValue || isOwner || isModerator);
+    }
+
     public async Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId)
     {
         var isBanned = await _context.Get<Post>()

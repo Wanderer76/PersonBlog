@@ -3,7 +3,7 @@
 public interface IFileStorage : IDisposable
 {
     Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input);
-    Task ReadFileAsync(Guid bucketId, string objectName, Stream output);
+    Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default);
     Task<string> GetFileUrlAsync(Guid bucketId, string objectName);
     Task RemoveFileAsync(Guid bucketId, string objectName);
     Task RemoveBucketAsync(string bucketId);

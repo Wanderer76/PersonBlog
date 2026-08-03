@@ -20,6 +20,7 @@ public interface IPostService
     [Obsolete("Пригоден для .mp4 сейчас не поддерживается")]
     Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
     Task RemovePostByIdAsync(Guid id);
+    Task<bool> CanAccessVideoAsync(Guid blogId, Guid postId);
     Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId);
     Task SetReactionToPost(ReactionCreateModel value);
     IEnumerable<SelectItem<PostVisibility>> GetPostVisibilityList();

@@ -35,6 +35,14 @@ public class PostController : BaseApiController
         return Ok(result);
     }
 
+    [HttpGet("video-access/{blogId:guid}/{postId:guid}")]
+    public async Task<IActionResult> CheckVideoAccessAsync(Guid blogId, Guid postId)
+    {
+        return await _postService.CanAccessVideoAsync(blogId, postId)
+            ? NoContent()
+            : NotFound();
+    }
+
     [HttpGet("userInfo/{postId:guid}")]
     [Produces(typeof(UserViewInfo))]
     public async Task<ActionResult<UserViewInfo>> GetDetailPostByIdAsync(Guid postId, Guid? userId, string? address)

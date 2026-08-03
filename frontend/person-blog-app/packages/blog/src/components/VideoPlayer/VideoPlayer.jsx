@@ -5,6 +5,21 @@ import './qualitySelector/plugin.js';
 import 'hls.js';
 import './Player.css';
 import { BaseApUrl } from '../../lib/api/client.js';
+import { JwtTokenService } from '../../shared/TokenStrorage.ts';
+
+if (videojs.Vhs?.xhr) {
+  videojs.Vhs.xhr.beforeRequest = (requestOptions) => {
+    const authorization = JwtTokenService.getFormatedTokenForHeader();
+    if (authorization && requestOptions.uri?.startsWith(BaseApUrl)) {
+      requestOptions.headers = {
+        ...requestOptions.headers,
+        Authorization: authorization
+      };
+    }
+
+    return requestOptions;
+  };
+}
 
 // Fetch the link to playlist.m3u8 of the video you want to play
 export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay, onEnded }) => {
@@ -19,6 +34,11 @@ export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUser
     preload: 'none',
     responsive: true,
     fluid: true,
+    html5: {
+      vhs: {
+        overrideNative: true
+      }
+    },
     aspectRatio: '16:9',
     poster: thumbnail,
     plugins: {

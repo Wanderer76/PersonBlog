@@ -4,6 +4,7 @@ using Blog.Contracts.Models.File;
 using Infrastructure.Extensions;
 using Profile.Domain.Models;
 using Shared.Utils;
+using System.Net;
 
 namespace Gateway.API.Api
 {
@@ -12,6 +13,7 @@ namespace Gateway.API.Api
     {
         private const string PostManifest = "api/Post/manifest";
         private const string DetailPost = "api/Post/detail";
+        private const string VideoAccess = "api/Post/video-access";
         private const string UserPostInfo = "ViewHistory/userReaction";
         private const string CommonBlog = "api/Blog/blogViewerInfoByPost";
 
@@ -41,6 +43,18 @@ namespace Gateway.API.Api
             {
                 return Result<PostDetailViewModel>.Failure(new Error(ex.Message));
             }
+        }
+
+        public static async Task<HttpStatusCode> CheckVideoAccessAsync(
+            this IHttpClientFactory httpClientFactory,
+            Guid blogId,
+            Guid postId,
+            CancellationToken cancellationToken)
+        {
+            using var response = await httpClientFactory.CreateClient("Profile")
+                .GetAsync($"{VideoAccess}/{blogId}/{postId}", cancellationToken);
+
+            return response.StatusCode;
         }
 
         public static async Task<Result<BlogUserInfoViewModel>> GetBlogModelAsync(this IHttpClientFactory httpContextFactory, Guid postId)

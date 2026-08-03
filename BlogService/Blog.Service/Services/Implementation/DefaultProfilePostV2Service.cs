@@ -339,6 +339,7 @@ internal sealed class DefaultProfilePostV2Service(
 
         post.VideoPostInfo.Description = updateRequest.Description;
         post.Title = updateRequest.Title;
+        post.Visibility = updateRequest.Visibility;
 
         var categoriesToRemove = updateRequest.Categories
             .Except(post.VideoPostInfo.PostCategories.Select(x => x.CategoryId))

@@ -22,12 +22,19 @@ internal class MinioFileStorage : IFileStorage
             .Build();
     }
 
-    public async Task ReadFileAsync(Guid bucketId, string objectName, Stream output)
+    public async Task ReadFileAsync(
+        Guid bucketId,
+        string objectName,
+        Stream output,
+        CancellationToken cancellationToken = default)
     {
-        await _client.GetObjectAsync(new GetObjectArgs()
-            .WithBucket(bucketId.ToString())
-            .WithObject(objectName)
-            .WithCallbackStream(stream => stream.CopyTo(output)));
+        await _client.GetObjectAsync(
+            new GetObjectArgs()
+                .WithBucket(bucketId.ToString())
+                .WithObject(objectName)
+                .WithCallbackStream((stream, callbackCancellationToken) =>
+                    stream.CopyToAsync(output, callbackCancellationToken)),
+            cancellationToken);
     }
 
     public async Task RemoveFileAsync(Guid bucketId, string objectName)

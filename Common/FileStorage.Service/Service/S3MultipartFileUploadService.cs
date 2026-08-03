@@ -389,7 +389,11 @@ internal class S3FileStorage : IFileStorage
         throw new NotImplementedException();
     }
 
-    public Task ReadFileAsync(Guid bucketId, string objectName, Stream output)
+    public Task ReadFileAsync(
+        Guid bucketId,
+        string objectName,
+        Stream output,
+        CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
