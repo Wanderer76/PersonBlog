@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace MessageBus
+namespace MessageBus;
+
+public interface IMessageBusBuilder
 {
-    public interface IMessageBusBuilder
-    {
-        public IServiceCollection Services { get; }
-    }
+    public IServiceCollection Services { get; }
 }

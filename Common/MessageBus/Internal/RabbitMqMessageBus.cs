@@ -18,7 +18,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     private readonly ConnectionFactory _factory;
     private readonly IServiceScopeFactory _serviceScope;
     private readonly Lazy<Task<IConnection>> _connectionLazy;
-    private readonly MessageBusSubscriptionInfo _subscriptionInfo;
+    private readonly MessageBusInfoContainer _subscriptionInfo;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
     private readonly ConcurrentDictionary<string, SubscriptionContext> _subscriptions = new();
     private readonly IRequestClient requestClient;
@@ -29,7 +29,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     public RabbitMqMessageBus(
         RabbitMqConnection config,
         IServiceScopeFactory serviceScope,
-        IOptions<MessageBusSubscriptionInfo> subscriptionInfo,
+        IOptions<MessageBusInfoContainer> subscriptionInfo,
         IRequestClient requestClient)
     {
         _factory = new ConnectionFactory
@@ -71,7 +71,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
 
         using var initConnection = await _factory.CreateConnectionAsync();
         using var initChannel = await initConnection.CreateChannelAsync(cancellationToken: cancellationToken);
-        foreach (var handlerConfig in _subscriptionInfo.Handlers)
+        foreach (var handlerConfig in _subscriptionInfo.HandlerTypes.Values)
         {
             await InitializeSubscriptionAsync(initChannel, handlerConfig, cancellationToken);
         }
@@ -320,12 +320,11 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     {
         cfg ??= new MessageProperty();
 
-        var type = _subscriptionInfo.EventTypes[message.EventType];
-        var attr = _cachedValues.GetOrAdd(type, t => t.GetCustomAttribute<EventPublishAttribute>(false));
-        var handlerConfig = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
+        var publishCfg = _subscriptionInfo.Events[message.EventType];
+        var attr = _cachedValues.GetOrAdd(publishCfg.Type, t => t.GetCustomAttribute<EventPublishAttribute>(false));
 
-        cfg.RoutingKey ??= attr?.RoutingKey ?? handlerConfig?.Queue?.Exchange?.RoutingKey;
-        cfg.Exchange ??= attr?.Exchange ?? handlerConfig?.Queue?.Exchange?.Name;
+        cfg.RoutingKey ??= attr?.RoutingKey ?? publishCfg?.RoutingKey;
+        cfg.Exchange ??= attr?.Exchange ?? publishCfg?.Exchange;
 
         var connection = await GetConnectionInternalAsync();
         using var channel = await connection.CreateChannelAsync();
@@ -347,10 +346,9 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     {
         var type = typeof(T);
         var attr = _cachedValues.GetOrAdd(type, t => t.GetCustomAttribute<EventPublishAttribute>(false));
-        var handlerConfig = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
-
-        cfg.RoutingKey ??= attr?.RoutingKey ?? handlerConfig?.Queue?.Exchange?.RoutingKey;
-        cfg.Exchange ??= attr?.Exchange ?? handlerConfig?.Queue?.Exchange?.Name;
+        var handlerConfig = _subscriptionInfo.Events.FirstOrDefault(x => x.Value.Type == type);
+        cfg.RoutingKey ??= attr?.RoutingKey ?? handlerConfig.Value?.RoutingKey;
+        cfg.Exchange ??= attr?.Exchange ?? handlerConfig.Value?.Exchange;
     }
 
     #endregion
