@@ -3,7 +3,8 @@ using MessageBus.EventHandler;
 using MessageBus.Internal;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
-using RabbitMQ.Client;
+using Microsoft.Extensions.Options;
+using System.Reflection;
 
 namespace MessageBus;
 
@@ -20,8 +21,8 @@ public static class MessageBusServiceExtensions
              .ToList();
 
         services.AddSingleton<IRequestClient, RabbitMqRequestClient>();
-        services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
-      
+        services.AddOptions<MessageBusInfoContainer>().PostConfigure(x => x.Init(types.Select(x => (x, x.GetCustomAttribute<EventPublishAttribute>()))));
+
         services.AddSingleton<RabbitMqConnection>(configuration);
         services.AddHostedService<DefaultHostedService>();
         return new MessageBusBuilder(services);
@@ -36,7 +37,7 @@ public static class MessageBusServiceExtensions
         var types = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
           .Where(x => Attribute.IsDefined(x, typeof(EventPublishAttribute)))
           .ToList();
-        services.AddOptions<MessageBusSubscriptionInfo>().PostConfigure(x => x.Init(types));
+        services.AddOptions<MessageBusInfoContainer>().PostConfigure(x => x.Init(types.Select(x => (x, x.GetCustomAttribute<EventPublishAttribute>()))));
 
         services.AddSingleton(connection);
         services.AddSingleton<IMessagePublish, KafkaMessageBus>();
@@ -51,7 +52,7 @@ public static class MessageBusServiceExtensions
         where THandle : class, IEventHandler<TEvent>
     {
         builder.Services.AddKeyedScoped<IEventHandler<TEvent>, THandle>(typeof(TEvent).Name);
-        builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
+        builder.Services.PostConfigure<MessageBusInfoContainer>(sp =>
         {
             sp.AddSubscription<TEvent>(cfg);
         });
@@ -62,7 +63,7 @@ public static class MessageBusServiceExtensions
     public static IMessageBusBuilder AddMessage<TEvent>(this IMessageBusBuilder builder, Action<MessageInfo<TEvent>> cfg)
       where TEvent : class
     {
-        builder.Services.PostConfigure<MessageBusSubscriptionInfo>(sp =>
+        builder.Services.PostConfigure<MessageBusInfoContainer>(sp =>
         {
             sp.AddMessageInfo(cfg);
         });

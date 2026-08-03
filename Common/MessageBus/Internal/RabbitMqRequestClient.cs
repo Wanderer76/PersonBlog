@@ -15,7 +15,7 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
 {
     private readonly ConnectionFactory _factory;
     private readonly Lazy<Task<IConnection>> _connectionLazy;
-    private readonly MessageBusSubscriptionInfo _subscriptionInfo;
+    private readonly MessageBusInfoContainer _subscriptionInfo;
 
     private readonly ConcurrentDictionary<string, TaskCompletionSource<byte[]>> _pendingRequests = new();
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedAttributes = new();
@@ -27,7 +27,7 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
 
     private static readonly JsonSerializerOptions _deserializeOptions = new() { PropertyNameCaseInsensitive = true };
 
-    public RabbitMqRequestClient(IOptions<MessageBusSubscriptionInfo> subscriptionInfo, RabbitMqConnection config)
+    public RabbitMqRequestClient(IOptions<MessageBusInfoContainer> subscriptionInfo, RabbitMqConnection config)
     {
         _factory = new ConnectionFactory
         {
@@ -143,13 +143,12 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
         }
     }
 
-    public async Task<TResponse> RequestAsync<TRequest, TResponse>(
-        TRequest request, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    public async Task<TResponse> RequestAsync<TRequest, TResponse>(TRequest request, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
     {
         var type = typeof(TRequest);
         var attr = _cachedAttributes.GetOrAdd(type, t => t.GetCustomAttribute<EventPublishAttribute>(false));
-        var handlerConfig = _subscriptionInfo.Handlers.FirstOrDefault(x => x.HandlerType == type);
-        return await RequestAsync<TRequest, TResponse>(handlerConfig?.Queue?.Exchange?.Name, handlerConfig?.Queue?.Exchange?.RoutingKey, request, timeout, cancellationToken);
+        var handlerConfig = _subscriptionInfo.Events.FirstOrDefault(x => x.Value.Type == type);
+        return await RequestAsync<TRequest, TResponse>(handlerConfig.Value?.Exchange, handlerConfig.Value?.RoutingKey, request, timeout, cancellationToken);
     }
 
     public async ValueTask DisposeAsync()

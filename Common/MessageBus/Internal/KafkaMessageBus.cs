@@ -17,7 +17,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
 {
     private readonly KafkaConnection _config;
     private readonly IServiceScopeFactory _serviceScope;
-    private readonly MessageBusSubscriptionInfo _subscriptionInfo;
+    private readonly MessageBusInfoContainer _subscriptionInfo;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedAttributes = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _consumers = new();
     private readonly ProducerBuilder<string, string> _producerBuilder;
@@ -39,7 +39,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
     public KafkaMessageBus(
         KafkaConnection config,
         IServiceScopeFactory serviceScope,
-        IOptions<MessageBusSubscriptionInfo> subscriptionInfo,
+        IOptions<MessageBusInfoContainer> subscriptionInfo,
         IRequestClient requestClient)
     {
         _config = config;
@@ -99,7 +99,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         // Создаём топики для ошибок (аналог exchange "error" в RabbitMQ)
         await EnsureTopicExistsAsync(GetErrorTopicName(), cancellationToken);
 
-        foreach (var handlerConfig in _subscriptionInfo.Handlers)
+        foreach (var handlerConfig in _subscriptionInfo.HandlerTypes.Values)
         {
             await InitializeSubscriptionAsync(handlerConfig, cancellationToken);
         }
@@ -393,14 +393,11 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
     {
         cfg ??= new MessageProperty();
 
-        var type = _subscriptionInfo.EventTypes[message.EventType];
-        var attr = _cachedAttributes.GetOrAdd(type,
-            t => t.GetCustomAttribute<EventPublishAttribute>(false));
-        var handlerConfig = _subscriptionInfo.Handlers
-            .FirstOrDefault(x => x.HandlerType == type);
+        var publishConfig = _subscriptionInfo.Events[message.EventType];
+        var attr = _cachedAttributes.GetOrAdd(publishConfig.Type, t => t.GetCustomAttribute<EventPublishAttribute>(false));
 
-        cfg.RoutingKey ??= attr?.RoutingKey ?? handlerConfig?.Queue?.Exchange?.RoutingKey;
-        cfg.Exchange ??= attr?.Exchange ?? handlerConfig?.Queue?.Exchange?.Name;
+        cfg.RoutingKey ??= attr?.RoutingKey ?? publishConfig?.RoutingKey;
+        cfg.Exchange ??= attr?.Exchange ?? publishConfig?.Exchange;
 
         var topic = cfg.Exchange ?? message.EventType;
         var body = JsonSerializer.Serialize(message, _baseEventSerializerOptions);
@@ -431,11 +428,11 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         var type = typeof(T);
         var attr = _cachedAttributes.GetOrAdd(type,
             t => t.GetCustomAttribute<EventPublishAttribute>(false));
-        var handlerConfig = _subscriptionInfo.Handlers
-            .FirstOrDefault(x => x.HandlerType == type);
+        var handlerConfig = _subscriptionInfo.Events
+            .FirstOrDefault(x => x.Value.Type == type);
 
-        cfg.RoutingKey ??= attr?.RoutingKey ?? handlerConfig?.Queue?.Exchange?.RoutingKey;
-        cfg.Exchange ??= attr?.Exchange ?? handlerConfig?.Queue?.Exchange?.Name;
+        cfg.RoutingKey ??= attr?.RoutingKey ?? handlerConfig.Value?.RoutingKey;
+        cfg.Exchange ??= attr?.Exchange ?? handlerConfig.Value?.Exchange;
     }
 
     #endregion
