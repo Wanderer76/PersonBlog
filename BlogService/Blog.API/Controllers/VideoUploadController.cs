@@ -1,11 +1,9 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Contracts.Services;
-using Blog.Domain.Entities;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Persistence;
 
 namespace Blog.API.Controllers;
 
@@ -13,8 +11,7 @@ public sealed class VideoUploadController(
     ILogger<BaseApiController> _logger,
     IMultipartFileUpload _multipartFileUpload,
     ICurrentUserService _currentUserService,
-    IVideoService videoService,
-    IReadWriteRepository<IBlogEntity> context
+    IVideoService videoService
     ) : BaseApiController(_logger)
 {
 
@@ -24,13 +21,25 @@ public sealed class VideoUploadController(
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var objectName = $"{request.PostId}/{request.ObjectName}";
+
+        request.ObjectName = objectName;
+        var initResult = await videoService.InitVideoUploadAsync(request);
+        if (initResult.IsFailure)
+        {
+            if (initResult.Errors.Any(error => error.Key == "NotFound"))
+                return NotFound(initResult.Errors);
+
+            if (initResult.Errors.Any(error => error.Key == "Forbidden"))
+                return Forbid();
+
+            return BadRequest(initResult.Errors);
+        }
+
         var session = await _multipartFileUpload.InitiateUploadAsync(
             user.BlogId.ToString(),
             objectName,
             request.Size);
 
-        request.ObjectName = objectName;
-        _ = await videoService.InitVideoUploadAsync(request);
         return Ok(session);
     }
 
@@ -59,12 +68,34 @@ public sealed class VideoUploadController(
         var user = await _currentUserService.GetCurrentUserAsync();
         var bucketId = user.BlogId;
 
+        var session = await _multipartFileUpload.GetUploadSessionAsync(bucketId.ToString(), request.UploadId);
+        if (session == null)
+        {
+            return NotFound();
+        }
+
+        if (!TryGetPostId(session, out var postId))
+        {
+            return BadRequest("Upload session is not associated with a post.");
+        }
+
         var eTag = await _multipartFileUpload.CompleteUploadAsync(
             bucketId.ToString(),
             request.UploadId,
             request.Parts);
 
-        await videoService.CompleteUploadAsync(request.PostId);
+        var completeResult = await videoService.CompleteUploadAsync(postId);
+        if (completeResult.IsFailure)
+        {
+            if (completeResult.Errors.Any(error => error.Key == "NotFound"))
+                return NotFound(completeResult.Errors);
+
+            if (completeResult.Errors.Any(error => error.Key == "Forbidden"))
+                return Forbid();
+
+            return BadRequest(completeResult.Errors);
+        }
+
         return Ok(eTag);
     }
 
@@ -105,11 +136,20 @@ public sealed class VideoUploadController(
         var parts = await _multipartFileUpload.ListPartsAsync(bucketId.ToString(), uploadId);
         return Ok(parts);
     }
+
+    private static bool TryGetPostId(MultipartUploadSession session, out Guid postId)
+    {
+        var separatorIndex = session.ObjectName.IndexOf('/');
+        var postIdSegment = separatorIndex >= 0
+            ? session.ObjectName[..separatorIndex]
+            : session.ObjectName;
+
+        return Guid.TryParse(postIdSegment, out postId);
+    }
 }
 
 public class CompleteUploadRequest
 {
-    public Guid PostId { get; set; }
     public string UploadId { get; set; } = null!;
     public List<MultipartUploadPart> Parts { get; set; } = new();
 }

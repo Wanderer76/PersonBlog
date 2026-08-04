@@ -17,12 +17,18 @@ internal sealed class DefaultVideoService : IVideoService
     private readonly IReadWriteRepository<IBlogEntity> _context;
     private readonly ICacheService _cacheService;
     private readonly IFileStorageFactory _fileStorageFactory;
+    private readonly ICurrentUserService _currentUserService;
     public const int LifeTimeInMinutes = 60000;
-    public DefaultVideoService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory)
+    public DefaultVideoService(
+        IReadWriteRepository<IBlogEntity> context,
+        ICacheService cacheService,
+        IFileStorageFactory fileStorageFactory,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _cacheService = cacheService;
         _fileStorageFactory = fileStorageFactory;
+        _currentUserService = currentUserService;
     }
     [Obsolete("", true)]
     public async Task<Result<UploadVideoProgress>> CreateUploadVideoMetadata(CreateUploadVideoProgressRequest uploadVideoChunk)
@@ -111,8 +117,19 @@ internal sealed class DefaultVideoService : IVideoService
 
     public async Task<Result> InitVideoUploadAsync(InitiateUploadRequest initiateUploadRequest)
     {
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
         var post = await _context.Get<Post>()
-            .FirstAsync(x => x.Id == initiateUploadRequest.PostId);
+            .FirstOrDefaultAsync(x => x.Id == initiateUploadRequest.PostId);
+
+        if (post == null)
+        {
+            return Result.Failure(new Error("NotFound", "Пост не найден"));
+        }
+
+        if (post.BlogId != currentUser.BlogId)
+        {
+            return Result.Failure(new Error("Forbidden", "Пост не принадлежит текущему пользователю"));
+        }
 
         if (post.Type != PostType.Video)
         {
@@ -149,15 +166,31 @@ internal sealed class DefaultVideoService : IVideoService
         return Result.Success();
     }
 
-    public async Task CompleteUploadAsync(Guid postId)
+    public async Task<Result> CompleteUploadAsync(Guid postId)
     {
-        var metadata = await _context.Get<VideoFile>()
-                  .Where(x => x.PostId == postId)
-                  .FirstAsync();
-
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
         var post = await _context.Get<Post>()
             .Include(x => x.VideoPostInfo)
-            .FirstAsync(x => x.Id == metadata.PostId);
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+        {
+            return Result.Failure(new Error("NotFound", "Пост не найден"));
+        }
+
+        if (post.BlogId != currentUser.BlogId)
+        {
+            return Result.Failure(new Error("Forbidden", "Пост не принадлежит текущему пользователю"));
+        }
+
+        var metadata = await _context.Get<VideoFile>()
+                  .Where(x => x.PostId == postId)
+                  .FirstOrDefaultAsync();
+
+        if (metadata == null)
+        {
+            return Result.Failure(new Error("NotFound", "Метаданные видео не найдены"));
+        }
 
         var videoCreateEvent = new ConvertVideoCommand
         {
@@ -175,5 +208,6 @@ internal sealed class DefaultVideoService : IVideoService
         post.ProcessState = ProcessState.Draft;
         _context.Add(videoEvent);
         await _context.SaveChangesAsync();
+        return Result.Success();
     }
 }

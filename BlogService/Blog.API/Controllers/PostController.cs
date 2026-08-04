@@ -71,8 +71,17 @@ public class PostController : BaseApiController
     [Authorize]
     public async Task<ActionResult> DeletePost(Guid id)
     {
-        await _postService.RemovePostByIdAsync(id);
-        return Ok();
+        var result = await _postService.RemovePostByIdAsync(id);
+        if (result.IsSuccess)
+            return Ok();
+
+        if (result.Errors.Any(error => error.Key == "NotFound"))
+            return NotFound(result.Errors);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return BadRequest(result.Errors);
     }
 
     [HttpPost("commonByIds")]

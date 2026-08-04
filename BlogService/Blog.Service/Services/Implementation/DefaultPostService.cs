@@ -42,31 +42,41 @@ internal class DefaultPostService : IPostService
         return fileMetadataId;
     }
 
-    public async Task RemovePostByIdAsync(Guid id)
+    public async Task<Result> RemovePostByIdAsync(Guid id)
     {
+        var currentUser = await _userService.GetCurrentUserAsync();
         var post = await _context.Get<Post>()
             .Where(x => x.Id == id)
             .Include(x => x.VideoPostInfo)
             .FirstOrDefaultAsync();
-        if (post != null)
+
+        if (post == null)
         {
-            _context.Attach(post);
-            post.Delete();
-            _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
-            _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
-            {
-                BlogId = post.BlogId,
-                CreatedAt = DateTimeService.Now(),
-                UpdateType = UpdateType.Delete,
-                Description = post.VideoPostInfo.Description,
-                PostId = post.Id,
-                Title = post.Title,
-                ViewCount = post.ViewCount
-            }));
+            return Result.Failure(new Error("NotFound", "Пост не найден"));
         }
+
+        if (post.BlogId != currentUser.BlogId)
+        {
+            return Result.Failure(new Error("Forbidden", "Пост не принадлежит текущему пользователю"));
+        }
+
+        _context.Attach(post);
+        post.Delete();
+        _context.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
+        _context.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Delete,
+            Description = post.VideoPostInfo.Description,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
 
         await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
         await _context.SaveChangesAsync();
+        return Result.Success();
     }
 
     public async Task<bool> CanAccessVideoAsync(Guid blogId, Guid postId)
