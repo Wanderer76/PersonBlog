@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, Link, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import './App.css';
 import { JwtTokenService } from './shared/TokenStrorage.js';
@@ -8,7 +8,6 @@ import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
 import ChannelPage from './pages/channel/ChannelPage';
 import CreateBlogForm from './components/profile/blog/CreateBlogForm';
 import LikedPage from './pages/liked/LikedPage';
-import AuthPage from './pages/auth/AuthPage.js';
 import OAuthCallback from './pages/callback/OAuthCallback.js';
 import CreateTextPostForm from './components/profile/post/CreateTextPostForm.js';
 
@@ -24,28 +23,12 @@ const HistoryPage = lazy(() => import('./pages/history/HistoryPage'));
 const Header = lazy(() => import('./components/header/Header'));
 
 // Приватный маршрут
-interface PrivateRouteProps {
-  redirectPath?: string;
-}
-
-const PrivateRoute = ({ redirectPath = '/auth' }: PrivateRouteProps) => {
+const PrivateRoute = () => {
   const isAuthenticated = JwtTokenService.isAuth();
   return isAuthenticated ? <Outlet /> : <button onClick={async () => await JwtTokenService.redirectToAuth(window.location.origin)} />;
 };
 // Публичный маршрут (если нужно ограничить доступ к auth)
 // Публичный маршрут
-interface PublicRouteProps {
-  children: ReactNode;
-}
-
-const PublicRoute = ({ children }: PublicRouteProps) => {
-  const isAuthenticated = JwtTokenService.isAuth();
-  const [searchParams] = useSearchParams();
-  const isRedirect = searchParams.get('redirect');
-
-  return !isAuthenticated || isRedirect !== null ? <>{children}</> : <Navigate to="/" replace />;
-};
-
 // Компонент проверки сессии
 interface SessionProps {
   children: ReactNode;
@@ -79,7 +62,6 @@ function App() {
 
               {/* Приватные маршруты */}
               <Route element={<PrivateRoute />}>
-                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/conference/:id" element={<ConferencePage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/subscriptions" element={<SubscriptionPage />} />
