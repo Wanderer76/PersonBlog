@@ -1,10 +1,12 @@
-import { getAuth } from "@/lib/api/generated/auth/auth";
-import API, { BaseApUrl } from "../lib/api/client";
-import { AuthCodeResponse, AuthResponse } from "@/lib/api/generated/models";
+import axios from "axios";
+import { AuthResponse } from "@/lib/api/generated/models";
 
 export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 export const OAUTH_STATE_KEY = 'OAUTH_STATE_KEY';
+export const OAUTH_RETURN_URL_KEY = 'OAUTH_RETURN_URL_KEY';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5078';
+const authTransport = axios.create({ baseURL: AUTH_API_URL, withCredentials: false });
 
 /**
  * Сохраняет access token в localStorage и уведомляет Service Worker
@@ -49,12 +51,31 @@ export function getRefreshToken(): string | null {
 }
 
 export function saveOAuthState(state: string): void {
-    localStorage.setItem(OAUTH_STATE_KEY, state);
+    sessionStorage.setItem(OAUTH_STATE_KEY, state);
 }
 export function getAndClearOAuthState(): string | null {
-    const state = localStorage.getItem(OAUTH_STATE_KEY);
-    localStorage.removeItem(OAUTH_STATE_KEY);
+    const state = sessionStorage.getItem(OAUTH_STATE_KEY);
+    sessionStorage.removeItem(OAUTH_STATE_KEY);
     return state;
+}
+
+function saveOAuthReturnUrl(returnUrl: string): void {
+    sessionStorage.setItem(OAUTH_RETURN_URL_KEY, returnUrl);
+}
+
+export function getAndClearOAuthReturnUrl(): string {
+    const returnUrl = sessionStorage.getItem(OAUTH_RETURN_URL_KEY);
+    sessionStorage.removeItem(OAUTH_RETURN_URL_KEY);
+    if (!returnUrl) return '/';
+
+    try {
+        const parsed = new URL(returnUrl, window.location.origin);
+        return parsed.origin === window.location.origin
+            ? `${parsed.pathname}${parsed.search}${parsed.hash}`
+            : '/';
+    } catch {
+        return '/';
+    }
 }
 
 /**
@@ -65,15 +86,9 @@ interface RefreshTokenResponse {
     refreshToken: string;
 }
 
-/**
- * Сообщение для Service Worker
- */
-interface ServiceWorkerAuthMessage {
-    type: 'SET_AUTH_TOKEN';
-    payload: string;
-}
-
 export class JwtTokenService {
+    private static refreshPromise: Promise<number> | null = null;
+    private static authRedirectPromise: Promise<void> | null = null;
     /**
      * Возвращает токен в формате для HTTP-заголовка Authorization
      */
@@ -87,8 +102,21 @@ export class JwtTokenService {
      * Редирект пользователя на сервер авторизации (начало OAuth потока)
      */
     static async redirectToAuth(returnUrl?: string): Promise<void> {
+        if (this.authRedirectPromise) return this.authRedirectPromise;
+
+        this.authRedirectPromise = this.performAuthRedirect(returnUrl);
+        try {
+            await this.authRedirectPromise;
+        } catch (error) {
+            this.authRedirectPromise = null;
+            throw error;
+        }
+    }
+
+    private static async performAuthRedirect(returnUrl?: string): Promise<void> {
         const state = crypto.randomUUID();
         saveOAuthState(state);
+        saveOAuthReturnUrl(returnUrl || window.location.href);
 
         const params = new URLSearchParams({
             clientId: 'blog',
@@ -98,9 +126,7 @@ export class JwtTokenService {
             ...(returnUrl && { returnUrl }),
         });
 
-        const response = await API.get(
-            `http://localhost:5078/api/Auth/authorize?${params.toString()}`,
-        );
+        const response = await authTransport.get(`/api/Auth/authorize?${params.toString()}`);
 
         if (response.status !== 200) {
             throw new Error(`Authorize failed: ${response.status}`);
@@ -122,11 +148,11 @@ export class JwtTokenService {
     static async exchangeCodeForTokens(code: string, state: string | null = null): Promise<RefreshTokenResponse> {
         // Проверяем state для защиты от CSRF
         const savedState = getAndClearOAuthState();
-        if (!savedState) {
+        if (!savedState || !state || savedState !== state) {
             throw new Error('Invalid OAuth state');
         }
 
-        const response = await API.post(`http://localhost:5078/api/Auth/token`, {
+        const response = await authTransport.post(`/api/Auth/token`, {
             grant_type: 'authorization_code',
             code: code,
             client_id: 'blog',
@@ -156,6 +182,17 @@ export class JwtTokenService {
      * @returns HTTP status code или 401 при ошибке
      */
     static async refreshToken(): Promise<number> {
+        if (this.refreshPromise) return this.refreshPromise;
+
+        this.refreshPromise = this.performRefresh();
+        try {
+            return await this.refreshPromise;
+        } finally {
+            this.refreshPromise = null;
+        }
+    }
+
+    private static async performRefresh(): Promise<number> {
         try {
             const refreshToken = getRefreshToken();
 
@@ -165,7 +202,10 @@ export class JwtTokenService {
             }
 
             
-            const response = await API.post(`http://localhost:5078/api/Auth/refresh?refreshToken=${encodeURIComponent(refreshToken)}`);
+            // Отдельный transport не содержит 401 interceptor, поэтому refresh не может вызвать сам себя.
+            const response = await authTransport.post(`/api/Auth/refresh`, null, {
+                params: { refreshToken },
+            });
 
             if (response.status === 200) {
                 const data: AuthResponse = response.data;
@@ -191,13 +231,16 @@ export class JwtTokenService {
     static cleanAuth(): void {
         localStorage.removeItem(ACCESS_TOKEN_KEY);
         localStorage.removeItem(REFRESH_TOKEN_KEY);
-        localStorage.removeItem(OAUTH_STATE_KEY);
+        sessionStorage.removeItem(OAUTH_STATE_KEY);
+        sessionStorage.removeItem(OAUTH_RETURN_URL_KEY);
     }
 
     /**
      * Проверяет, авторизован ли пользователь
      */
     static isAuth(): boolean {
-        return getAccessToken() !== null;
+        // Истёкший access token всё ещё допускается до HTTP-слоя: interceptor
+        // обменяет валидный refresh token и повторит исходный запрос.
+        return getAccessToken() !== null && getRefreshToken() !== null;
     }
 }

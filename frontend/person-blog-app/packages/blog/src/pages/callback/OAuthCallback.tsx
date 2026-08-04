@@ -1,5 +1,5 @@
 // src/pages/OAuthCallback.tsx
-import { JwtTokenService } from '@/shared/TokenStrorage';
+import { getAndClearOAuthReturnUrl, JwtTokenService } from '@/shared/TokenStrorage';
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -25,7 +25,7 @@ const OAuthCallback = () => {
       try {
         await JwtTokenService.exchangeCodeForTokens(code, state);
         // Успех: редирект на лавную или return_url
-        const returnUrl = searchParams.get('return_url') || '/';
+        const returnUrl = getAndClearOAuthReturnUrl();
         navigate(returnUrl, { replace: true });
       } catch (err) {
         console.error('Token exchange failed:', err);

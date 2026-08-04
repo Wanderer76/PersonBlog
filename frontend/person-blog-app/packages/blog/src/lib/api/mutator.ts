@@ -52,6 +52,12 @@ instance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    if (error.response?.status === 403) {
+      JwtTokenService.cleanAuth();
+      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+      return Promise.reject(error);
+    }
+
     // Если не 401 или уже пытались retry — отклоняем
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
@@ -92,7 +98,7 @@ instance.interceptors.response.use(
       // ✅ Refresh не удался — очищаем очередь и перенаправляем на авторизацию
       processQueue(refreshError, null);
       JwtTokenService.cleanAuth();
-      redirectToAuth();
+      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
       return Promise.reject(refreshError);
       
     } finally {
@@ -105,12 +111,5 @@ instance.interceptors.response.use(
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
   return instance.request<T>(config);
 };
-
-function redirectToAuth() {
-  const authPaths = ['/auth'];
-  if (!authPaths.includes(window.location.pathname)) {
-    window.location.href = '/auth';
-  }
-}
 
 export default customInstance;

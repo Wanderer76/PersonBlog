@@ -1,10 +1,10 @@
 // src/pages/Auth/SignUpForm.tsx
 import React, { useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import './AuthPage.css';
 import type { RegisterRequest } from "../../lib/api/generated/models";
 import { getAuth } from "../../lib/api/generated/auth/auth";
-import { validateRedirectUri, buildAuthRedirectUrl } from "../../utils/validation";
+import { buildAuthRedirectUrl } from "../../utils/validation";
 
 interface SignUpFormProps {
     onSwitchToSignIn: () => void;
@@ -12,7 +12,6 @@ interface SignUpFormProps {
 
 const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToSignIn }) => {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const [formData, setFormData] = useState<RegisterRequest>({
         login: "",
         password: "",
@@ -63,7 +62,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToSignIn }) => {
 
         try {
              // Валидация redirect_uri
-            const redirectUri =  searchParams.get("redirectUri") || searchParams.get("redirect");
+            const redirectUri = searchParams.get("redirectUri") || searchParams.get("redirect") || '/';
 
             // Шаг 1: Регистрация пользователя
             const registerResponse = await authApi.postApiAuthCreate({

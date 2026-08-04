@@ -20,6 +20,13 @@ API.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    if (error.response?.status === 403) {
+      JwtTokenService.cleanAuth();
+      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -34,6 +41,7 @@ API.interceptors.response.use(
           .catch((refreshError) => {
             refreshTokenPromise = null;
             JwtTokenService.cleanAuth();
+            void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
             return Promise.reject(refreshError);
           });
       }
@@ -44,13 +52,6 @@ API.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-function redirectToAuth() {
-  const authPaths = ['/auth'];
-  if (!authPaths.includes(window.location.pathname)) {
-    window.location.href = '/auth';
-  }
-}
 
 // Экспортируем для orval
 export default API;

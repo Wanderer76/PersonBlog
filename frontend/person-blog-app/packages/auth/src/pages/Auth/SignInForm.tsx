@@ -1,9 +1,9 @@
 // src/pages/Auth/SignInForm.tsx
 import React, { useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import './AuthPage.css';
 import { getAuth } from "../../lib/api/generated/auth/auth";
-import { buildAuthRedirectUrl, validateRedirectUri } from "../../utils/validation";
+import { buildAuthRedirectUrl } from "../../utils/validation";
 
 interface SignInFormProps {
     onSwitchToSignUp: () => void;
@@ -11,7 +11,6 @@ interface SignInFormProps {
 
 const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const [formData, setFormData] = useState({ login: "", password: "" });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

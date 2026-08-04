@@ -25,7 +25,14 @@ const Header = lazy(() => import('./components/header/Header'));
 // Приватный маршрут
 const PrivateRoute = () => {
   const isAuthenticated = JwtTokenService.isAuth();
-  return isAuthenticated ? <Outlet /> : <button onClick={async () => await JwtTokenService.redirectToAuth(window.location.origin)} />;
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+    }
+  }, [isAuthenticated]);
+
+  return isAuthenticated ? <Outlet /> : <div className="loader">Перенаправление на авторизацию...</div>;
 };
 // Публичный маршрут (если нужно ограничить доступ к auth)
 // Публичный маршрут

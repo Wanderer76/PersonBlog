@@ -11,8 +11,6 @@ declare global {
   }
 }
 
-let refreshTokenPromise: Promise<void> | null = null;
-
 // Функция с дженерик типом для Orval
 export const customInstance = async <T>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
   const instance = axios.create({
@@ -24,30 +22,8 @@ export const customInstance = async <T>(config: AxiosRequestConfig): Promise<Axi
     return config;
   });
 
-  instance.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-
-        await refreshTokenPromise;
-        return instance(originalRequest);
-      }
-
-      return Promise.reject(error);
-    }
-  );
-
   const res = await instance.request(config);
   return res;
 };
-
-function redirectToAuth() {
-  const authPaths = ['/auth'];
-  if (!authPaths.includes(window.location.pathname)) {
-    window.location.href = '/auth';
-  }
-}
 
 export default customInstance;
