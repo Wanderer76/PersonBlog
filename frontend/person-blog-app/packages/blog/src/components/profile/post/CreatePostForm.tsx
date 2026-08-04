@@ -36,6 +36,18 @@ const emptyCreateModel: CreatePostModelViewModel = {
   categoryList: []
 };
 
+const formatFileSize = (bytes: number) => {
+  if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} КБ`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`;
+};
+
+const formatDuration = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'Определяем длительность…';
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
 const CreatePostForm = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,63 +175,96 @@ const CreatePostForm = () => {
     navigate('/profile');
   };
 
+  const openFilePicker = () => fileInputRef.current?.click();
+
   return (
-    <div className={styles.modal}>
-      <div className={styles.createPostForm}>
-        <h1>Создать видео</h1>
-        {errorMessage && <p role="alert">{errorMessage}</p>}
-
-        <TitleInput value={postForm.title} onChange={updateForm} placeholder="Название видео" />
-        <ThumbnailUpload thumbnail={postForm.videoPostData.thumbnail} onChange={updateForm} />
-
-        <div className={styles.formGroup}>
-          <label>Видео</label>
-          <div className={styles.uploadArea} onClick={() => fileInputRef.current?.click()}>
-            <div className={styles.cameraIcon}>🎥</div>
-            <h3>Выберите видеофайл</h3>
-            <input ref={fileInputRef} name="video" type="file"
-              className={`${styles.videoInput} ${styles.fileInput}`} accept="video/*" hidden onChange={updateForm} />
+    <main className={styles.pageShell}>
+      <section className={styles.formCard} aria-labelledby="create-video-title">
+        <header className={styles.formHeader}>
+          <div>
+            <span className={styles.eyebrow}>Новая публикация</span>
+            <h1 id="create-video-title">Создание видео</h1>
+            <p>Добавьте файл и заполните информацию, которую увидят зрители.</p>
           </div>
-        </div>
+          <button className={styles.closeButton} type="button" onClick={() => void handleCancel()}
+            aria-label="Закрыть форму">×</button>
+        </header>
 
-        {postForm.video && (
-          <div className={styles.previewContainer}>
-            <video className={styles.videoPreview} ref={videoRef} controls preload="metadata"
-              onLoadedMetadata={event => setVideoDuration(event.currentTarget.duration)} />
-            {uploadProgress > 0 && (
-              <div className={styles.uploadStatus}>
-                <div className={styles.progressBar}>
-                  <div className={styles.progressFill} style={{ width: `${uploadProgress}%` }} />
+        {errorMessage && <div className={styles.errorBanner} role="alert">{errorMessage}</div>}
+
+        <div className={styles.formBody}>
+          <section className={styles.mediaColumn} aria-label="Видео">
+            <div className={styles.sectionHeading}>
+              <span className={styles.stepNumber}>1</span>
+              <div><h2>Видеофайл</h2><p>До 2 ГБ, любой формат video/*</p></div>
+            </div>
+
+            {!postForm.video ? (
+              <div className={styles.uploadArea} role="button" tabIndex={0} onClick={openFilePicker}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openFilePicker(); }
+                }}>
+                <span className={styles.uploadIcon}>↑</span>
+                <strong>Выберите видео</strong>
+                <span>или перетащите файл в эту область</span>
+              </div>
+            ) : (
+              <div className={styles.previewContainer}>
+                <video className={styles.videoPreview} ref={videoRef} controls preload="metadata"
+                  onLoadedMetadata={event => setVideoDuration(event.currentTarget.duration)} />
+                <div className={styles.fileDetails}>
+                  <div><strong title={postForm.video.name}>{postForm.video.name}</strong>
+                    <span>{formatFileSize(postForm.video.size)} · {formatDuration(videoDuration)}</span></div>
+                  <button type="button" onClick={openFilePicker} disabled={isSubmitting}>Заменить</button>
                 </div>
-                <span className={styles.progressText}>{uploadProgress}% загружено</span>
               </div>
             )}
-          </div>
-        )}
+            <input ref={fileInputRef} name="video" type="file" className={styles.fileInput}
+              accept="video/*" hidden onChange={updateForm} />
 
-        <DescriptionTextarea value={postForm.videoPostData.description}
-          onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setPostForm(previous => ({
-            ...previous,
-            videoPostData: { ...previous.videoPostData, description: event.target.value }
-          }))} placeholder="Описание видео" />
+            {uploadProgress > 0 && (
+              <div className={styles.uploadStatus} aria-live="polite">
+                <div className={styles.progressMeta}><span>Загрузка видео</span><strong>{uploadProgress}%</strong></div>
+                <div className={styles.progressBar}><div className={styles.progressFill}
+                  style={{ width: `${uploadProgress}%` }} /></div>
+              </div>
+            )}
+          </section>
 
-        <TypedCategoryMultiSelect options={createModel.categoryList ?? []} value={postForm.videoPostData.categories}
-          onChange={(event: { target: { value: number[] } }) => setPostForm(previous => ({
-            ...previous,
-            videoPostData: { ...previous.videoPostData, categories: event.target.value }
-          }))} />
+          <section className={styles.detailsColumn} aria-label="Информация о публикации">
+            <div className={styles.sectionHeading}>
+              <span className={styles.stepNumber}>2</span>
+              <div><h2>О публикации</h2><p>Название, обложка и параметры доступа</p></div>
+            </div>
 
-        <PrivacySelect options={createModel.visibility ?? []} value={postForm.visibility} onChange={updateForm} />
-        <div className={styles.actionButtons}>
-          <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => void handleCancel()}>
-            Закрыть
-          </button>
-          <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => void sendForm()} disabled={isSubmitting}>
-            {isSubmitting ? 'Загрузка...' : createdPostIdRef.current ? 'Повторить загрузку' : 'Создать'}
-          </button>
+            <TitleInput value={postForm.title} onChange={updateForm} placeholder="Например, путешествие по Уралу" />
+            <ThumbnailUpload thumbnail={postForm.videoPostData.thumbnail} onChange={updateForm} />
+            <DescriptionTextarea value={postForm.videoPostData.description}
+              onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setPostForm(previous => ({
+                ...previous, videoPostData: { ...previous.videoPostData, description: event.target.value }
+              }))} placeholder="Расскажите, о чём это видео" />
+            <TypedCategoryMultiSelect options={createModel.categoryList ?? []}
+              value={postForm.videoPostData.categories}
+              onChange={(event: { target: { value: number[] } }) => setPostForm(previous => ({
+                ...previous, videoPostData: { ...previous.videoPostData, categories: event.target.value }
+              }))} />
+            <PrivacySelect options={createModel.visibility ?? []} value={postForm.visibility} onChange={updateForm} />
+          </section>
         </div>
-      </div>
-    </div>
+
+        <footer className={styles.actionBar}>
+          <p>{postForm.video ? 'После загрузки видео отправится на обработку.' : 'Сначала выберите видеофайл.'}</p>
+          <div className={styles.actionButtons}>
+            <button className={`${styles.btn} ${styles.btnSecondary}`} type="button"
+              onClick={() => void handleCancel()}>Отмена</button>
+            <button className={`${styles.btn} ${styles.btnPrimary}`} type="button"
+              onClick={() => void sendForm()} disabled={isSubmitting || !postForm.video}>
+              {isSubmitting ? 'Загружаем…' : createdPostIdRef.current ? 'Повторить загрузку' : 'Создать видео'}
+            </button>
+          </div>
+        </footer>
+      </section>
+    </main>
   );
 };
 
