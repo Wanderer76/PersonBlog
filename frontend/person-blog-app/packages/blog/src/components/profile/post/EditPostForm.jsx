@@ -1,90 +1,96 @@
-import React, { useEffect, useState } from "react";
-import styles from './CreatePostForm.module.css';
-import API from "../../../lib/api/client";
-import { useNavigate, useParams } from "react-router-dom";
-import VideoPlayer from "../../VideoPlayer/VideoPlayer";
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import API from '../../../lib/api/client';
 import {
-  TitleInput,
-  ThumbnailEdit,
   DescriptionTextarea,
   PrivacySelect,
-  ActionButtons,
-  ThumbnailUpload
-} from "./CommonComponents";
+  ThumbnailUpload,
+  TitleInput
+} from './CommonComponents';
+import styles from './CreatePostForm.module.css';
+
+const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
 
 const EditPostForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     visibility: 1,
-    thumbnailUrl: ""
+    thumbnailUrl: '',
+    thumbnailFile: null
   });
-
-  const [videoInfo, setVideoInfo] = useState({
-    objectName: null
-  });
-
   const [createModel, setCreateModel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [formConfig, postData] = await Promise.all([
-          API.get("/profile/api/ProfilePostV2/create"),
-          API.get(`/profile/api/ProfilePostV2/edit/${id}`)
-        ]);
+    const controller = new AbortController();
 
+    const fetchData = async () => {
+      if (!id) {
+        setError('Не указан идентификатор публикации');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const [formConfig, postData] = await Promise.all([
+          API.get('/profile/api/ProfilePostV2/create', { signal: controller.signal }),
+          API.get(`/profile/api/ProfilePostV2/edit/${id}`, { signal: controller.signal })
+        ]);
 
         setCreateModel(formConfig.data);
         setFormData({
-          title: postData.data.title || "",
-          description: postData.data.description || "",
+          title: postData.data.title || '',
+          description: postData.data.description || '',
           visibility: postData.data.visibility ?? 1,
-          thumbnailUrl: postData.data?.previewUrl || ""
+          thumbnailUrl: postData.data.previewUrl || '',
+          thumbnailFile: null
         });
-
-        // setVideoInfo({
-        //   objectName: previewData.data?.objectName || ""
-        // });
-
-      } catch (err) {
-        console.error("Ошибка загрузки данных:", err);
-        setError("Не удалось загрузить данные поста");
+      } catch (requestError) {
+        if (!controller.signal.aborted) {
+          console.error('Ошибка загрузки данных:', requestError);
+          setError('Не удалось загрузить данные публикации');
+        }
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
+    return () => controller.abort();
   }, [id]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData(previous => ({ ...previous, [name]: value }));
   };
 
-  const handleThumbnailChange = (e) => {
-    const file = e.target.files[0];
+  const handleThumbnailChange = (event) => {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    // Проверка размера файла (макс. 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Размер изображения должен быть меньше 5MB");
+    if (file.size > MAX_THUMBNAIL_SIZE) {
+      setError('Размер изображения не должен превышать 5 МБ');
+      event.target.value = '';
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      setError('Выберите файл изображения');
+      event.target.value = '';
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setFormData(prev => ({
-        ...prev,
-        thumbnailUrl: e.target.result,
+    reader.onload = () => {
+      setError(null);
+      setFormData(previous => ({
+        ...previous,
+        thumbnailUrl: typeof reader.result === 'string' ? reader.result : previous.thumbnailUrl,
         thumbnailFile: file
       }));
     };
@@ -92,35 +98,30 @@ const EditPostForm = () => {
   };
 
   const handleUpdatePost = async () => {
+    if (!id || isSubmitting) return;
     if (!formData.title.trim()) {
-      alert("Пожалуйста, добавьте название видео");
+      setError('Добавьте название видео');
       return;
     }
 
-    if (isSubmitting) return;
+    setError(null);
     setIsSubmitting(true);
 
     try {
       const payload = new FormData();
       payload.append('id', id);
-      payload.append('title', formData.title);
+      payload.append('title', formData.title.trim());
       payload.append('description', formData.description);
-      payload.append('visibility', formData.visibility);
+      payload.append('visibility', String(formData.visibility));
+      if (formData.thumbnailFile) payload.append('preview', formData.thumbnailFile);
 
-      if (formData.thumbnailFile) {
-        payload.append("preview", formData.thumbnailFile);
-      }
-
-      const response = await API.post("/profile/api/ProfilePostV2/edit", payload, {
+      await API.post('/profile/api/ProfilePostV2/edit', payload, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-
-      if (response.status === 200) {
-        navigate('/profile');
-      }
-    } catch (error) {
-      console.error("Ошибка обновления:", error);
-      alert("Произошла ошибка при сохранении изменений");
+      navigate('/profile');
+    } catch (requestError) {
+      console.error('Ошибка обновления:', requestError);
+      setError('Не удалось сохранить изменения. Попробуйте ещё раз.');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,83 +129,83 @@ const EditPostForm = () => {
 
   if (isLoading) {
     return (
-      <div className="modal loading-modal">
-        <div className="loading-spinner"></div>
-        <p>Загрузка данных...</p>
-      </div>
+      <main className={styles.pageShell}>
+        <section className={`${styles.formCard} ${styles.formState}`} aria-live="polite">
+          <span className={styles.loadingSpinner} aria-hidden="true" />
+          <p>Загружаем публикацию…</p>
+        </section>
+      </main>
     );
   }
 
-  if (error) {
+  if (error && !createModel) {
     return (
-      <div className="modal error-modal">
-        <div className="error-content">
-          <h2>Ошибка</h2>
+      <main className={styles.pageShell}>
+        <section className={`${styles.formCard} ${styles.formState}`} role="alert">
+          <h1>Не удалось открыть публикацию</h1>
           <p>{error}</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="btn btnPrimary"
-          >
-            Назад
+          <button className={`${styles.btn} ${styles.btnPrimary}`} type="button" onClick={() => navigate('/profile')}>
+            Вернуться в профиль
           </button>
-        </div>
-      </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <div className={styles.modal}>
-      <div className={styles.createPostForm}>
-        <h1>Редактировать видео-пост</h1>
-
-        <TitleInput
-          value={formData.title}
-          onChange={handleInputChange}
-          placeholder="Добавьте название вашего видео"
-        />
-
-        <ThumbnailUpload
-          thumbnail={formData.thumbnailUrl}
-          onChange={handleThumbnailChange}
-        />
-
-        {videoInfo.objectName &&
-          <div className={styles.formGroup}>
-            <label>Видео</label>
-            <div className={styles.videoPreview}>
-
-              <VideoPlayer
-                key={id}
-                path={{
-                  postId: id,
-                  autoplay: false,
-                  objectName: videoInfo.objectName
-                }}
-              />
-            </div>
+    <main className={styles.pageShell}>
+      <section className={styles.formCard} aria-labelledby="edit-video-title">
+        <header className={styles.formHeader}>
+          <div>
+            <span className={styles.eyebrow}>Настройки публикации</span>
+            <h1 id="edit-video-title">Редактирование видео</h1>
+            <p>Обновите информацию, обложку и параметры доступа.</p>
           </div>
-        }
-        <DescriptionTextarea
-          value={formData.description}
-          onChange={handleInputChange}
-          placeholder="Добавьте описание к вашему видео"
-        />
+          <button className={styles.closeButton} type="button" onClick={() => navigate('/profile')}
+            aria-label="Закрыть форму">×</button>
+        </header>
 
-        <PrivacySelect
-          options={createModel?.visibility}
-          value={formData.visibility}
-          onChange={handleInputChange}
-        />
+        {error && <div className={styles.errorBanner} role="alert">{error}</div>}
 
-        <ActionButtons
-          onCancel={() => navigate('/profile')}
-          onSubmit={handleUpdatePost}
-          cancelText="Отменить"
-          submitText="Сохранить изменения"
-          isSubmitting={isSubmitting}
-        />
-      </div>
-    </div>
+        <div className={styles.formBody}>
+          <section className={styles.mediaColumn} aria-label="Обложка видео">
+            <div className={styles.sectionHeading}>
+              <span className={styles.stepNumber}>1</span>
+              <div><h2>Обложка видео</h2><p>Изображение до 5 МБ</p></div>
+            </div>
+            <div className={styles.editThumbnail}>
+              <ThumbnailUpload thumbnail={formData.thumbnailUrl} onChange={handleThumbnailChange} />
+            </div>
+            <p className={styles.editMediaHint}>Используйте изображение формата 16:9 — оно лучше выглядит в ленте и на странице видео.</p>
+          </section>
+
+          <section className={styles.detailsColumn} aria-label="Информация о публикации">
+            <div className={styles.sectionHeading}>
+              <span className={styles.stepNumber}>2</span>
+              <div><h2>О публикации</h2><p>Название, описание и параметры доступа</p></div>
+            </div>
+            <TitleInput value={formData.title} onChange={handleInputChange}
+              placeholder="Название видео" />
+            <DescriptionTextarea value={formData.description} onChange={handleInputChange}
+              placeholder="Расскажите, о чём это видео" />
+            <PrivacySelect options={createModel?.visibility ?? []} value={formData.visibility}
+              onChange={handleInputChange} />
+          </section>
+        </div>
+
+        <footer className={styles.actionBar}>
+          <p>Изменения будут видны зрителям после сохранения.</p>
+          <div className={styles.actionButtons}>
+            <button className={`${styles.btn} ${styles.btnSecondary}`} type="button"
+              onClick={() => navigate('/profile')} disabled={isSubmitting}>Отмена</button>
+            <button className={`${styles.btn} ${styles.btnPrimary}`} type="button"
+              onClick={() => void handleUpdatePost()} disabled={isSubmitting}>
+              {isSubmitting ? 'Сохраняем…' : 'Сохранить изменения'}
+            </button>
+          </div>
+        </footer>
+      </section>
+    </main>
   );
 };
 

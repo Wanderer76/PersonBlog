@@ -222,6 +222,51 @@
 .hasThumbnail:hover .thumbnailOverlay { opacity: 1; }
 .thumbnailOverlay p { margin: 4px 0 0; }
 
+.editThumbnail .uploadThumbnail {
+  min-height: 280px;
+  border-style: solid;
+}
+
+.editThumbnail .thumbnailPreview {
+  max-height: none;
+}
+
+.editMediaHint {
+  margin: 14px 0 0;
+  color: var(--create-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.formState {
+  display: flex;
+  min-height: 300px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  padding: 40px;
+  text-align: center;
+}
+
+.formState h1,
+.formState p { margin: 0; }
+.formState p { color: var(--create-muted); }
+
+.loadingSpinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #fed7aa;
+  border-top-color: var(--create-accent);
+  border-radius: 50%;
+  animation: formSpin 0.8s linear infinite;
+}
+
+@keyframes formSpin {
+  to { transform: rotate(360deg); }
+}
+
 .multiselectContainer {
   position: relative;
   display: flex;
@@ -289,6 +334,7 @@
   .formBody { grid-template-columns: 1fr; }
   .mediaColumn { border-right: 0; border-bottom: 1px solid var(--create-border); }
   .uploadArea { min-height: 260px; }
+  .editThumbnail .uploadThumbnail { min-height: 220px; }
 }
 
 @media (max-width: 560px) {
