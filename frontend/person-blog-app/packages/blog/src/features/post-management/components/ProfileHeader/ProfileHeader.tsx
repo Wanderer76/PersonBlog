@@ -17,12 +17,6 @@ interface ProfileHeaderProps {
 export const ProfileHeader = memo(({ profile, hasBlog, onLogout, onCreateBlog }: ProfileHeaderProps) => (
   <header className="profileHeader">
     <div className="avatarSection">
-      {!hasBlog && (
-        <Button variant="secondary" onClick={onCreateBlog}>
-          Создать блог
-        </Button>
-      )}
-
       <div className="avatarWrapper">
         <img
           src={profile.photoUrl ?? DefaultProfileIcon}
@@ -33,18 +27,29 @@ export const ProfileHeader = memo(({ profile, hasBlog, onLogout, onCreateBlog }:
 
       <div className="profileInfo">
         <h1 className="blogTitle">{profile.name || 'Без имени'}</h1>
+        {profile.description && <p className="profileDescription">{profile.description}</p>}
         <div className="profileMeta">
+          <span className="profileStat">
+            <strong>{profile.totalPostsCount}</strong>
+            <span>публикаций</span>
+          </span>
+          <span className="profileStat">
+            <strong>{profile.subscribersCount ?? 0}</strong>
+            <span>подписчиков</span>
+          </span>
           {profile.createdAt && (
             <time className="registration-date" dateTime={profile.createdAt}>
-              📅 Зарегистрирован: {getLocalDateTime(profile.createdAt)}
+              На сайте с {getLocalDateTime(profile.createdAt)}
             </time>
           )}
-          <span className="posts-count">📝 Публикаций: {profile.totalPostsCount}</span>
         </div>
       </div>
     </div>
 
-    <Button variant="danger" onClick={onLogout}>Выход</Button>
+    <div className="profileHeaderActions">
+      {!hasBlog && <Button onClick={onCreateBlog}>Создать блог</Button>}
+      <Button className="profileLogoutButton" variant="secondary" onClick={onLogout}>Выйти</Button>
+    </div>
   </header>
 ));
 

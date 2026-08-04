@@ -1,10 +1,9 @@
-import { KeyboardEvent, memo, useState } from 'react';
+import { KeyboardEvent, memo, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPostInfoModel } from '@/lib/api/generated/models';
 import { useServiceWorkerMessage } from '../../../../shared/hooks/useServiceWorkerMessage';
-import './PostCard.css';
 import { secondsToHumanReadable } from '@/shared/LocalDate';
-import { Button } from '@/shared/ui/Button/Button';
+import './PostCard.css';
 
 interface PostCardProps {
   post: UserPostInfoModel;
@@ -16,6 +15,8 @@ interface PostCardProps {
 export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardProps) => {
   const navigate = useNavigate();
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useServiceWorkerMessage((event) => {
     if (event.data.type === 'CHUNK_UPLOADED' && event.data.payload.postId === post.id) {
@@ -23,6 +24,24 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardPr
       setUploadProgress(Math.round((chunkNumber / totalChunks) * 100));
     }
   }, [post.id]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const closeMenu = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setIsMenuOpen(false);
+    };
+    const closeMenuOnEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', closeMenu);
+    document.addEventListener('keydown', closeMenuOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeMenu);
+      document.removeEventListener('keydown', closeMenuOnEscape);
+    };
+  }, [isMenuOpen]);
 
   const processState = post.videoInfo?.processState;
   const isClickable = processState === 1 && Boolean(post.id);
@@ -46,10 +65,20 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardPr
   };
 
   return (
-    <article className="postCard" ref={isLast && observeRef ? observeRef : undefined}>
+    <article
+      className={`postCard${isMenuOpen ? ' postCardMenuOpen' : ''}`}
+      ref={isLast && observeRef ? observeRef : undefined}
+    >
       <div className="postThumbnail" onClick={openPost} onKeyDown={handleKeyDown}
         role={isClickable ? 'button' : undefined} tabIndex={isClickable ? 0 : -1}>
-        <img src={post.videoInfo?.previewUrl || ''} alt={post.title || 'Превью публикации'} loading="lazy" />
+        {post.videoInfo?.previewUrl ? (
+          <img src={post.videoInfo.previewUrl} alt={post.title || 'Превью публикации'} loading="lazy" />
+        ) : (
+          <div className="postThumbnailFallback" aria-label="Превью пока недоступно">
+            <span aria-hidden="true">▶</span>
+            <small>Превью недоступно</small>
+          </div>
+        )}
         <time className="videoDuration">
           {secondsToHumanReadable(post.videoInfo?.videoMetadata?.duration ?? 0)}
         </time>
@@ -57,26 +86,54 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardPr
       </div>
 
       <div className="postContent">
-        <h3 className="postTitle" onClick={openPost} onKeyDown={handleKeyDown}
-          role={isClickable ? 'button' : undefined} tabIndex={isClickable ? 0 : -1}>
-          {post.title || 'Без названия'}
-        </h3>
+        <div className="postTitleRow">
+          <h3 className="postTitle" onClick={openPost} onKeyDown={handleKeyDown}
+            role={isClickable ? 'button' : undefined} tabIndex={isClickable ? 0 : -1}>
+            {post.title || 'Без названия'}
+          </h3>
+          <div className="postMenu" ref={menuRef}>
+            <button
+              className="postMenuTrigger"
+              type="button"
+              aria-label="Действия с публикацией"
+              aria-expanded={isMenuOpen}
+              aria-haspopup="menu"
+              onClick={() => setIsMenuOpen(current => !current)}
+            >
+              <span aria-hidden="true">•••</span>
+            </button>
+            {isMenuOpen && (
+              <div className="postMenuPopover" role="menu">
+                <button type="button" role="menuitem" onClick={() => {
+                  setIsMenuOpen(false);
+                  if (post.id) navigate(`post/edit/${post.id}`);
+                }}>
+                  Редактировать
+                </button>
+                <button className="postMenuDanger" type="button" role="menuitem" onClick={() => {
+                  setIsMenuOpen(false);
+                  if (post.id && window.confirm('Удалить публикацию? Это действие нельзя отменить.')) {
+                    onRemove(post.id);
+                  }
+                }}>
+                  Удалить
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="postMeta">
           <div className="postStats">
-            <span aria-label={`Просмотры: ${post.viewCount ?? 0}`}>👁 {post.viewCount ?? 0}</span>
+            <span aria-label={`Просмотры: ${post.viewCount ?? 0}`}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                <circle cx="12" cy="12" r="2.5" />
+              </svg>
+              {post.viewCount ?? 0}
+            </span>
             <time dateTime={post.createdAt || ''}>
-              📅 {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '—'}
+              {post.createdAt ? new Date(post.createdAt).toLocaleDateString() : '—'}
             </time>
-          </div>
-          <div className="postActions">
-            <Button variant="primary" onClick={(event) => {
-              event.stopPropagation();
-              if (post.id) navigate(`post/edit/${post.id}`);
-            }}>Редактировать</Button>
-            <Button variant="danger" onClick={(event) => {
-              event.stopPropagation();
-              if (post.id) onRemove(post.id);
-            }}>Удалить</Button>
           </div>
         </div>
       </div>

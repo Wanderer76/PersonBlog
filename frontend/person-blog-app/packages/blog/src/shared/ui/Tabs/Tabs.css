@@ -1,9 +1,11 @@
 .tabsContainer {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 20px;
-  padding-bottom: 20px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ededee;
   flex-wrap: wrap;
 }
 
@@ -15,8 +17,8 @@
 .tabButton {
   background: none;
   border: none;
-  padding: 8px 16px;
-  font-size: 18px;
+  padding: 8px 12px;
+  font-size: 15px;
   color: #666;
   cursor: pointer;
   position: relative;
@@ -36,10 +38,11 @@
 .tabButton.active::after {
   content: '';
   position: absolute;
-  bottom: -5px;
+  bottom: -17px;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
   background: #ff7b00;
 }
 
