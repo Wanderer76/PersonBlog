@@ -103,9 +103,22 @@ internal class S3MultipartFileUploadService : IMultipartFileUpload
         if (session == null)
             throw new InvalidOperationException($"Upload session {uploadId} not found");
 
+        if (session.Status == UploadStatus.Completed)
+            return await GetCompletedETagAsync(bucketId, session);
+
+        if (session.Status != UploadStatus.InProgress)
+            throw new InvalidOperationException($"Upload session {uploadId} cannot be completed from status {session.Status}");
+
         if (parts == null || parts.Count == 0)
         {
-            parts = (await ListPartsAsync(bucketId, uploadId)).ToList();
+            try
+            {
+                parts = (await ListPartsAsync(bucketId, uploadId)).ToList();
+            }
+            catch (AmazonS3Exception exception) when (exception.ErrorCode == "NoSuchUpload")
+            {
+                return await GetCompletedETagAsync(bucketId, session);
+            }
         }
 
         if (parts.Count == 0)
@@ -123,11 +136,42 @@ internal class S3MultipartFileUploadService : IMultipartFileUpload
             PartETags = partETags
         };
 
-        var completeResponse = await _client.CompleteMultipartUploadAsync(completeRequest);
+        try
+        {
+            var completeResponse = await _client.CompleteMultipartUploadAsync(completeRequest);
+            return await MarkCompletedAsync(bucketId, session, completeResponse.ETag);
+        }
+        catch (AmazonS3Exception exception) when (exception.ErrorCode == "NoSuchUpload")
+        {
+            // Another request may have completed the same multipart upload before
+            // it persisted the session status. The resulting object is authoritative.
+            return await GetCompletedETagAsync(bucketId, session);
+        }
+    }
 
+    private async Task<string> GetCompletedETagAsync(string bucketId, MultipartUploadSession session)
+    {
+        if (!string.IsNullOrWhiteSpace(session.CompletedETag))
+            return session.CompletedETag;
+
+        var metadata = await _client.GetObjectMetadataAsync(new GetObjectMetadataRequest
+        {
+            BucketName = bucketId,
+            Key = session.ObjectName
+        });
+
+        return await MarkCompletedAsync(bucketId, session, metadata.ETag);
+    }
+
+    private async Task<string> MarkCompletedAsync(
+        string bucketId,
+        MultipartUploadSession session,
+        string eTag)
+    {
         session.Status = UploadStatus.Completed;
+        session.CompletedETag = eTag.Trim('"');
         await SaveSessionAsync(bucketId, session);
-        return completeResponse.ETag.Trim('"');
+        return session.CompletedETag;
     }
 
     public async Task AbortUploadAsync(string bucketId, string uploadId)

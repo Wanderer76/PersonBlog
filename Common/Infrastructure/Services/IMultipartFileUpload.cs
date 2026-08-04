@@ -31,6 +31,7 @@ public sealed class MultipartUploadSession
     public UploadStatus Status { get; set; }
     public long TotalSize { get; set; }
     public int TotalParts { get; set; }
+    public string? CompletedETag { get; set; }
 }
 
 public sealed class MultipartUploadPart

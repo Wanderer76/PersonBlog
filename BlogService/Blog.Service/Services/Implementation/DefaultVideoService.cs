@@ -183,6 +183,14 @@ internal sealed class DefaultVideoService : IVideoService
             return Result.Failure(new Error("Forbidden", "Пост не принадлежит текущему пользователю"));
         }
 
+        // Complete is retried by the client when the response is lost. Once the
+        // post has left the upload state, the conversion command was already saved
+        // in the same unit of work as this state transition.
+        if (post.ProcessState != ProcessState.Load)
+        {
+            return Result.Success();
+        }
+
         var metadata = await _context.Get<VideoFile>()
                   .Where(x => x.PostId == postId)
                   .FirstOrDefaultAsync();
@@ -190,6 +198,19 @@ internal sealed class DefaultVideoService : IVideoService
         if (metadata == null)
         {
             return Result.Failure(new Error("NotFound", "Метаданные видео не найдены"));
+        }
+
+        var conversionAlreadyQueued = await _context.Get<VideoProcessEvent>()
+            .AnyAsync(x =>
+                x.CorrelationId == metadata.Id &&
+                x.EventType == nameof(ConvertVideoCommand));
+
+        if (conversionAlreadyQueued)
+        {
+            _context.Attach(post);
+            post.ProcessState = ProcessState.Draft;
+            await _context.SaveChangesAsync();
+            return Result.Success();
         }
 
         var videoCreateEvent = new ConvertVideoCommand
