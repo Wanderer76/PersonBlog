@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
 import { useNavigate } from 'react-router-dom';
 import { PostCard } from '../../features/post-management/components/PostCard/PostCard';
 import { Tabs } from '../../shared/ui/Tabs/Tabs';
@@ -8,13 +9,14 @@ import { useIntersectionObserver } from '../../shared/hooks/useIntersectionObser
 import { Playlist } from '../../entities/playlist/types';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
 import styles from './ProfilePage.module.css';
-import API from '@/lib/api/client';
+import API, { BaseApUrl } from '@/lib/api/client';
 import { getPlayList } from '@/lib/api/generated/play-list/play-list';
-import { JwtTokenService } from '@/shared/TokenStrorage';
+import { getAccessToken, JwtTokenService } from '@/shared/TokenStrorage';
 import { ProfileHeader } from '@/features/post-management/components/ProfileHeader/ProfileHeader';
 import { PlaylistCard } from '@/features/post-management/components/PlayListCars/PlaylistCard';
 import { getBlog } from '@/lib/api/generated/blog/blog';
 import { BlogModel, UserPostInfoModel } from '@/lib/api/generated/models';
+import { VideoProcessingProgress } from '@/entities/profile/types';
 
 const PAGE_SIZE = 10;
 const POST_TYPE = { text: 0, video: 1 } as const;
@@ -48,6 +50,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 export const ProfilePage = memo(() => {
     const navigate = useNavigate();
     const loadingRef = useRef(false);
+    const videoHubRef = useRef<HubConnection | null>(null);
     const [profile, setProfile] = useState<ProfileViewModel>(initialProfile);
     const [blogId, setBlogId] = useState<string | null>(null);
     const [posts, setPosts] = useState<UserPostInfoModel[]>([]);
@@ -57,6 +60,47 @@ export const ProfilePage = memo(() => {
     const [activePanel, setActivePanel] = useState<ActivePanel>('posts');
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [videoProgress, setVideoProgress] = useState<Record<string, VideoProcessingProgress>>({});
+
+    useEffect(() => {
+        let disposed = false;
+        const connection = new HubConnectionBuilder()
+            .withUrl(`${BaseApUrl}/videohub`, {
+                accessTokenFactory: () => getAccessToken() ?? '',
+                withCredentials: false
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        const handleProgress = (progress: VideoProcessingProgress) => {
+            setVideoProgress(previous => ({ ...previous, [progress.postId]: progress }));
+        };
+
+        connection.on('OnVideoConvertProgress', handleProgress);
+        videoHubRef.current = connection;
+
+        const startConnection = async () => {
+            while (!disposed && connection.state === HubConnectionState.Disconnected) {
+                try {
+                    await connection.start();
+                    return;
+                } catch (error) {
+                    if (disposed) return;
+                    console.error('Не удалось подключиться к прогрессу обработки видео. Повтор через 3 секунды.', error);
+                    await new Promise(resolve => window.setTimeout(resolve, 3000));
+                }
+            }
+        };
+
+        void startConnection();
+
+        return () => {
+            disposed = true;
+            videoHubRef.current = null;
+            connection.off('OnVideoConvertProgress', handleProgress);
+            void connection.stop();
+        };
+    }, []);
 
     const loadMore = useCallback(() => {
         if (!loadingRef.current) setPage(previousPage => previousPage + 1);
@@ -202,7 +246,8 @@ export const ProfilePage = memo(() => {
                 <div className={styles.postsGrid}>
                     {activePanel === 'posts' && posts.map((post, index) => (
                         <PostCard key={post.id} post={post} isLast={index === posts.length - 1}
-                            onRemove={handleRemovePost} observeRef={lastElementRef} />
+                            onRemove={handleRemovePost} observeRef={lastElementRef}
+                            processingProgress={post.id ? videoProgress[post.id] : undefined} />
                     ))}
                     {activePanel === 'text' && posts.map((post, index) => (
                         <article className={styles.textPostCard} key={post.id}

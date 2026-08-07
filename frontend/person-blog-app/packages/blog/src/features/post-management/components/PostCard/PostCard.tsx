@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserPostInfoModel } from '@/lib/api/generated/models';
 import { useServiceWorkerMessage } from '../../../../shared/hooks/useServiceWorkerMessage';
 import { secondsToHumanReadable } from '@/shared/LocalDate';
+import { VideoProcessingProgress } from '@/entities/profile/types';
 import './PostCard.css';
 
 interface PostCardProps {
@@ -10,9 +11,10 @@ interface PostCardProps {
   isLast?: boolean;
   onRemove: (id: string) => void;
   observeRef?: (node: HTMLElement | null) => void;
+  processingProgress?: VideoProcessingProgress;
 }
 
-export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardProps) => {
+export const PostCard = memo(({ post, isLast, onRemove, observeRef, processingProgress }: PostCardProps) => {
   const navigate = useNavigate();
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -44,14 +46,21 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardPr
   }, [isMenuOpen]);
 
   const processState = post.videoInfo?.processState;
+  const displayedProgress = Math.round(processingProgress?.percent ?? uploadProgress);
   const isClickable = processState === 1 && Boolean(post.id);
-  const statusText = processState === 1
-    ? 'Опубликовано'
-    : processState === 2
-      ? `Загрузка ${uploadProgress}%`
-      : processState === 3
-        ? 'Ошибка обработки'
-        : 'Черновик';
+  const statusText = processingProgress?.status === 'failed'
+    ? 'Ошибка обработки'
+    : processingProgress?.status === 'completed'
+      ? 'Обработка завершена'
+      : processingProgress?.status === 'processing'
+        ? `Обработка ${displayedProgress}%`
+        : processState === 1
+          ? 'Опубликовано'
+          : processState === 2
+            ? `Загрузка ${displayedProgress}%`
+            : processState === 3
+              ? 'Ошибка обработки'
+              : 'Черновик';
 
   const openPost = () => {
     if (isClickable) navigate(`/videoPage/${post.id}`);
@@ -83,6 +92,11 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef }: PostCardPr
           {secondsToHumanReadable(post.videoInfo?.videoMetadata?.duration ?? 0)}
         </time>
         <span className={`postStatus status-${processState}`}>{statusText}</span>
+        {processState === 2 && (
+          <div className="videoProcessingProgress" aria-label={`Прогресс обработки видео: ${displayedProgress}%`}>
+            <div style={{ width: `${displayedProgress}%` }} />
+          </div>
+        )}
       </div>
 
       <div className="postContent">

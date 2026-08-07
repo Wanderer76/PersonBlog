@@ -18,6 +18,7 @@ public class VideoConversionServiceTests : IDisposable
     private readonly Mock<IVideoConvertService> _mockFfmpegService;
     private readonly Mock<IFileStorage> _mockStorage;
     private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<IVideoProgressNotifier> _mockProgressNotifier;
     private readonly HlsVideoPresets _videoPresets;
     private readonly VideoConversionService _service;
     private readonly string _tempPath;
@@ -27,6 +28,7 @@ public class VideoConversionServiceTests : IDisposable
         _mockFfmpegService = new Mock<IVideoConvertService>();
         _mockStorage = new Mock<IFileStorage>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockProgressNotifier = new Mock<IVideoProgressNotifier>();
 
         _tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         Directory.CreateDirectory(_tempPath);
@@ -47,7 +49,8 @@ public class VideoConversionServiceTests : IDisposable
             _mockFfmpegService.Object,
             _mockStorage.Object,
             _mockConfiguration.Object,
-            _videoPresets);
+            _videoPresets,
+            _mockProgressNotifier.Object);
     }
 
     #region ProcessConversionAsync Tests

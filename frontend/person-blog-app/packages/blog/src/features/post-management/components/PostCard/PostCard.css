@@ -85,6 +85,23 @@
 .postStatus.status-2 { background: rgba(194, 65, 12, 0.9); }
 .postStatus.status-3 { background: rgba(185, 28, 28, 0.9); }
 
+.videoProcessingProgress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 5px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.videoProcessingProgress > div {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: #ff7b00;
+  transition: width 180ms ease;
+}
+
 .postContent {
   display: flex;
   flex-grow: 1;

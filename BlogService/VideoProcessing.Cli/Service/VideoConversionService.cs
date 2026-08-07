@@ -17,13 +17,20 @@ public sealed class VideoConversionService
     private readonly IFileStorage _storage;
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
+    private readonly IVideoProgressNotifier _progressNotifier;
 
-    public VideoConversionService(IVideoConvertService ffmpegService, IFileStorage storage, IConfiguration configuration, HlsVideoPresets videoPresets)
+    public VideoConversionService(
+        IVideoConvertService ffmpegService,
+        IFileStorage storage,
+        IConfiguration configuration,
+        HlsVideoPresets videoPresets,
+        IVideoProgressNotifier progressNotifier)
     {
         _ffmpegService = ffmpegService;
         _storage = storage;
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
+        _progressNotifier = progressNotifier;
     }
 
     public async Task<VideoConvertedResponse> ProcessConversionAsync(ConvertVideoCommand command, Guid postId, bool hasPreviewId)
@@ -53,18 +60,21 @@ public sealed class VideoConversionService
                 await ProcessPreviewAsync(command, result, url);
             }
 
-            await ProcessHls(command.BlogId, command.VideoMetadata, dir, fileId, url, videoStream);
+            await ReportProgressSafelyAsync(command.BlogId, postId, 0, "processing");
+            await ProcessHls(command.BlogId, command.VideoMetadata, dir, fileId, url, videoStream, postId);
 
             result.IsProcessing = false;
             result.ObjectName = $"{postId}/{command.VideoMetadataId}.m3u8";
             result.Duration = videoStream.Duration;
             result.ProcessState = ProcessState.Complete;
+            await ReportProgressSafelyAsync(command.BlogId, postId, 100, "completed");
             return result;
         }
         catch (Exception e)
         {
             result.Error = $"Ошибка конвертации видео: {e.Message}";
             result.ProcessState = ProcessState.Error;
+            await ReportProgressSafelyAsync(command.BlogId, postId, 0, "failed", result.Error);
             return result;
         }
     }
@@ -151,7 +161,7 @@ public sealed class VideoConversionService
         }
     }
 
-    private async Task ProcessHls(Guid blogId, VideoFile fileMetadata, string dir, Guid fileId, string inputUrl, VideoMediaInfo videoStream)
+    private async Task ProcessHls(Guid blogId, VideoFile fileMetadata, string dir, Guid fileId, string inputUrl, VideoMediaInfo videoStream, Guid postId)
     {
         try
         {
@@ -174,13 +184,13 @@ public sealed class VideoConversionService
                 EncodePreset = _videoPresets.EncodePreset
             };
 
-            var progressCallBack = new AsyncProgress<double>((currentTime) =>
+            var progressCallBack = new AsyncProgress<double>(async currentTime =>
             {
                 var percent = videoStream.Duration <= 0
                     ? 0
                     : Math.Min(100, currentTime / videoStream.Duration * 100);
                 Console.WriteLine($"Percent : {percent}");
-                return Task.CompletedTask;
+                await ReportProgressSafelyAsync(blogId, postId, percent, "processing");
             });
 
             await _ffmpegService.CreateHlsAsync(inputUrl, dir, hlsOptions, progressCallBack);
@@ -328,6 +338,24 @@ public sealed class VideoConversionService
         if (!deleted && Directory.Exists(directoryPath))
         {
             Console.WriteLine($"⚠️ Не удалось очистить временную директорию: {directoryPath}. Будет удалена при следующей попытке или перезапуске сервиса.");
+        }
+    }
+
+    private async Task ReportProgressSafelyAsync(
+        Guid blogId,
+        Guid postId,
+        double percent,
+        string status,
+        string? error = null)
+    {
+        try
+        {
+            await _progressNotifier.ReportAsync(blogId, postId, percent, status, error);
+        }
+        catch (Exception exception)
+        {
+            // A disconnected UI must not fail or cancel the video conversion itself.
+            Console.Error.WriteLine($"Unable to publish video progress for post {postId}: {exception.Message}");
         }
     }
 

@@ -6,6 +6,8 @@ using Infrastructure.Extensions;
 using MessageBus;
 using MessageBus.Configs;
 using MessageBus.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using VideoProcessing.Cli.Hubs;
 using VideoProcessing.Cli.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +32,26 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
     });
 
 builder.Services.AddScoped<VideoConversionService>();
+builder.Services.AddSingleton<IVideoProgressNotifier, SignalRVideoProgressNotifier>();
+builder.Services.AddSignalR();
+builder.Services.AddCors();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.Events ??= new JwtBearerEvents();
+    options.Events.OnMessageReceived = context =>
+    {
+        var accessToken = context.Request.Query["access_token"];
+        if (!string.IsNullOrEmpty(accessToken) &&
+            context.HttpContext.Request.Path.StartsWithSegments("/videohub"))
+        {
+            context.Token = accessToken;
+        }
+
+        return Task.CompletedTask;
+    };
+});
+builder.Services.AddAuthorization();
 
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
@@ -40,6 +62,10 @@ app.UseSwagger();
 //app.UseCustomSwagger(app.Configuration);
 app.UseSwaggerUI();
 app.UseRouting();
+app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
+app.MapHub<VideoProcessingHub>("/videohub");
 app.MapDefaultEndpoints();
 app.Run();
