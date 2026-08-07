@@ -1,4 +1,4 @@
-﻿using Conference.Domain.Entities;
+using Conference.Domain.Entities;
 using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Conference.Service.Extensions;
@@ -7,107 +7,134 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
 
-namespace Conference.Service.Implementation
+namespace Conference.Service.Implementation;
+
+public sealed class DefaultConferenceService(
+    IReadWriteRepository<IConferenceEntity> repository,
+    ICacheService cacheService,
+    ICurrentUserService currentUserService) : IConferenceRoomService
 {
-    public class DefaultConferenceService : IConferenceRoomService
+    public async Task AddParticipantToConferenceAsync(Guid id, Guid userId, string? userName = null)
     {
-        private readonly IReadWriteRepository<IConferenceEntity> _readWriteRepository;
-        private readonly ICacheService _cacheService;
-        private readonly ICurrentUserService _currentUserService;
-
-        public DefaultConferenceService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService, ICurrentUserService currentUserService)
+        var conference = await repository.Get<ConferenceRoom>()
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == id);
+        if (conference == null || !conference.IsActive)
         {
-            _readWriteRepository = readWriteRepository;
-            _cacheService = cacheService;
-            _currentUserService = currentUserService;
+            throw new ArgumentException("Conference does not exist or is closed.", nameof(id));
         }
 
-        public async Task AddParticipantToConferenceAsync(Guid id, Guid userId)
+        if (conference.Participants.Any(x => x.UserId == userId))
         {
-            var cacheKey = new ConferenceRoomKey(id);
-            var conference = await _cacheService.GetConferenceRoomCacheAsync(cacheKey);
-            conference ??= await _readWriteRepository.Get<ConferenceRoom>()
-                    .Include(x => x.Participants)
-                    .FirstAsync(x => x.Id == id);
-
-            if (!conference.Participants.Any(x => x.UserId == userId))
-            {
-                var session = (await _currentUserService.GetCurrentUserAsync())!;
-                conference.AddParticipant(new ConferenceParticipant(GuidService.GetNewGuid(), session.UserId, session.UserName, conference.Id));
-                await _readWriteRepository.SaveChangesAsync();
-                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-            }
+            return;
         }
 
-        public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid userId, Guid postId)
+        if (string.IsNullOrWhiteSpace(userName))
         {
-            var roomId = GuidService.GetNewGuid();
-            var creatorUser = (await _currentUserService.GetCurrentUserAsync())!;
-            if (creatorUser.IsAnonymous == false)
+            var user = await currentUserService.GetCurrentUserAsync();
+            if (user.IsAnonymous || user.UserId != userId)
             {
-                var creator = new ConferenceParticipant(GuidService.GetNewGuid(), creatorUser.UserId, creatorUser.UserName, roomId);
-                var conference = new ConferenceRoom(roomId, postId, creator);
-                _readWriteRepository.Add(conference);
-                await _readWriteRepository.SaveChangesAsync();
-                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-                return new ConferenceViewModel(conference.Id, conference.PostId);
+                throw new UnauthorizedAccessException("The current user session is invalid.");
             }
-            else
-            {
-                throw new ArgumentException("Пользователь должен быть авторизован");
-            }
+
+            userName = user.UserName;
         }
 
-        public async Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id)
+        var participant = new ConferenceParticipant(
+            GuidService.GetNewGuid(),
+            userId,
+            userName,
+            conference.Id);
+        conference.AddParticipant(participant);
+        repository.Add(participant);
+        await repository.SaveChangesAsync();
+        await cacheService.RemoveConferenceRoomCacheAsync(conference.GetCacheKey());
+    }
+
+    public async Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid userId, Guid postId)
+    {
+        var creatorUser = await currentUserService.GetCurrentUserAsync();
+        if (creatorUser.IsAnonymous || creatorUser.UserId != userId)
         {
-            var conference = await _cacheService.GetConferenceRoomCacheAsync(new ConferenceRoomKey(id));
-            if (conference == null)
-            {
-                conference ??= await _readWriteRepository.Get<ConferenceRoom>()
-                        .Include(x => x.Participants)
-                        .Where(x => x.State == ConferenceState.Active)
-                        .FirstAsync(x => x.Id == id);
-                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-            }
-
-            if ((DateTimeService.Now() - conference.UpdatedAt).TotalMinutes > 10 && conference.Participants.Count == 0)
-            {
-                conference.Close();
-            }
-
-            if (!conference.IsActive)
-                throw new ArgumentException("Conference is close");
-            return new ConferenceViewModel(conference.Id, conference.PostId);
+            throw new UnauthorizedAccessException("An authenticated user is required.");
         }
 
-        public async ValueTask<bool> IsConferenceActiveAsync(Guid id)
+        var roomId = GuidService.GetNewGuid();
+        var creator = new ConferenceParticipant(
+            GuidService.GetNewGuid(),
+            creatorUser.UserId,
+            creatorUser.UserName,
+            roomId);
+        var conference = new ConferenceRoom(roomId, postId, creator);
+        repository.Add(conference);
+        await repository.SaveChangesAsync();
+        await cacheService.UpdateConferenceRoomCacheAsync(conference);
+
+        return new ConferenceViewModel(conference.Id, conference.PostId);
+    }
+
+    public async Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id)
+    {
+        var cacheKey = new ConferenceRoomKey(id);
+        var conference = await cacheService.GetConferenceRoomCacheAsync(cacheKey);
+        conference ??= await repository.Get<ConferenceRoom>()
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == id && x.State == ConferenceState.Active);
+
+        if (conference == null)
         {
-            return await _readWriteRepository.Get<ConferenceRoom>()
-                .Where(x => x.Id == id)
-                .Select(x => x.State == ConferenceState.Active)
-                .FirstAsync();
+            throw new ArgumentException("Conference does not exist or is closed.", nameof(id));
         }
 
-        public async Task RemoveParticipantToConferenceAsync(Guid roomId, Guid userId)
+        if ((DateTimeService.Now() - conference.UpdatedAt).TotalMinutes > 10 && conference.Participants.Count == 0)
         {
-            var cacheKey = new ConferenceRoomKey(roomId);
-            var conference = await _cacheService.GetConferenceRoomCacheAsync(cacheKey);
-            if (conference == null)
+            var persistedConference = await repository.Get<ConferenceRoom>()
+                .Include(x => x.Participants)
+                .FirstOrDefaultAsync(x => x.Id == id);
+            if (persistedConference != null && persistedConference.IsActive && persistedConference.Participants.Count == 0)
             {
-                conference ??= await _readWriteRepository.Get<ConferenceRoom>()
-                        .Include(x => x.Participants)
-                        .FirstAsync(x => x.Id == roomId);
-                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
+                persistedConference.Close();
+                await repository.SaveChangesAsync();
             }
 
-            var userToRemove = conference.Participants.FirstOrDefault(x => x.UserId == userId);
-            if (userToRemove != null)
-            {
-                conference.RemoveParticipant(userToRemove);
-                _readWriteRepository.Remove(userToRemove);
-                await _readWriteRepository.SaveChangesAsync();
-                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-            }
+            await cacheService.RemoveConferenceRoomCacheAsync(cacheKey);
+            throw new InvalidOperationException("Conference is closed.");
         }
+
+        if (!conference.IsActive)
+        {
+            throw new InvalidOperationException("Conference is closed.");
+        }
+
+        await cacheService.UpdateConferenceRoomCacheAsync(conference);
+        return new ConferenceViewModel(conference.Id, conference.PostId);
+    }
+
+    public async ValueTask<bool> IsConferenceActiveAsync(Guid id)
+    {
+        return await repository.Get<ConferenceRoom>()
+            .AnyAsync(x => x.Id == id && x.State == ConferenceState.Active);
+    }
+
+    public async Task RemoveParticipantToConferenceAsync(Guid roomId, Guid userId)
+    {
+        var conference = await repository.Get<ConferenceRoom>()
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == roomId);
+        if (conference == null)
+        {
+            return;
+        }
+
+        var participant = conference.Participants.FirstOrDefault(x => x.UserId == userId);
+        if (participant == null)
+        {
+            return;
+        }
+
+        conference.RemoveParticipant(participant);
+        repository.Remove(participant);
+        await repository.SaveChangesAsync();
+        await cacheService.RemoveConferenceRoomCacheAsync(conference.GetCacheKey());
     }
 }

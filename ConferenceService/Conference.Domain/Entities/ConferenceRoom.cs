@@ -13,7 +13,7 @@ namespace Conference.Domain.Entities
         public Guid PostId { get; }
         public ConferenceState State { get; private set; }
         public DateTimeOffset UpdatedAt { get; private set; }
-        public List<ConferenceParticipant> Participants { get; private set; }
+        public List<ConferenceParticipant> Participants { get; private set; } = [];
 
         [NotMapped]
         public bool IsActive { get => State == ConferenceState.Active; }

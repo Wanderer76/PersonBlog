@@ -6,7 +6,7 @@ namespace Conference.Domain.Services
     {
         Task<ConferenceViewModel> CreateConferenceRoomAsync(Guid creatorUserId, Guid postId);
         Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id);
-        Task AddParticipantToConferenceAsync(Guid id, Guid userId);
+        Task AddParticipantToConferenceAsync(Guid id, Guid userId, string? userName = null);
         Task RemoveParticipantToConferenceAsync(Guid id, Guid userId);
         ValueTask<bool> IsConferenceActiveAsync(Guid id);
     }

@@ -15,6 +15,7 @@ namespace Conference.Service.Extensions
         {
             services.AddScoped<IConferenceRoomService, DefaultConferenceService>();
             services.AddScoped<IConferenceChatService, DefaultConferenceChatService>();
+            services.AddSingleton<IConferenceStateStore, RedisConferenceStateStore>();
         }
     }
 }

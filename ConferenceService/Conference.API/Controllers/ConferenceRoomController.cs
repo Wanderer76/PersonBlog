@@ -9,13 +9,11 @@ namespace Conference.API.Controllers
 {
     public class ConferenceRoomController : BaseApiController
     {
-        private readonly ILogger<ConferenceRoomController> _logger;
         private readonly IConferenceRoomService _conferenceRoomService;
         private readonly ICurrentUserService _currentUserService;
         public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IConferenceRoomService conferenceRoomService, ICurrentUserService currentUserService)
             : base(logger)
         {
-            _logger = logger;
             _conferenceRoomService = conferenceRoomService;
             _currentUserService = currentUserService;
         }
@@ -39,6 +37,7 @@ namespace Conference.API.Controllers
         }
 
         [HttpGet("join")]
+        [Authorize]
         public async Task<IActionResult> Join(Guid roomId)
         {
             var user = await _currentUserService.GetCurrentUserAsync();

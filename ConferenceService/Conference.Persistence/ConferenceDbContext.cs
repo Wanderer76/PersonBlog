@@ -18,13 +18,22 @@ namespace Conference.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.HasDefaultSchema("Conference");
             {
                 var entity = modelBuilder.Entity<ConferenceParticipant>();
                 entity.HasKey(x => new { x.ConferenceRoomId, x.SessionId });
+                entity.HasIndex(x => new { x.ConferenceRoomId, x.UserId }).IsUnique();
+                entity.Property(x => x.UserName).HasMaxLength(200);
             }
             {
                 var entity = modelBuilder.Entity<ConferenceRoom>();
                 entity.HasKey(x => new { x.Id });
+                entity.Property(x => x.Id).ValueGeneratedNever();
+                entity.Property(x => x.PostId);
+            }
+            {
+                var entity = modelBuilder.Entity<Message>();
+                entity.Property(x => x.MessageText).HasMaxLength(4000);
             }
         }
     }

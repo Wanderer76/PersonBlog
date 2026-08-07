@@ -36,7 +36,8 @@ const ConferencePage = function () {
 
     useEffect(() => {
         const connection_chat = new HubConnectionBuilder()
-            .withUrl(BaseApUrl + `/conference?conferenceId=${conferenceId.id}&token=${getAccessToken()}`, {
+            .withUrl(BaseApUrl + `/conference?conferenceId=${conferenceId.id}`, {
+                accessTokenFactory: () => getAccessToken(),
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets,
             })
@@ -162,18 +163,13 @@ const ConferencePage = function () {
         }
     }
 
-    function getUrl(postId, objectName) {
-        if (postId !== null && objectName !== null)
-            return `${BaseApUrl}/video/Video/${postId}/${objectName}`;
-    }
-
     function videoWindow(connection) {
         return <div className="video-player">
             <VideoPlayer className="myVideo"
                 thumbnail={post.previewUrl}
                 path={{
-                    url: getUrl(post.id, post.videoData.objectName),
                     label: '',
+                    blogId: blog.id,
                     postId: post.id,
                     autoplay: false,
                     preload: 'none',

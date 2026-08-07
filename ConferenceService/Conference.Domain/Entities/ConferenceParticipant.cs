@@ -8,10 +8,10 @@ namespace Conference.Domain.Entities
 
         public Guid? UserId { get; set; }
         public Guid ConferenceRoomId { get; set; }
-        public string UserName { get; set; }
+        public string UserName { get; set; } = string.Empty;
 
         [ForeignKey(nameof(ConferenceRoomId))]
-        public ConferenceRoom ConferenceRoom { get; set; }
+        public ConferenceRoom ConferenceRoom { get; set; } = null!;
 
         public ConferenceParticipant()
         {
