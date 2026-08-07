@@ -26,6 +26,9 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
     private static readonly JsonSerializerOptions _deserializeOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly CreateChannelOptions _publisherChannelOptions = new(
+        publisherConfirmationsEnabled: true,
+        publisherConfirmationTrackingEnabled: true);
 
     public RabbitMqRequestClient(IOptions<MessageBusInfoContainer> subscriptionInfo, RabbitMqConnection config)
     {
@@ -103,7 +106,7 @@ internal sealed class RabbitMqRequestClient : IRequestClient, IAsyncDisposable
         try
         {
             var connection = await _connectionLazy.Value;
-            using var channel = await connection.CreateChannelAsync();
+            using var channel = await connection.CreateChannelAsync(_publisherChannelOptions, cancellationToken);
 
             var baseEvent = BaseEvent<TRequest>.Create(request);
             var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));

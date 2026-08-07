@@ -4,6 +4,7 @@ using MessageBus.Configs;
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shared.Services;
 using System.Collections.Concurrent;
@@ -18,6 +19,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
     private readonly KafkaConnection _config;
     private readonly IServiceScopeFactory _serviceScope;
     private readonly MessageBusInfoContainer _subscriptionInfo;
+    private readonly ILogger<KafkaMessageBus> _logger;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedAttributes = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _consumers = new();
     private readonly ProducerBuilder<string, string> _producerBuilder;
@@ -40,11 +42,13 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         KafkaConnection config,
         IServiceScopeFactory serviceScope,
         IOptions<MessageBusInfoContainer> subscriptionInfo,
-        IRequestClient requestClient)
+        IRequestClient requestClient,
+        ILogger<KafkaMessageBus> logger)
     {
         _config = config;
         _serviceScope = serviceScope;
         _subscriptionInfo = subscriptionInfo.Value;
+        _logger = logger;
 
         _producerBuilder = new ProducerBuilder<string, string>(BuildProducerConfig());
         _requestClient = requestClient;
@@ -126,8 +130,11 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         }
         catch (Exception ex)
         {
-            // Логируем, но не роняем весь сервис
-            // logger.LogError(ex, "Failed to initialize subscription for {HandlerType}", handlerConfig.HandlerType);
+            _logger.LogError(
+                ex,
+                "Failed to initialize Kafka subscription for {EventType}",
+                handlerConfig.HandlerType);
+            throw;
         }
     }
 
