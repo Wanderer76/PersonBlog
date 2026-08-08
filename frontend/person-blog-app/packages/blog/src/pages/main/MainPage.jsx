@@ -79,9 +79,12 @@ const MainPage = function () {
     return (
         <div className="mainpage-container">
             <SideBar />
-            <div className="mainpage-content">
-                <form onSubmit={handleSearchSubmit} className="search-container">
+            <main className="mainpage-content">
+                <h1 className="mainpage-title">Рекомендации</h1>
+                <form onSubmit={handleSearchSubmit} className="search-container" role="search" aria-label="Поиск видео">
+                    <label className="visually-hidden" htmlFor="main-video-search">Поиск по названию видео</label>
                     <input
+                        id="main-video-search"
                         type="text"
                         placeholder="Поиск по названию видео..."
                         value={searchQuery}
@@ -116,17 +119,17 @@ const MainPage = function () {
                         return <BigVideoCard videoCardModel={video} key={`${video.postId}-${index}`} />;
                     })}
 
-                    {isLoading && <div className="loading">Загрузка...</div>}
-                    {!hasMore && videos.length > 0 && <div className="end-message">
-                        {searchQuery ? "Больше результатов нет" : "Больше видео нет"}
-                    </div>}
-                    {!isLoading && videos.length === 0 && (
-                        <div className="end-message">
-                            {searchQuery ? "Видео не найдены" : "Нет доступных видео"}
-                        </div>
-                    )}
                 </div>
-            </div>
+                {isLoading && <div className="loading" role="status">Загрузка...</div>}
+                {!hasMore && videos.length > 0 && <div className="end-message">
+                    {activeSearchQuery ? "Больше результатов нет" : "Больше видео нет"}
+                </div>}
+                {!isLoading && videos.length === 0 && (
+                    <div className="end-message">
+                        {activeSearchQuery ? "Видео не найдены" : "Нет доступных видео"}
+                    </div>
+                )}
+            </main>
         </div>
     );
 };

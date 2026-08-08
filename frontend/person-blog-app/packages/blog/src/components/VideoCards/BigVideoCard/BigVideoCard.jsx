@@ -1,41 +1,39 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from 'react-router-dom';
+import React from 'react';
 import logo from '../../../defaultProfilePic.png';
-import React from "react";
 import styles from './BigVideoCard.module.css';
 
+const BigVideoCard = React.forwardRef(function BigVideoCard({ videoCardModel }, ref) {
+    const videoUrl = `/videoPage/${videoCardModel.postId}`;
 
-const BigVideoCard = React.forwardRef(function ({ videoCardModel }, ref) {
-    const navigate = useNavigate();
     return (
-        <div ref={ref} className={styles.videoCard}>
-            <div
-                className={styles.thumbnailContainer}
-                onClick={() => navigate(`/videoPage/${videoCardModel.postId}`)}
-            >
+        <article ref={ref} className={styles.videoCard}>
+            <Link className={styles.thumbnailContainer} to={videoUrl}>
                 <img
                     src={videoCardModel.previewUrl}
                     className={styles.thumbnail}
-                    alt="Превью видео"
+                    alt={`Превью видео «${videoCardModel.title}»`}
                 />
-                <div className={styles.playIcon}></div>
-            </div>
+                <span className={styles.playIcon} aria-hidden="true" />
+            </Link>
+
             <div className={styles.videoInfo}>
-                <h3 className={styles.videoTitle}>{videoCardModel.title}</h3>
-                <div className={styles.channelInfo} onClick={() => {
-                    navigate(`/channel/${videoCardModel.blogId}`)
-                }}>
+                <h2 className={styles.videoTitle}>
+                    <Link to={videoUrl}>{videoCardModel.title}</Link>
+                </h2>
+                <Link className={styles.channelInfo} to={`/channel/${videoCardModel.blogId}`}>
                     <img
                         src={videoCardModel.blogLogo || logo}
                         className={styles.channelIcon}
-                        alt="Логотип канала"
+                        alt=""
                     />
                     <span className={styles.channelName}>{videoCardModel.blogName}</span>
-                </div>
+                </Link>
                 <div className={styles.videoStats}>
                     Просмотров: {videoCardModel.viewCount}
                 </div>
             </div>
-        </div>
+        </article>
     );
 });
 

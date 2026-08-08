@@ -7,45 +7,86 @@
     background: #fff;
     border-right: 1px solid #e5e5e5;
     padding: 12px 0;
-    /* border-radius: 10px; */
     overflow-y: auto;
-    /* Убрали margin-top — он не нужен при sticky */
+    box-sizing: border-box;
 }
 
 .sidebarNav {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     padding: 0 12px;
 }
 
 .sidebarItem {
     display: flex;
     align-items: center;
+    min-height: 44px;
     padding: 8px 12px;
     border-radius: 8px;
     color: #0f0f0f;
     text-decoration: none;
-    font-size: large;
-    font-weight: bold;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.3;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease;
+}
+
+.sidebarItem:hover {
+    background: #f2f2f2;
+}
+
+.sidebarItemActive {
+    background: #e9e9e9;
+    font-weight: 600;
+}
+
+.sidebarItem:focus-visible {
+    outline: 3px solid #ff7b00;
+    outline-offset: -1px;
 }
 
 .sidebarIcon {
-    width: 24px;
-    height: 24px;
-    margin-right: 16px;
-    /* Уменьшенный отступ */
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    margin-right: 14px;
     fill: currentColor;
 }
 
 .sidebarSectionDivider {
     height: 1px;
     background: #e5e5e5;
-    margin: 12px 0;
+    margin: 10px 0;
 }
 
 @media (max-width: 900px) {
     .sidebar {
         display: none;
+    }
+
+    .sidebar.sidebarMobile {
+        display: block;
+        position: fixed;
+        z-index: 99;
+        top: 56px;
+        left: 0;
+        width: min(290px, 82vw);
+        height: calc(100svh - 56px);
+        padding-top: 12px;
+        box-shadow: 6px 0 20px rgba(0, 0, 0, 0.14);
+        animation: sidebar-slide-in 0.18s ease-out;
+    }
+}
+
+@keyframes sidebar-slide-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar.sidebarMobile {
+        animation: none;
     }
 }
