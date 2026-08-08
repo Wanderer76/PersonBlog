@@ -17,8 +17,8 @@ internal sealed class FFmpegImageConvertService : IImageConvertService
 
     public async Task<Result<FileMetadataModel>> ConvertImageToPngAsync(FileMetadataModel image, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(image.FileExtension))
-            return Result<FileMetadataModel>.Failure(new Shared.Utils.Error("image","Имя файла пусто"));
+        if (!IsSafeExtension(image.FileExtension))
+            return Result<FileMetadataModel>.Failure(new Shared.Utils.Error("image", "Некорректное расширение файла"));
 
         var inputPath = Path.Combine(options.TempPath, $"{Guid.NewGuid()}{image.FileExtension}");
         var outputPath = Path.Combine(options.TempPath, $"{Guid.NewGuid()}.png");
@@ -35,12 +35,15 @@ internal sealed class FFmpegImageConvertService : IImageConvertService
             var startInfo = new ProcessStartInfo
             {
                 FileName = options.FFMpegPath,
-                Arguments = $"-y -i \"{inputPath}\" \"{outputPath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
+            startInfo.ArgumentList.Add("-y");
+            startInfo.ArgumentList.Add("-i");
+            startInfo.ArgumentList.Add(inputPath);
+            startInfo.ArgumentList.Add(outputPath);
 
             using var process = new Process { StartInfo = startInfo };
             process.Start();
@@ -94,6 +97,21 @@ internal sealed class FFmpegImageConvertService : IImageConvertService
             TryDelete(outputPath);
         }
     }
+
+    private static bool IsSafeExtension(string? extension)
+    {
+        if (string.IsNullOrWhiteSpace(extension) || extension.Length is < 2 or > 11 || extension[0] != '.')
+            return false;
+
+        foreach (var character in extension.AsSpan(1))
+        {
+            if (!char.IsAsciiLetterOrDigit(character))
+                return false;
+        }
+
+        return true;
+    }
+
     private void TryDelete(string path)
     {
         try { if (File.Exists(path)) File.Delete(path); }
