@@ -3,13 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import './VideoPage.css';
 import API from '../../lib/api/client';
-import { getLocalDateTime } from '../../shared/LocalDate';
-import logo from '../../defaultProfilePic.png';
 import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import SmallVideoCard from '../../components/VideoCards/SmallVideoCard';
-import SideBar from '../../components/sidebar/SideBar';
 import CommentsList from '../../components/comment/Comment';
 import { getVideo } from '@/lib/api/generated/video/video';
+import {
+    ChannelSummary,
+    VideoActionButton,
+    VideoDescription,
+    VideoMetadata,
+    VideoPageState,
+    VideoPlayerFrame,
+    VideoWatchLayout,
+} from '../../components/VideoWatch/VideoWatch';
 
 const videoApi = getVideo();
 const recommendationsLimit = 40;
@@ -332,38 +338,30 @@ const VideoPage = function () {
 
     if (isLoading) {
         return (
-            <div className="video-page-layout">
-                <SideBar />
-                <main className="video-page-state" aria-live="polite">
-                    <div className="video-page-spinner" />
-                    <p>Загружаем видео…</p>
-                </main>
-            </div>
+            <VideoPageState loading>Загружаем видео…</VideoPageState>
         );
     }
 
     if (loadError) {
         return (
-            <div className="video-page-layout">
-                <SideBar />
-                <main className="video-page-state" role="alert">
-                    <h1>Не удалось открыть видео</h1>
-                    <p>{loadError}</p>
+            <VideoPageState
+                title="Не удалось открыть видео"
+                action={(
                     <button type="button" className="primary-button" onClick={() => setReloadKey((value) => value + 1)}>
                         Повторить
                     </button>
-                </main>
-            </div>
+                )}
+            >
+                {loadError}
+            </VideoPageState>
         );
     }
 
     return (
-        <div className="video-page-layout">
-            <SideBar />
-            <main className="video-content-container">
+        <VideoWatchLayout>
                 <div className="video-container">
                     <article className="main-content">
-                        <div className="video-player-shell">
+                        <VideoPlayerFrame>
                             <VideoPlayer
                                 key={post.id}
                                 className="video-page-player"
@@ -379,76 +377,53 @@ const VideoPage = function () {
                                 onEnded={setViewEnd}
                                 onPause={onPaused}
                             />
-                        </div>
+                        </VideoPlayerFrame>
 
-                        <section className="video-metadata">
-                            <h1 className="video-title">{post.title}</h1>
-                            <div className="video-stats">
-                                <div className="views-date">
-                                    <span>{post.viewCount} просмотров</span>
-                                    <span aria-hidden="true">•</span>
-                                    <span>Опубликовано {getLocalDateTime(post.createdAt)}</span>
-                                </div>
-                                <div className="video-actions" aria-label="Действия с видео">
-                                    <button
-                                        type="button"
-                                        className={`action-button ${userView.isLike === true ? 'action-button-active' : ''}`}
+                        <VideoMetadata post={post}>
+                                    <VideoActionButton
+                                        className={userView.isLike === true ? 'is-active' : ''}
                                         onClick={() => setReaction(true)}
                                         disabled={reactionPending}
                                         aria-pressed={userView.isLike === true}
                                     >
                                         <span aria-hidden="true">👍</span><span>{post.likeCount}</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`action-button ${userView.isLike === false ? 'action-button-active' : ''}`}
+                                    </VideoActionButton>
+                                    <VideoActionButton
+                                        className={userView.isLike === false ? 'is-active' : ''}
                                         onClick={() => setReaction(false)}
                                         disabled={reactionPending}
                                         aria-pressed={userView.isLike === false}
                                     >
                                         <span aria-hidden="true">👎</span><span>{post.dislikeCount}</span>
-                                    </button>
-                                    <button type="button" className="action-button" onClick={handleShare}>
+                                    </VideoActionButton>
+                                    <VideoActionButton onClick={handleShare}>
                                         <span aria-hidden="true">↗</span><span>Поделиться</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="action-button conference-button"
+                                    </VideoActionButton>
+                                    <VideoActionButton
+                                        className="conference-button"
                                         onClick={handleCreateConference}
                                         disabled={conferencePending}
                                     >
                                         <span aria-hidden="true">◉</span><span>Смотреть вместе</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
+                                    </VideoActionButton>
+                        </VideoMetadata>
 
-                        <section className="channel-info" aria-label="Информация о канале">
-                            <button type="button" className="channel-left" onClick={() => navigate(`/channel/${blog.id}`)}>
-                                <img src={blog.photoUrl || logo} className="channel-avatar" alt="" />
-                                <span className="channel-copy">
-                                    <span className="channel-name">{blog.name}</span>
-                                    <span className="subscribers-count">{blog.subscribersCount ?? 0} подписчиков</span>
-                                </span>
-                            </button>
-                            <button
+                        <ChannelSummary
+                            blog={blog}
+                            onClick={() => navigate(`/channel/${blog.id}`)}
+                            action={<button
                                 type="button"
                                 className={`subscribe-button ${userView.hasSubscription ? 'subscribe-button-active' : ''}`}
                                 onClick={handleSubscribe}
                                 disabled={subscriptionPending}
                             >
                                 {userView.hasSubscription ? 'Вы подписаны' : 'Подписаться'}
-                            </button>
-                        </section>
+                            </button>}
+                        />
 
                         {actionMessage && <p className="video-action-message" role="status">{actionMessage}</p>}
 
-                        {post.description?.trim() && (
-                            <section className="video-description">
-                                <h2>Описание</h2>
-                                <p>{post.description}</p>
-                            </section>
-                        )}
+                        <VideoDescription description={post.description} />
 
                         <section className="comments-section">
                             <h2>{commentCount} комментариев</h2>
@@ -493,8 +468,7 @@ const VideoPage = function () {
                         </div>
                     </aside>
                 </div>
-            </main>
-        </div>
+        </VideoWatchLayout>
     );
 };
 

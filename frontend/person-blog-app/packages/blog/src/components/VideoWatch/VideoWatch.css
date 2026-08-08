@@ -1,0 +1,273 @@
+.watch-page-layout {
+    display: flex;
+    width: 100%;
+    min-height: calc(100svh - 56px);
+    background: #f7f7f8;
+    color: #171717;
+}
+
+.watch-page-content {
+    flex: 1;
+    min-width: 0;
+    padding: 28px clamp(16px, 2.5vw, 40px) 56px;
+}
+
+.watch-player-frame {
+    overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+}
+
+.watch-video-metadata {
+    padding-top: 20px;
+}
+
+.watch-video-title {
+    margin: 0 0 14px;
+    font-size: clamp(22px, 2vw, 30px);
+    line-height: 1.2;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.watch-video-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.watch-views-date {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    color: #656565;
+    font-size: 14px;
+}
+
+.watch-video-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.watch-action-button {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #e9e9eb;
+    color: #202020;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.watch-action-button:hover:not(:disabled) {
+    background: #dddddf;
+    transform: translateY(-1px);
+}
+
+.watch-action-button.is-active,
+.watch-action-button.is-active:hover:not(:disabled) {
+    background: #ffe1da;
+    color: #b5280e;
+}
+
+.watch-action-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.watch-action-button:focus-visible,
+.watch-channel-main:focus-visible {
+    outline: 3px solid rgba(255, 75, 43, 0.28);
+    outline-offset: 2px;
+}
+
+.watch-channel-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    padding: 20px 0;
+    margin-top: 18px;
+    border-top: 1px solid #dedee1;
+    border-bottom: 1px solid #dedee1;
+}
+
+.watch-channel-main {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    gap: 13px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+div.watch-channel-main {
+    cursor: default;
+}
+
+.watch-channel-avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e3e3e5;
+}
+
+.watch-channel-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.watch-channel-name {
+    overflow: hidden;
+    font-size: 17px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.watch-subscribers-count {
+    color: #686868;
+    font-size: 13px;
+}
+
+.watch-video-description {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: #ececee;
+}
+
+.watch-video-description h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.3;
+}
+
+.watch-video-description p {
+    margin: 9px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.watch-page-state {
+    display: flex;
+    min-height: 60svh;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+}
+
+.watch-page-state h1 {
+    margin: 0 0 8px;
+    font-size: 26px;
+}
+
+.watch-page-state p {
+    max-width: 520px;
+    margin: 0 0 20px;
+    color: #666;
+}
+
+.watch-page-spinner {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 14px;
+    border: 4px solid #dedee2;
+    border-top-color: #ff4b2b;
+    border-radius: 50%;
+    animation: watch-page-spin 0.8s linear infinite;
+}
+
+@keyframes watch-page-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+    .watch-page-content {
+        padding: 20px 18px 48px;
+    }
+}
+
+@media (max-width: 700px) {
+    .watch-page-content {
+        padding: 12px 10px 36px;
+    }
+
+    .watch-player-frame {
+        border-radius: 9px;
+    }
+
+    .watch-video-metadata {
+        padding-top: 15px;
+    }
+
+    .watch-video-title {
+        margin-bottom: 10px;
+        font-size: 20px;
+    }
+
+    .watch-video-stats {
+        align-items: flex-start;
+    }
+
+    .watch-video-actions {
+        width: 100%;
+    }
+
+    .watch-action-button {
+        padding-inline: 13px;
+    }
+
+    .watch-channel-info {
+        align-items: flex-start;
+    }
+
+    .watch-channel-avatar {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+}
+
+@media (max-width: 430px) {
+    .watch-channel-info {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .watch-action-button {
+        transition: none;
+    }
+
+    .watch-page-spinner {
+        animation-duration: 1.8s;
+    }
+}

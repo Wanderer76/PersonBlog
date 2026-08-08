@@ -1,361 +1,403 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { getLocalDateTime } from "../../shared/LocalDate";
-import VideoPlayer from "../../components/VideoPlayer/VideoPlayer";
-import logo from '../../defaultProfilePic.png';
-import API, { BaseApUrl } from "../../lib/api/client";
-import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from "@microsoft/signalr";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
+import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
+import API, { BaseApUrl } from '../../lib/api/client';
+import { getAccessToken } from '../../shared/TokenStrorage.js';
+import {
+    ChannelSummary,
+    VideoActionButton,
+    VideoDescription,
+    VideoMetadata,
+    VideoPageState,
+    VideoPlayerFrame,
+    VideoWatchLayout,
+} from '../../components/VideoWatch/VideoWatch';
 import './ConferencePage.css';
-import '../post/VideoPage.css';
-import SideBar from "../../components/sidebar/SideBar";
-import { getAccessToken, JwtTokenService } from "../../shared/TokenStrorage.js";
+
+const messagePageSize = 20;
 
 const ConferencePage = function () {
-    const conferenceId = useParams();
-    const [post, setPost] = useState();
-    const [blog, setBlog] = useState();
-    const [messages, setMessages] = useState([]);
-    const [connection, setConnection] = useState(null);
+    const { id: conferenceId } = useParams();
     const navigate = useNavigate();
+    const [post, setPost] = useState(null);
+    const [blog, setBlog] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+    const [connectionStatus, setConnectionStatus] = useState('Подключение…');
+    const [copyMessage, setCopyMessage] = useState('');
     const playerRef = useRef(null);
-    const isSeeking = useRef(false); // Флаг блокировки обновлений
+    const connectionRef = useRef(null);
+    const isApplyingRemoteEventRef = useRef(false);
+    const remoteEventTimerRef = useRef(null);
+    const lastTimeSyncRef = useRef(0);
 
     useEffect(() => {
-        API.get(`video/api/ConferenceRoom/joinLink?roomId=${conferenceId.id}`)
-            .then(async response => {
-                const postId = response.data.postId;
+        const controller = new AbortController();
+        let isActive = true;
 
-                await API.get(`/video/Video/video/${postId}`)
-                    .then(response => {
-                        setPost(response.data.post);
-                        setBlog(response.data.blog);
-                    });
+        setIsLoading(true);
+        setLoadError('');
 
-            })
-    }, []);
+        const loadConference = async () => {
+            try {
+                const roomResponse = await API.get(`/video/api/ConferenceRoom/joinLink?roomId=${conferenceId}`, {
+                    signal: controller.signal,
+                });
+                const postId = roomResponse.data?.postId;
+                if (!postId) throw new Error('Комната не найдена');
+
+                const videoResponse = await API.get(`/video/Video/video/${postId}`, {
+                    signal: controller.signal,
+                });
+                if (!videoResponse.data?.post || !videoResponse.data?.blog) {
+                    throw new Error('Видео конференции не найдено');
+                }
+
+                if (isActive) {
+                    setPost(videoResponse.data.post);
+                    setBlog(videoResponse.data.blog);
+                }
+            } catch (error) {
+                if (!isActive || error?.code === 'ERR_CANCELED') return;
+                console.error('Ошибка при загрузке конференции:', error);
+                setLoadError('Не удалось открыть конференцию. Возможно, она завершена или недоступна.');
+            } finally {
+                if (isActive) setIsLoading(false);
+            }
+        };
+
+        loadConference();
+
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
+    }, [conferenceId]);
 
     useEffect(() => {
-        const connection_chat = new HubConnectionBuilder()
-            .withUrl(BaseApUrl + `/conference?conferenceId=${conferenceId.id}`, {
+        let isActive = true;
+
+        const connection = new HubConnectionBuilder()
+            .withUrl(`${BaseApUrl}/conference?conferenceId=${conferenceId}`, {
                 accessTokenFactory: () => getAccessToken(),
                 skipNegotiation: true,
                 transport: HttpTransportType.WebSockets,
             })
-            .configureLogging(LogLevel.Debug)
+            .configureLogging(LogLevel.Warning)
             .withAutomaticReconnect()
             .build();
 
-        connection_chat.on("onconferenceconnect", function (message) {
-            setMessages([message]);
+        const releaseRemoteEvent = () => {
+            if (remoteEventTimerRef.current) clearTimeout(remoteEventTimerRef.current);
+            remoteEventTimerRef.current = setTimeout(() => {
+                isApplyingRemoteEventRef.current = false;
+            }, 400);
+        };
+
+        const beginRemoteEvent = () => {
+            isApplyingRemoteEventRef.current = true;
+            releaseRemoteEvent();
+        };
+
+        connection.on('OnMessageSend', (message) => {
+            setMessages((previous) => [...previous, message]);
         });
 
-        connection_chat.on("OnMessageSend", function (message) {
-            console.log('message comes')
-            setMessages((prev) => [...prev, message]);
+        connection.on('OnPause', (time) => {
+            const player = playerRef.current;
+            if (!player) return;
+
+            beginRemoteEvent();
+            if (Number.isFinite(time) && Math.abs(player.currentTime() - time) > 0.5) player.currentTime(time);
+            if (!player.paused()) player.pause();
         });
 
-        connection_chat.on("OnPause", function (time) {
-            handleSignalRPause(time);
+        connection.on('OnPlay', () => {
+            const player = playerRef.current;
+            if (!player || !player.paused()) return;
+
+            beginRemoteEvent();
+            player.play()?.catch(() => setConnectionStatus('Браузер заблокировал автоматическое воспроизведение'));
         });
 
-        connection_chat.on("OnPlay", function () {
-            handleSignalRPlay();
-        })
+        connection.on('OnTimeSeek', (time) => {
+            const player = playerRef.current;
+            if (!player || !Number.isFinite(time)) return;
 
-        connection_chat.on("OnTimeSeek", function (time) {
-            if (!isSeeking.current)
-                handleSignalRSeek(time);
+            beginRemoteEvent();
+            player.currentTime(time);
         });
 
-        setConnection(connection_chat);
-    }, []);
+        connection.onreconnecting(() => isActive && setConnectionStatus('Переподключение…'));
+        connection.onreconnected(() => isActive && setConnectionStatus('Подключено'));
+        connection.onclose(() => isActive && setConnectionStatus('Соединение потеряно'));
 
-    useEffect(() => {
-        const startConnection = async () => {
-            await connection.start();
-        }
-        if (connection)
-            startConnection()
-                .then(() => console.log("SignalR connected."))
-                .catch(() => console.assert(connection.state === HubConnectionState.Connected));
-
-    }, [connection]);
-
-    if (post == null || blog == null)
-        return <></>;
-
-    return (
-        <div className='page-layout'>
-            <SideBar />
-            <div className="video-content-container">
-                <div className="video-container">
-                    <div className="main-content">
-
-                        {videoWindow(connection)}
-                        {videoMetadata(post)}
-                        {channelInfo(blog)}
-
-                        <div className="video-description">
-                            <span>Описание: </span>
-                            {post.description}
-                        </div>
-
-                        <div className="comments-section">
-                            <h3>432 комментария</h3>
-
-                            <div className="comment">
-                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                                <div className="comment-content">
-                                    <div className="comment-author">Иван Петров</div>
-                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                                </div>
-                            </div>
-
-                            <div className="comment">
-                                <img src="https://picsum.photos/40/40" className="comment-avatar" alt="Аватар пользователя" />
-                                <div className="comment-content">
-                                    <div className="comment-author">Иван Петров</div>
-                                    <div className="comment-text">Отличное видео! Очень познавательно и интересно подано.</div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                    <div className="chat-container">
-                        <Messages messages={messages} setMessages={setMessages} conferenceId={conferenceId.id} />
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-
-    function handleSignalRSeek(time) {
-        if (playerRef.current) {
-            isSeeking.current = true;
-            setTimeout(() => isSeeking.current = false, 500)
-            playerRef.current.currentTime(time)
-            // seekFunction(time); // Вызываем seekFunction, передавая ей время от SignalR
-        } else {
-            console.warn("Seek function not available.");
-        }
-    }
-
-    function handleSignalRPause(time) {
-        if (playerRef.current) {
-            var isPlaying = playerRef.current.currentTime > 0 && !playerRef.current.paused && !playerRef.current.ended
-                && playerRef.current.readyState > playerRef.current.HAVE_CURRENT_DATA;
-
-            if (isPlaying !== true) {
-                playerRef.current.currentTime(time);
-                playerRef.current.pause();
-            }
-        }
-    }
-
-    function handleSignalRPlay() {
-        if (playerRef.current && playerRef.current.paused) {
-            var isPlaying = playerRef.current.currentTime > 0 && !playerRef.current.paused && !playerRef.current.ended
-                && playerRef.current.readyState > playerRef.current.HAVE_CURRENT_DATA;
-
-            if (!isPlaying)
-                playerRef.current.play();
-        }
-    }
-
-    function videoWindow(connection) {
-        return <div className="video-player">
-            <VideoPlayer className="myVideo"
-                thumbnail={post.previewUrl}
-                path={{
-                    label: '',
-                    blogId: blog.id,
-                    postId: post.id,
-                    autoplay: false,
-                    preload: 'none',
-                    objectName: post.videoData.objectName
-                }}
-
-                onTimeupdate={(player) => {
-                    connection.invoke("SetCurrentTime", player.currentTime());
-                }}
-
-                setPlayerRef={(e) => {
-                    playerRef.current = e
-                }}
-                onUserSeek={(time) => {
-                    connection.invoke("Seek", time);
-                }}
-                onPause={(player) => {
-                    connection.invoke("PauseVideo", player.currentTime());
-                }}
-                onPlay={() => {
-                    connection.invoke("ResumeVideo");
-                }}
-            />
-        </div>;
-    }
-
-    function videoMetadata(post) {
-        return <div className="video-metadata">
-            <h1 className="video-title">{post.title}</h1>
-
-            <div className="video-stats">
-                <div className="views-date">
-                    <span>{post.viewCount} Просмотров </span> •
-                    <span> Опубликовано {getLocalDateTime(post.createdAt)}</span>
-                </div>
-                <div className="video-actions">
-                    <button className="action-button" onClick={(e) => { navigate(`/videoPage/${post.id}?time=${playerRef.current.currentTime()}`) }}>
-                        <span>📁</span> Отключится от конференции
-                    </button>
-                    <button className="action-button" onClick={(e) => { navigator.clipboard.writeText(window.location.href) }}>
-                        <span>📁</span> Ссылка для присоединения
-                    </button>
-                </div>
-            </div>
-        </div>;
-    }
-
-    function channelInfo(blog) {
-        return <div className="channel-info">
-            <div className="channel-left">
-                <img src={blog.photoUrl === null ? logo : blog.photoUrl} className="channel-avatar" alt="Аватар канала" />
-                <div>
-                    <div className="channel-name">{blog.name}</div>
-                    <div className="subscribers-count">{blog.subscribersCount} подписчиков</div>
-                </div>
-            </div>
-        </div>;
-    }
-}
-
-const Messages = function ({ messages, setMessages, conferenceId }) {
-    const [page, setPage] = useState(1);
-    const [isLoading, setIsLoading] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
-    const [messageInput, setMessageInput] = useState('');
-    const messagesEndRef = useRef(null);
-    const containerRef = useRef(null);
-    const [isAutoScroll, setIsAutoScroll] = useState(true);
-    const prevMessagesLength = useRef(messages.length);
-
-    const handleSendMessage = async () => {
-        if (messageInput.trim()) {
-            try {
-
-                await API.post("video/api/ConferenceChat/sendMessage", {
-                    conferenceId: conferenceId,
-                    message: messageInput
-                });
-
-                setMessageInput('');
-            } catch (error) {
-                console.error('Ошибка отправки сообщения:', error);
-            }
-        }
-    };
-    const loadMessages = async (pageNumber) => {
-        if (!hasMore || isLoading) return;
-
-        setIsLoading(true);
-        try {
-            const response = await API.get(`video/api/ConferenceChat/messages/${conferenceId}`, {
-                params: {
-                    offset: pageNumber,
-                    count: 10
-                }
+        connectionRef.current = connection;
+        connection.start()
+            .then(() => isActive && setConnectionStatus('Подключено'))
+            .catch((error) => {
+                console.error('Ошибка подключения к конференции:', error);
+                if (isActive) setConnectionStatus('Не удалось подключиться');
             });
 
-            if (response.data.length === 0) {
-                setHasMore(false);
-            } else {
-                setMessages(prev => [...response.data, ...prev]);
-            }
+        return () => {
+            isActive = false;
+            if (remoteEventTimerRef.current) clearTimeout(remoteEventTimerRef.current);
+            connectionRef.current = null;
+            connection.stop().catch(() => undefined);
+        };
+    }, [conferenceId]);
+
+    const invokeConference = useCallback(async (method, ...args) => {
+        const connection = connectionRef.current;
+        if (!connection || connection.state !== HubConnectionState.Connected) return;
+
+        try {
+            await connection.invoke(method, ...args);
         } catch (error) {
-            console.error('Ошибка загрузки сообщений:', error);
-        } finally {
-            setIsLoading(false);
+            console.warn(`Не удалось выполнить ${method}:`, error);
+        }
+    }, []);
+
+    const handleTimeUpdate = useCallback((player) => {
+        if (isApplyingRemoteEventRef.current) return;
+        const now = Date.now();
+        if (now - lastTimeSyncRef.current < 1000) return;
+        lastTimeSyncRef.current = now;
+        invokeConference('SetCurrentTime', player.currentTime());
+    }, [invokeConference]);
+
+    const handleExit = () => {
+        const currentTime = playerRef.current?.currentTime?.() ?? 0;
+        navigate(`/videoPage/${post.id}?time=${currentTime}`);
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopyMessage('Ссылка скопирована');
+        } catch {
+            setCopyMessage('Не удалось скопировать ссылку');
         }
     };
+
+    if (isLoading) return <VideoPageState loading>Подключаемся к конференции…</VideoPageState>;
+
+    if (loadError || !post || !blog) {
+        return (
+            <VideoPageState
+                title="Конференция недоступна"
+                action={<button type="button" className="conference-primary-button" onClick={() => navigate('/')}>На главную</button>}
+            >
+                {loadError}
+            </VideoPageState>
+        );
+    }
+
+    return (
+        <VideoWatchLayout className="conference-page-content">
+            <div className="conference-layout">
+                <article className="conference-main">
+                    <VideoPlayerFrame>
+                        <VideoPlayer
+                            key={post.id}
+                            thumbnail={post.previewUrl}
+                            path={{
+                                blogId: blog.id,
+                                postId: post.id,
+                                autoplay: false,
+                                objectName: post.videoData.objectName,
+                            }}
+                            onTimeupdate={handleTimeUpdate}
+                            setPlayerRef={(player) => { playerRef.current = player; }}
+                            onUserSeek={(time) => {
+                                if (!isApplyingRemoteEventRef.current) invokeConference('Seek', time);
+                            }}
+                            onPause={(player) => {
+                                if (!isApplyingRemoteEventRef.current) invokeConference('PauseVideo', player.currentTime());
+                            }}
+                            onPlay={() => {
+                                if (!isApplyingRemoteEventRef.current) invokeConference('ResumeVideo');
+                            }}
+                        />
+                    </VideoPlayerFrame>
+
+                    <VideoMetadata post={post}>
+                        <VideoActionButton onClick={handleExit}>
+                            <span aria-hidden="true">←</span><span>Выйти из просмотра</span>
+                        </VideoActionButton>
+                        <VideoActionButton onClick={handleCopyLink}>
+                            <span aria-hidden="true">⧉</span><span>{copyMessage || 'Скопировать ссылку'}</span>
+                        </VideoActionButton>
+                    </VideoMetadata>
+
+                    <ChannelSummary blog={blog} onClick={() => navigate(`/channel/${blog.id}`)} />
+                    <VideoDescription description={post.description} />
+                </article>
+
+                <ConferenceChat
+                    messages={messages}
+                    setMessages={setMessages}
+                    conferenceId={conferenceId}
+                    connectionStatus={connectionStatus}
+                />
+            </div>
+        </VideoWatchLayout>
+    );
+};
+
+const ConferenceChat = function ({ messages, setMessages, conferenceId, connectionStatus }) {
+    const [messageInput, setMessageInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [errorMessage, setErrorMessage] = useState('');
+    const messagesEndRef = useRef(null);
+    const containerRef = useRef(null);
+    const offsetRef = useRef(0);
+    const loadingRef = useRef(false);
+    const autoScrollRef = useRef(true);
+    const previousMessagesLengthRef = useRef(messages.length);
+
+    const loadMessages = useCallback(async () => {
+        if (!hasMore || loadingRef.current) return;
+
+        loadingRef.current = true;
+        setIsLoading(true);
+        setErrorMessage('');
+
+        try {
+            const response = await API.get(`/video/api/ConferenceChat/messages/${conferenceId}`, {
+                params: { offset: offsetRef.current, count: messagePageSize },
+            });
+            const loadedMessages = response.data ?? [];
+
+            if (loadedMessages.length > 0) {
+                setMessages((previous) => [...loadedMessages, ...previous]);
+                offsetRef.current += loadedMessages.length;
+            }
+            if (loadedMessages.length < messagePageSize) setHasMore(false);
+        } catch (error) {
+            console.error('Ошибка загрузки сообщений:', error);
+            setErrorMessage('Не удалось загрузить сообщения.');
+        } finally {
+            loadingRef.current = false;
+            setIsLoading(false);
+        }
+    }, [conferenceId, hasMore, setMessages]);
+
+    useEffect(() => {
+        loadMessages();
+    }, [loadMessages]);
+
+    useEffect(() => {
+        if (autoScrollRef.current && messages.length > previousMessagesLengthRef.current) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+        previousMessagesLengthRef.current = messages.length;
+    }, [messages]);
 
     const handleScroll = () => {
         const container = containerRef.current;
-        // Определяем находится ли пользователь внизу контейнера
-        const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
-        setIsAutoScroll(isAtBottom);
-        if (containerRef.current.scrollTop === 0 && hasMore) {
+        if (!container) return;
 
+        autoScrollRef.current = container.scrollHeight - container.scrollTop - container.clientHeight < 8;
+        if (container.scrollTop < 8 && hasMore) loadMessages();
+    };
 
-            setPage(prev => {
-                const newPage = prev + 1;
-                loadMessages(newPage);
-                return newPage;
-            });
+    const handleSendMessage = async () => {
+        const message = messageInput.trim();
+        if (!message || isSending) return;
+
+        setIsSending(true);
+        setErrorMessage('');
+        try {
+            await API.post('/video/api/ConferenceChat/sendMessage', { conferenceId, message });
+            setMessageInput('');
+            autoScrollRef.current = true;
+        } catch (error) {
+            console.error('Ошибка отправки сообщения:', error);
+            setErrorMessage('Не удалось отправить сообщение.');
+        } finally {
+            setIsSending(false);
         }
     };
 
-    useEffect(() => {
-        loadMessages(1);
-    }, []);
-
-    useEffect(() => {
-        if (isAutoScroll && messages.length > prevMessagesLength.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-        prevMessagesLength.current = messages.length;
-    }, [messages]);
-
     return (
-        <aside className="conference-sidebar">
-            <h3 className="comments-section">Чат конференции</h3>
-            <div
-                className="messages-container"
-                ref={containerRef}
-                onScroll={handleScroll}
-            >
-                {isLoading && <div className="loading-text">Загрузка сообщений...</div>}
-                {messages.map((x, i) => (
-                    <div className="comment" key={i}>
-                        <img
-                            src={x.creatorAvatar || "https://picsum.photos/40/40"}
-                            className="comment-avatar"
-                            alt="Аватар"
-                        />
-                        <div className="comment-content">
-                            <div className="comment-author">{x.creatorUserName}</div>
-                            <div className="comment-text">{x.message}</div>
-                            <div className="views-date">
-                                {new Date(x.createdAt).toLocaleDateString('ru-RU', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </div>
+        <aside className="conference-chat" aria-label="Чат конференции">
+            <header className="conference-chat-header">
+                <div>
+                    <h2>Чат конференции</h2>
+                    <span className={`conference-status ${connectionStatus === 'Подключено' ? 'is-connected' : ''}`}>
+                        {connectionStatus}
+                    </span>
+                </div>
+            </header>
+
+            <div className="conference-messages" ref={containerRef} onScroll={handleScroll} aria-live="polite">
+                {isLoading && <div className="conference-loading">Загрузка сообщений…</div>}
+                {!isLoading && messages.length === 0 && (
+                    <div className="conference-empty-chat">Сообщений пока нет. Начните беседу.</div>
+                )}
+                {messages.map((message, index) => (
+                    <article className="conference-message" key={`${message.createdAt}-${message.creatorUserName}-${index}`}>
+                        <div className="conference-message-avatar" aria-hidden="true">
+                            {(message.creatorUserName || '?').slice(0, 1).toUpperCase()}
                         </div>
-                    </div>
+                        <div className="conference-message-content">
+                            <div className="conference-message-heading">
+                                <strong>{message.creatorUserName || 'Участник'}</strong>
+                                <time>{formatMessageDate(message.createdAt)}</time>
+                            </div>
+                            <p>{message.message}</p>
+                        </div>
+                    </article>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="message-input-container">
-                <input
-                    type="text"
-                    className="message-input"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Введите сообщение..."
-                />
-                <button
-                    className="subscribe-button"
-                    onClick={handleSendMessage}
-                    style={{ padding: '8px 16px' }}
-                >
-                    Отправить
-                </button>
-            </div>
+            <footer className="conference-composer">
+                {errorMessage && <div className="conference-chat-error" role="alert">{errorMessage}</div>}
+                <div className="conference-input-row">
+                    <input
+                        type="text"
+                        className="conference-message-input"
+                        value={messageInput}
+                        maxLength={4000}
+                        onChange={(event) => setMessageInput(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter' && !event.shiftKey) handleSendMessage();
+                        }}
+                        placeholder="Введите сообщение…"
+                        aria-label="Сообщение конференции"
+                    />
+                    <button
+                        type="button"
+                        className="conference-send-button"
+                        onClick={handleSendMessage}
+                        disabled={!messageInput.trim() || isSending}
+                    >
+                        <span className="conference-send-label">Отправить</span>
+                        <span className="conference-send-icon" aria-hidden="true">↑</span>
+                    </button>
+                </div>
+            </footer>
         </aside>
     );
+};
+
+const formatMessageDate = (value) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    return date.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 };
 
 export default ConferencePage;
