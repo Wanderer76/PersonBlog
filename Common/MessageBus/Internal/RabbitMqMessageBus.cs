@@ -124,10 +124,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
                     cancellationToken: cancellationToken);
             }
 
-            var subscribeMethod = typeof(RabbitMqMessageBus).GetMethod(nameof(StartConsumerAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var genericSubscribe = subscribeMethod.MakeGenericMethod(handlerConfig.HandlerType);
-
-            await (Task)genericSubscribe.Invoke(this, [queueName])!;
+            await StartConsumerAsync(queueName);
         }
         catch (Exception ex)
         {
@@ -143,7 +140,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
 
     #region Consumer Management
 
-    private async Task StartConsumerAsync<T>(string queueName)
+    private async Task StartConsumerAsync(string queueName)
     {
         // Проверяем, что подписка ещё не активна (защита от дублей)
         if (_subscriptions.ContainsKey(queueName))
@@ -158,7 +155,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         await channel.BasicQosAsync(0, 10, false);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
-        consumer.ReceivedAsync += async (model, ea) => await ProcessMessageAsync<T>(channel, ea);
+        consumer.ReceivedAsync += async (model, ea) => await ProcessMessageAsync(channel, ea);
 
         var consumerTag = await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
 
@@ -173,7 +170,32 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         await channel.QueueBindAsync("errors", "error", "");
     }
 
-    private async Task ProcessMessageAsync<T>(IChannel channel, BasicDeliverEventArgs ea)
+    private async Task ProcessMessageAsync(IChannel channel, BasicDeliverEventArgs ea)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(ea.Body);
+            if (!document.RootElement.TryGetProperty(nameof(BaseEvent.EventType), out var eventTypeElement)
+                || eventTypeElement.GetString() is not { } eventType
+                || !_subscriptionInfo.HandlerTypes.TryGetValue(eventType, out var handlerInfo))
+            {
+                await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
+                return;
+            }
+
+            var processMethod = typeof(RabbitMqMessageBus)
+                .GetMethod(nameof(ProcessTypedMessageAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var genericProcessMethod = processMethod.MakeGenericMethod(handlerInfo.HandlerType);
+
+            await (Task)genericProcessMethod.Invoke(this, [channel, ea])!;
+        }
+        catch
+        {
+            await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
+        }
+    }
+
+    private async Task ProcessTypedMessageAsync<T>(IChannel channel, BasicDeliverEventArgs ea)
     {
         try
         {
@@ -188,7 +210,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
             using var scope = _serviceScope.CreateScope();
 
             // 🔍 Находим все хендлеры для этого типа события: IEventHandler<TConcrete>
-            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(concreteEvent.EventType);
+            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(typeof(T).Name);
 
             if (!handlers.Any())
             {
