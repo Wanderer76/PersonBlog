@@ -201,6 +201,29 @@ dotnet test PersonBlog.sln
 
 Отдельные тестовые проекты находятся в `AuthService/Authentication.Test`, `BlogService/VideoProcessing.Cli.Test` и `Tests`.
 
+### Тесты производительности MessageBus
+
+Проект `Tests/MessageBus.Benchmarks` содержит микробенчмарки горячего пути диспетчеризации событий, общего для реализаций RabbitMQ и Kafka. Он сравнивает:
+
+- прежнюю диспетчеризацию с заранее известным generic-типом события;
+- динамическое определение типа и вызов через reflection;
+- динамическую диспетчеризацию с кэшированным delegate;
+- вариант с однократным разбором JSON и десериализацией только `EventData`.
+
+Полный прогон следует выполнять в конфигурации Release:
+
+```bash
+dotnet run --project Tests/MessageBus.Benchmarks/MessageBus.Benchmarks.csproj -c Release -- --filter "*EventDispatchBenchmarks*"
+```
+
+Для быстрой проверки сборки и запуска без статистически значимых измерений используйте `Dry`-режим:
+
+```bash
+dotnet run --project Tests/MessageBus.Benchmarks/MessageBus.Benchmarks.csproj -c Release -- --filter "*EventDispatchBenchmarks*" --job dry
+```
+
+BenchmarkDotNet сохраняет подробные отчёты в `BenchmarkDotNet.Artifacts`. Этот каталог исключён из Git. Результаты зависят от оборудования, версии runtime и фоновой нагрузки, поэтому сравнивать варианты следует в рамках одного прогона на одной машине.
+
 ## Структура репозитория
 
 ```text
@@ -220,6 +243,7 @@ PersonBlog/
 ├── ProfileService/                profiles and social activity
 ├── RecommendationService/         post recommendations
 ├── SearchService/                 content search
+├── Tests/                         unit, regression and performance tests
 ├── TokenizerService/              Python tokenizer and ML models
 ├── nginx/                         local reverse-proxy configuration
 ├── docker-compose.yml             partial application stack
