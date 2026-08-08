@@ -1,155 +1,143 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 import './qualitySelector/plugin.js';
-import 'hls.js';
 import './Player.css';
 import { BaseApUrl } from '../../lib/api/client.js';
 import { JwtTokenService } from '../../shared/TokenStrorage.ts';
 
-if (videojs.Vhs?.xhr) {
-  videojs.Vhs.xhr.beforeRequest = (requestOptions) => {
-    const authorization = JwtTokenService.getFormatedTokenForHeader();
-    if (authorization && requestOptions.uri?.startsWith(BaseApUrl)) {
-      requestOptions.headers = {
-        ...requestOptions.headers,
-        Authorization: authorization
-      };
-    }
+const addAuthorizationHeader = (requestOptions) => {
+  const authorization = JwtTokenService.getFormatedTokenForHeader();
 
-    return requestOptions;
-  };
+  if (authorization && requestOptions.uri?.startsWith(BaseApUrl)) {
+    requestOptions.headers = {
+      ...requestOptions.headers,
+      Authorization: authorization,
+    };
+  }
+
+  return requestOptions;
+};
+
+if (videojs.Vhs?.xhr?.onRequest) {
+  const previousHook = videojs.Vhs.xhr.playViewAuthorizationHook;
+
+  if (previousHook && videojs.Vhs.xhr.offRequest) {
+    videojs.Vhs.xhr.offRequest(previousHook);
+  }
+
+  videojs.Vhs.xhr.onRequest(addAuthorizationHeader);
+  videojs.Vhs.xhr.playViewAuthorizationHook = addAuthorizationHeader;
 }
 
-// Fetch the link to playlist.m3u8 of the video you want to play
-export const VideoPlayer = ({ thumbnail, path, onTimeupdate, currentTime, onUserSeek, setPlayerRef, onPause, onPlay, onEnded }) => {
-  const videoRef = React.useRef(null);
-  const playerRef = React.useRef(null);
+export const VideoPlayer = ({
+  thumbnail,
+  path,
+  onTimeupdate,
+  currentTime,
+  onUserSeek,
+  setPlayerRef,
+  onPause,
+  onPlay,
+  onEnded,
+  className = '',
+}) => {
+  const videoRef = useRef(null);
+  const playerRef = useRef(null);
+  const sourceRef = useRef(null);
+  const callbacksRef = useRef({});
 
-  const url =  `${BaseApUrl}/video/Video/${path.blogId}/${path.postId}/${path.objectName}`;
-  const options = {
-    autoplay: path.autoplay == undefined ? false : path.autoplay,
-    controls: true,
-    playbackRates: [0.5, 1, 1.5, 2],
-    preload: 'none',
-    responsive: true,
-    fluid: true,
-    html5: {
-      vhs: {
-        overrideNative: true
-      }
-    },
-    aspectRatio: '16:9',
-    poster: thumbnail,
-    plugins: {
-      qualitySelectorHls: {
-        displayCurrentQuality: true,
-        vjsIconClass: 'vjs-icon-hd'
-      }
-    },
-    controlBar: {
-      playToggle: true,
-      volumePanel: {
-        inline: false
-      },
-      skipButtons: {
-        forward: 10,
-        backward: 10
-      },
-
-      fullscreenToggle: true
-    },
-    sources: {
-      src: url,
-    }
+  callbacksRef.current = {
+    onTimeupdate,
+    onUserSeek,
+    setPlayerRef,
+    onPause,
+    onPlay,
+    onEnded,
   };
+
+  const sourceUrl = `${BaseApUrl}/video/Video/${path.blogId}/${path.postId}/${path.objectName}`;
+  const autoplay = path.autoplay ?? false;
 
   useEffect(() => {
-    // Make sure Video.js player is only initialized once
-    if (!playerRef.current) {
-      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode. 
-      const videoElement = document.createElement("video-js");
-      videoElement.classList.add('vjs-big-play-centered');
-      videoElement.classList.add('vjs-default-skin');
-      videoRef.current.appendChild(videoElement);
-      playerRef.current = videojs(videoElement, options, function () {
-        var player = this;
-        var qualities = player.qualityLevels();
+    if (!videoRef.current || playerRef.current) return undefined;
 
-        player.on('timeupdate', () => {
-          if (onTimeupdate)
-            onTimeupdate(player);
-        })
+    const videoElement = document.createElement('video-js');
+    videoElement.classList.add('vjs-big-play-centered', 'vjs-default-skin');
+    videoRef.current.appendChild(videoElement);
 
-        player.on('pause', () => {
-          if (onPause) {
-            onPause(player);
-          }
-        });
+    const player = videojs(videoElement, {
+      autoplay,
+      controls: true,
+      playbackRates: [0.5, 1, 1.5, 2],
+      preload: 'metadata',
+      responsive: true,
+      fluid: true,
+      html5: {
+        vhs: {
+          overrideNative: true,
+        },
+      },
+      aspectRatio: '16:9',
+      poster: thumbnail,
+      plugins: {
+        qualitySelectorHls: {
+          displayCurrentQuality: true,
+          vjsIconClass: 'vjs-icon-hd',
+        },
+      },
+      controlBar: {
+        playToggle: true,
+        volumePanel: { inline: false },
+        skipButtons: { forward: 10, backward: 10 },
+        fullscreenToggle: true,
+      },
+      sources: [{ src: sourceUrl, type: 'application/x-mpegURL' }],
+    });
 
-        player.on('ended', () => {
-          if (onEnded) {
-            onEnded(player)
-          }
-        });
+    playerRef.current = player;
+    sourceRef.current = sourceUrl;
 
-        player.on('play', () => {
-          if (onPlay) {
-            onPlay(player);
-          }
-        });
+    player.on('timeupdate', () => callbacksRef.current.onTimeupdate?.(player));
+    player.on('pause', () => callbacksRef.current.onPause?.(player));
+    player.on('ended', () => callbacksRef.current.onEnded?.(player));
+    player.on('play', () => callbacksRef.current.onPlay?.(player));
+    player.on('seeked', () => callbacksRef.current.onUserSeek?.(player.currentTime()));
 
-        player.on('seeked', () => {
-          if (onUserSeek != undefined && onUserSeek != null) {
-            onUserSeek(player.currentTime());
-          }
-        })
-
-        if (currentTime) {
-          player.currentTime(currentTime)
-        }
-
-        if (setPlayerRef != undefined && setPlayerRef != null) {
-          setPlayerRef(player)
-        }
-
-        qualities.on('addqualitylevel', () => {
-
-        });
-
-      });
-
-    } else {
-      const player = playerRef.current;
-
-      player.autoplay(options.autoplay);
-      player.src(options.sources);
-      player.poster(options.poster);
-
+    const initialTime = Number(currentTime);
+    if (Number.isFinite(initialTime) && initialTime > 0) {
+      player.one('loadedmetadata', () => player.currentTime(initialTime));
     }
-  }, [options, videoRef]);
 
-  React.useEffect(() => {
-    const player = playerRef.current;
+    callbacksRef.current.setPlayerRef?.(player);
 
     return () => {
-      if (player && !player.isDisposed()) {
-        player.dispose();
-        playerRef.current = null;
-      }
+      if (!player.isDisposed()) player.dispose();
+      playerRef.current = null;
+      sourceRef.current = null;
     };
-  }, [playerRef]);
+    // The player is intentionally created once. Dynamic values are handled below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player || player.isDisposed()) return;
+
+    player.autoplay(autoplay);
+    player.poster(thumbnail ?? '');
+
+    if (sourceRef.current !== sourceUrl) {
+      sourceRef.current = sourceUrl;
+      player.src({ src: sourceUrl, type: 'application/x-mpegURL' });
+    }
+  }, [autoplay, sourceUrl, thumbnail]);
 
   return (
-    <div data-vjs-player>
-      <div
-        ref={videoRef}
-      >
-
-      </div>
-
+    <div className={`video-player-root ${className}`.trim()} data-vjs-player>
+      <div ref={videoRef} />
     </div>
   );
-}
+};
 
 export default VideoPlayer;

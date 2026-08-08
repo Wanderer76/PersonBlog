@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './SmallVideoCard.module.css';
 
 const SmallVideoCard = function (props) {
-    return <div className={styles.video} onClick={(e) => {
+    return <button type="button" className={styles.video} onClick={(e) => {
         e.preventDefault();
         props.navigate(`/videoPage/${props.videoCardModel.postId}`);
     }}>
@@ -12,7 +12,7 @@ const SmallVideoCard = function (props) {
             <div className={styles.channel}>{props.videoCardModel.blogName}</div>
             <div className={styles.stats}> {props.videoCardModel.viewCount} просмотров • 2 дня назад</div>
         </div>
-    </div>
+    </button>
 }
 
 export default SmallVideoCard;

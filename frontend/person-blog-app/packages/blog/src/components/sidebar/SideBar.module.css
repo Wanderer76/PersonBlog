@@ -1,12 +1,14 @@
 .sidebar {
     width: 240px;
-    height: 90svh;
+    flex: 0 0 240px;
+    height: calc(100svh - 56px);
+    top: 56px;
     position: sticky;
     background: #fff;
     border-right: 1px solid #e5e5e5;
     padding: 12px 0;
     /* border-radius: 10px; */
-    overflow-y: none;
+    overflow-y: auto;
     /* Убрали margin-top — он не нужен при sticky */
 }
 
@@ -40,4 +42,10 @@
     height: 1px;
     background: #e5e5e5;
     margin: 12px 0;
+}
+
+@media (max-width: 900px) {
+    .sidebar {
+        display: none;
+    }
 }
