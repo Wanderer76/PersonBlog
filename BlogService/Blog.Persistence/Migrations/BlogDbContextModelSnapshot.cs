@@ -281,6 +281,9 @@ namespace Blog.Persistence.Migrations
                     b.Property<Guid?>("PaymentSubscriptionId")
                         .HasColumnType("uuid");
 
+                    b.Property<long>("RecommendationVersion")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("ProcessState")
                         .HasColumnType("integer");
 

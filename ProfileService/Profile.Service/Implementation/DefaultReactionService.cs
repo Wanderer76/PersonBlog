@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
+using Recommendation.Contracts.Events;
 using Shared.Persistence;
 using Shared.Services;
 
@@ -33,6 +34,7 @@ namespace Profile.Service.Implementation
             var resultingReaction = hasView?.IsLike == reaction.IsLike
                 ? null
                 : reaction.IsLike;
+            var previousReaction = hasView?.IsLike;
 
             if (hasView == null)
             {
@@ -57,6 +59,25 @@ namespace Profile.Service.Implementation
 
             var videoEvent = ReactingEvent.Create(eventData, eventData.EventId);
             _context.Add(videoEvent);
+
+            var recommendationEventId = GuidService.GetNewGuid();
+            var recommendationEvent = new UserInteractionRecordedV1
+            {
+                EventId = recommendationEventId,
+                OccurredAt = DateTimeService.Now(),
+                UserId = reaction.UserId,
+                PostId = reaction.PostId,
+                Type = resultingReaction switch
+                {
+                    true => UserInteractionType.Like,
+                    false => UserInteractionType.Dislike,
+                    null => UserInteractionType.ReactionRemoved
+                },
+                WatchedSeconds = reaction.Time,
+                Reaction = resultingReaction,
+                PreviousReaction = previousReaction
+            };
+            _context.Add(ReactingEvent.Create(recommendationEvent, recommendationEventId));
             await _context.SaveChangesAsync();
         }
 

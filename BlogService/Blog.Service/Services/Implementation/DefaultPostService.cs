@@ -5,6 +5,7 @@ using Blog.Contracts.Models.File;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
+using Blog.Service.Events;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -73,6 +74,7 @@ internal class DefaultPostService : IPostService
             Title = post.Title,
             ViewCount = post.ViewCount
         }));
+        _context.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
 
         await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(id));
         await _context.SaveChangesAsync();

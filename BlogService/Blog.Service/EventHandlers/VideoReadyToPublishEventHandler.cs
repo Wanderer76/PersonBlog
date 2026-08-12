@@ -1,6 +1,7 @@
 ﻿using Blog.Contracts.Events;
 using Blog.Contracts.Models.Post;
 using Blog.Domain.Entities;
+using Blog.Service.Events;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
@@ -43,7 +44,8 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
             .FirstOrDefaultAsync(x => x.Id == @event.VideoMetadataId);
 
         var post = await _repository.Get<Post>()
-            .Include(x=>x.VideoPostInfo)
+            .Include(x => x.VideoPostInfo).ThenInclude(x => x.PostCategories)
+            .Include(x => x.VideoPostInfo).ThenInclude(x => x.PreviewFile)
             .FirstOrDefaultAsync(x => x.Id == @event.PostId);
 
         if (fileMetadata == null || post == null)
@@ -67,7 +69,9 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
             fileMetadata.Duration = @event.Duration;
             post.ProcessState = ProcessState.Complete;
             post.VideoPostInfo.VideoFileId = fileMetadata.Id;
+            post.VideoPostInfo.VideoFile = fileMetadata;
         }
+        post.MarkRecommendationChanged();
         var postUpdateEvent = new PostUpdateEvent
         {
             BlogId = post.BlogId,
@@ -80,6 +84,7 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
         };
 
         _repository.Add(VideoProcessEvent.Create(postUpdateEvent));
+        _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
         await _repository.SaveChangesAsync();
         await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(post.Id));
         await _cacheService.RemoveCachedDataAsync(new VideoMetadataCacheKey(post.Id));

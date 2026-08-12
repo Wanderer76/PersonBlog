@@ -3,6 +3,7 @@ using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
+using Blog.Service.Events;
 using FileStorage.Service;
 using Infrastructure.Services;
 using Infrastructure.Models;
@@ -75,6 +76,10 @@ internal sealed class DefaultProfilePostV2Service(
         }
 
         repository.Add(post);
+        if (post.Type == PostType.Text)
+        {
+            repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+        }
         await repository.SaveChangesAsync();
 
         return await MapToUserPostInfoDtoAsync(post, blogId, storage);
@@ -285,6 +290,7 @@ internal sealed class DefaultProfilePostV2Service(
             Title = post.Title,
             ViewCount = post.ViewCount
         }));
+        repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
         await repository.SaveChangesAsync();
         return Result.Success();
     }
@@ -416,6 +422,7 @@ internal sealed class DefaultProfilePostV2Service(
         foreach (var file in newFiles) repository.Add(file);
         foreach (var file in filesToRemove) repository.Remove(file);
 
+        post.MarkRecommendationChanged();
         repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
         {
             BlogId = post.BlogId,
@@ -426,6 +433,7 @@ internal sealed class DefaultProfilePostV2Service(
             Title = post.Title,
             ViewCount = post.ViewCount
         }));
+        repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
         try
         {
             await repository.SaveChangesAsync();
@@ -478,13 +486,16 @@ internal sealed class DefaultProfilePostV2Service(
         post.Title = updateRequest.Title;
         post.Visibility = updateRequest.Visibility;
 
-        var categoriesToRemove = updateRequest.Categories
-            .Except(post.VideoPostInfo.PostCategories.Select(x => x.CategoryId))
+        var categoriesToRemove = post.VideoPostInfo.PostCategories.Select(x => x.CategoryId)
+            .Except(updateRequest.Categories)
             .ToList();
 
-        foreach (var category in post.VideoPostInfo.PostCategories.Where(x => categoriesToRemove.Contains(x.CategoryId)))
+        foreach (var category in post.VideoPostInfo.PostCategories
+                     .Where(x => categoriesToRemove.Contains(x.CategoryId))
+                     .ToList())
         {
             repository.Remove(category);
+            post.VideoPostInfo.PostCategories.Remove(category);
         }
 
         var newCategories = await repository.Get<Category>()
@@ -516,9 +527,11 @@ internal sealed class DefaultProfilePostV2Service(
 
             await storage.PutFileAsync(post.BlogId, newThumbnail.ObjectName, updateRequest.Preview.ContentStream);
             post.VideoPostInfo.PreviewId = newThumbnail.Id;
+            post.VideoPostInfo.PreviewFile = newThumbnail;
             await storage.RemoveFileAsync(post.BlogId, preview.ObjectName);
         }
 
+        post.MarkRecommendationChanged();
         repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
         {
             BlogId = post.BlogId,
@@ -529,6 +542,7 @@ internal sealed class DefaultProfilePostV2Service(
             Title = post.Title,
             ViewCount = post.ViewCount
         }));
+        repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
 
         await repository.SaveChangesAsync();
 

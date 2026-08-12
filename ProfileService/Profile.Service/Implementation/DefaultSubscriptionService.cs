@@ -1,6 +1,4 @@
 ﻿using Infrastructure.Services;
-using MessageBus;
-using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
@@ -9,6 +7,7 @@ using Profile.Domain.Services;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
+using Recommendation.Contracts.Events;
 
 namespace Profile.Service.Implementation
 {
@@ -16,13 +15,11 @@ namespace Profile.Service.Implementation
     {
         private readonly IReadWriteRepository<IUserEntity> _readWriteRepository;
         private readonly ICurrentUserService _userSession;
-        private readonly IMessagePublish _messagePublish;
 
-        public DefaultSubscriptionService(IReadWriteRepository<IUserEntity> readWriteRepository, ICurrentUserService userSession, IMessagePublish messagePublish)
+        public DefaultSubscriptionService(IReadWriteRepository<IUserEntity> readWriteRepository, ICurrentUserService userSession)
         {
             _readWriteRepository = readWriteRepository;
             _userSession = userSession;
-            _messagePublish = messagePublish;
         }
 
         public async Task<HasSubscriptionModel> CheckCurrentUserToSubscriptionAsync(Guid blogId)
@@ -78,13 +75,23 @@ namespace Profile.Service.Implementation
 
             var newSubscription = new SubscribedChanel(user.UserId!, blogId);
             _readWriteRepository.Add(newSubscription);
-            await _readWriteRepository.SaveChangesAsync();
-            await _messagePublish.PublishAsync(BaseEvent<SubscribeCreateEvent>.Create(new SubscribeCreateEvent
+            _readWriteRepository.Add(ReactingEvent.Create(new SubscribeCreateEvent
             {
                 BlogId = blogId,
                 CreatedAt = newSubscription.CreatedAt,
                 UserId = newSubscription.UserId
-            }));
+            }, GuidService.GetNewGuid()));
+
+            var eventId = GuidService.GetNewGuid();
+            _readWriteRepository.Add(ReactingEvent.Create(new SubscriptionChangedV1
+            {
+                EventId = eventId,
+                BlogId = blogId,
+                UserId = newSubscription.UserId,
+                IsSubscribed = true,
+                OccurredAt = newSubscription.CreatedAt
+            }, eventId));
+            await _readWriteRepository.SaveChangesAsync();
         }
 
         public async Task UnSubscribeToBlogAsync(Guid blogId)
@@ -98,13 +105,24 @@ namespace Profile.Service.Implementation
                 throw new ArgumentException("У вас нет активной подписки на канал");
 
             _readWriteRepository.Remove(hasActiveSubscription);
-            await _readWriteRepository.SaveChangesAsync();
-            await _messagePublish.PublishAsync(BaseEvent<SubscribeCancelEvent>.Create(new SubscribeCancelEvent
+            var occurredAt = DateTimeService.Now();
+            _readWriteRepository.Add(ReactingEvent.Create(new SubscribeCancelEvent
             {
                 UserId = user.UserId,
-                CreatedAt = DateTimeService.Now(),
+                CreatedAt = occurredAt,
                 BlogId = blogId
-            }));
+            }, GuidService.GetNewGuid()));
+
+            var eventId = GuidService.GetNewGuid();
+            _readWriteRepository.Add(ReactingEvent.Create(new SubscriptionChangedV1
+            {
+                EventId = eventId,
+                BlogId = blogId,
+                UserId = user.UserId,
+                IsSubscribed = false,
+                OccurredAt = occurredAt
+            }, eventId));
+            await _readWriteRepository.SaveChangesAsync();
         }
     }
 }

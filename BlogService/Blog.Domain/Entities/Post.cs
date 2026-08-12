@@ -18,6 +18,7 @@ public sealed class Post : IBlogEntity, ISoftDelete
     public int ViewCount { get; set; } = 0;
     public int LikeCount { get; set; } = 0;
     public int DislikeCount { get; set; } = 0;
+    public long RecommendationVersion { get; private set; } = 1;
     public PostVisibility Visibility { get; set; }
     public ProcessState ProcessState { get; set; }
 
@@ -56,6 +57,7 @@ public sealed class Post : IBlogEntity, ISoftDelete
         else
         {
             TextPostInfo = new TextPostInfo(id, text, []);
+            ProcessState = ProcessState.Complete;
         }
     }
 
@@ -83,7 +85,10 @@ public sealed class Post : IBlogEntity, ISoftDelete
     {
         IsDelete = true;
         DeleteDateTime = DateTimeService.Now();
+        MarkRecommendationChanged();
     }
+
+    public void MarkRecommendationChanged() => RecommendationVersion++;
 }
 
 public enum PostType

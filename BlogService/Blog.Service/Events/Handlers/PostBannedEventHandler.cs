@@ -1,5 +1,6 @@
 ﻿using Blog.Contracts.Events;
 using Blog.Domain.Entities;
+using Blog.Service.Events;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -19,6 +20,10 @@ namespace Blog.Domain.Events.Handlers
         public async Task Handle(IMessageContext<PostBannedEvent> @event)
         {
             var post = await _repository.Get<Post>()
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PostCategories)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PreviewFile)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.VideoFile)
+                .Include(x => x.TextPostInfo)
                 .FirstAsync(x => x.Id == @event.Message.PostId);
 
             if (!post.BanMessageId.HasValue)
@@ -27,6 +32,8 @@ namespace Blog.Domain.Events.Handlers
                 var banMessage = new BanMessage(GuidService.GetNewGuid(), post.Id, @event.Message.CreatedAt, @event.Message.Message);
                 _repository.Add(banMessage);
                 post.SetPostBanned(banMessage);
+                post.MarkRecommendationChanged();
+                _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post, @event.Message.CreatedAt)));
                 await _repository.SaveChangesAsync();
             }
         }
@@ -47,12 +54,18 @@ namespace Blog.Domain.Events.Handlers
         {
             var post = await _repository.Get<Post>()
                 .Include(x => x.BanMessage)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PostCategories)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PreviewFile)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.VideoFile)
+                .Include(x => x.TextPostInfo)
                 .FirstAsync(x => x.Id == @event.Message.PostId);
 
             if (post.BanMessageId.HasValue)
             {
                 _repository.Attach(post);
                 post.RestorePostFromBan();
+                post.MarkRecommendationChanged();
+                _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
                 await _repository.SaveChangesAsync();
             }
         }

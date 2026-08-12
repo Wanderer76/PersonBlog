@@ -15,6 +15,8 @@ using MessageBus;
 using MessageBus.Configs;
 using MessageBus.Models;
 using Profile.Domain.Events;
+using Recommendation.Contracts;
+using Recommendation.Contracts.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +70,11 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
             Name = "blogs",
             RoutingKey = "post.unbanned"
         };
+    })
+    .AddMessage<PostCatalogChangedV2>(x =>
+    {
+        x.Exchange = RecommendationExchange.Name;
+        x.RoutingKey = RecommendationExchange.PostCatalogChangedV2RoutingKey;
     });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>

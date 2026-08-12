@@ -66,7 +66,7 @@ RecommendationService/
 
 ## Этап 1. Разделить проекты и зависимости
 
-- [ ] Создать `Recommendation.Contracts` без ссылок на Blog/Profile проекты.
+- [x] Создать `Recommendation.Contracts` без ссылок на Blog/Profile проекты.
 - [ ] Создать `Recommendation.Domain` без ASP.NET Core и EF Core.
 - [ ] Создать `Recommendation.Persistence` с отдельным `RecommendationDbContext`.
 - [ ] Перенести use cases и интерфейсы из старого `Recommendation.Service`.
@@ -181,13 +181,13 @@ RecommendationService/
 
 ### Задачи publisher-ов
 
-- [ ] Blog Service публикует полный snapshot после создания и обновления поста.
-- [ ] Blog Service публикует ban/unban и delete как изменение snapshot.
-- [ ] Blog Service использует монотонный `AggregateVersion`.
-- [ ] Profile Service создаёт новый уникальный `EventId` для каждого взаимодействия.
-- [ ] Profile Service сохраняет events через outbox до публикации.
+- [x] Blog Service публикует полный snapshot после создания и обновления поста.
+- [x] Blog Service публикует ban/unban и delete как изменение snapshot.
+- [x] Blog Service использует монотонный `AggregateVersion`.
+- [x] Profile Service создаёт новый уникальный `EventId` для каждого взаимодействия.
+- [x] Profile Service сохраняет recommendation events через outbox до публикации.
 - [ ] Gateway/frontend передаёт стабильный случайный anonymous session ID вместо IP.
-- [ ] Добавить contract tests сериализации всех событий.
+- [x] Добавить contract tests сериализации и маршрутизации событий.
 
 ### Задачи consumer-ов
 

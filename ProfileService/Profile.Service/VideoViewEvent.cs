@@ -50,7 +50,7 @@ public class VideoViewEventHandler : IEventHandler<VideoViewEvent>
             await @event.PublishAsync(BaseEvent<UserViewedSyncEvent>.Create(
                 new UserViewedSyncEvent
                 {
-                    EventId = @event.Message.UserId,
+                    EventId = GuidService.GetNewGuid(),
                     IsViewed = result.Value == UpdateViewState.Created ? @event.Message.IsCompleteWatch : true,
                     PostId = @event.Message.PostId,
                     UserId = @event.Message.UserId,

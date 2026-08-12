@@ -9,6 +9,8 @@ using Profile.API.HostedService;
 using Profile.Domain.Events;
 using Profile.Persistence;
 using Profile.Service;
+using Recommendation.Contracts;
+using Recommendation.Contracts.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,16 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
     .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(x =>
     {
         x.QueueName = "profile-blog";
+    })
+    .AddMessage<UserInteractionRecordedV1>(x =>
+    {
+        x.Exchange = RecommendationExchange.Name;
+        x.RoutingKey = RecommendationExchange.UserInteractionRecordedV1RoutingKey;
+    })
+    .AddMessage<SubscriptionChangedV1>(x =>
+    {
+        x.Exchange = RecommendationExchange.Name;
+        x.RoutingKey = RecommendationExchange.SubscriptionChangedV1RoutingKey;
     });
 
 builder.Services.AddHttpClient("Blog", x =>
