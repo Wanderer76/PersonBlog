@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { HttpTransportType, HubConnectionBuilder, HubConnectionState, LogLevel } from '@microsoft/signalr';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
-import API, { BaseApUrl } from '../../lib/api/client';
+import { BaseApUrl } from '../../lib/api/client';
 import { getAccessToken } from '../../shared/TokenStrorage.js';
+import { getConferenceRoom } from '@/lib/api/generated/conference-room/conference-room';
+import { getConferenceChat } from '@/lib/api/generated/conference-chat/conference-chat';
+import { getVideo } from '@/lib/api/generated/video/video';
 import {
     ChannelSummary,
     VideoActionButton,
@@ -16,6 +19,9 @@ import {
 import './ConferencePage.css';
 
 const messagePageSize = 20;
+const conferenceRoomApi = getConferenceRoom();
+const conferenceChatApi = getConferenceChat();
+const videoApi = getVideo();
 
 const ConferencePage = function () {
     const { id: conferenceId } = useParams();
@@ -34,7 +40,6 @@ const ConferencePage = function () {
     const lastTimeSyncRef = useRef(0);
 
     useEffect(() => {
-        const controller = new AbortController();
         let isActive = true;
 
         setIsLoading(true);
@@ -42,15 +47,11 @@ const ConferencePage = function () {
 
         const loadConference = async () => {
             try {
-                const roomResponse = await API.get(`/video/api/ConferenceRoom/joinLink?roomId=${conferenceId}`, {
-                    signal: controller.signal,
-                });
+                const roomResponse = await conferenceRoomApi.getApiConferenceRoomJoinLink({ roomId: conferenceId });
                 const postId = roomResponse.data?.postId;
                 if (!postId) throw new Error('Комната не найдена');
 
-                const videoResponse = await API.get(`/video/Video/video/${postId}`, {
-                    signal: controller.signal,
-                });
+                const videoResponse = await videoApi.getVideoVideoPostId(postId);
                 if (!videoResponse.data?.post || !videoResponse.data?.blog) {
                     throw new Error('Видео конференции не найдено');
                 }
@@ -60,7 +61,7 @@ const ConferencePage = function () {
                     setBlog(videoResponse.data.blog);
                 }
             } catch (error) {
-                if (!isActive || error?.code === 'ERR_CANCELED') return;
+                if (!isActive) return;
                 console.error('Ошибка при загрузке конференции:', error);
                 setLoadError('Не удалось открыть конференцию. Возможно, она завершена или недоступна.');
             } finally {
@@ -72,7 +73,6 @@ const ConferencePage = function () {
 
         return () => {
             isActive = false;
-            controller.abort();
         };
     }, [conferenceId]);
 
@@ -269,8 +269,9 @@ const ConferenceChat = function ({ messages, setMessages, conferenceId, connecti
         setErrorMessage('');
 
         try {
-            const response = await API.get(`/video/api/ConferenceChat/messages/${conferenceId}`, {
-                params: { offset: offsetRef.current, count: messagePageSize },
+            const response = await conferenceChatApi.getApiConferenceChatMessagesConferenceId(conferenceId, {
+                offset: offsetRef.current,
+                count: messagePageSize,
             });
             const loadedMessages = response.data ?? [];
 
@@ -314,7 +315,7 @@ const ConferenceChat = function ({ messages, setMessages, conferenceId, connecti
         setIsSending(true);
         setErrorMessage('');
         try {
-            await API.post('/video/api/ConferenceChat/sendMessage', { conferenceId, message });
+            await conferenceChatApi.postApiConferenceChatSendMessage({ conferenceId, message });
             setMessageInput('');
             autoScrollRef.current = true;
         } catch (error) {
