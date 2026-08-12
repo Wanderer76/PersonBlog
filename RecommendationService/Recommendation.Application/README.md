@@ -67,7 +67,7 @@ RecommendationService/
 ## Этап 1. Разделить проекты и зависимости
 
 - [x] Создать `Recommendation.Contracts` без ссылок на Blog/Profile проекты.
-- [ ] Создать `Recommendation.Domain` без ASP.NET Core и EF Core.
+- [x] Создать `Recommendation.Domain` без ASP.NET Core и EF Core.
 - [ ] Создать `Recommendation.Persistence` с отдельным `RecommendationDbContext`.
 - [ ] Перенести use cases и интерфейсы из старого `Recommendation.Service`.
 - [ ] Удалить ссылку Application на `Blog.Persistence`.
@@ -141,7 +141,8 @@ RecommendationService/
 
 ### Задачи
 
-- [ ] Реализовать сущности и EF-конфигурации.
+- [x] Реализовать доменные сущности.
+- [ ] Реализовать EF-конфигурации.
 - [ ] Создать первую миграцию.
 - [ ] Добавить индексы по доступности поста, времени создания, блогу и категориям.
 - [ ] Добавить индексы по `UserId + OccurredAt` для истории взаимодействий.
