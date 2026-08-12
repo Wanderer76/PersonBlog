@@ -1,31 +1,7 @@
-import API from '../lib/api/client';
+import { getVideoUpload } from '../lib/api/generated/video-upload/video-upload';
+import type { MultipartUploadPart, MultipartUploadSession } from '../lib/api/generated/models';
 
-export interface InitiateUploadResponse {
-    uploadId: string;
-    bucketId: string;
-    objectName: string;
-    contentType: string;
-    createdAt: string;
-    status: string;
-    totalSize: number;
-    totalParts: number;
-}
-
-interface GenerateUrlResponse {
-    url: string;
-}
-
-interface MultipartUploadPart {
-    partNumber: number;
-    eTag: string;
-    size: number;
-    uploadedAt: string;
-}
-
-interface CompleteUploadRequest {
-    uploadId: string;
-    parts: MultipartUploadPart[];
-}
+const videoUploadApi = getVideoUpload();
 
 const MAX_CONCURRENT_UPLOADS = 5;
 const MAX_PART_ATTEMPTS = 3;
@@ -52,8 +28,8 @@ export class DirectFileUploader {
         this.onProgress = callback;
     }
 
-    async initiateUpload(postId: string, duration: number, file: File): Promise<InitiateUploadResponse> {
-        const { data } = await API.post<InitiateUploadResponse>('/profile/api/VideoUpload/initiate', {
+    async initiateUpload(postId: string, duration: number, file: File): Promise<MultipartUploadSession> {
+        const { data } = await videoUploadApi.postApiVideoUploadInitiate({
             postId,
             objectName: file.name,
             size: file.size,
@@ -63,6 +39,7 @@ export class DirectFileUploader {
             duration
         });
 
+        if (!data.uploadId) throw new Error('Upload API returned no upload id');
         this.uploadId = data.uploadId;
         this.parts = [];
         return data;
@@ -98,7 +75,7 @@ export class DirectFileUploader {
     }
 
     private async uploadPart(file: File, partNumber: number, totalParts: number): Promise<void> {
-        const { data } = await API.post<GenerateUrlResponse>('/profile/api/VideoUpload/generate-url', {
+        const { data } = await videoUploadApi.postApiVideoUploadGenerateUrl({
             uploadId: this.uploadId,
             partNumber,
             expiryMinutes: 10
@@ -106,6 +83,7 @@ export class DirectFileUploader {
 
         const start = (partNumber - 1) * this.chunkSize;
         const chunk = file.slice(start, Math.min(start + this.chunkSize, file.size));
+        if (!data.url) throw new Error(`Upload API returned no URL for part ${partNumber}`);
         const response = await fetch(data.url, {
             method: 'PUT',
             body: chunk,
@@ -123,11 +101,11 @@ export class DirectFileUploader {
     }
 
     private async completeUpload(): Promise<void> {
-        const request: CompleteUploadRequest = {
+        const request = {
             uploadId: this.uploadId,
-            parts: [...this.parts].sort((left, right) => left.partNumber - right.partNumber)
+            parts: [...this.parts].sort((left, right) => (left.partNumber ?? 0) - (right.partNumber ?? 0))
         };
-        await API.post('/profile/api/VideoUpload/complete', request);
+        await videoUploadApi.postApiVideoUploadComplete(request);
     }
 
     async abortUpload(): Promise<void> {
@@ -137,6 +115,6 @@ export class DirectFileUploader {
         this.abortController = null;
         this.uploadId = '';
         this.parts = [];
-        await API.post('/profile/api/VideoUpload/abort', { uploadId });
+        await videoUploadApi.postApiVideoUploadAbort({ uploadId });
     }
 }

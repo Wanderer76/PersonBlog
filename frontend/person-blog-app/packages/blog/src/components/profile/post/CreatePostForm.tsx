@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './CreatePostForm.module.css';
-import API from '../../../lib/api/client';
 import { DirectFileUploader } from '../../../shared/DirectFileUploader';
-import type { CategoryModel, CreatePostModelViewModel } from '@/lib/api/generated/models';
+import { getProfilePostV2 } from '@/lib/api/generated/profile-post-v2/profile-post-v2';
+import type { CategoryModel, CreatePostModelViewModel, PostVisibility } from '@/lib/api/generated/models';
 import {
   CategoryMultiSelect,
   DescriptionTextarea,
@@ -19,9 +19,11 @@ const TypedCategoryMultiSelect = CategoryMultiSelect as ComponentType<{
   onChange: (event: { target: { value: number[] } }) => void;
 }>;
 
+const profilePostApi = getProfilePostV2();
+
 interface PostForm {
   title: string;
-  visibility: number;
+  visibility: PostVisibility;
   video: File | null;
   videoPostData: {
     description: string;
@@ -77,7 +79,7 @@ const CreatePostForm = () => {
 
   useEffect(() => {
     let isActive = true;
-    API.get<CreatePostModelViewModel>('/profile/api/ProfilePostV2/create')
+    profilePostApi.getApiProfilePostV2Create()
       .then(({ data }) => { if (isActive) setCreateModel(data); })
       .catch(() => { if (isActive) setErrorMessage('Не удалось загрузить параметры формы'); });
     return () => { isActive = false; };
@@ -117,18 +119,13 @@ const CreatePostForm = () => {
   };
 
   const createPost = async () => {
-    const formData = new FormData();
-    formData.append('Title', postForm.title.trim());
-    formData.append('Visibility', postForm.visibility.toString());
-    formData.append('VideoPostData.Description', postForm.videoPostData.description.trim());
-    postForm.videoPostData.categories.forEach(categoryId => {
-      formData.append('VideoPostData.Categories', categoryId.toString());
+    const { data } = await profilePostApi.postApiProfilePostV2Create({
+      Title: postForm.title.trim(),
+      Visibility: postForm.visibility,
+      'VideoPostData.Description': postForm.videoPostData.description.trim(),
+      'VideoPostData.Categories': postForm.videoPostData.categories,
+      'VideoPostData.Thumbnail': postForm.videoPostData.thumbnail ?? undefined
     });
-    if (postForm.videoPostData.thumbnail) {
-      formData.append('VideoPostData.Thumbnail', postForm.videoPostData.thumbnail);
-    }
-
-    const { data } = await API.post<{ id?: string }>('/profile/api/ProfilePostV2/create', formData);
     if (!data.id) throw new Error('Сервис не вернул идентификатор созданного поста');
     createdPostIdRef.current = data.id;
     return data.id;
@@ -170,7 +167,7 @@ const CreatePostForm = () => {
     if (isUploading && !window.confirm('Загрузка не завершена. Отменить её?')) return;
     if (uploaderRef.current) await uploaderRef.current.abortUpload().catch(() => undefined);
     if (createdPostIdRef.current) {
-      await API.post(`/profile/api/ProfilePostV2/remove/${createdPostIdRef.current}`).catch(() => undefined);
+      await profilePostApi.postApiProfilePostV2RemovePostId(createdPostIdRef.current).catch(() => undefined);
     }
     navigate('/profile');
   };

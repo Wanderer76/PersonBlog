@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import API from '../../../lib/api/client';
+import { getProfilePostV2 } from '../../../lib/api/generated/profile-post-v2/profile-post-v2';
 import {
   DescriptionTextarea,
   PrivacySelect,
@@ -10,6 +10,7 @@ import {
 import styles from './CreatePostForm.module.css';
 
 const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
+const profilePostApi = getProfilePostV2();
 
 const EditPostForm = () => {
   const { id } = useParams();
@@ -38,10 +39,11 @@ const EditPostForm = () => {
 
       try {
         const [formConfig, postData] = await Promise.all([
-          API.get('/profile/api/ProfilePostV2/create', { signal: controller.signal }),
-          API.get(`/profile/api/ProfilePostV2/edit/${id}`, { signal: controller.signal })
+          profilePostApi.getApiProfilePostV2Create(),
+          profilePostApi.getApiProfilePostV2EditPostId(id)
         ]);
 
+        if (controller.signal.aborted) return;
         setCreateModel(formConfig.data);
         setFormData({
           title: postData.data.title || '',
@@ -108,15 +110,12 @@ const EditPostForm = () => {
     setIsSubmitting(true);
 
     try {
-      const payload = new FormData();
-      payload.append('id', id);
-      payload.append('title', formData.title.trim());
-      payload.append('description', formData.description);
-      payload.append('visibility', String(formData.visibility));
-      if (formData.thumbnailFile) payload.append('preview', formData.thumbnailFile);
-
-      await API.post('/profile/api/ProfilePostV2/edit', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      await profilePostApi.postApiProfilePostV2Edit({
+        Id: id,
+        Title: formData.title.trim(),
+        Description: formData.description,
+        Visibility: Number(formData.visibility),
+        Preview: formData.thumbnailFile ?? undefined
       });
       navigate('/profile');
     } catch (requestError) {

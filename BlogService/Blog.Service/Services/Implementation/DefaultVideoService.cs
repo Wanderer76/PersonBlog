@@ -119,6 +119,7 @@ internal sealed class DefaultVideoService : IVideoService
     {
         var currentUser = await _currentUserService.GetCurrentUserAsync();
         var post = await _context.Get<Post>()
+            .Include(x => x.VideoPostInfo)
             .FirstOrDefaultAsync(x => x.Id == initiateUploadRequest.PostId);
 
         if (post == null)
@@ -136,17 +137,24 @@ internal sealed class DefaultVideoService : IVideoService
             return Result.Failure(new Error("Пост не является постом с видео"));
         }
 
-        var exists = await _context.Get<VideoFile>()
-            .FirstOrDefaultAsync(x => x.PostId == post.Id);
-
-        if (exists != null)
-        {
-            _context.Attach(exists);
-            exists.PostId = Guid.Empty;
-        }
-
         _context.Attach(post);
         post.ProcessState = ProcessState.Load;
+
+        var existingFiles = await _context.Get<VideoFile>()
+            .Where(x => x.PostId == post.Id)
+            .ToListAsync();
+
+        using var transaction = await _context.BeginTransactionAsync();
+        if (existingFiles.Count > 0)
+        {
+            post.VideoPostInfo.VideoFileId = null;
+            foreach (var existingFile in existingFiles)
+                _context.Remove(existingFile);
+
+            // The old rows must be deleted before the replacement is inserted,
+            // otherwise the unique (PostId, Resolution, ContentType) index fails.
+            await _context.SaveChangesAsync();
+        }
 
         var metadata = new VideoFile
         {
@@ -163,6 +171,7 @@ internal sealed class DefaultVideoService : IVideoService
         };
         _context.Add(metadata);
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
         return Result.Success();
     }
 

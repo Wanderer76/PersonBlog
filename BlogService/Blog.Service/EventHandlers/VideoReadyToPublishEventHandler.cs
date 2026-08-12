@@ -20,17 +20,34 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
 
     public async Task Handle(IMessageContext<VideoReadyToPublishEvent> @event)
     {
-        var post = await PrepareToPublish(@event.Message);
+        try
+        {
+            await PrepareToPublish(@event.Message);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // A new upload replaces the previous VideoFile. A late conversion
+            // response for that removed file is stale and must not fail the bus.
+            var metadataStillExists = await _repository.Get<VideoFile>()
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == @event.Message.VideoMetadataId);
+
+            if (metadataStillExists)
+                throw;
+        }
     }
 
-    private async Task<Post> PrepareToPublish(VideoReadyToPublishEvent @event)
+    private async Task PrepareToPublish(VideoReadyToPublishEvent @event)
     {
         var fileMetadata = await _repository.Get<VideoFile>()
-                        .FirstAsync(x => x.Id == @event.VideoMetadataId);
+            .FirstOrDefaultAsync(x => x.Id == @event.VideoMetadataId);
 
         var post = await _repository.Get<Post>()
             .Include(x=>x.VideoPostInfo)
-            .FirstAsync(x => x.Id == @event.PostId);
+            .FirstOrDefaultAsync(x => x.Id == @event.PostId);
+
+        if (fileMetadata == null || post == null)
+            return;
 
         _repository.Attach(fileMetadata);
         _repository.Attach(post);
@@ -66,6 +83,5 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
         await _repository.SaveChangesAsync();
         await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(post.Id));
         await _cacheService.RemoveCachedDataAsync(new VideoMetadataCacheKey(post.Id));
-        return post;
     }
 }

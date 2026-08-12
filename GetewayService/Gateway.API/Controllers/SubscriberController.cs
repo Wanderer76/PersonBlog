@@ -60,10 +60,10 @@ namespace Gateway.API.Controllers
             {
                 var blogs = await Task.WhenAll(subscriptions.Items
                     .Select(x => _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<BlogModel>($"api/Blog/blog/{x.BlogId}")));
-                return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, blogs));
+                return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, subscriptions.TotalPostsCount, blogs));
             }
             else
-                return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, []));
+                return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, subscriptions.TotalPostsCount, []));
         }
     }
 }

@@ -7,6 +7,9 @@
 
 export interface CreateMessageForm {
   conferenceId?: string;
-  /** @nullable */
-  message?: string | null;
+  /**
+   * @minLength 1
+   * @maxLength 4000
+   */
+  message: string;
 }

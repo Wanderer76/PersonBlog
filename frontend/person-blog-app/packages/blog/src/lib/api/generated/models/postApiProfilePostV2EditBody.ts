@@ -6,9 +6,12 @@
  */
 import type { PostVisibility } from './postVisibility';
 
-export type PostApiTextPostCreateTextPostBody = {
-  Title: string;
-  Text?: string;
+export type PostApiProfilePostV2EditBody = {
+  Id?: string;
+  Description?: string;
+  /** @minLength 3 */
+  Title?: string;
+  Preview?: Blob;
+  Categories?: number[];
   Visibility?: PostVisibility;
-  Media?: Blob[];
 };

@@ -1,8 +1,10 @@
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button/Button';
 import { PrivacySelect, TitleInput } from './CommonComponents';
-import { PostApiTextPostCreateTextPostBody, PostVisibility, PostVisibilitySelectItem } from '@/lib/api/generated/models';
+import { PostVisibility } from '@/lib/api/generated/models';
+import type { PostApiTextPostCreateTextPostBody, PostVisibilitySelectItem } from '@/lib/api/generated/models';
 import { getTextPost } from '@/lib/api/generated/text-post/text-post';
 import { ALLOWED_MEDIA_TYPES, MAX_FILE_SIZE, MediaUploader } from '@/features/post-management/components/MediaUploader/MediaUploader';
 import { RichTextEditor } from '@/features/post-management/components/RichTextEditor/RichTextEditor';
@@ -15,9 +17,11 @@ interface FormErrors {
     general?: string;
 }
 
+type TextPostFormData = Omit<PostApiTextPostCreateTextPostBody, 'Media'> & { Media?: File[] };
+
 const CreateTextPostForm = () => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState<PostApiTextPostCreateTextPostBody>({
+    const [formData, setFormData] = useState<TextPostFormData>({
         Title: 'e',
         Text: '',
         Media: [],
@@ -29,9 +33,9 @@ const CreateTextPostForm = () => {
     const client = getTextPost();
 
 
-    const handleChange = <K extends keyof PostApiTextPostCreateTextPostBody>(
+    const handleChange = <K extends keyof TextPostFormData>(
         field: K,
-        value: PostApiTextPostCreateTextPostBody[K]
+        value: TextPostFormData[K]
     ) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
         if (errors[field as keyof FormErrors]) {
@@ -119,7 +123,7 @@ const CreateTextPostForm = () => {
                 <PrivacySelect
                     options={visibilities}
                     value={visibilities[0]}
-                    onChange={(e) => {
+                    onChange={(e: ChangeEvent<HTMLSelectElement>) => {
                         const { value } = e.target;
                         return handleChange('Visibility', value);
                     }}
@@ -148,7 +152,7 @@ const CreateTextPostForm = () => {
     );
 };
 
-export const validateForm = (data: PostApiTextPostCreateTextPostBody): FormErrors => {
+export const validateForm = (data: TextPostFormData): FormErrors => {
     const errors: FormErrors = {};
 
     // Title is always required

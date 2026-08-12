@@ -4,11 +4,11 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
-import type { PostCommonModel } from './postCommonModel';
+import type { UserPostInfoModel } from './userPostInfoModel';
 
-export interface PostCommonModelPagedListViewModel {
+export interface UserPostInfoModelPagedListViewModel {
   totalPageCount: number;
   pageSize: number;
   totalPostsCount: number;
-  items: PostCommonModel[];
+  items: UserPostInfoModel[];
 }

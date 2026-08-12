@@ -9,8 +9,9 @@ import { useIntersectionObserver } from '../../shared/hooks/useIntersectionObser
 import { Playlist } from '../../entities/playlist/types';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
 import styles from './ProfilePage.module.css';
-import API, { BaseApUrl } from '@/lib/api/client';
+import { BaseApUrl } from '@/lib/api/client';
 import { getPlayList } from '@/lib/api/generated/play-list/play-list';
+import { getProfilePostV2 } from '@/lib/api/generated/profile-post-v2/profile-post-v2';
 import { getAccessToken, JwtTokenService } from '@/shared/TokenStrorage';
 import { ProfileHeader } from '@/features/post-management/components/ProfileHeader/ProfileHeader';
 import { PlaylistCard } from '@/features/post-management/components/PlayListCars/PlaylistCard';
@@ -24,12 +25,7 @@ const POST_TYPE = { text: 0, video: 1 } as const;
 type ActivePanel = 'posts' | 'playlists' | 'text';
 type ProfileViewModel = BlogModel & { totalPostsCount: number };
 
-interface PostsPageResponse {
-    items: UserPostInfoModel[];
-    totalPostsCount: number;
-    totalPageCount: number;
-    currentPage: number;
-}
+const profilePostApi = getProfilePostV2();
 
 const initialProfile: ProfileViewModel = {
     id: '',
@@ -140,10 +136,12 @@ export const ProfilePage = memo(() => {
             setIsLoading(true);
             setErrorMessage(null);
             try {
-                const { data } = await API.get<PostsPageResponse>(
-                    `/profile/api/ProfilePostV2/my?page=${page}&pageSize=${PAGE_SIZE}&postType=${postType}`,
-                    { signal: controller.signal }
-                );
+                const { data } = await profilePostApi.getApiProfilePostV2My({
+                    page,
+                    pageSize: PAGE_SIZE,
+                    postType
+                });
+                if (controller.signal.aborted) return;
                 setPosts(previousPosts => {
                     if (page === 1) return data.items;
                     const ids = new Set(previousPosts.map(post => post.id));
@@ -185,7 +183,7 @@ export const ProfilePage = memo(() => {
     const handleRemovePost = async (id: string) => {
         setErrorMessage(null);
         try {
-            await API.post(`/profile/api/ProfilePostV2/remove/${id}`);
+            await profilePostApi.postApiProfilePostV2RemovePostId(id);
             setPosts(previous => previous.filter(post => post.id !== id));
             setProfile(previous => ({
                 ...previous,

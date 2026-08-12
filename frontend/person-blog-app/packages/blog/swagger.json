@@ -10,221 +10,6 @@
     }
   ],
   "paths": {
-    "/api/Auth/create": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterModel"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterModel"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterModel"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthCodeResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthCodeResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthCodeResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Auth/login": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginPasswordModel"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginPasswordModel"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginPasswordModel"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthCodeResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthCodeResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthCodeResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Auth/refresh": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/Auth/authorize": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "parameters": [
-          {
-            "name": "clientId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "redirectUri",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "response_type",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "state",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "returnUrl",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Auth/token": {
-      "post": {
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
     "/api/Ban/sendPostBanRequest": {
       "post": {
         "tags": [
@@ -1647,6 +1432,295 @@
         }
       }
     },
+    "/api/ProfilePostV2/my": {
+      "get": {
+        "tags": [
+          "ProfilePostV2"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "postType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PostType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ProfilePostV2/create": {
+      "get": {
+        "tags": [
+          "ProfilePostV2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ProfilePostV2"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  },
+                  "VideoPostData.Thumbnail": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "VideoPostData.Description": {
+                    "type": "string"
+                  },
+                  "VideoPostData.Categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                },
+                "VideoPostData.Thumbnail": {
+                  "style": "form"
+                },
+                "VideoPostData.Description": {
+                  "style": "form"
+                },
+                "VideoPostData.Categories": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ProfilePostV2/remove/{postId}": {
+      "post": {
+        "tags": [
+          "ProfilePostV2"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ProfilePostV2/edit/{postId}": {
+      "get": {
+        "tags": [
+          "ProfilePostV2"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEditViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEditViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEditViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ProfilePostV2/edit": {
+      "post": {
+        "tags": [
+          "ProfilePostV2"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "Title": {
+                    "minLength": 3,
+                    "type": "string"
+                  },
+                  "Preview": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  }
+                }
+              },
+              "encoding": {
+                "Id": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "Title": {
+                  "style": "form"
+                },
+                "Preview": {
+                  "style": "form"
+                },
+                "Categories": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/recommendations": {
       "get": {
         "tags": [
@@ -1778,6 +1852,108 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TextPost/create": {
+      "get": {
+        "tags": [
+          "TextPost"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/TextPost/createTextPost": {
+      "post": {
+        "tags": [
+          "TextPost"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "Title"
+                ],
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Text": {
+                    "type": "string"
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  },
+                  "Media": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Text": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                },
+                "Media": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              }
+            }
           }
         }
       }
@@ -1914,6 +2090,181 @@
         }
       }
     },
+    "/api/VideoUpload/initiate": {
+      "post": {
+        "tags": [
+          "VideoUpload"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateUploadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateUploadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/InitiateUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultipartUploadSession"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultipartUploadSession"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultipartUploadSession"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/VideoUpload/generate-url": {
+      "post": {
+        "tags": [
+          "VideoUpload"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateUrlRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateUrlRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreSignedUrl"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreSignedUrl"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreSignedUrl"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/VideoUpload/complete": {
+      "post": {
+        "tags": [
+          "VideoUpload"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteUploadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteUploadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/VideoUpload/abort": {
+      "post": {
+        "tags": [
+          "VideoUpload"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbortUploadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbortUploadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbortUploadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/View/history": {
       "get": {
         "tags": [
@@ -1941,38 +2292,12 @@
   },
   "components": {
     "schemas": {
-      "AuthCodeResponse": {
+      "AbortUploadRequest": {
         "type": "object",
         "properties": {
-          "authCode": {
+          "uploadId": {
             "type": "string",
             "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "AuthResponse": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string",
-            "nullable": true
-          },
-          "refreshToken": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "RefreshTokenRequest": {
-        "required": [
-          "refreshToken"
-        ],
-        "type": "object",
-        "properties": {
-          "refreshToken": {
-            "type": "string"
           }
         },
         "additionalProperties": false
@@ -2044,6 +2369,20 @@
         },
         "additionalProperties": false
       },
+      "CategoryModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ChangePostPositionRequest": {
         "required": [
           "destination",
@@ -2089,7 +2428,27 @@
         },
         "additionalProperties": false
       },
+      "CompleteUploadRequest": {
+        "type": "object",
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MultipartUploadPart"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateMessageForm": {
+        "required": [
+          "message"
+        ],
         "type": "object",
         "properties": {
           "conferenceId": {
@@ -2097,8 +2456,9 @@
             "format": "uuid"
           },
           "message": {
-            "type": "string",
-            "nullable": true
+            "maxLength": 4000,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -2134,6 +2494,51 @@
         },
         "additionalProperties": false
       },
+      "CreatePostModelViewModel": {
+        "type": "object",
+        "properties": {
+          "subscriptionLevels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubscriptionLevelModel"
+            },
+            "nullable": true
+          },
+          "visibility": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostVisibilitySelectItem"
+            },
+            "nullable": true
+          },
+          "categoryList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryModel"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GenerateUrlRequest": {
+        "type": "object",
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiryMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "HasBlogResponse": {
         "type": "object",
         "properties": {
@@ -2143,22 +2548,97 @@
         },
         "additionalProperties": false
       },
-      "LoginPasswordModel": {
-        "required": [
-          "login",
-          "password"
-        ],
+      "InitiateUploadRequest": {
         "type": "object",
         "properties": {
-          "login": {
-            "minLength": 1,
-            "type": "string"
+          "postId": {
+            "type": "string",
+            "format": "uuid"
           },
-          "password": {
-            "minLength": 1,
-            "type": "string"
+          "objectName": {
+            "type": "string",
+            "nullable": true
           },
-          "redirectUrl": {
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileExtension": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "duration": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MultipartUploadPart": {
+        "type": "object",
+        "properties": {
+          "partNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "eTag": {
+            "type": "string",
+            "nullable": true
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MultipartUploadSession": {
+        "type": "object",
+        "properties": {
+          "uploadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "bucketId": {
+            "type": "string",
+            "nullable": true
+          },
+          "objectName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/UploadStatus"
+          },
+          "totalSize": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalParts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completedETag": {
             "type": "string",
             "nullable": true
           }
@@ -2268,7 +2748,8 @@
         "required": [
           "items",
           "pageSize",
-          "totalPageCount"
+          "totalPageCount",
+          "totalPostsCount"
         ],
         "type": "object",
         "properties": {
@@ -2280,11 +2761,53 @@
             "type": "integer",
             "format": "int32"
           },
+          "totalPostsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
           "items": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PostCommonModel"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostEditViewModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "previewUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/PostVisibility"
+          },
+          "paymentSubscriptionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2303,6 +2826,62 @@
           "reasonId": {
             "type": "string",
             "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PostType": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "PostVisibility": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "PostVisibilitySelectItem": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/PostVisibility"
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PreSignedUrl": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "httpMethod": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2334,37 +2913,15 @@
         },
         "additionalProperties": { }
       },
-      "RegisterModel": {
-        "required": [
-          "login",
-          "password",
-          "passwordConfirm",
-          "userName"
+      "ProcessState": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
         ],
-        "type": "object",
-        "properties": {
-          "login": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "password": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "passwordConfirm": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "userName": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "redirectUrl": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
+        "type": "integer",
+        "format": "int32"
       },
       "SetViewRequest": {
         "type": "object",
@@ -2449,28 +3006,142 @@
         },
         "additionalProperties": false
       },
-      "TokenRequest": {
+      "TextInfoDto": {
         "type": "object",
         "properties": {
-          "grant_type": {
+          "text": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "UserPostInfoModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "blogId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dislikeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "viewCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "paymentSubscriptionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/PostVisibility"
+          },
+          "title": {
             "type": "string",
             "nullable": true
           },
-          "code": {
+          "textInfo": {
+            "$ref": "#/components/schemas/TextInfoDto"
+          },
+          "videoInfo": {
+            "$ref": "#/components/schemas/VideoInfoDto"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserPostInfoModelPagedListViewModel": {
+        "required": [
+          "items",
+          "pageSize",
+          "totalPageCount",
+          "totalPostsCount"
+        ],
+        "type": "object",
+        "properties": {
+          "totalPageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPostsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserPostInfoModel"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "VideoInfoDto": {
+        "type": "object",
+        "properties": {
+          "processState": {
+            "$ref": "#/components/schemas/ProcessState"
+          },
+          "previewUrl": {
             "type": "string",
             "nullable": true
           },
-          "client_id": {
+          "videoMetadata": {
+            "$ref": "#/components/schemas/VideoMetadataModel"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VideoMetadataModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "length": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "contentType": {
             "type": "string",
             "nullable": true
           },
-          "client_secret": {
+          "objectName": {
             "type": "string",
             "nullable": true
           },
-          "redirect_uri": {
-            "type": "string",
-            "nullable": true
+          "duration": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

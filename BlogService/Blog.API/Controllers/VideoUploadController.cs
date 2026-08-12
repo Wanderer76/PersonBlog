@@ -1,4 +1,5 @@
 ﻿using Authentication.Contract.Constants;
+using Blog.Contracts.Models.Upload;
 using Blog.Contracts.Services;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
@@ -148,28 +149,10 @@ public sealed class VideoUploadController(
     }
 }
 
-public class CompleteUploadRequest
-{
-    public string UploadId { get; set; } = null!;
-    public List<MultipartUploadPart> Parts { get; set; } = new();
-}
-
-public class AbortUploadRequest
-{
-    public string UploadId { get; set; } = null!;
-}
-
 public class ResumeUploadResponse
 {
     public MultipartUploadSession Session { get; set; } = null!;
     public List<MultipartUploadPart> UploadedParts { get; set; } = new();
     public List<int> MissingParts { get; set; } = new();
     public int Progress { get; set; }
-}
-
-public class GenerateUrlRequest
-{
-    public string UploadId { get; set; } = null!;
-    public int PartNumber { get; set; }
-    public int ExpiryMinutes { get; set; } = 5;
 }

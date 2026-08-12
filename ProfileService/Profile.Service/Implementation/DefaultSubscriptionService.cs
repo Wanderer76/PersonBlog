@@ -54,7 +54,7 @@ namespace Profile.Service.Implementation
 
             var pagesCount = Math.Ceiling(totalCount / (double)size);
 
-            return new PagedListViewModel<SubscribeViewModel>(pagesCount == 0 ? 1 : (int)pagesCount, totalCount, blogs);
+            return new PagedListViewModel<SubscribeViewModel>(pagesCount == 0 ? 1 : (int)pagesCount, size, totalCount, blogs);
         }
 
         public async Task SubscribeToBlogAsync(Guid blogId)

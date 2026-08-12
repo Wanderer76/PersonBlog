@@ -101,6 +101,7 @@ internal sealed class DefaultProfilePostV2Service(
         return new PagedListViewModel<PostCommonModelV2>(
             (int)Math.Ceiling((double)totalCount / pageSize),
             pageSize,
+            totalCount,
             dtos);
     }
 
