@@ -7,6 +7,7 @@ export const OAUTH_STATE_KEY = 'OAUTH_STATE_KEY';
 export const OAUTH_RETURN_URL_KEY = 'OAUTH_RETURN_URL_KEY';
 export const AUTH_STATE_CHANGED_EVENT = 'auth-state-changed';
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5078';
+const AUTH_REDIRECT_URI = `${window.location.origin}/callback`;
 const authTransport = axios.create({ baseURL: AUTH_API_URL, withCredentials: false });
 
 function notifyAuthStateChanged(): void {
@@ -109,6 +110,29 @@ interface RefreshTokenResponse {
     refreshToken: string;
 }
 
+function isTokenResponse(value: unknown): value is RefreshTokenResponse {
+    if (typeof value !== 'object' || value === null) return false;
+
+    const response = value as Record<string, unknown>;
+    return typeof response.accessToken === 'string'
+        && response.accessToken.length > 0
+        && typeof response.refreshToken === 'string'
+        && response.refreshToken.length > 0;
+}
+
+function saveTokenPair(tokens: RefreshTokenResponse): void {
+    localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
+    localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
+    notifyAuthStateChanged();
+
+    if (navigator.serviceWorker?.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'SET_AUTH_TOKEN',
+            payload: tokens.accessToken
+        });
+    }
+}
+
 export class JwtTokenService {
     private static refreshPromise: Promise<number> | null = null;
     private static authRedirectPromise: Promise<void> | null = null;
@@ -143,7 +167,7 @@ export class JwtTokenService {
 
         const params = new URLSearchParams({
             clientId: 'blog',
-            redirectUri: `http://localhost:3000/callback`,
+            redirectUri: AUTH_REDIRECT_URI,
             response_type: 'code',
             state: state,
             ...(returnUrl && { returnUrl }),
@@ -180,7 +204,7 @@ export class JwtTokenService {
             code: code,
             client_id: 'blog',
             client_secret: 'blog', // ⚠️ См. примечание про PKCE ниже
-            redirect_uri: `${window.location.origin}/callback`,
+            redirect_uri: AUTH_REDIRECT_URI,
         });
 
         if (response.status !== 200) {
@@ -188,11 +212,14 @@ export class JwtTokenService {
             throw new Error(`Token exchange failed: ${error}`);
         }
 
-        const data = response.data;
+        const data: unknown = response.data;
+
+        if (!isTokenResponse(data)) {
+            throw new Error('Invalid token response');
+        }
 
         // Сохраняем токены
-        saveAccessToken(data.accessToken);
-        saveRefreshToken(data.refreshToken);
+        saveTokenPair(data);
 
         return {
             accessToken: data.accessToken,
@@ -226,25 +253,28 @@ export class JwtTokenService {
 
             
             // Отдельный transport не содержит 401 interceptor, поэтому refresh не может вызвать сам себя.
-            const response = await authTransport.post(`/api/Auth/refresh`, null, {
-                params: { refreshToken },
-            });
+            const response = await authTransport.post(`/api/Auth/refresh`, { refreshToken });
 
             if (response.status === 200) {
                 const data: AuthResponse = response.data;
-                saveAccessToken(data.accessToken!);
-                saveRefreshToken(data.refreshToken!);
+                if (!isTokenResponse(data)) {
+                    throw new Error('Invalid refresh response');
+                }
+                saveTokenPair(data);
                 return response.status;
             }
 
-            if (response.status === 401) {
-                this.cleanAuth();
+            return response.status;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+                if (status === 400 || status === 401 || status === 403) {
+                    this.cleanAuth();
+                    return status;
+                }
             }
 
-            return response.status;
-        } catch {
-            this.cleanAuth();
-            return 401;
+            throw error;
         }
     }
 

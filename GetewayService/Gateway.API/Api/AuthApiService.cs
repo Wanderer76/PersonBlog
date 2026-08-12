@@ -45,7 +45,10 @@ namespace Gateway.API.Api
             {
                 client.DefaultRequestHeaders.TryAddWithoutValidation(i.Key, i.Value.ToArray());
             }
-            var response = await client.PostAsync($"Auth/refresh?refreshToken={refreshToken}", null);
+            var response = await client.PostAsJsonAsync("Auth/refresh", new RefreshTokenRequest
+            {
+                RefreshToken = refreshToken
+            });
             return (await response.Content.ReadFromJsonAsync<Result<AuthResponse>>())!;
         }
     }

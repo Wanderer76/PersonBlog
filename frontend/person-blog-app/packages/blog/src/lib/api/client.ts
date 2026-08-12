@@ -34,15 +34,12 @@ API.interceptors.response.use(
         refreshTokenPromise = JwtTokenService.refreshToken()
           .then((status) => {
             if (status !== 200) {
+              void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
               throw new Error('Refresh token failed');
             }
-            refreshTokenPromise = null;
           })
-          .catch((refreshError) => {
+          .finally(() => {
             refreshTokenPromise = null;
-            JwtTokenService.cleanAuth();
-            void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
-            return Promise.reject(refreshError);
           });
       }
       await refreshTokenPromise;

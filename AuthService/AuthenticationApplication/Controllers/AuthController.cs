@@ -40,9 +40,9 @@ public class AuthController : BaseApiController
 
     [HttpPost("refresh")]
     [Produces(typeof(AuthResponse))]
-    public async Task<Result<AuthResponse>> Refresh(string refreshToken)
+    public async Task<Result<AuthResponse>> Refresh([FromBody] RefreshTokenRequest request)
     {
-        var response = await _authService.Refresh(refreshToken);
+        var response = await _authService.Refresh(request.RefreshToken);
         return response;
     }
 

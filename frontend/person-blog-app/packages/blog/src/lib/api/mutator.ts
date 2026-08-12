@@ -82,7 +82,10 @@ instance.interceptors.response.use(
       const status = await JwtTokenService.refreshToken();
       
       if (status !== 200) {
-        throw new Error('Refresh token failed');
+        const refreshError = new Error('Refresh token failed');
+        processQueue(refreshError, null);
+        void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+        return Promise.reject(refreshError);
       }
 
       const newToken = JwtTokenService.getFormatedTokenForHeader();
@@ -95,10 +98,8 @@ instance.interceptors.response.use(
       return instance(originalRequest);
       
     } catch (refreshError) {
-      // ✅ Refresh не удался — очищаем очередь и перенаправляем на авторизацию
+      // Временная сетевая или серверная ошибка не должна удалять сессию.
       processQueue(refreshError, null);
-      JwtTokenService.cleanAuth();
-      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
       return Promise.reject(refreshError);
       
     } finally {

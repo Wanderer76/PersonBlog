@@ -9,7 +9,7 @@ import type {
   AuthResponse,
   GetApiAuthAuthorizeParams,
   LoginPasswordModel,
-  PostApiAuthRefreshParams,
+  RefreshTokenRequest,
   RegisterRequest,
   TokenRequest
 } from '.././models';
@@ -40,11 +40,12 @@ const postApiAuthCreate = (
       );
     }
   const postApiAuthRefresh = (
-    params?: PostApiAuthRefreshParams,
+    refreshTokenRequest: RefreshTokenRequest,
  ) => {
       return customInstance<AuthResponse>(
       {url: `/api/Auth/refresh`, method: 'POST',
-        params
+      headers: {'Content-Type': 'application/json', },
+      data: refreshTokenRequest
     },
       );
     }

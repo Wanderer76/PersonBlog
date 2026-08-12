@@ -30,9 +30,9 @@ public class AuthController(ILogger<AuthController> logger, IHttpClientFactory _
 
     [HttpPost("refresh")]
     [Produces(typeof(AuthResponse))]
-    public async Task<ActionResult<AuthResponse>> Refresh(string refreshToken)
+    public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshTokenRequest request)
     {
-        var response = await _httpClientFactory.RefreshAsync(HttpContext, refreshToken);
+        var response = await _httpClientFactory.RefreshAsync(HttpContext, request.RefreshToken);
         return ToActionResult(response);
     }
 

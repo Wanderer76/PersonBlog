@@ -11,6 +11,12 @@ public class AuthResponse
     public string RefreshToken { get; set; } = null!;
 }
 
+public class RefreshTokenRequest
+{
+    [JsonPropertyName("refreshToken")]
+    public string RefreshToken { get; set; } = null!;
+}
+
 public class AuthCodeResponse
 {
     public string AuthCode { get; set; } = null!;
