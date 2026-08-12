@@ -7,8 +7,11 @@
 import type {
   CreatePostModelViewModel,
   PostApiTextPostCreateTextPostBody,
+  PostApiTextPostEditBody,
+  TextPostEditViewModel,
   UserPostInfoModel
 } from '.././models';
+import type { AxiosRequestConfig } from 'axios';
 
 import { customInstance } from '../../mutator';
 
@@ -44,6 +47,40 @@ if(postApiTextPostCreateTextPostBody.Media !== undefined) {
     },
       );
     }
-  return {getApiTextPostCreate,postApiTextPostCreateTextPost}};
+  const getApiTextPostEditPostId = (
+    postId: string,
+    options?: AxiosRequestConfig,
+ ) => {
+      return customInstance<TextPostEditViewModel>(
+      {url: `/api/TextPost/edit/${postId}`, method: 'GET'
+    },
+      options);
+    }
+  const postApiTextPostEdit = (
+    postApiTextPostEditBody: PostApiTextPostEditBody,
+ ) => {const formData = new FormData();
+formData.append(`Id`, postApiTextPostEditBody.Id);
+formData.append(`Title`, postApiTextPostEditBody.Title);
+if(postApiTextPostEditBody.Text !== undefined) {
+ formData.append(`Text`, postApiTextPostEditBody.Text);
+ }
+formData.append(`Visibility`, postApiTextPostEditBody.Visibility.toString())
+if(postApiTextPostEditBody.Media !== undefined) {
+ postApiTextPostEditBody.Media.forEach(value => formData.append(`Media`, value));
+ }
+if(postApiTextPostEditBody.RemovedMediaIds !== undefined) {
+ postApiTextPostEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
+ }
+
+      return customInstance<void>(
+      {url: `/api/TextPost/edit`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      );
+    }
+  return {getApiTextPostCreate,postApiTextPostCreateTextPost,getApiTextPostEditPostId,postApiTextPostEdit}};
 export type GetApiTextPostCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['getApiTextPostCreate']>>>
 export type PostApiTextPostCreateTextPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['postApiTextPostCreateTextPost']>>>
+export type GetApiTextPostEditPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['getApiTextPostEditPostId']>>>
+export type PostApiTextPostEditResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['postApiTextPostEdit']>>>

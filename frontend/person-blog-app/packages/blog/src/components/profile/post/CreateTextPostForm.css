@@ -258,6 +258,10 @@
   box-shadow: 0 20px 55px rgba(24, 24, 27, 0.08);
 }
 
+.create-text-post-loading p {
+  margin: 0 0 18px;
+}
+
 @media (max-width: 640px) {
   .create-text-post-page {
     padding: 0 0 40px;

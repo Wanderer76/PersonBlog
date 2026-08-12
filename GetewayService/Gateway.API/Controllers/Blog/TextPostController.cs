@@ -1,6 +1,7 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Contracts;
 using Blog.Contracts.Services;
+using Blog.Contracts.Models.Post;
 using Blog.Domain.Entities;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
@@ -31,5 +32,19 @@ public class TextPostController : BaseApiController
     {
         var postCreateResult = await postApiClient.CreateTextPostAsync(textPostCreateForm);
         return ToActionResult(postCreateResult);
+    }
+
+    [HttpGet("edit/{postId:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<TextPostEditViewModel>> GetTextPostEditModel(Guid postId)
+    {
+        return ToActionResult(await postApiClient.GetTextPostEditModelAsync(postId));
+    }
+
+    [HttpPost("edit")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult> EditTextPost([FromForm] TextPostEditDto request)
+    {
+        return ToActionResult(await postApiClient.UpdateTextPostAsync(request));
     }
 }

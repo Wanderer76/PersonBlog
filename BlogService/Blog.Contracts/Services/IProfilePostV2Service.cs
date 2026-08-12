@@ -17,8 +17,9 @@ public interface IProfilePostV2Service
     Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(Guid requestedBlogId, int page, int pageSize, PostType postType);
     Task<Result> RemovePostAsync(Guid postId);
     Task<Result<PostEditViewModel>> GetPostEditViewModelAsync(Guid postId);
-
     Task<Result> UpdatePostAsync(PostUpdateRequest updateRequest);
+    Task<Result<TextPostEditViewModel>> GetTextPostEditViewModelAsync(Guid postId);
+    Task<Result> UpdateTextPostAsync(TextPostEditDto request);
 
 }
 

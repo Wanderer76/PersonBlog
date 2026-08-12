@@ -89,6 +89,7 @@ function App() {
                   <Route path="history" element={<HistoryPage />} />
                   <Route path="playList/create" element={<CreatePlaylistForm />} />
                   <Route path="textPost/create" element={<CreateTextPostForm />} />
+                  <Route path="textPost/edit/:id" element={<CreateTextPostForm />} />
                 </Route>
               </Route>
               <Route path='playlist/:playlistId' element={<PlaylistPage />} />

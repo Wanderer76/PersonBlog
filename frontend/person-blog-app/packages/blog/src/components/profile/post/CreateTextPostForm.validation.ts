@@ -17,13 +17,15 @@ const hasVisibleText = (html?: string) => {
   return Boolean(template.content.textContent?.trim());
 };
 
-export const validateForm = (data: TextPostFormData): FormErrors => {
+export const validateForm = (data: TextPostFormData, hasExistingMedia = false): FormErrors => {
   const errors: FormErrors = {};
 
-  if (!data.Title.trim()) errors.title = 'Заголовок обязателен';
+  const title = data.Title.trim();
+  if (!title) errors.title = 'Заголовок обязателен';
+  else if (title.length < 3) errors.title = 'Заголовок должен содержать минимум 3 символа';
 
   const hasText = hasVisibleText(data.Text);
-  const hasMedia = Boolean(data.Media?.length);
+  const hasMedia = hasExistingMedia || Boolean(data.Media?.length);
   if (!hasText && !hasMedia) {
     errors.text = 'Напишите текст или добавьте медиафайл';
     errors.media = 'Напишите текст или добавьте медиафайл';

@@ -121,6 +121,22 @@ public class ProfilePostV2Controller(
         return Ok(postCreateResult);
     }
 
+    [HttpGet("textEdit/{postId:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<TextPostEditViewModel>> GetTextPostEditModel(Guid postId)
+    {
+        var result = await profilePostService.GetTextPostEditViewModelAsync(postId);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
+    }
+
+    [HttpPost("textEdit")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<IActionResult> EditTextPost([FromForm] TextPostEditDto request)
+    {
+        var result = await profilePostService.UpdateTextPostAsync(request);
+        return result.IsSuccess ? Ok() : BadRequest(result.Errors);
+    }
+
     private static PostCreateCommand MapToCommand(VideoPostCreateRequest request) => new(
             Type: PostType.Video,
             Title: request.Title,

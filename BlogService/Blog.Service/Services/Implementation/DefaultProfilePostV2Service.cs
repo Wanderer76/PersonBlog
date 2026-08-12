@@ -5,6 +5,7 @@ using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using FileStorage.Service;
 using Infrastructure.Services;
+using Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;
@@ -196,7 +197,7 @@ internal sealed class DefaultProfilePostV2Service(
 
                 var fileId = GuidService.GetNewGuid();
 
-                var fileToUpload = await imageConvertService.ConvertImageToPngAsync(file!);
+                var fileToUpload = await PrepareTextPostFileAsync(file);
 
                 if (fileToUpload.IsFailure)
                     return Result.Failure(fileToUpload.Errors);
@@ -211,11 +212,11 @@ internal sealed class DefaultProfilePostV2Service(
                     Id = fileId,
                     PostId = postId,
                     ObjectName = objectName,
-                    Name = Path.GetFileName(file.FileName),
-                    ContentType = file.ContentType,
-                    Length = file.Length,
+                    Name = Path.GetFileName(fileToUpload.Value.FileName),
+                    ContentType = fileToUpload.Value.ContentType,
+                    Length = fileToUpload.Value.Length,
                     CreatedAt = DateTimeService.Now(),
-                    FileExtension = Path.GetExtension(file.FileName)
+                    FileExtension = fileToUpload.Value.FileExtension
                 });
             }
             post.TextPostInfo.UpdateFiles(files);
@@ -259,6 +260,7 @@ internal sealed class DefaultProfilePostV2Service(
 
         var post = await repository.Get<Post>()
             .Include(x => x.VideoPostInfo)
+            .Include(x => x.TextPostInfo)
             .FirstOrDefaultAsync(x => x.Id == postId);
 
         if (post == null)
@@ -276,7 +278,9 @@ internal sealed class DefaultProfilePostV2Service(
             BlogId = post.BlogId,
             CreatedAt = DateTimeService.Now(),
             UpdateType = UpdateType.Delete,
-            Description = post.VideoPostInfo.Description,
+            Description = post.Type == PostType.Video
+                ? post.VideoPostInfo?.Description
+                : post.TextPostInfo?.Text,
             PostId = post.Id,
             Title = post.Title,
             ViewCount = post.ViewCount
@@ -314,6 +318,138 @@ internal sealed class DefaultProfilePostV2Service(
             categories: post.VideoPostInfo.PostCategories.Select(x => x.CategoryId).ToList()
             );
 
+    }
+
+    public async Task<Result<TextPostEditViewModel>> GetTextPostEditViewModelAsync(Guid postId)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var post = await repository.Get<Post>()
+            .Include(x => x.TextPostInfo)
+            .ThenInclude(x => x.Files)
+            .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDelete && x.Type == PostType.Text);
+
+        if (post == null)
+            return Result<TextPostEditViewModel>.Failure(new Error("postId", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+            return Result<TextPostEditViewModel>.Failure(new Error("postId", "Пост не принадлежит пользователю"));
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var media = await Task.WhenAll(post.TextPostInfo.Files.Select(async file =>
+            new TextPostMediaViewModel(
+                file.Id,
+                file.Name,
+                await storage.GetFileUrlAsync(post.BlogId, file.ObjectName),
+                file.ContentType,
+                file.Length)));
+
+        return new TextPostEditViewModel(
+            post.Id,
+            post.Title,
+            post.TextPostInfo.Text,
+            post.Visibility,
+            media);
+    }
+
+    public async Task<Result> UpdateTextPostAsync(TextPostEditDto request)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var post = await repository.Get<Post>()
+            .Include(x => x.TextPostInfo)
+            .ThenInclude(x => x.Files)
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDelete && x.Type == PostType.Text);
+
+        if (post == null)
+            return Result.Failure(new Error("id", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+            return Result.Failure(new Error("id", "Пост не принадлежит пользователю"));
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var filesToRemove = post.TextPostInfo.Files
+            .Where(file => request.RemovedMediaIds.Contains(file.Id))
+            .ToList();
+        var newFiles = new List<PostFile>();
+
+        var remainingMediaCount = post.TextPostInfo.Files.Count - filesToRemove.Count;
+        if (string.IsNullOrWhiteSpace(request.Text)
+            && remainingMediaCount == 0
+            && (request.Media == null || !request.Media.Any(file => file.Length > 0)))
+            return Result.Failure(new Error("text", "Добавьте текст или медиафайл"));
+
+        if (request.Media != null)
+        {
+            foreach (var mediaFile in request.Media)
+            {
+                if (mediaFile.Length == 0) continue;
+
+                var fileId = GuidService.GetNewGuid();
+                var convertedFile = await PrepareTextPostFileAsync(mediaFile.ConvertToFileMetadata());
+                if (convertedFile.IsFailure)
+                    return Result.Failure(convertedFile.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    post.BlogId,
+                    $"{post.Id}/{fileId}",
+                    convertedFile.Value.ContentStream);
+
+                newFiles.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = post.Id,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(convertedFile.Value.FileName),
+                    ContentType = convertedFile.Value.ContentType,
+                    Length = convertedFile.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = convertedFile.Value.FileExtension
+                });
+            }
+        }
+
+        repository.Attach(post);
+        post.Title = request.Title.Trim();
+        post.Visibility = request.Visibility;
+        post.TextPostInfo.UpdateText(request.Text);
+        post.TextPostInfo.RemoveFiles(filesToRemove.Select(file => file.Id));
+        post.TextPostInfo.UpdateFiles(newFiles);
+        foreach (var file in newFiles) repository.Add(file);
+        foreach (var file in filesToRemove) repository.Remove(file);
+
+        repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Update,
+            Description = post.TextPostInfo.Text,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
+        try
+        {
+            await repository.SaveChangesAsync();
+        }
+        catch
+        {
+            foreach (var file in newFiles)
+                await storage.RemoveFileAsync(post.BlogId, file.ObjectName);
+
+            throw;
+        }
+
+        foreach (var file in filesToRemove)
+            await storage.RemoveFileAsync(post.BlogId, file.ObjectName);
+
+        return Result.Success();
+    }
+
+    private async Task<Result<FileMetadataModel>> PrepareTextPostFileAsync(FileMetadataModel file)
+    {
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            return file;
+
+        return await imageConvertService.ConvertImageToPngAsync(file);
     }
 
     public async Task<Result> UpdatePostAsync(PostUpdateRequest updateRequest)

@@ -147,6 +147,37 @@ public sealed class PostApiClient
         return await response.Content.ReadFromJsonAsync<UserPostInfoModel>();
     }
 
+    public async Task<Result<TextPostEditViewModel>> GetTextPostEditModelAsync(Guid postId)
+    {
+        var response = await httpClient.GetAsync($"ProfilePostV2/textEdit/{postId}");
+        return await ToResultAsync<TextPostEditViewModel>(response);
+    }
+
+    public async Task<Result> UpdateTextPostAsync(TextPostEditDto request)
+    {
+        using var formData = new MultipartFormDataContent
+        {
+            { new StringContent(request.Id.ToString()), "Id" },
+            { new StringContent(request.Title), "Title" },
+            { new StringContent(request.Text ?? string.Empty), "Text" },
+            { new StringContent(((int)request.Visibility).ToString()), "Visibility" }
+        };
+
+        foreach (var removedMediaId in request.RemovedMediaIds)
+            formData.Add(new StringContent(removedMediaId.ToString()), "RemovedMediaIds");
+
+        if (request.Media != null)
+        {
+            foreach (var file in request.Media)
+                AddFile(formData, file, "Media");
+        }
+
+        var response = await httpClient.PostAsync("ProfilePostV2/textEdit", formData);
+        return response.IsSuccessStatusCode
+            ? Result.Success()
+            : Result.Failure(new Error("TextPost", await response.Content.ReadAsStringAsync()));
+    }
+
     private static void AddFile(MultipartFormDataContent formData, IFormFile file, string name)
     {
         var content = new StreamContent(file.OpenReadStream());

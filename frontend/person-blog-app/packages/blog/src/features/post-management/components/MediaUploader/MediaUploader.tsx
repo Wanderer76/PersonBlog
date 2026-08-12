@@ -1,17 +1,38 @@
-import { useState, useRef, ChangeEvent, useCallback } from 'react';
+import { useState, useRef, ChangeEvent, useCallback, useEffect, useMemo } from 'react';
 import { ALLOWED_MEDIA_TYPES, MAX_FILE_SIZE } from './MediaUploader.constants';
 import './MediaUploader.css';
 
 interface MediaUploaderProps {
   files: File[];
   onChange: (files: File[]) => void;
+  existingFiles?: ExistingMediaFile[];
+  onRemoveExisting?: (id: string) => void;
   error?: string;
 }
 
-export const MediaUploader = ({ files, onChange, error }: MediaUploaderProps) => {
+interface ExistingMediaFile {
+  id: string;
+  name: string;
+  url: string;
+  contentType: string;
+  length: number;
+}
+
+export const MediaUploader = ({
+  files,
+  onChange,
+  existingFiles = [],
+  onRemoveExisting,
+  error
+}: MediaUploaderProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const fileUrls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
+
+  useEffect(() => () => {
+    fileUrls.forEach((url) => URL.revokeObjectURL(url));
+  }, [fileUrls]);
 
   const handleFiles = (newFiles: File[]) => {
     const validFiles = newFiles.filter((file) => {
@@ -76,25 +97,19 @@ export const MediaUploader = ({ files, onChange, error }: MediaUploaderProps) =>
     });
   }, [files.length]);
 
-  // Обработка клавиш
-  useCallback((e: KeyboardEvent) => {
-    if (previewIndex === null) return;
-    
-    if (e.key === 'Escape') {
-      closePreview();
-    } else if (e.key === 'ArrowLeft') {
-      navigatePreview(-1);
-    } else if (e.key === 'ArrowRight') {
-      navigatePreview(1);
-    }
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (previewIndex === null) return;
+      if (e.key === 'Escape') closePreview();
+      else if (e.key === 'ArrowLeft') navigatePreview(-1);
+      else if (e.key === 'ArrowRight') navigatePreview(1);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewIndex, closePreview, navigatePreview]);
 
-  const getFileUrl = (file: File) => {
-    return URL.createObjectURL(file);
-  };
-
-  const renderPreviewContent = (file: File) => {
-    const url = getFileUrl(file);
+  const renderPreviewContent = (file: File, url: string) => {
     
     if (file.type.startsWith('image/')) {
       return <img src={url} alt={file.name} />;
@@ -132,8 +147,36 @@ export const MediaUploader = ({ files, onChange, error }: MediaUploaderProps) =>
         <p className="media-uploader-hint">До 20МБ каждый (изображения, видео, аудио)</p>
       </div>
 
-      {files.length > 0 && (
+      {(existingFiles.length > 0 || files.length > 0) && (
         <div className="media-uploader-preview">
+          {existingFiles.map((file) => (
+            <div key={file.id} className="media-uploader-file">
+              {file.contentType.startsWith('image/') ? (
+                <img src={file.url} alt={file.name} />
+              ) : file.contentType.startsWith('video/') ? (
+                <video src={file.url} controls preload="metadata" />
+              ) : (
+                <div className="media-uploader-file-icon">🎵</div>
+              )}
+              <div className="media-uploader-file-overlay">
+                <div className="media-uploader-file-name">{file.name}</div>
+                <div className="media-uploader-file-size">
+                  {(file.length / 1024 / 1024).toFixed(2)} МБ
+                </div>
+              </div>
+              {onRemoveExisting && (
+                <button
+                  type="button"
+                  onClick={() => onRemoveExisting(file.id)}
+                  className="media-uploader-file-remove"
+                  aria-label={`Удалить файл ${file.name}`}
+                  title="Удалить файл"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
           {files.map((file, index) => (
             <div 
               key={index} 
@@ -141,9 +184,9 @@ export const MediaUploader = ({ files, onChange, error }: MediaUploaderProps) =>
               onClick={() => openPreview(index)}
             >
               {file.type.startsWith('image/') ? (
-                <img src={URL.createObjectURL(file)} alt={file.name} />
+                <img src={fileUrls[index]} alt={file.name} />
               ) : file.type.startsWith('video/') ? (
-                <video src={URL.createObjectURL(file)} />
+                <video src={fileUrls[index]} />
               ) : (
                 <div className="media-uploader-file-icon">🎵</div>
               )}
@@ -199,7 +242,7 @@ export const MediaUploader = ({ files, onChange, error }: MediaUploaderProps) =>
               </>
             )}
             
-            {renderPreviewContent(files[previewIndex])}
+            {renderPreviewContent(files[previewIndex], fileUrls[previewIndex])}
           </div>
         </div>
       )}

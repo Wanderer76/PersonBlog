@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from 'react';
 import DOMPurify from 'dompurify';
+import { useNavigate } from 'react-router-dom';
 import { UserPostInfoModel } from '@/lib/api/generated/models';
 import { Button } from '@/shared/ui/Button/Button';
 import styles from './TextPostCard.module.css';
@@ -34,6 +35,7 @@ interface TextPostCardProps {
 }
 
 export const TextPostCard = memo(({ post, isLast, observeRef, onRemove }: TextPostCardProps) => {
+  const navigate = useNavigate();
   const [isRemoving, setIsRemoving] = useState(false);
   const sanitizedHtml = useMemo(
     () => sanitizeTextPostHtml(post.textInfo?.text ?? ''),
@@ -59,6 +61,14 @@ export const TextPostCard = memo(({ post, isLast, observeRef, onRemove }: TextPo
             <span aria-hidden="true">•••</span>
           </summary>
           <div className={styles.menuPopover}>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!post.id || isRemoving}
+              onClick={() => post.id && navigate(`/profile/textPost/edit/${post.id}`)}
+            >
+              Редактировать
+            </Button>
             <Button type="button" variant="danger" disabled={isRemoving} onClick={() => void handleRemove()}>
               {isRemoving ? 'Удаление…' : 'Удалить'}
             </Button>
