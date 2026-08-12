@@ -2,7 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import API from "../../lib/api/client";
+import { getPlayList } from "../../lib/api/generated/play-list/play-list";
 import styles from './CreatePlaylistForm.module.css';
+
+const playListApi = getPlayList();
 
 const CreatePlaylistForm = () => {
     const [playlistForm, setPlaylistForm] = useState({
@@ -23,7 +26,7 @@ const CreatePlaylistForm = () => {
     }, []);
 
     const fetchAvailableVideos = async () => {
-        const response = await API.get("video/api/Playlist/availableVideos");
+        const response = await playListApi.getApiPlayListAvailableVideos();
         if (response.status === 200) {
             setAvailableVideos(response.data);
         }
@@ -47,8 +50,14 @@ const CreatePlaylistForm = () => {
                     ['Content-Type']: 'multipart/form-data'
                 }
             });
-            if (response.status === 200)
-                setPlaylistForm(prev => ({ ...prev, thumbnailId: response.data.thumbnailId, thumbnailUrl: response.data.thumbnailUrl }));
+            if (response.status === 200) {
+                const thumbnailId = response.data?.thumbnailId ?? response.data;
+                setPlaylistForm(prev => ({
+                    ...prev,
+                    thumbnailId,
+                    thumbnailUrl: URL.createObjectURL(file)
+                }));
+            }
         }
     };
 
@@ -86,19 +95,20 @@ const CreatePlaylistForm = () => {
         setIsLoading(true);
 
         try {
-            const formData = {
+            const request = {
                 title: playlistForm.title,
-                description: playlistForm.description,
-                isPublic: playlistForm.isPublic,
                 thumbnailId: playlistForm.thumbnailId,
                 postIds: selectedVideos.map(video => video.id)
             };
 
-
-            const response = await API.post("profile/api/Playlist/create", formData);
+            const response = await playListApi.postApiPlayListCreate(request);
 
             if (response.status === 200) {
-                navigate(`/playlist/${response.data.id}`);
+                const playlistId = response.data.playList?.id;
+                if (!playlistId) {
+                    throw new Error("Playlist API returned no playlist id");
+                }
+                navigate(`/playlist/${playlistId}`);
             }
         } catch (error) {
             console.error("Error creating playlist:", error);

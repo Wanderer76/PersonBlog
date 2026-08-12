@@ -3,17 +3,18 @@ import SideBar from "../../components/sidebar/SideBar";
 import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 import styles from './LikedPage.module.css';
 import { getLocalDate } from "../../shared/LocalDate";
-import { useState } from "react";
-import API from "../../lib/api/client";
+import { useEffect, useState } from "react";
+import { getView } from "../../lib/api/generated/view/view";
+
+const viewApi = getView();
 
 const LikedPage = function () {
     const [likedList, setLikedList] = useState([]);
     const navigate = useNavigate();
-    useState(() => {
-
-        API.get("video/api/View/liked").then(response => {
+    useEffect(() => {
+        viewApi.getApiViewLiked().then(response => {
             if (response.status == 200) {
-                setLikedList(response.data)
+                setLikedList(response.data ?? {})
             }
         })
     }, [])

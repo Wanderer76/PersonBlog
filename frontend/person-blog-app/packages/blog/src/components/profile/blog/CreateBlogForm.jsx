@@ -1,19 +1,20 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import styles from '../post/CreatePostForm.module.css';
-import API from "../../../lib/api/client";
 import { useNavigate } from "react-router-dom";
 import { getBlog } from "@/lib/api/generated/blog/blog";
 
+const blogApi = getBlog();
+
 const CreateBlogForm = function () {
     const [blogForm, setBlogForm] = useState({
-        title: null,
-        description: null,
+        title: "",
+        description: "",
         photoUrl: null
     });
     const [uploadProgress, setUploadProgress] = useState(0);
     const [imagePreview, setImagePreview] = useState(null);
+    const [isCreating, setIsCreating] = useState(false);
     const navigate = useNavigate();
-    const isCreateDisabled = useRef(false);
 
     function updateForm(event) {
         const key = event.target.name;
@@ -33,34 +34,25 @@ const CreateBlogForm = function () {
     }
 
     async function sendForm() {
-        const url = "/video/api/Blog/create";
-        let formData = new FormData();
-
-        // Append all form fields
-        Object.keys(blogForm).forEach((key) => {
-            formData.append(key, blogForm[key]);
-        });
-
+        setIsCreating(true);
+        setUploadProgress(0);
         try {
-            const response = await API.post(url, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                },
-                onUploadProgress: (progressEvent) => {
-                    const progress = Math.round(
-                        (progressEvent.loaded * 100) / progressEvent.total
-                    );
-                    setUploadProgress(progress);
-                }
+            const response = await blogApi.postApiBlogCreate({
+                Title: blogForm.title,
+                Description: blogForm.description,
+                PhotoUrl: blogForm.photoUrl ?? undefined
             });
 
             if (response.status === 200) {
+                setUploadProgress(100);
                 alert('Блог успешно создан!');
                 navigate('/profile');
             }
         } catch (error) {
             console.error("Error creating blog:", error);
             alert('Произошла ошибка при создании блога');
+        } finally {
+            setIsCreating(false);
         }
     }
 
@@ -133,12 +125,8 @@ const CreateBlogForm = function () {
                     </button>
                     <button
                         className={`${styles.btn} ${styles.btnPrimary}`}
-                        disabled={isCreateDisabled.current || !blogForm.title}
-                        onClick={() => {
-                            isCreateDisabled.current = true;
-                            sendForm();
-                            isCreateDisabled.current = false;
-                        }}
+                        disabled={isCreating || !blogForm.title}
+                        onClick={sendForm}
                     >
                         Создать
                     </button>

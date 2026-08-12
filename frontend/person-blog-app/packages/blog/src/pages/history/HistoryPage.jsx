@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { JwtTokenService } from '../../shared/TokenStrorage.js';
-import API from "../../lib/api/client";
+import { getView } from "../../lib/api/generated/view/view";
 import { useNavigate } from "react-router-dom";
 import BigVideoCard from "../../components/VideoCards/BigVideoCard/BigVideoCard";
 import SideBar from "../../components/sidebar/SideBar";
@@ -8,18 +8,18 @@ import styles from './HistoryPage.module.css';
 import { getLocalDate, getLocalDateTime, secondsToHumanReadable } from "../../shared/LocalDate";
 import PostListItem from "../../components/VideoCards/PostListItem/PostListItem";
 
+const viewApi = getView();
+
 const HistoryPage = function (props) {
 
   const [historyList, setHistoryList] = useState([]);
   const navigate = useNavigate();
-  useState(() => {
-
-    API.get("video/api/View/history").then(response => {
+  useEffect(() => {
+    viewApi.getApiViewHistory().then(response => {
       if (response.status == 200) {
-        setHistoryList(response.data)
+        setHistoryList(response.data ?? {})
       }
     })
-
   }, [])
 
   if (!JwtTokenService.isAuth())

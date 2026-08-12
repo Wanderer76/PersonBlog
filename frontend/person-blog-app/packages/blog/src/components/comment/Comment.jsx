@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { getLocalDateTime } from "../../shared/LocalDate";
-import API from "../../lib/api/client";
+import { getComments } from "../../lib/api/generated/comments/comments";
+
+const commentsApi = getComments();
 
 const Comment = ({ comment, postId, depth }) => {
     const [newCommentText, setNewCommentText] = useState('')
     const [showReply, setShowReply] = useState(false);
     const [children, setChildren] = useState(comment.children ?? [])
     const handleAddComment = async (replyId) => {
-        if (!newCommentText.trim() && !replyId && !postId) return;
+        if (!newCommentText.trim() || !postId) return;
         try {
-            const response = await API.post(`video/api/Comments/create`, {
+            const response = await commentsApi.postApiCommentsCreate({
                 postId: postId,
                 replyTo: replyId,
                 text: newCommentText

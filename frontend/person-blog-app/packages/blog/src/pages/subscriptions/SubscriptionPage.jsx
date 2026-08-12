@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import API from "../../lib/api/client";
+import { getSubscriber } from "../../lib/api/generated/subscriber/subscriber";
 import { Link } from "react-router-dom";
 import styles from "./SubscriptionPage.module.css";
 import SideBar from "../../components/sidebar/SideBar";
+
+const subscriberApi = getSubscriber();
 
 const SubscriptionPage = function () {
     const [subscriptions, setSubscriptions] = useState([]);
@@ -19,7 +21,10 @@ const SubscriptionPage = function () {
         const fetchSubscriptions = async () => {
             try {
                 setLoading(true);
-                const response = await API.get(`video/api/Subscriber/subscriptions?page=${pagination.page}&size=${pagination.size}`);
+                const response = await subscriberApi.getApiSubscriberSubscriptions({
+                    page: pagination.page,
+                    size: pagination.size
+                });
 
                 setSubscriptions(response.data.items);
                 setPagination(prev => ({

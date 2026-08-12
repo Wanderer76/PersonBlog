@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import API from "../../lib/api/client";
+import { getChannel } from "../../lib/api/generated/channel/channel";
+import { getSubscriber } from "../../lib/api/generated/subscriber/subscriber";
 import styles from './ChannelPage.module.css';
 import DefaultProfileIcon from '../../defaultProfilePic.png';
 import { getLocalDateTime } from "../../shared/LocalDate";
 import SideBar from "../../components/sidebar/SideBar";
+
+const channelApi = getChannel();
+const subscriberApi = getSubscriber();
 
 const ChannelPage = () => {
     const { channelId } = useParams();
@@ -41,7 +45,7 @@ const ChannelPage = () => {
     useEffect(() => {
         const loadChannelData = async () => {
             try {
-                const response = await API.get(`/video/api/Channel/${channelId}`);
+                const response = await channelApi.getApiChannelChannelId(channelId);
                 if (response.status === 200) {
                     setChannel({
                         ...response.data,
@@ -57,12 +61,18 @@ const ChannelPage = () => {
     }, [channelId]);
 
     useEffect(() => {
+        setVideos([]);
+        setPage(1);
+        setHasMore(true);
+    }, [channelId]);
+
+    useEffect(() => {
         const loadVideos = async () => {
             try {
-                alert('неиспользуемый метод')
-                const response = await API.get(
-                    `/video/api/Channel/posts/${channelId}?page=${page}&size=${pageSize}`
-                );
+                const response = await channelApi.getApiChannelPostsChannelId(channelId, {
+                    page,
+                    size: pageSize
+                });
                 if (response.status === 200) {
                     // Преобразуем данные из API в нужный формат
                     const formattedVideos = response.data.posts.map(post => ({
@@ -103,9 +113,7 @@ const ChannelPage = () => {
     useEffect(() => {
         const loadPlaylists = async () => {
             try {
-                const response = await API.get(
-                    `/video/api/Channel/playLists/${channelId}`
-                );
+                const response = await channelApi.getApiChannelPlayListsChannelId(channelId);
                 if (response.status === 200) {
                     setPlaylists(response.data);
                 }
@@ -117,16 +125,14 @@ const ChannelPage = () => {
         if (activeTab === 'playlists') {
             loadPlaylists();
         }
-    }, [channelId]);
+    }, [activeTab, channelId]);
 
     // Подписка/отписка
     const handleSubscribe = async () => {
         try {
-            const endpoint = channel.isSubscribed
-                ? `/video/api/Subscriber/unsubscribe/${channelId}`
-                : `/video/api/Subscriber/subscribe/${channelId}`;
-
-            const response = await API.post(endpoint);
+            const response = channel.isSubscribed
+                ? await subscriberApi.postApiSubscriberUnsubscribeBlogId(channelId)
+                : await subscriberApi.postApiSubscriberSubscribeBlogId(channelId);
 
             if (response.status === 200) {
                 setChannel(prev => ({
@@ -185,7 +191,7 @@ const ChannelPage = () => {
             >
                 <div className={styles.playlistThumbnail}>
                     <img src={playlist.thumbnailUrl} alt={playlist.title} />
-                    <span className={styles.videoCount}>{playlist.posts.length} видео</span>
+                    <span className={styles.videoCount}>{playlist.postCount ?? playlist.posts?.length ?? 0} видео</span>
                 </div>
                 <div className={styles.playlistInfo}>
                     <h3>{playlist.title}</h3>
