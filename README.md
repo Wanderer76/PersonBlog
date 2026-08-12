@@ -1,259 +1,231 @@
-# PersonBlog
+# PersonBlog: Auth и Blog
 
-PersonBlog — экспериментальная платформа для публикации текстов, видео и музыки, построенная как микросервисный монорепозиторий.
+PersonBlog — микросервисная платформа для публикации текстов и видео. Этот README описывает поддерживаемый сейчас клиентский контур: приложения `auth` и `blog`, а также backend-сервисы, через которые они работают.
 
-Основной backend написан на **.NET 8**. В репозитории также находятся клиентские приложения на **React + TypeScript**, административное приложение на **Spring Boot 3.5.4 / Java 21** и Python-сервис для токенизации и классификации музыки.
+> Проект находится в разработке. Локальный запуск через `dotnet run` воспроизводим лучше, чем полный запуск через `docker-compose.yml`: прикладной Compose требует внешнюю сеть `backend` и отсутствующие в репозитории файлы `configs/*/appsettings.json`.
 
-> Проект находится в активной разработке. Docker Compose пока покрывает только часть сервисов, а для запуска требуются локальные конфигурации и инфраструктура.
-
-## Архитектура
+## Архитектура выбранного контура
 
 ```text
-React applications
-        │
-   Nginx / Ocelot
-        │
- ┌──────┼──────────────────────────────────┐
- │      │                                  │
-Auth   Blog / media                  Profile / social
- │      │                                  │
- └──────┴──── RabbitMQ / Kafka ────────────┘
-        │
- PostgreSQL / Redis / MinIO
+auth SPA :5174
+    │
+    └── AuthGateway.API :5078
+            └── AuthenticationApplication :5179
+                    ├── PostgreSQL (schema Authentication)
+                    ├── Redis (сессии и OAuth-коды)
+                    └── RabbitMQ (события регистрации)
+
+blog SPA :3000
+    ├── OAuth ───────────────► AuthGateway.API :5078
+    └── REST /video ─────────► Nginx :7892
+                                  └── Gateway.API :5165
+                                          ├── Blog.API :5069 через /profile
+                                          └── другие сервисы для отдельных экранов
+
+Blog.API
+    ├── PostgreSQL (schema Blog)
+    ├── Redis
+    ├── RabbitMQ
+    ├── MinIO
+    └── VideoProcessing.Cli :5281 (обработка видео, опционально)
 ```
 
-.NET-сервисы преимущественно разделены на следующие слои:
+### Клиентские приложения
 
-```text
-*.API          HTTP API, контроллеры и composition root
-*.Service      прикладная и бизнес-логика
-*.Domain       доменные сущности и интерфейсы
-*.Persistence  EF Core, DbContext и миграции
-*.Contract     DTO, события и HTTP-клиенты
+| Workspace | Порт | Назначение |
+|---|---:|---|
+| `frontend/person-blog-app/packages/auth` | 5174 | Вход и регистрация, возврат OAuth authorization code в вызывающее приложение |
+| `frontend/person-blog-app/packages/blog` | 3000 | Лента, каналы, профили, посты, плейлисты, подписки и просмотр видео |
+
+Оба приложения написаны на React и TypeScript и собираются Vite. API-клиенты генерируются Orval из OpenAPI-схем.
+
+### Backend
+
+| Проект | Порт | Роль |
+|---|---:|---|
+| `AuthService/AuthenticationApplication` | 5179 | Пользователи, пароли, OAuth-коды, access/refresh tokens |
+| `GetewayService/AuthGateway.API` | 5078 | Публичный фасад для `auth` и OAuth-вызовов `blog` |
+| `BlogService/Blog.API` | 5069 | Блоги, текстовые и видеопосты, категории, реакции и загрузка файлов |
+| `GetewayService/Gateway.API` | 5165 | Публичный агрегирующий API клиента `blog` |
+| `BlogService/VideoProcessing.Cli` | 5281 | Объединение частей файла, FFmpeg/HLS и SignalR-прогресс |
+| `nginx` | 7892 | Локальная маршрутизация `/auth`, `/profile`, `/video` и SignalR hubs |
+
+`blog` содержит клиенты и для Profile, Playlist, Recommendation, Search, Comments и Conference. Соответствующие сервисы нужны только для связанных с ними экранов; базовый auth/blog-контур можно разрабатывать без запуска всего монорепозитория.
+
+## Требования
+
+- .NET SDK 8;
+- Node.js 20.19+ или 22.12+ и npm (требование текущего Vite 7);
+- Docker с Docker Compose;
+- FFmpeg — для локального запуска `VideoProcessing.Cli`.
+
+Инфраструктурный Compose поднимает PostgreSQL 16.6, RabbitMQ Management, Redis, Redis Insight, MinIO и Nginx.
+
+## Локальный запуск
+
+Команды ниже выполняются из корня репозитория, если не указан другой каталог.
+
+### 1. Инфраструктура
+
+```bash
+docker compose -f docker-compose-infrastructre.yml up -d
 ```
 
-Сервисы взаимодействуют синхронно по HTTP и асинхронно через RabbitMQ или Kafka. Для обновлений в реальном времени используется SignalR.
+Доступные локально интерфейсы:
 
-## Сервисы
-
-| Каталог | Назначение | Запускаемый проект |
-|---|---|---|
-| `AuthService` | JWT/OAuth, регистрация и управление токенами | `AuthenticationApplication` |
-| `BlogService` | Блоги, публикации, категории, подписки и медиа | `Blog.API` |
-| `BlogService/VideoProcessing.Cli` | Конвертация видео и подготовка HLS через FFmpeg | `VideoProcessing.Cli` |
-| `ProfileService` | Профили, реакции, подписки и история просмотров | `Profile.API` |
-| `CommentService` | Комментарии | `Comments.API` |
-| `ConferenceService` | Конференции, чат и SignalR | `Conference.API` |
-| `MusicService` | Треки, исполнители, жанры и музыкальные плейлисты | `Music.API` |
-| `PlayListService` | Плейлисты и связанные файлы | `PlayListService.API` |
-| `NotificationService` | Уведомления | `Notification.API` |
-| `SearchService` | Поиск через PostgreSQL или Elasticsearch | `SearchService.Application` |
-| `RecommendationService` | Рекомендации публикаций | `Recommendation.Application` |
-| `MusicRecommendationService` | Рекомендации музыки | `MusicRecommendation.API` |
-| `GetewayService/Gateway.API` | Основной API Gateway на Ocelot | `Gateway.API` |
-| `GetewayService/AuthGateway.API` | Отдельный gateway для аутентификации | `AuthGateway.API` |
-| `GetewayService/ReactionProcessing.Cli` | Фоновая обработка реакций | `ReactionProcessing.Cli` |
-| `TokenizerService` | Python API для токенизации и ML-классификации жанров | `main.py` |
-
-Название каталога `GetewayService` сохранено в том виде, в котором оно сейчас используется в solution и ссылках проектов.
-
-## Общие библиотеки
-
-Каталог `Common` содержит переиспользуемые компоненты backend:
-
-- `FFmpeg.Service` — интеграция с FFmpeg;
-- `FileStorage.Service` — файловое и S3-совместимое хранилище, загрузка частями;
-- `Infrastructure` — общие инфраструктурные сервисы;
-- `MessageBus` и `MessageBus.Shared` — абстракции RabbitMQ/Kafka и общие сообщения;
-- `Shared` — общие модели и утилиты.
-
-## Frontend
-
-Frontend расположен в `frontend/person-blog-app` и организован как npm workspaces:
-
-| Workspace | Назначение |
+| Компонент | Адрес |
 |---|---|
-| `packages/blog` | Основной интерфейс блога |
-| `packages/auth` | Авторизация |
-| `packages/admin` | Клиентская административная панель |
-| `packages/music` | Музыкальный интерфейс |
+| Nginx | `http://localhost:7892` |
+| PostgreSQL | `localhost:5432` |
+| RabbitMQ Management | `http://localhost:15672` |
+| Redis | `localhost:6379` |
+| Redis Insight | `http://localhost:5540` |
+| MinIO API / Console | `http://localhost:9000` / `http://localhost:9001` |
 
-Основные технологии: React, TypeScript, Vite, React Router, Axios, Tiptap, Bootstrap/MUI, HLS.js и Video.js. Для `blog` и `auth` предусмотрена генерация API-клиентов из OpenAPI через Orval.
+Локальные логины и пароли находятся в `docker-compose-infrastructre.yml` и предназначены только для разработки.
 
-Корневые команды frontend:
+### 2. Auth backend
+
+Запустите в отдельных терминалах:
+
+```bash
+dotnet run --project AuthService/AuthenticationApplication/AuthenticationApplication.csproj
+dotnet run --project GetewayService/AuthGateway.API/AuthGateway.API.csproj
+```
+
+При старте `AuthenticationApplication` автоматически применяет EF Core migrations. OpenAPI:
+
+- Authentication API: `http://localhost:5179/swagger`;
+- Auth Gateway: `http://localhost:5078/swagger`.
+
+### 3. Blog backend
+
+```bash
+dotnet run --project BlogService/Blog.API/Blog.API.csproj
+dotnet run --project GetewayService/Gateway.API/Gateway.API.csproj
+```
+
+Для загрузки и конвертации видео дополнительно запустите:
+
+```bash
+dotnet run --project BlogService/VideoProcessing.Cli/VideoProcessing.Cli.csproj
+```
+
+OpenAPI:
+
+- Blog API: `http://localhost:5069/swagger`;
+- Gateway: `http://localhost:5165/swagger`;
+- объединённая схема через Nginx: `http://localhost:7892/video/swagger/v1/swagger.json`.
+
+### 4. Frontend
 
 ```bash
 cd frontend/person-blog-app
 npm install
-
-npm run dev          # blog + auth
-npm run dev:blog
-npm run dev:auth
-npm run dev:admin
-npm run dev:music
-
-npm run build        # blog + admin
-npm run build:blog
-npm run build:admin
-npm run build:music
+npm run dev
 ```
 
-Команда `npm run dev` не запускает `admin` и `music`, а корневая команда `npm run build` пока не собирает `auth` и `music`.
+`npm run dev` одновременно запускает `blog` на `http://localhost:3000` и `auth` на `http://localhost:5174`.
 
-## Административное приложение
+Переменные окружения по умолчанию:
 
-В `adminPanel` находится отдельное серверное приложение:
+| Workspace | Переменная | Значение |
+|---|---|---|
+| `auth` | `VITE_API_BASE_URL` | `http://localhost:5078` |
+| `blog` | `VITE_API_BASE_URL` | `http://localhost:7892` |
+| `blog` | `VITE_AUTH_API_URL` | необязательна; fallback `http://localhost:5078` |
 
-- Java 21;
-- Spring Boot 3.5.4;
-- Spring MVC и Thymeleaf;
-- Spring Data JPA и PostgreSQL;
-- RabbitMQ;
-- springdoc-openapi;
-- Maven Wrapper.
+OAuth callback клиента `blog` сейчас рассчитан на `http://localhost:3000/callback`, поэтому смена frontend-порта требует изменения конфигурации в коде.
 
-Запуск:
+## Генерация API-клиентов
+
+Перед обновлением схемы должны работать соответствующие gateway и Nginx.
 
 ```bash
-cd adminPanel
-./mvnw spring-boot:run
+cd frontend/person-blog-app
+
+npm run api:update -w=auth
+npm run api:update -w=blog
 ```
 
-В Windows PowerShell используйте `./mvnw.cmd spring-boot:run`.
+Источники схем:
 
-## Инфраструктура
+- `auth`: `http://localhost:5078/swagger/v1/swagger.json`;
+- `blog`: `http://localhost:7892/video/swagger/v1/swagger.json`.
 
-Файл `docker-compose-infrastructre.yml` описывает:
+Сгенерированные файлы находятся в `src/lib/api/generated` и не должны редактироваться вручную.
 
-- PostgreSQL 16.6;
-- RabbitMQ Management;
-- Redis и Redis Insight;
-- MinIO;
-- Nginx.
+## Сборка и проверки
 
-Файл `docker-compose.yml` собирает только следующий прикладной контур:
-
-| Контейнер | Порт хоста |
-|---|---:|
-| `auth-app` | 5179 |
-| `blog-app` | 5069 |
-| `videoprocess-app` | внутренний 8080 |
-| `playlist-app` | 5147 |
-| `gateway-app` | 5165 |
-| `profile-app` | 5153 |
-| `recommendation-app` | 5209 |
-
-Остальные API пока необходимо запускать отдельно или добавить в Compose.
-
-Прикладной Compose ожидает внешнюю Docker-сеть `backend` и файлы `configs/<service>/appsettings.json`. Каталог `configs` не хранится в репозитории, поэтому перед контейнерным запуском необходимо подготовить конфигурации с адресами PostgreSQL, RabbitMQ, Redis и MinIO, а также создать сеть:
+Backend выбранного контура:
 
 ```bash
-docker network create backend
+dotnet build AuthService/AuthenticationApplication/AuthenticationApplication.csproj
+dotnet build GetewayService/AuthGateway.API/AuthGateway.API.csproj
+dotnet build BlogService/Blog.API/Blog.API.csproj
+dotnet build GetewayService/Gateway.API/Gateway.API.csproj
+
+dotnet test AuthService/Authentication.Test/Authentication.Test.csproj
+dotnet test BlogService/VideoProcessing.Cli.Test/VideoProcessing.Cli.Test.csproj
 ```
 
-При совместном запуске обоих Compose-файлов проверьте, что инфраструктурные и прикладные контейнеры подключены к одной сети. Текущие файлы не являются полностью автономным production deployment.
-
-## Локальная разработка
-
-### Требования
-
-- .NET SDK 8;
-- Node.js и npm, совместимые с используемой версией Vite;
-- Java 21 для `adminPanel`;
-- Python и зависимости из `TokenizerService/requirements.txt` для tokenizer;
-- PostgreSQL, RabbitMQ, Redis, MinIO и FFmpeg — в зависимости от запускаемого сервиса;
-- Docker — опционально.
-
-### Backend
-
-Восстановление и сборка .NET solution:
+Frontend:
 
 ```bash
-dotnet restore PersonBlog.sln
-dotnet build PersonBlog.sln
+cd frontend/person-blog-app
+npm run build -w=blog
+npm run build -w=auth
+npm run lint -w=blog
+npm run lint -w=auth
 ```
 
-Запуск отдельного сервиса, например Auth API:
+Текущее состояние проверок:
 
-```bash
-dotnet run --project AuthService/AuthenticationApplication/AuthenticationApplication.csproj
-```
+- `blog` собирается, но его script `build` запускает только Vite и не выполняет отдельную TypeScript-проверку;
+- dev-сервер и production-сборка `auth` работают;
+- ESLint пока не проходит: в `auth` обнаружено 2 ошибки, в `blog` — 10 ошибок и 1 предупреждение;
+- сборка backend может показывать `NU1902` для `OpenTelemetry.Exporter.OpenTelemetryProtocol` 1.9.0;
+- Vite предупреждает о крупных чанках `blog` размером более 500 kB.
 
-Другие API запускаются аналогично через их `.csproj`. Настройки разработки находятся в соответствующих `appsettings.json`, `appsettings.Development.json` и `Properties/launchSettings.json`.
+## OAuth-сценарий
 
-### TokenizerService
+1. Защищённый маршрут `blog` вызывает `GET /api/Auth/authorize` через Auth Gateway.
+2. Authentication API возвращает адрес приложения `auth` с `clientId`, `redirectUri` и `state`.
+3. После входа или регистрации `auth` возвращает authorization code на `/callback` клиента `blog`.
+4. `blog` проверяет `state`, обменивает одноразовый code на пару токенов и сохраняет их в `localStorage`.
+5. Axios добавляет access token к запросам, а при `401` выполняет один общий refresh и повторяет ожидающие запросы.
 
-```bash
-cd TokenizerService
-python -m venv .venv
-# активируйте виртуальное окружение
-pip install -r requirements.txt
-python main.py
-```
+## Известные ограничения
 
-## Тесты
+- На backend пока отключена проверка OAuth client credentials и разрешённого `redirectUri`; контур нельзя считать готовым к публичному развёртыванию.
+- SPA передаёт `client_secret` и хранит access/refresh tokens в `localStorage`; перед production нужен PKCE и пересмотр модели хранения токенов.
+- Полный `docker-compose.yml` не является автономным: нужны внешняя сеть `backend` и локальные конфигурации `configs/*`.
+- В конфигурации и исходниках остаются dev credentials. Не используйте их вне локальной среды и не коммитьте реальные секреты.
 
-Запустить все тестовые проекты, подключённые к solution:
-
-```bash
-dotnet test PersonBlog.sln
-```
-
-Отдельные тестовые проекты находятся в `AuthService/Authentication.Test`, `BlogService/VideoProcessing.Cli.Test` и `Tests`.
-
-### Тесты производительности MessageBus
-
-Проект `Tests/MessageBus.Benchmarks` содержит микробенчмарки горячего пути диспетчеризации событий, общего для реализаций RabbitMQ и Kafka. Он сравнивает:
-
-- прежнюю диспетчеризацию с заранее известным generic-типом события;
-- динамическое определение типа и вызов через reflection;
-- динамическую диспетчеризацию с кэшированным delegate;
-- вариант с однократным разбором JSON и десериализацией только `EventData`.
-
-Полный прогон следует выполнять в конфигурации Release:
-
-```bash
-dotnet run --project Tests/MessageBus.Benchmarks/MessageBus.Benchmarks.csproj -c Release -- --filter "*EventDispatchBenchmarks*"
-```
-
-Для быстрой проверки сборки и запуска без статистически значимых измерений используйте `Dry`-режим:
-
-```bash
-dotnet run --project Tests/MessageBus.Benchmarks/MessageBus.Benchmarks.csproj -c Release -- --filter "*EventDispatchBenchmarks*" --job dry
-```
-
-BenchmarkDotNet сохраняет подробные отчёты в `BenchmarkDotNet.Artifacts`. Этот каталог исключён из Git. Результаты зависят от оборудования, версии runtime и фоновой нагрузки, поэтому сравнивать варианты следует в рамках одного прогона на одной машине.
-
-## Структура репозитория
+## Структура контура
 
 ```text
 PersonBlog/
-├── adminPanel/                    Spring Boot admin application
-├── AuthService/                   authentication and authorization
-├── BlogService/                   blog API and video processing
-├── CommentService/                comments
-├── Common/                        shared .NET infrastructure
-├── ConferenceService/             conferences and real-time chat
-├── frontend/person-blog-app/      React npm workspaces
-├── GetewayService/                gateways and reaction processing
-├── MusicRecommendationService/    music recommendations
-├── MusicService/                  music catalog and playback
-├── NotificationService/           notifications
-├── PlayListService/               playlists
-├── ProfileService/                profiles and social activity
-├── RecommendationService/         post recommendations
-├── SearchService/                 content search
-├── Tests/                         unit, regression and performance tests
-├── TokenizerService/              Python tokenizer and ML models
-├── nginx/                         local reverse-proxy configuration
-├── docker-compose.yml             partial application stack
+├── AuthService/
+│   ├── AuthenticationApplication/     HTTP API и composition root
+│   ├── Authentication.Service/         auth/OAuth/token logic
+│   ├── Authentication.Domain/          пользователи, клиенты и токены
+│   └── Authentication.Peristence/      EF Core и migrations
+├── BlogService/
+│   ├── Blog.API/                       внутренний Blog API
+│   ├── Blog.Service/                   прикладная логика
+│   ├── Blog.Domain/                    доменная модель
+│   ├── Blog.Persistence/               EF Core и migrations
+│   └── VideoProcessing.Cli/            обработка видео
+├── GetewayService/
+│   ├── AuthGateway.API/                фасад auth
+│   └── Gateway.API/                    фасад blog
+├── frontend/person-blog-app/packages/
+│   ├── auth/
+│   └── blog/
+├── nginx/
 ├── docker-compose-infrastructre.yml
-└── PersonBlog.sln
+└── docker-compose.yml
 ```
 
-## Состояние проекта
-
-- Все собственные .NET-проекты ориентированы на `net8.0`.
-- Docker Compose не включает все сервисы репозитория.
-- Конфигурации могут содержать секреты: не коммитьте реальные пароли, ключи JWT и OAuth credentials.
-- В репозитории присутствуют крупные FFmpeg/ML-артефакты; при дальнейшем росте проекта стоит перенести их в Git LFS или объектное хранилище.
+Название каталога `GetewayService` и файла `docker-compose-infrastructre.yml` приведено как в репозитории.

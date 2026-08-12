@@ -5,8 +5,29 @@ export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 export const OAUTH_STATE_KEY = 'OAUTH_STATE_KEY';
 export const OAUTH_RETURN_URL_KEY = 'OAUTH_RETURN_URL_KEY';
+export const AUTH_STATE_CHANGED_EVENT = 'auth-state-changed';
 const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5078';
 const authTransport = axios.create({ baseURL: AUTH_API_URL, withCredentials: false });
+
+function notifyAuthStateChanged(): void {
+    window.dispatchEvent(new Event(AUTH_STATE_CHANGED_EVENT));
+}
+
+export function subscribeToAuthState(listener: () => void): () => void {
+    const handleStorage = (event: StorageEvent) => {
+        if (event.key === ACCESS_TOKEN_KEY || event.key === REFRESH_TOKEN_KEY) {
+            listener();
+        }
+    };
+
+    window.addEventListener(AUTH_STATE_CHANGED_EVENT, listener);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+        window.removeEventListener(AUTH_STATE_CHANGED_EVENT, listener);
+        window.removeEventListener('storage', handleStorage);
+    };
+}
 
 /**
  * Сохраняет access token в localStorage и уведомляет Service Worker
@@ -17,6 +38,7 @@ export function saveAccessToken(token: string | null): void {
     }
 
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    notifyAuthStateChanged();
 
     if (navigator.serviceWorker?.controller) {
         navigator.serviceWorker.controller.postMessage({
@@ -34,6 +56,7 @@ export function saveRefreshToken(token: string | null): void {
         return;
     }
     localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    notifyAuthStateChanged();
 }
 
 /**
@@ -233,6 +256,7 @@ export class JwtTokenService {
         localStorage.removeItem(REFRESH_TOKEN_KEY);
         sessionStorage.removeItem(OAUTH_STATE_KEY);
         sessionStorage.removeItem(OAUTH_RETURN_URL_KEY);
+        notifyAuthStateChanged();
     }
 
     /**

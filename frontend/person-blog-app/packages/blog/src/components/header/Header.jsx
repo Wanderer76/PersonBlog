@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { JwtTokenService } from '../../shared/TokenStrorage.js';
+import { JwtTokenService, subscribeToAuthState } from '../../shared/TokenStrorage.js';
 import SideBar from '../sidebar/SideBar';
 import './Header.css';
 
 const Header = function () {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => JwtTokenService.isAuth());
+
+    useEffect(() => subscribeToAuthState(() => {
+        setIsAuthenticated(JwtTokenService.isAuth());
+    }), []);
 
     useEffect(() => {
         const closeMenu = () => setIsMenuOpen(false);
@@ -52,7 +57,7 @@ const Header = function () {
 
             {!window.location.href.includes('auth') && (
                 <div className="right-section">
-                    {!JwtTokenService.isAuth() ? (
+                    {!isAuthenticated ? (
                         <button
                             type="button"
                             onClick={async () => JwtTokenService.redirectToAuth(window.location.origin)}
