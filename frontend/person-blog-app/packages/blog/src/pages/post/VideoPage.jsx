@@ -2,11 +2,14 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import VideoPlayer from '../../components/VideoPlayer/VideoPlayer';
 import './VideoPage.css';
-import API from '../../lib/api/client';
 import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import SmallVideoCard from '../../components/VideoCards/SmallVideoCard';
 import CommentsList from '../../components/comment/Comment';
 import { getVideo } from '@/lib/api/generated/video/video';
+import { getRecommendation } from '@/lib/api/generated/recommendation/recommendation';
+import { getComments } from '@/lib/api/generated/comments/comments';
+import { getSubscriber } from '@/lib/api/generated/subscriber/subscriber';
+import { getConferenceRoom } from '@/lib/api/generated/conference-room/conference-room';
 import {
     ChannelSummary,
     VideoActionButton,
@@ -18,6 +21,10 @@ import {
 } from '../../components/VideoWatch/VideoWatch';
 
 const videoApi = getVideo();
+const recommendationApi = getRecommendation();
+const commentsApi = getComments();
+const subscriberApi = getSubscriber();
+const conferenceRoomApi = getConferenceRoom();
 const recommendationsLimit = 40;
 
 const emptyPost = {
@@ -45,8 +52,6 @@ const emptyUserView = {
     hasSubscription: false,
 };
 
-const isCanceledRequest = (error) => error?.code === 'ERR_CANCELED';
-
 const VideoPage = function () {
     const { postId } = useParams();
     const location = useLocation();
@@ -72,7 +77,6 @@ const VideoPage = function () {
     const lastCallTimeRef = useRef(0);
 
     useEffect(() => {
-        const controller = new AbortController();
         let isActive = true;
         const urlTimeValue = new URLSearchParams(location.search).get('time');
         const parsedUrlTime = urlTimeValue === null ? null : Number(urlTimeValue);
@@ -94,7 +98,7 @@ const VideoPage = function () {
         nextThresholdRef.current = 30;
         lastCallTimeRef.current = 0;
 
-        API.get(`/video/Video/video/${postId}`, { signal: controller.signal })
+        videoApi.getVideoVideoPostId(postId)
             .then((response) => {
                 if (!isActive) return;
 
@@ -111,7 +115,7 @@ const VideoPage = function () {
                 setTime(resumeTime);
             })
             .catch((error) => {
-                if (!isActive || isCanceledRequest(error)) return;
+                if (!isActive) return;
                 console.error('Ошибка при загрузке видео:', error);
                 setLoadError(error?.response?.status === 404
                     ? 'Видео не найдено или было удалено.'
@@ -121,29 +125,30 @@ const VideoPage = function () {
                 if (isActive) setIsLoading(false);
             });
 
-        API.get(`/video/recommendations?page=1&limit=${recommendationsLimit}&currentPostId=${postId}`, {
-            signal: controller.signal,
+        recommendationApi.getRecommendations({
+            page: 1,
+            limit: recommendationsLimit,
+            currentPostId: postId,
         })
             .then((response) => {
                 if (isActive) setRecommendations(response.data ?? []);
             })
             .catch((error) => {
-                if (!isCanceledRequest(error)) console.warn('Не удалось загрузить рекомендации:', error);
+                if (isActive) console.warn('Не удалось загрузить рекомендации:', error);
             });
 
-        API.get(`/video/api/Comments/list?postId=${postId}`, { signal: controller.signal })
+        commentsApi.getApiCommentsList({ postId })
             .then((response) => {
                 if (!isActive) return;
                 setComments(response.data?.comments ?? []);
                 setCommentCount(response.data?.count ?? 0);
             })
             .catch((error) => {
-                if (!isCanceledRequest(error) && isActive) setCommentsError(true);
+                if (isActive) setCommentsError(true);
             });
 
         return () => {
             isActive = false;
-            controller.abort();
         };
     }, [location.search, postId, reloadKey]);
 
@@ -155,14 +160,14 @@ const VideoPage = function () {
         if (!newCommentText.trim()) return;
 
         try {
-            const response = await API.post('/video/api/Comments/create', {
+            const response = await commentsApi.postApiCommentsCreate({
                 postId,
                 replyTo: null,
                 text: newCommentText.trim(),
             });
 
             if (response.status === 200) {
-                const commentsResponse = await API.get(`/video/api/Comments/list?postId=${postId}`);
+                const commentsResponse = await commentsApi.getApiCommentsList({ postId });
                 setComments(commentsResponse.data?.comments ?? []);
                 setCommentCount(commentsResponse.data?.count ?? 0);
                 setNewCommentText('');
@@ -184,7 +189,7 @@ const VideoPage = function () {
         setActionMessage('');
 
         try {
-            await API.post(`/video/Video/setReaction/${post.id}?isLike=${isLike}`);
+            await videoApi.postVideoSetReactionPostId(post.id, { isLike });
 
             setPostData((previousPost) => {
                 const previousReaction = userView.isLike;
@@ -286,7 +291,11 @@ const VideoPage = function () {
         setActionMessage('');
 
         try {
-            await API.post(`/video/api/Subscriber/${current ? 'unsubscribe' : 'subscribe'}/${blog.id}`);
+            if (current) {
+                await subscriberApi.postApiSubscriberUnsubscribeBlogId(blog.id);
+            } else {
+                await subscriberApi.postApiSubscriberSubscribeBlogId(blog.id);
+            }
             setUserView((previous) => ({ ...previous, hasSubscription: !current }));
             setBlog((previous) => ({
                 ...previous,
@@ -326,7 +335,7 @@ const VideoPage = function () {
         setActionMessage('');
 
         try {
-            const response = await API.post(`/video/api/ConferenceRoom/createConferenceToPost?postId=${post.id}`, null);
+            const response = await conferenceRoomApi.postApiConferenceRoomCreateConferenceToPost({ postId: post.id });
             if (response.status === 200) navigate(`/conference/${response.data.id}`);
         } catch (error) {
             console.error('Ошибка при создании комнаты:', error);
