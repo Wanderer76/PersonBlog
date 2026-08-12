@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, memo } from "react";
-import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import API from "../../lib/api/client";
 import { useNavigate, useParams } from "react-router-dom";
 import SideBar from "../../components/sidebar/SideBar";
@@ -7,6 +6,8 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './PlaylistPage.css';
 import { secondsToHumanReadable } from "../../shared/LocalDate";
 import { getPlayList } from "@/lib/api/generated/play-list/play-list";
+
+const playListApi = getPlayList();
 
 // Вынесенные компоненты
 const AddVideoModal = memo(({
@@ -137,19 +138,19 @@ const PlaylistPage = () => {
     const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
 
     const fetchPlaylistData = useCallback(async () => {
-        const response = await getPlayList().getApiPlayListItemId(playlistId);
-            const videosWithPositions = response.postPage.items.map((video, index) => ({
-                ...video,
-                position: index + 1
-            }));
-            setPlaylist({ ...response.playList, posts: videosWithPositions });
+        const { data } = await playListApi.getApiPlayListItemId(playlistId);
+        const videosWithPositions = (data.postPage?.items ?? []).map((video, index) => ({
+            ...video,
+            position: index + 1
+        }));
+        setPlaylist({ ...data.playList, posts: videosWithPositions });
     }, [playlistId]);
 
     const fetchAvailableVideos = useCallback(async () => {
-        const response = await getPlayList().getApiPlayListAvailableVideos(playlistId);
-        setAvailableVideos(response);
+        const { data } = await playListApi.getApiPlayListAvailableVideos({ playListId: playlistId });
+        setAvailableVideos(data ?? []);
         setSelectedVideos([]);
-    }, []);
+    }, [playlistId]);
 
     useEffect(() => {
         fetchPlaylistData();
@@ -167,32 +168,25 @@ const PlaylistPage = () => {
         const formData = new FormData();
         formData.append('thumbnail', file);
 
-        const thumbnailId = await API.post("profile/api/Playlist/loadThumbnail", formData, true);
-        if (thumbnailId.status === 200) {
-            const response = await API.post("profile/api/Playlist/update", { playListId: playlistId, thumbnailId: thumbnailId.data.thumbnailId });
+        const uploadResponse = await API.post("/profile/api/Playlist/loadThumbnail", formData);
+        if (uploadResponse.status === 200) {
+            const thumbnailId = uploadResponse.data?.thumbnailId ?? uploadResponse.data;
+            await API.post("/profile/api/Playlist/update", { playListId: playlistId, thumbnailId });
             setIsEditingTitle(false);
-            const videosWithPositions = response.data.posts.map((video, index) => ({
-                ...video,
-                position: index + 1
-            }));
-            setPlaylist({ ...response.data, posts: videosWithPositions });
+            await fetchPlaylistData();
         }
-    }, []);
+    }, [fetchPlaylistData, playlistId]);
 
 
     const saveTitleChanges = useCallback(async () => {
-        const response = await API.post("profile/api/Playlist/update", { playListId: playlistId, title: playlist.title });
+        await API.post("/profile/api/Playlist/update", { playListId: playlistId, title: playlist.title });
         setIsEditingTitle(false);
-        const videosWithPositions = response.data.posts.map((video, index) => ({
-            ...video,
-            position: index + 1
-        }));
-        setPlaylist({ ...response.data, posts: videosWithPositions });
-    }, [playlist.title]);
+        await fetchPlaylistData();
+    }, [fetchPlaylistData, playlist.title, playlistId]);
 
 
     const removeVideo = useCallback(async (videoId) => {
-        await API.post(`profile/api/Playlist/removeVideo`, {
+        await playListApi.postApiPlayListRemoveVideo({
             playListId: playlistId,
             postId: videoId
         });
@@ -214,31 +208,22 @@ const PlaylistPage = () => {
     const addVideos = useCallback(async () => {
         if (selectedVideos.length === 0) return;
  
-        const response = await getPlayList().postApiPlayListAddVideo({
+        const response = await playListApi.postApiPlayListAddVideo({
             playListId: playlistId,
             postsToAdd: selectedVideos.map(x => x.id)
         });
 
         if (response.status === 200) {
-            setPlaylist(prev => ({
-                ...prev,
-                posts: [...response.data.posts.map((video, index) => ({
-                    ...video,
-                    position: index + 1
-                }))]
-            }));
+            await fetchPlaylistData();
             setShowAddVideoModal(false);
         }
-    }, [playlistId, selectedVideos]);
+    }, [fetchPlaylistData, playlistId, selectedVideos]);
 
     const onDragEnd = useCallback(async (result) => {
         if (!result.destination) return;
 
         const items = Array.from(playlist.posts);
         const [reorderedItem] = items.splice(result.source.index, 1);
-        console.log(result)
-        console.log(reorderedItem)
-        console.log(result.destination.index)
         items.splice(result.destination.index, 0, reorderedItem);
 
         const updatedVideos = items.map((item, index) => ({
@@ -250,7 +235,7 @@ const PlaylistPage = () => {
 
         setIsUpdatingOrder(true);
         try {
-            await API.post("profile/api/Playlist/updatePositions", {
+            await playListApi.postApiPlayListUpdatePositions({
                 playlistId: playlistId,
                 postId: reorderedItem.id,
                 destination: result.destination.index + 1
