@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getLocalDateTime } from "../../shared/LocalDate";
 import { getComments } from "../../lib/api/generated/comments/comments";
+import defaultProfilePic from "../../defaultProfilePic.png";
 
 const commentsApi = getComments();
 
@@ -30,7 +31,7 @@ const Comment = ({ comment, postId, depth }) => {
     return (
         <div className='comment'>
             <img
-                src={comment.userAvatar || "https://picsum.photos/40/40"}
+                src={comment.userAvatar || defaultProfilePic}
                 className="comment-avatar"
                 alt="Аватар пользователя"
             />
