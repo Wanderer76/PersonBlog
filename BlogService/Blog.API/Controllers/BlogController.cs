@@ -86,11 +86,11 @@ public sealed class BlogController(
 
 
     [HttpGet("blogViewerInfoByPost/{postId:guid}")]
-    [AuthFilter]
     public async Task<ActionResult<BlogUserInfoViewModel>> GetBlogViewerInfoByPostId(Guid postId)
     {
         var user = await currentUserService.GetCurrentUserAsync();
-        var result = await blogService.GetBlogByPostIdAsync(postId, user.UserId);
+        Guid? viewerId = user.IsAnonymous ? null : user.UserId;
+        var result = await blogService.GetBlogByPostIdAsync(postId, viewerId);
         return Ok(result);
     }
 

@@ -78,7 +78,7 @@ public class PlayListController : BaseApiController
     }
 
     //[HttpPost("update")]
-    //[Authorize]
+    //[AuthFilter]
     //[Produces(typeof(PlayListDetailViewModel))]
     //public async Task<IActionResult> UpdatePlayList([FromBody] PlayListUpdateRequest form)
     //{

@@ -1,8 +1,8 @@
 ﻿using Blog.Contracts.Models;
 using Gateway.API.Api;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Services;
@@ -23,7 +23,7 @@ public class ViewController : BaseApiController
 
 
     [HttpGet("history")]
-    [Authorize]
+    [AuthFilter]
     public async Task<IActionResult> GetViewHistory()
     {
         HttpContext.TryGetUserFromContext(out var userId);
@@ -61,7 +61,7 @@ public class ViewController : BaseApiController
         return Ok(result);
     }
     [HttpGet("liked")]
-    [Authorize]
+    [AuthFilter]
     public async Task<IActionResult> GetLikedHistory()
     {
         HttpContext.TryGetUserFromContext(out var userId);

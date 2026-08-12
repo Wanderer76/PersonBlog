@@ -4,7 +4,6 @@ using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 
@@ -22,7 +21,6 @@ public class BanController : BaseApiController
     }
 
     [HttpPost("sendPostBanRequest")]
-    [Authorize]
     [AuthFilter(Roles.User)]
     public async Task<IActionResult> SendBanRequest([FromBody] PostReportForm postReport)
     {

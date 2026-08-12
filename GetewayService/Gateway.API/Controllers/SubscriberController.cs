@@ -1,6 +1,6 @@
 ﻿using Blog.Contracts.Models.Blog;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Models;
@@ -18,7 +18,7 @@ namespace Gateway.API.Controllers
         }
 
         [HttpPost("subscribe/{blogId:guid}")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> SubscribeToBlog(Guid blogId)
         {
             try
@@ -34,7 +34,7 @@ namespace Gateway.API.Controllers
         }
 
         [HttpPost("unsubscribe/{blogId:guid}")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> UnSubscribeToBlog(Guid blogId)
         {
             try
@@ -50,7 +50,7 @@ namespace Gateway.API.Controllers
         }
 
         [HttpGet("subscriptions")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> SubscriptionsList(int page, int size)
         {
             var client = _httpClientFactory.CreateClient("Reacting");

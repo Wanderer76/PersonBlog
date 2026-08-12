@@ -1,6 +1,6 @@
 ﻿using Conference.Domain.Models;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
@@ -14,7 +14,7 @@ namespace Gateway.API.Controllers
         }
 
         [HttpPost("createConferenceToPost")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> Index(Guid postId)
         {
             using var client = _httpClientFactory.CreateClient("Conference");

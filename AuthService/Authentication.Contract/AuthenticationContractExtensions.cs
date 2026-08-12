@@ -1,5 +1,6 @@
 ﻿using Authentication.Contract.Services;
 using Infrastructure.Extensions;
+using Infrastructure.Middleware;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,11 +19,12 @@ public static class AuthenticationContractExtensions
     {
         var options = new AuthenticationClientOptions();
         configureOptions?.Invoke(options);
+        services.AddTransient<HeaderClientHandler>();
         services.AddHttpClient<HttpContextCachedUserService>("AuthApp", client =>
         {
             client.BaseAddress = new Uri(options.BaseUrl);
             client.Timeout = options.Timeout;
-        });
+        }).AddHttpMessageHandler<HeaderClientHandler>();
 
         services.AddScoped<ICurrentUserService>(sp =>
         {

@@ -135,7 +135,7 @@ public sealed class BlogController : BaseApiController
     }
 
     /// <summary>
-    /// Получение информации о блоге для зрителя по ID поста (требует авторизации)
+    /// Получение информации о блоге для зрителя по ID поста с опциональной авторизацией
     /// </summary>
     [HttpGet("blogViewerInfoByPost/{postId:guid}")]
     [ProducesResponseType(typeof(BlogUserInfoViewModel), StatusCodes.Status200OK)]
@@ -145,7 +145,8 @@ public sealed class BlogController : BaseApiController
     public async Task<ActionResult<BlogUserInfoViewModel>> GetBlogViewerInfoByPostId(Guid postId)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var result = await _blogClient.GetBlogByPostIdAsync(postId, user.UserId);
+        Guid? viewerId = user.IsAnonymous ? null : user.UserId;
+        var result = await _blogClient.GetBlogByPostIdAsync(postId, viewerId);
 
         return result.IsSuccess
             ? Ok(result.Value)

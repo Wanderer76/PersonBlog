@@ -1,81 +1,73 @@
-﻿using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Shared;
-using Shared.Models;
-using Shared.Services;
 using System.Net;
+using System.Security.Claims;
 
-namespace Infrastructure.Middleware
+namespace Infrastructure.Middleware;
+
+public class JwtMiddleware
 {
-    public class JwtMiddleware
+    private readonly RequestDelegate _next;
+
+    public JwtMiddleware(RequestDelegate next)
     {
-        private readonly RequestDelegate _next;
-        private readonly IConfiguration _configuration;
-        private readonly ICacheService _cacheService;
-        private readonly IJwtTokenService _jwtTokenService;
-
-        public JwtMiddleware(RequestDelegate requestDelegate, IConfiguration configuration, ICacheService cacheService, IJwtTokenService jwtTokenService)
-        {
-            _next = requestDelegate;
-            _configuration = configuration;
-            _cacheService = cacheService;
-            _jwtTokenService = jwtTokenService;
-        }
-
-        public async Task InvokeAsync(HttpContext context)
-        {
-            var requestToken = context.Request.Headers.Authorization.FirstOrDefault()?.Split(' ').Last();
-            var endpoint = context.GetEndpoint();
-
-            if (requestToken != null)
-            {
-                var token = _jwtTokenService.GetTokenModel(requestToken);
-                if (token.IsFailure)
-                {
-                    context.Response.ContentType = "application/json";
-                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    await context.Response.StartAsync();
-                    return;
-                }
-                if (endpoint.Metadata.GetMetadata<AuthFilterAttribute>() != null)
-                {
-                    if (token.Value.ExpiredAt < DateTimeService.Now())
-                    {
-                        context.Response.ContentType = "application/json";
-                        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                        await context.Response.StartAsync();
-                        return;
-                    }
-                    var _currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
-                    var currentUser = await _currentUserService.GetCurrentUserAsync();
-
-                    if (currentUser == null)
-                    {
-                        context.Response.ContentType = "application/json";
-                        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                        await context.Response.StartAsync();
-                        return;
-                    }
-                    else
-                    {
-                        context.Items.Add("userId", token.Value.UserId);
-                    }
-                }
-            }
-            await _next(context);
-        }
+        _next = next;
     }
 
-    public static class JwtMiddlewareExtension
+    public async Task InvokeAsync(HttpContext context)
     {
-        public static IApplicationBuilder UseJwtMiddleware(this IApplicationBuilder builder)
+        var authFilter = context.GetEndpoint()?.Metadata.GetMetadata<AuthFilterAttribute>();
+
+        if (context.User.Identity?.IsAuthenticated != true)
         {
-            return builder.UseMiddleware<JwtMiddleware>();
+            if (authFilter != null)
+            {
+                await WriteUnauthorizedAsync(context);
+                return;
+            }
+
+            await _next(context);
+            return;
         }
+
+        var currentUserService = context.RequestServices.GetRequiredService<ICurrentUserService>();
+        var currentUser = await currentUserService.GetCurrentUserAsync();
+
+        if (currentUser.IsAnonymous)
+        {
+            // A structurally valid JWT may refer to an expired or removed session.
+            // Public endpoints treat it as an anonymous request; protected endpoints
+            // marked with AuthFilter reject it before entering the controller.
+            context.User = new ClaimsPrincipal(new ClaimsIdentity());
+
+            if (authFilter != null)
+            {
+                await WriteUnauthorizedAsync(context);
+                return;
+            }
+
+            await _next(context);
+            return;
+        }
+
+        context.Items["userId"] = currentUser.UserId;
+        await _next(context);
+    }
+
+    private static Task WriteUnauthorizedAsync(HttpContext context)
+    {
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+        return context.Response.CompleteAsync();
+    }
+}
+
+public static class JwtMiddlewareExtension
+{
+    public static IApplicationBuilder UseJwtMiddleware(this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<JwtMiddleware>();
     }
 }

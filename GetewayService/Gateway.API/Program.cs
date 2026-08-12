@@ -95,9 +95,9 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 app.MapDefaultEndpoints();
 app.UseHttpsRedirection();
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseCorrelationMiddleware();
 app.UseJwtMiddleware();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

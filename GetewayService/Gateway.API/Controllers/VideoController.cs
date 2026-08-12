@@ -2,9 +2,9 @@ using Blog.Contracts.Models;
 using Blog.Contracts.Models.Blog;
 using Gateway.API.Api;
 using Gateway.API.Services;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Profile.Domain.Models;
 using Shared.Services;
@@ -93,11 +93,11 @@ public class VideoController : BaseApiController
         try
         {
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            var hasUser = HttpContext.TryGetUserFromContext(out var userId);
+            HttpContext.TryGetUserFromContext(out var userId);
 
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
             var post = _httpClientFactory.GetPostDetailViewAsync(HttpContext, postId);
-            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.Value?.Id);
+            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.IsSuccess ? blog.Value?.Id : null);
 
             await Task.WhenAll(post, userInfo).ConfigureAwait(false);
 
@@ -120,7 +120,7 @@ public class VideoController : BaseApiController
     }
 
     [HttpPost("setView")]
-    [Authorize]
+    [AuthFilter]
     public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
     {
         var client = _httpClientFactory.CreateClient("Reacting");

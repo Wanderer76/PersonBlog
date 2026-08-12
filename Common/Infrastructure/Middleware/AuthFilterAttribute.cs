@@ -19,16 +19,18 @@ namespace Infrastructure.Middleware
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
+            var currentUser = await context.HttpContext.RequestServices.GetRequiredService<ICurrentUserService>().GetCurrentUserAsync();
+            if (currentUser.IsAnonymous)
+            {
+                context.Result = new UnauthorizedResult();
+                return;
+            }
+
             if (_roles.Count == 0)
             {
                 return;
             }
-            var currentUser = await context.HttpContext.RequestServices.GetRequiredService<ICurrentUserService>().GetCurrentUserAsync();
-            if (currentUser.IsAnonymous)
-            {
-                context.Result = new ForbidResult();
-                return;
-            }
+
             var roles = currentUser.Roles;
             if (!roles.Intersect(_roles).Any())
             {

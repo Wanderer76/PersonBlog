@@ -1,6 +1,6 @@
 ﻿using Conference.Domain.Models;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gateway.API.Controllers
@@ -13,7 +13,7 @@ namespace Gateway.API.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        [Authorize]
+        [AuthFilter]
         [HttpPost("sendMessage")]
         public async Task<IActionResult> SendMessage([FromBody] CreateMessageForm messageForm)
         {
