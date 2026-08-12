@@ -28,3 +28,24 @@ export const profile = {
         mock: false,
     },
 };
+
+export const authGateway = {
+    input: {
+        target: '../auth/swagger.json',
+    },
+    output: {
+        target: './src/lib/api/generated/auth-gateway',
+        schemas: './src/lib/api/generated/auth-gateway/models',
+        client: 'axios',
+        mode: 'tags-split',
+        override: {
+            mutator: {
+                path: './src/lib/api/authGatewayMutator.ts',
+                name: 'authGatewayInstance',
+            },
+        },
+        prettier: true,
+        indexFiles: true,
+        mock: false,
+    },
+};

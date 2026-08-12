@@ -1,14 +1,15 @@
 import axios from "axios";
-import { AuthResponse } from "@/lib/api/generated/models";
+import { getAuth } from '@/lib/api/generated/auth-gateway/auth/auth';
+import type { AuthResponse } from '@/lib/api/generated/auth-gateway/models';
+import { postServiceWorkerMessage } from '@/serviceWorker/messages';
 
 export const ACCESS_TOKEN_KEY = 'ACCESS_TOKEN_KEY';
 export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 export const OAUTH_STATE_KEY = 'OAUTH_STATE_KEY';
 export const OAUTH_RETURN_URL_KEY = 'OAUTH_RETURN_URL_KEY';
 export const AUTH_STATE_CHANGED_EVENT = 'auth-state-changed';
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:5078';
 const AUTH_REDIRECT_URI = `${window.location.origin}/callback`;
-const authTransport = axios.create({ baseURL: AUTH_API_URL, withCredentials: false });
+const authGatewayClient = getAuth();
 
 function notifyAuthStateChanged(): void {
     window.dispatchEvent(new Event(AUTH_STATE_CHANGED_EVENT));
@@ -41,12 +42,7 @@ export function saveAccessToken(token: string | null): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, token);
     notifyAuthStateChanged();
 
-    if (navigator.serviceWorker?.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'SET_AUTH_TOKEN',
-            payload: token
-        });
-    }
+    postServiceWorkerMessage({ type: 'SET_AUTH_TOKEN', payload: token });
 }
 
 /**
@@ -105,12 +101,12 @@ export function getAndClearOAuthReturnUrl(): string {
 /**
  * Ответ от эндпоинта refresh token
  */
-interface RefreshTokenResponse {
-    accessToken: string;
-    refreshToken: string;
-}
+type TokenPair = {
+    accessToken: NonNullable<AuthResponse['accessToken']>;
+    refreshToken: NonNullable<AuthResponse['refreshToken']>;
+};
 
-function isTokenResponse(value: unknown): value is RefreshTokenResponse {
+function isTokenResponse(value: AuthResponse): value is TokenPair {
     if (typeof value !== 'object' || value === null) return false;
 
     const response = value as Record<string, unknown>;
@@ -120,17 +116,12 @@ function isTokenResponse(value: unknown): value is RefreshTokenResponse {
         && response.refreshToken.length > 0;
 }
 
-function saveTokenPair(tokens: RefreshTokenResponse): void {
+function saveTokenPair(tokens: TokenPair): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
     notifyAuthStateChanged();
 
-    if (navigator.serviceWorker?.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'SET_AUTH_TOKEN',
-            payload: tokens.accessToken
-        });
-    }
+    postServiceWorkerMessage({ type: 'SET_AUTH_TOKEN', payload: tokens.accessToken });
 }
 
 export class JwtTokenService {
@@ -165,19 +156,13 @@ export class JwtTokenService {
         saveOAuthState(state);
         saveOAuthReturnUrl(returnUrl || window.location.href);
 
-        const params = new URLSearchParams({
+        const response = await authGatewayClient.getApiAuthAuthorize({
             clientId: 'blog',
             redirectUri: AUTH_REDIRECT_URI,
             response_type: 'code',
-            state: state,
-            ...(returnUrl && { returnUrl }),
+            state,
+            returnUrl,
         });
-
-        const response = await authTransport.get(`/api/Auth/authorize?${params.toString()}`);
-
-        if (response.status !== 200) {
-            throw new Error(`Authorize failed: ${response.status}`);
-        }
 
         const data = response.data;
 
@@ -192,14 +177,14 @@ export class JwtTokenService {
     /**
  * Обмен кода авторизации на токены (вызывается на странице /callback)
  */
-    static async exchangeCodeForTokens(code: string, state: string | null = null): Promise<RefreshTokenResponse> {
+    static async exchangeCodeForTokens(code: string, state: string | null = null): Promise<TokenPair> {
         // Проверяем state для защиты от CSRF
         const savedState = getAndClearOAuthState();
         if (!savedState || !state || savedState !== state) {
             throw new Error('Invalid OAuth state');
         }
 
-        const response = await authTransport.post(`/api/Auth/token`, {
+        const response = await authGatewayClient.postApiAuthToken({
             grant_type: 'authorization_code',
             code: code,
             client_id: 'blog',
@@ -207,12 +192,7 @@ export class JwtTokenService {
             redirect_uri: AUTH_REDIRECT_URI,
         });
 
-        if (response.status !== 200) {
-            const error = response.data;
-            throw new Error(`Token exchange failed: ${error}`);
-        }
-
-        const data: unknown = response.data;
+        const data = response.data;
 
         if (!isTokenResponse(data)) {
             throw new Error('Invalid token response');
@@ -253,7 +233,7 @@ export class JwtTokenService {
 
             
             // Отдельный transport не содержит 401 interceptor, поэтому refresh не может вызвать сам себя.
-            const response = await authTransport.post(`/api/Auth/refresh`, { refreshToken });
+            const response = await authGatewayClient.postApiAuthRefresh({ refreshToken });
 
             if (response.status === 200) {
                 const data: AuthResponse = response.data;
@@ -287,6 +267,7 @@ export class JwtTokenService {
         sessionStorage.removeItem(OAUTH_STATE_KEY);
         sessionStorage.removeItem(OAUTH_RETURN_URL_KEY);
         notifyAuthStateChanged();
+        postServiceWorkerMessage({ type: 'SET_AUTH_TOKEN', payload: null });
     }
 
     /**

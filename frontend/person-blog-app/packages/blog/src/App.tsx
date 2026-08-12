@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import './App.css';
-import { JwtTokenService } from './shared/TokenStrorage.js';
+import { getAccessToken, JwtTokenService } from './shared/TokenStrorage.js';
 import PlaylistPage from './pages/playlist/PlayListPage';
 import CreatePlaylistForm from './components/playList/CreatePlaylistForm';
 import SubscriptionPage from './pages/subscriptions/SubscriptionPage';
@@ -10,6 +10,7 @@ import CreateBlogForm from './components/profile/blog/CreateBlogForm';
 import LikedPage from './pages/liked/LikedPage';
 import OAuthCallback from './pages/callback/OAuthCallback.js';
 import CreateTextPostForm from './components/profile/post/CreateTextPostForm.js';
+import { postServiceWorkerMessage } from './serviceWorker/messages';
 
 // Ленивая загрузка компонентов
 const MainPage = lazy(() => import('./pages/main/MainPage'));
@@ -44,9 +45,14 @@ interface SessionProps {
 const Session = ({ children }: SessionProps) => {
   useEffect(() => {
     if (JwtTokenService.isAuth()) {
-      navigator.serviceWorker?.controller?.postMessage({
-        type: 'UPLOAD_ALL_CHUNKS'
+      postServiceWorkerMessage({
+        type: 'CONFIGURE',
+        payload: {
+          apiBaseUrl: import.meta.env.VITE_API_BASE_URL || window.location.origin,
+          authToken: getAccessToken(),
+        },
       });
+      postServiceWorkerMessage({ type: 'UPLOAD_ALL_CHUNKS' });
     }
   }, []);
 

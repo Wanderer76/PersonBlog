@@ -46,7 +46,8 @@ public class AuthController(ILogger<AuthController> logger, IHttpClientFactory _
 
     // 2. Обмен кода на токен (делается с бэкенда React приложения или напрямую, если SPA)
     [HttpPost("token")]
-    public async Task<IActionResult> Token([FromBody] TokenRequest body)
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<AuthResponse>> Token([FromBody] TokenRequest body)
     {
         using var client = _httpClientFactory.CreateClient("Auth");
         var result = await client.PostAsync($"OAuth/token?grant_type={body.grant_type}&code={body.code}&client_id={body.client_id}&client_secret={body.client_secret}&redirect_uri={body.redirect_uri}", null);

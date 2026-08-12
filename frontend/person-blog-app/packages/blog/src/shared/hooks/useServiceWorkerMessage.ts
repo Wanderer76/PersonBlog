@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
+import { isServiceWorkerResponse, type ServiceWorkerResponse } from '@/serviceWorker/messages';
 
-type MessageHandler = (event: MessageEvent) => void;
+type MessageHandler = (message: ServiceWorkerResponse) => void;
 
 export const useServiceWorkerMessage = (
   handler: MessageHandler,
   deps: React.DependencyList = []
 ) => {
   useEffect(() => {
-    const listener = (event: MessageEvent) => {
-      handler(event);
+    const listener = (event: MessageEvent<unknown>) => {
+      if (isServiceWorkerResponse(event.data)) handler(event.data);
     };
 
     navigator.serviceWorker?.addEventListener('message', listener);

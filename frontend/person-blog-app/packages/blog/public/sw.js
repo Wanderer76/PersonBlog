@@ -2,6 +2,8 @@
 importScripts('https://cdn.jsdelivr.net/npm/idb@7/build/umd.js');
 let isUploadingAllChunks = false;
 let hasNewChunks = false;
+let apiBaseUrl = null;
+let authToken = null;
 
 
 self.addEventListener('install', (event) => {
@@ -15,10 +17,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('message', async (event) => {
+    if (!event.data || typeof event.data.type !== 'string') return;
+
     const { type, payload } = event.data;
 
-    if (type === 'SET_AUTH_TOKEN') {
+    if (type === 'CONFIGURE') {
+        if (!payload || typeof payload.apiBaseUrl !== 'string') return;
+        apiBaseUrl = payload.apiBaseUrl.replace(/\/$/, '');
+        authToken = typeof payload.authToken === 'string' ? payload.authToken : null;
+        return;
+    }
 
+    if (type === 'SET_AUTH_TOKEN') {
+        authToken = typeof payload === 'string' ? payload : null;
+        return;
     }
 
     if (type === 'UPLOAD_CHUNK') {
@@ -27,6 +39,11 @@ self.addEventListener('message', async (event) => {
     }
 
     if (type === 'UPLOAD_ALL_CHUNKS') {
+
+        if (!apiBaseUrl) {
+            console.error('[SW] Cannot upload chunks before API configuration');
+            return;
+        }
 
         if (isUploadingAllChunks) {
             console.log('[SW] Upload of all chunks already in progress, skipping duplicate call.');
@@ -72,6 +89,11 @@ self.addEventListener('message', async (event) => {
 });
 
 async function uploadChunk(chunkId) {
+    if (!apiBaseUrl) {
+        console.error('[SW] API URL is not configured');
+        return;
+    }
+
     const db = await idb.openDB('video-upload-db', 1);
     const chunkEntry = await db.get('chunks', chunkId);
 
@@ -90,10 +112,10 @@ async function uploadChunk(chunkId) {
     formData.append("chunkData", chunk);
 
     try {
-        const response = await fetch('http://localhost:7892/profile/api/Post/uploadChunk', {
+        const response = await fetch(`${apiBaseUrl}/profile/api/Post/uploadChunk`, {
             method: 'POST',
             body: formData,
-
+            headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined,
         });
 
         if (response.ok) {

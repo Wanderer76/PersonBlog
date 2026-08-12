@@ -20,9 +20,9 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef, processingPr
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useServiceWorkerMessage((event) => {
-    if (event.data.type === 'CHUNK_UPLOADED' && event.data.payload.postId === post.id) {
-      const { chunkNumber, totalChunks } = event.data.payload;
+  useServiceWorkerMessage((message) => {
+    if (message.type === 'CHUNK_UPLOADED' && message.payload.postId === post.id) {
+      const { chunkNumber, totalChunks } = message.payload;
       setUploadProgress(Math.round((chunkNumber / totalChunks) * 100));
     }
   }, [post.id]);
