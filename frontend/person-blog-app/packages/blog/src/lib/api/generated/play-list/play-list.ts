@@ -15,6 +15,7 @@ import type {
   PlayListWithPostsViewModel,
   PostCommonModel
 } from '.././models';
+import type { AxiosRequestConfig } from 'axios';
 
 import { customInstance } from '../../mutator';
 
@@ -96,12 +97,12 @@ const getApiPlayListItemId = (
       );
     }
   const getApiPlayListMyList = (
-    
+    options?: AxiosRequestConfig,
  ) => {
       return customInstance<PlayListListItem[]>(
       {url: `/api/PlayList/my/list`, method: 'GET'
     },
-      );
+      options);
     }
   return {getApiPlayListItemId,getApiPlayListList,getApiPlayListAvailableVideos,postApiPlayListCreate,postApiPlayListAddVideo,postApiPlayListUpdatePositions,postApiPlayListRemovePlaylistId,postApiPlayListRemoveVideo,getApiPlayListMyList}};
 export type GetApiPlayListItemIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPlayList>['getApiPlayListItemId']>>>

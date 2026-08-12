@@ -1,4 +1,5 @@
 import { useState, useRef, ChangeEvent, useCallback } from 'react';
+import { ALLOWED_MEDIA_TYPES, MAX_FILE_SIZE } from './MediaUploader.constants';
 import './MediaUploader.css';
 
 interface MediaUploaderProps {
@@ -205,16 +206,3 @@ export const MediaUploader = ({ files, onChange, error }: MediaUploaderProps) =>
     </div>
   );
 };
-
-export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
-export const ALLOWED_MEDIA_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-  'audio/mpeg',
-  'audio/wav',
-  'audio/ogg',
-];

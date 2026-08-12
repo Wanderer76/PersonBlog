@@ -18,6 +18,7 @@ import { PlaylistCard } from '@/features/post-management/components/PlayListCars
 import { getBlog } from '@/lib/api/generated/blog/blog';
 import { BlogModel, UserPostInfoModel } from '@/lib/api/generated/models';
 import { VideoProcessingProgress } from '@/entities/profile/types';
+import { TextPostCard } from '@/features/post-management/components/TextPostCard/TextPostCard';
 
 const PAGE_SIZE = 10;
 const POST_TYPE = { text: 0, video: 1 } as const;
@@ -55,8 +56,11 @@ export const ProfilePage = memo(() => {
     const [hasMore, setHasMore] = useState(true);
     const [activePanel, setActivePanel] = useState<ActivePanel>('posts');
     const [isLoading, setIsLoading] = useState(false);
+    const [isPlaylistsLoading, setIsPlaylistsLoading] = useState(false);
+    const [hasLoadedPlaylists, setHasLoadedPlaylists] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [videoProgress, setVideoProgress] = useState<Record<string, VideoProcessingProgress>>({});
+    const [postsReloadKey, setPostsReloadKey] = useState(0);
 
     useEffect(() => {
         let disposed = false;
@@ -109,6 +113,7 @@ export const ProfilePage = memo(() => {
 
     useEffect(() => {
         let isActive = true;
+        const controller = new AbortController();
         const loadProfile = async () => {
             try {
                 const blogApi = getBlog();
@@ -118,12 +123,33 @@ export const ProfilePage = memo(() => {
                 if (!isActive) return;
                 setProfile({ ...data, totalPostsCount: 0 });
                 setBlogId(data.id ?? null);
+
+                const [videoPosts, textPosts] = await Promise.all([
+                    profilePostApi.getApiProfilePostV2My(
+                        { page: 1, pageSize: 1, postType: POST_TYPE.video },
+                        { signal: controller.signal }
+                    ),
+                    profilePostApi.getApiProfilePostV2My(
+                        { page: 1, pageSize: 1, postType: POST_TYPE.text },
+                        { signal: controller.signal }
+                    )
+                ]);
+                if (!isActive) return;
+                setProfile(previous => ({
+                    ...previous,
+                    totalPostsCount: videoPosts.data.totalPostsCount + textPosts.data.totalPostsCount
+                }));
             } catch (error: unknown) {
-                if (isActive) setErrorMessage(getErrorMessage(error, 'Не удалось загрузить профиль'));
+                if (isActive && !axios.isCancel(error)) {
+                    setErrorMessage(getErrorMessage(error, 'Не удалось загрузить профиль'));
+                }
             }
         };
         void loadProfile();
-        return () => { isActive = false; };
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
     }, []);
 
     useEffect(() => {
@@ -136,18 +162,16 @@ export const ProfilePage = memo(() => {
             setIsLoading(true);
             setErrorMessage(null);
             try {
-                const { data } = await profilePostApi.getApiProfilePostV2My({
-                    page,
-                    pageSize: PAGE_SIZE,
-                    postType
-                });
+                const { data } = await profilePostApi.getApiProfilePostV2My(
+                    { page, pageSize: PAGE_SIZE, postType },
+                    { signal: controller.signal }
+                );
                 if (controller.signal.aborted) return;
                 setPosts(previousPosts => {
                     if (page === 1) return data.items;
                     const ids = new Set(previousPosts.map(post => post.id));
                     return [...previousPosts, ...data.items.filter(post => !ids.has(post.id))];
                 });
-                setProfile(previous => ({ ...previous, totalPostsCount: data.totalPostsCount }));
                 setHasMore(page < data.totalPageCount);
             } catch (error: unknown) {
                 if (!axios.isCancel(error)) {
@@ -161,30 +185,43 @@ export const ProfilePage = memo(() => {
             }
         };
         void loadPosts();
-        return () => controller.abort();
-    }, [activePanel, blogId, page]);
+        return () => {
+            controller.abort();
+            loadingRef.current = false;
+            setIsLoading(false);
+        };
+    }, [activePanel, blogId, page, postsReloadKey]);
 
     useEffect(() => {
         if (!blogId || activePanel !== 'playlists') return;
-        let isActive = true;
+        const controller = new AbortController();
         const loadPlaylists = async () => {
             setErrorMessage(null);
+            setIsPlaylistsLoading(true);
+            setHasLoadedPlaylists(false);
             try {
-                const { data } = await getPlayList().getApiPlayListMyList();
-                if (isActive) setPlaylists(data as Playlist[]);
+                const { data } = await getPlayList().getApiPlayListMyList({ signal: controller.signal });
+                if (controller.signal.aborted) return;
+                setPlaylists(data as Playlist[]);
+                setHasLoadedPlaylists(true);
             } catch (error: unknown) {
-                if (isActive) setErrorMessage(getErrorMessage(error, 'Не удалось загрузить плейлисты'));
+                if (!axios.isCancel(error)) setErrorMessage(getErrorMessage(error, 'Не удалось загрузить плейлисты'));
+            } finally {
+                if (!controller.signal.aborted) setIsPlaylistsLoading(false);
             }
         };
         void loadPlaylists();
-        return () => { isActive = false; };
+        return () => controller.abort();
     }, [activePanel, blogId]);
 
-    const handleRemovePost = async (id: string) => {
+    const handleRemovePost = useCallback(async (id: string) => {
         setErrorMessage(null);
         try {
             await profilePostApi.postApiProfilePostV2RemovePostId(id);
-            setPosts(previous => previous.filter(post => post.id !== id));
+            setPosts([]);
+            setPage(1);
+            setHasMore(true);
+            setPostsReloadKey(previous => previous + 1);
             setProfile(previous => ({
                 ...previous,
                 totalPostsCount: Math.max(0, previous.totalPostsCount - 1)
@@ -192,7 +229,7 @@ export const ProfilePage = memo(() => {
         } catch (error: unknown) {
             setErrorMessage(getErrorMessage(error, 'Не удалось удалить публикацию'));
         }
-    };
+    }, []);
 
     const handleRemovePlaylist = async (id: string) => {
         setErrorMessage(null);
@@ -248,12 +285,13 @@ export const ProfilePage = memo(() => {
                             processingProgress={post.id ? videoProgress[post.id] : undefined} />
                     ))}
                     {activePanel === 'text' && posts.map((post, index) => (
-                        <article className={styles.textPostCard} key={post.id}
-                            ref={index === posts.length - 1 ? lastElementRef : undefined}>
-                            <h3>{post.title || 'Без названия'}</h3>
-                            <p>{post.textInfo?.text}</p>
-                            <Button variant="danger" onClick={() => post.id && handleRemovePost(post.id)}>Удалить</Button>
-                        </article>
+                        <TextPostCard
+                            key={post.id}
+                            post={post}
+                            isLast={index === posts.length - 1}
+                            observeRef={lastElementRef}
+                            onRemove={handleRemovePost}
+                        />
                     ))}
                     {activePanel === 'playlists' && playlists.map(playlist => (
                         <PlaylistCard key={playlist.id} playlist={playlist} onRemove={handleRemovePlaylist} />
@@ -261,13 +299,16 @@ export const ProfilePage = memo(() => {
                     {isLoading && activePanel !== 'playlists' && (
                         <div className={page === 1 ? styles.loadingSpinner : styles.loadingMore}>Загрузка...</div>
                     )}
+                    {isPlaylistsLoading && activePanel === 'playlists' && (
+                        <div className={styles.loadingSpinner}>Загрузка плейлистов...</div>
+                    )}
                     {!isLoading && activePanel !== 'playlists' && posts.length === 0 && (
                         <p className={styles.emptyState}>Публикаций пока нет</p>
                     )}
                     {!hasMore && posts.length > 0 && activePanel !== 'playlists' && (
                         <p className={styles.noMore}>Больше публикаций нет</p>
                     )}
-                    {blogId && activePanel === 'playlists' && playlists.length === 0 && (
+                    {blogId && activePanel === 'playlists' && hasLoadedPlaylists && !isPlaylistsLoading && playlists.length === 0 && (
                         <p className={styles.emptyState}>У вас пока нет плейлистов</p>
                     )}
                 </div>

@@ -13,6 +13,7 @@ import type {
   UserPostInfoModel,
   UserPostInfoModelPagedListViewModel
 } from '.././models';
+import type { AxiosRequestConfig } from 'axios';
 
 import { customInstance } from '../../mutator';
 
@@ -21,12 +22,13 @@ import { customInstance } from '../../mutator';
   export const getProfilePostV2 = () => {
 const getApiProfilePostV2My = (
     params?: GetApiProfilePostV2MyParams,
+    options?: AxiosRequestConfig,
  ) => {
       return customInstance<UserPostInfoModelPagedListViewModel>(
       {url: `/api/ProfilePostV2/my`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const getApiProfilePostV2Create = (
 

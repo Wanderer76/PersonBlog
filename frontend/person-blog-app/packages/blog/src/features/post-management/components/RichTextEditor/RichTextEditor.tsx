@@ -26,6 +26,7 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
         editorProps: {
             attributes: {
                 class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none',
+                'aria-label': placeholder ?? 'Редактор текста',
             },
         },
         immediatelyRender: false,

@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 32px 24px 56px;
   box-sizing: border-box;
+  font-size: 16px;
 }
 
 .postsSection {
@@ -20,7 +21,7 @@
 
 .postsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   align-items: stretch;
   gap: 24px 20px;
 }
@@ -105,16 +106,4 @@
   border-radius: 6px;
   background: #fff1f1;
   color: #a61b1b;
-}
-
-.textPostCard {
-  padding: 20px;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  background: #fff;
-}
-
-.textPostCard p {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }

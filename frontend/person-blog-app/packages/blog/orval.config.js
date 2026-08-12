@@ -39,6 +39,7 @@ export const authGateway = {
         client: 'axios',
         mode: 'tags-split',
         override: {
+            requestOptions: true,
             mutator: {
                 path: './src/lib/api/authGatewayMutator.ts',
                 name: 'authGatewayInstance',
