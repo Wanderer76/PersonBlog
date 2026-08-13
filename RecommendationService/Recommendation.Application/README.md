@@ -192,10 +192,10 @@ RecommendationService/
 
 ### Задачи consumer-ов
 
-- [ ] Подписать Recommendation Service на новые routing keys отдельными durable queues.
-- [ ] Реализовать атомарную обработку `InboxMessage + изменение проекции`.
-- [ ] Повторно доставленное событие считать успешно обработанным.
-- [ ] Игнорировать событие поста с `AggregateVersion` ниже сохранённой.
+- [x] Подписать Recommendation Service на новые routing keys отдельными durable queues.
+- [x] Реализовать атомарную обработку `InboxMessage + изменение проекции`.
+- [x] Повторно доставленное событие считать успешно обработанным.
+- [x] Игнорировать событие поста с `AggregateVersion` ниже сохранённой.
 - [ ] Настроить retry с backoff и dead-letter queue.
 - [ ] Добавить метрики consumer lag, retry и DLQ.
 
