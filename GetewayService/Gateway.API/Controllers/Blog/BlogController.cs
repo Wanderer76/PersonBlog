@@ -1,4 +1,5 @@
 ﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Models;
 using Blog.Contracts;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Blog;
@@ -7,6 +8,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Json;
 
 namespace Gateway.API.Controllers.Blog;
 
@@ -14,10 +16,16 @@ public sealed class BlogController : BaseApiController
 {
     private readonly BlogApiClient _blogClient;
     private readonly ICurrentUserService _currentUserService;
-    public BlogController(ILogger<BaseApiController> logger, BlogApiClient blogClient, ICurrentUserService currentUserService) : base(logger)
+    private readonly IHttpClientFactory _httpClientFactory;
+    public BlogController(
+        ILogger<BaseApiController> logger,
+        BlogApiClient blogClient,
+        ICurrentUserService currentUserService,
+        IHttpClientFactory httpClientFactory) : base(logger)
     {
         _blogClient = blogClient;
         _currentUserService = currentUserService;
+        _httpClientFactory = httpClientFactory;
     }
 
     /// <summary>
@@ -190,9 +198,29 @@ public sealed class BlogController : BaseApiController
 
         var result = await _blogClient.CreateBlogAsync(form);
 
-        return result.IsSuccess
-            ? Ok(result.Value)
-            : BadRequest(result.Errors.ToValidationProblem());
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Errors.ToValidationProblem());
+        }
+
+        var authClient = _httpClientFactory.CreateClient("Auth");
+        var authResponse = await authClient.PostAsJsonAsync(
+            "Auth/blog-context",
+            new BlogContextRequest(result.Value.Id));
+
+        if (!authResponse.IsSuccessStatusCode)
+        {
+            return StatusCode(
+                StatusCodes.Status502BadGateway,
+                new ProblemDetails
+                {
+                    Title = "Не удалось обновить пользовательскую сессию",
+                    Detail = "Блог создан, но AuthService не подтвердил обновление контекста пользователя.",
+                    Status = StatusCodes.Status502BadGateway
+                });
+        }
+
+        return Ok(result.Value);
     }
 
     ///// <summary>
