@@ -2,10 +2,12 @@
 using Blog.Contracts.Models.Blog;
 using Shared.Utils;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Blog.Contracts;
 public sealed class BlogApiClient
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly HttpClient _httpClient;
 
     public BlogApiClient(HttpClient httpClient)
@@ -25,7 +27,7 @@ public sealed class BlogApiClient
         using var content = new MultipartFormDataContent
         {
             { new StringContent(form.Title), "Title" },
-            { new StringContent(form.Description), "Description" }
+            { new StringContent(form.Description ?? string.Empty), "Description" }
         };
 
         if (form.PhotoUrl != null)
@@ -79,14 +81,56 @@ public sealed class BlogApiClient
 
     private static async Task<Result<T>> HandleResponseAsync<T>(HttpResponseMessage response)
     {
-        if (response.IsSuccessStatusCode)
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
         {
-            var content = await response.Content.ReadFromJsonAsync<T>();
-            return Result<T>.Success(content);
+            if (!string.IsNullOrWhiteSpace(responseBody))
+            {
+                try
+                {
+                    var errors = JsonSerializer.Deserialize<List<Error>>(
+                        responseBody,
+                        JsonOptions);
+
+                    if (errors is { Count: > 0 })
+                    {
+                        return Result<T>.Failure(errors);
+                    }
+                }
+                catch (JsonException)
+                {
+                    // The downstream service may return ProblemDetails or plain text.
+                    // Fall through to a status-based error instead of masking it with
+                    // a deserialization exception.
+                }
+            }
+
+            return Result<T>.Failure(new Error(
+                response.StatusCode.ToString(),
+                $"Сервис блога вернул ошибку {(int)response.StatusCode} ({response.ReasonPhrase})"));
         }
 
-        var errors = await response.Content.ReadFromJsonAsync<List<Error>>();
-        return Result<T>.Failure(errors ?? new List<Error> { new Error("ServerError", "Ошибка сервиса блога") });
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return Result<T>.Failure(new Error(
+                "EmptyResponse",
+                $"Сервис блога вернул пустой ответ со статусом {(int)response.StatusCode}"));
+        }
+
+        try
+        {
+            var content = JsonSerializer.Deserialize<T>(responseBody, JsonOptions);
+            return content is null
+                ? Result<T>.Failure(new Error("InvalidResponse", "Сервис блога вернул пустой JSON"))
+                : Result<T>.Success(content);
+        }
+        catch (JsonException)
+        {
+            return Result<T>.Failure(new Error(
+                "InvalidResponse",
+                "Сервис блога вернул ответ в неподдерживаемом формате"));
+        }
     }
     //public async Task<Result<BlogModel>> UpdateBlogAsync(Guid blogId, BlogUpdateRequest form)
     //{
