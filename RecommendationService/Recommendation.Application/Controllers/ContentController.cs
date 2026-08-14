@@ -22,12 +22,7 @@ public sealed class ContentController(
     {
         var subject = await subjectResolver.ResolveAsync(cancellationToken);
         if (subject is null)
-            return Unauthorized(new ProblemDetails
-            {
-                Status = StatusCodes.Status401Unauthorized,
-                Title = "Authentication required",
-                Detail = "Authenticated user is required."
-            });
+            throw new InvalidOperationException("A recommendation subject could not be resolved.");
         if (page < 1) return BadRequest(new ProblemDetails { Title = "Page must be positive." });
 
         int offset;
@@ -36,7 +31,7 @@ public sealed class ContentController(
             offset = checked((page - 1) * pageSize);
             var response = await feedService.GetFeedAsync(new RecommendationFeedRequest(
                 subject.UserId,
-                null,
+                subject.AnonymousSessionId,
                 pageSize,
                 null,
                 currentPostId,

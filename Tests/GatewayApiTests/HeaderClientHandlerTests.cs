@@ -1,4 +1,5 @@
 using Infrastructure.Middleware;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using System.Net;
 using System.Security.Claims;
@@ -30,6 +31,24 @@ public sealed class HeaderClientHandlerTests
         Assert.Equal("Bearer", forwardedRequest.Headers.Authorization?.Scheme);
         Assert.Equal("access-token", forwardedRequest.Headers.Authorization?.Parameter);
         Assert.Equal("correlation-id", forwardedRequest.Headers.GetValues(CorrelationMiddleware.CorrelationId).Single());
+    }
+
+    [Fact]
+    public async Task SendAsync_CreatesAndForwardsAnonymousSession()
+    {
+        var context = new DefaultHttpContext();
+        HttpRequestMessage? forwardedRequest = null;
+        var handler = new HeaderClientHandler(new HttpContextAccessor { HttpContext = context })
+        {
+            InnerHandler = new CaptureHandler(request => forwardedRequest = request)
+        };
+        using var invoker = new HttpMessageInvoker(handler);
+
+        await invoker.SendAsync(new HttpRequestMessage(HttpMethod.Get, "http://service/feed"), CancellationToken.None);
+
+        var sessionId = forwardedRequest!.Headers.GetValues(AnonymousSession.HeaderName).Single();
+        Assert.True(Guid.TryParseExact(sessionId, "N", out _));
+        Assert.Contains($"{AnonymousSession.CookieName}={sessionId}", context.Response.Headers.SetCookie.ToString());
     }
 
     private sealed class CaptureHandler(Action<HttpRequestMessage> capture) : HttpMessageHandler

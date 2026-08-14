@@ -13,7 +13,6 @@ public sealed class FeedController(
     [HttpGet("api/v1/feed")]
     [ProducesResponseType<RecommendationFeedResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<RecommendationFeedResponse>> GetFeed(
         [FromQuery] int limit = 20,
         [FromQuery] string? cursor = null,
@@ -22,16 +21,13 @@ public sealed class FeedController(
     {
         var subject = await subjectResolver.ResolveAsync(cancellationToken);
         if (subject is null)
-            return Unauthorized(CreateProblem(
-                "Authenticated user is required.",
-                StatusCodes.Status401Unauthorized,
-                "Authentication required"));
+            throw new InvalidOperationException("A recommendation subject could not be resolved.");
 
         try
         {
             return Ok(await feedService.GetFeedAsync(new RecommendationFeedRequest(
                 subject.UserId,
-                null,
+                subject.AnonymousSessionId,
                 limit,
                 cursor,
                 currentPostId), cancellationToken));

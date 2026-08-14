@@ -37,20 +37,23 @@ public sealed class RecommendationControllersTests
     }
 
     [Fact]
-    public async Task FeedController_ReturnsBadRequestWhenSubjectIsMissing()
+    public async Task FeedController_ForwardsAnonymousSubject()
     {
+        const string sessionId = "87b61a0d7270441c936da927cb881f3e";
+        var feedService = new FeedService(new RecommendationFeedResponse(
+            Guid.NewGuid(), "heuristic-v1", [], null));
         var controller = new FeedController(
-            new FeedService(null!),
-            new SubjectResolver(null))
+            feedService,
+            new SubjectResolver(new RecommendationSubject(null, sessionId)))
         {
             ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
         };
 
         var result = await controller.GetFeed();
 
-        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(result.Result);
-        var problem = Assert.IsType<ProblemDetails>(unauthorized.Value);
-        Assert.Equal(StatusCodes.Status401Unauthorized, problem.Status);
+        Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Null(feedService.LastRequest!.UserId);
+        Assert.Equal(sessionId, feedService.LastRequest.AnonymousSessionId);
     }
 
     [Fact]
@@ -59,18 +62,31 @@ public sealed class RecommendationControllersTests
         var userId = Guid.NewGuid();
         var currentUser = new CurrentUserService(new UserModel(userId, "user", null, Guid.Empty, []));
 
-        var subject = await new RecommendationSubjectResolver(currentUser).ResolveAsync();
+        var subject = await new RecommendationSubjectResolver(
+            currentUser,
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() }).ResolveAsync();
 
         Assert.NotNull(subject);
         Assert.Equal(userId, subject.UserId);
     }
 
     [Fact]
-    public async Task SubjectResolver_ReturnsNullForAnonymousCurrentUser()
+    public async Task SubjectResolver_CreatesStableSessionForAnonymousCurrentUser()
     {
         var currentUser = new CurrentUserService(UserModel.AnonymousUser());
+        var context = new DefaultHttpContext();
+        var resolver = new RecommendationSubjectResolver(
+            currentUser,
+            new HttpContextAccessor { HttpContext = context });
 
-        Assert.Null(await new RecommendationSubjectResolver(currentUser).ResolveAsync());
+        var first = await resolver.ResolveAsync();
+        var second = await resolver.ResolveAsync();
+
+        Assert.NotNull(first);
+        Assert.Null(first.UserId);
+        Assert.Equal(first.AnonymousSessionId, second!.AnonymousSessionId);
+        Assert.True(Guid.TryParseExact(first.AnonymousSessionId, "N", out _));
+        Assert.Contains("AnonymousSessionId=", context.Response.Headers.SetCookie.ToString());
     }
 
     private sealed class FeedService(RecommendationFeedResponse response) : IRecommendationFeedService

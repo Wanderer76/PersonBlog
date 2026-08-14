@@ -28,6 +28,13 @@ public class HeaderClientHandler : DelegatingHandler
             request.Headers.TryAddWithoutValidation(CorrelationMiddleware.CorrelationId, correlationId.ToString());
         }
 
+        if (context is not null && context.User.Identity?.IsAuthenticated != true)
+        {
+            request.Headers.TryAddWithoutValidation(
+                Infrastructure.Services.AnonymousSession.HeaderName,
+                Infrastructure.Services.AnonymousSession.GetOrCreate(context));
+        }
+
         return base.SendAsync(request, cancellationToken);
     }
 }
