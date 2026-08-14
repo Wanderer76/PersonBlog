@@ -1,139 +1,132 @@
-import React, { useState } from "react";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../post/CreatePostForm.module.css';
-import { useNavigate } from "react-router-dom";
-import { getBlog } from "@/lib/api/generated/blog/blog";
+import { getBlog } from '@/lib/api/generated/blog/blog';
+import BlogCoverUpload from './BlogCoverUpload';
+import BlogDetailsFields from './BlogDetailsFields';
 
 const blogApi = getBlog();
 
-const CreateBlogForm = function () {
+const CreateBlogForm = () => {
+    const navigate = useNavigate();
     const [blogForm, setBlogForm] = useState({
-        title: "",
-        description: "",
+        title: '',
+        description: '',
         photoUrl: null
     });
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [imagePreview, setImagePreview] = useState(null);
     const [isCreating, setIsCreating] = useState(false);
-    const navigate = useNavigate();
+    const [errorMessage, setErrorMessage] = useState(null);
 
-    function updateForm(event) {
-        const key = event.target.name;
-        const value = key === 'photoUrl' ? event.target.files[0] : event.target.value;
-        setBlogForm((prev) => ({
-            ...prev,
-            [key]: value
-        }));
-    }
+    useEffect(() => {
+        return () => {
+            if (imagePreview) URL.revokeObjectURL(imagePreview);
+        };
+    }, [imagePreview]);
 
-    function handleImageSelect(input) {
-        const file = input.target.files[0];
-        if (file) {
-            const imageURL = URL.createObjectURL(file);
-            setImagePreview(imageURL);
+    const selectImage = (file) => {
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            setErrorMessage('Выберите файл изображения');
+            return;
         }
-    }
 
-    async function sendForm() {
+        setErrorMessage(null);
+        setBlogForm((previous) => ({ ...previous, photoUrl: file }));
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const updateTextField = (event) => {
+        const { name, value } = event.currentTarget;
+        setBlogForm((previous) => ({ ...previous, [name]: value }));
+        if (name === 'title' && value.trim()) setErrorMessage(null);
+    };
+
+    const sendForm = async () => {
+        if (isCreating) return;
+        if (!blogForm.title.trim()) {
+            setErrorMessage('Введите название блога');
+            return;
+        }
+
         setIsCreating(true);
-        setUploadProgress(0);
+        setErrorMessage(null);
+
         try {
-            const response = await blogApi.postApiBlogCreate({
-                Title: blogForm.title,
-                Description: blogForm.description,
+            await blogApi.postApiBlogCreate({
+                Title: blogForm.title.trim(),
+                Description: blogForm.description.trim(),
                 PhotoUrl: blogForm.photoUrl ?? undefined
             });
-
-            if (response.status === 200) {
-                setUploadProgress(100);
-                alert('Блог успешно создан!');
-                navigate('/profile');
-            }
+            navigate('/profile');
         } catch (error) {
-            console.error("Error creating blog:", error);
-            alert('Произошла ошибка при создании блога');
+            console.error('Error creating blog:', error);
+            setErrorMessage('Не удалось создать блог. Попробуйте ещё раз.');
         } finally {
             setIsCreating(false);
         }
-    }
+    };
 
     return (
-        <div className={styles.modal}>
-            <div className={styles.createPostForm}>
-                <h1>Создать блог</h1>
-
-                <div className={styles.formGroup}>
-                    <label>Название</label>
-                    <input
-                        className={styles.modalContent}
-                        type="text"
-                        placeholder="Добавьте название вашего блога"
-                        name="title"
-                        onChange={updateForm}
-                        required
-                    />
-                </div>
-
-                <div className={styles.uploadArea} onClick={() => document.getElementById('avatar').click()}>
-                    <div className={styles.cameraIcon}>📷</div>
-                    <h3>Выберите обложку для блога</h3>
-                    <p>или перетащите изображение</p>
-                    <input
-                        id="avatar"
-                        name='photoUrl'
-                        type="file"
-                        className={styles.fileInput}
-                        accept="image/*"
-                        hidden
-                        onChange={(e) => {
-                            updateForm(e);
-                            handleImageSelect(e);
-                        }}
-                    />
-                </div>
-
-                {imagePreview && (
-                    <div className={styles.previewContainer}>
-                        <img
-                            src={imagePreview}
-                            alt="Предпросмотр обложки"
-                            className={styles.videoPreview}
-                            style={{ objectFit: 'cover' }}
-                        />
-                        <div className={styles.progressBar}>
-                            <div
-                                className={styles.progressFill}
-                                style={{ width: `${uploadProgress}%` }}
-                            />
-                        </div>
+        <main className={styles.pageShell}>
+            <section className={styles.formCard} aria-labelledby="create-blog-title">
+                <header className={styles.formHeader}>
+                    <div>
+                        <span className={styles.eyebrow}>Новый блог</span>
+                        <h1 id="create-blog-title">Создание блога</h1>
+                        <p>Добавьте обложку и расскажите читателям, о чём будет ваш блог.</p>
                     </div>
+                    <button
+                        className={styles.closeButton}
+                        type="button"
+                        onClick={() => navigate('/profile')}
+                        aria-label="Закрыть форму"
+                    >
+                        ×
+                    </button>
+                </header>
+
+                {errorMessage && (
+                    <div className={styles.errorBanner} role="alert">{errorMessage}</div>
                 )}
 
-                <div className={styles.formGroup}>
-                    <label>Описание</label>
-                    <textarea
-                        className={`${styles.modalContent} ${styles.description}`}
-                        rows="4"
-                        placeholder="Добавьте описание к вашему блогу"
-                        name="description"
-                        onChange={updateForm}
+                <div className={styles.formBody}>
+                    <BlogCoverUpload
+                        file={blogForm.photoUrl}
+                        imagePreview={imagePreview}
+                        disabled={isCreating}
+                        onSelect={selectImage}
+                    />
+                    <BlogDetailsFields
+                        title={blogForm.title}
+                        description={blogForm.description}
+                        onChange={updateTextField}
                     />
                 </div>
 
-                <div className={styles.actionButtons}>
-                    <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={() => navigate('/profile')}>
-                        Закрыть
-                    </button>
-                    <button
-                        className={`${styles.btn} ${styles.btnPrimary}`}
-                        disabled={isCreating || !blogForm.title}
-                        onClick={sendForm}
-                    >
-                        Создать
-                    </button>
-                </div>
-            </div>
-        </div>
+                <footer className={styles.actionBar}>
+                    <p>Название можно будет изменить позже в настройках блога.</p>
+                    <div className={styles.actionButtons}>
+                        <button
+                            className={`${styles.btn} ${styles.btnSecondary}`}
+                            type="button"
+                            onClick={() => navigate('/profile')}
+                        >
+                            Отмена
+                        </button>
+                        <button
+                            className={`${styles.btn} ${styles.btnPrimary}`}
+                            type="button"
+                            disabled={isCreating || !blogForm.title.trim()}
+                            onClick={() => void sendForm()}
+                        >
+                            {isCreating ? 'Создаём…' : 'Создать блог'}
+                        </button>
+                    </div>
+                </footer>
+            </section>
+        </main>
     );
-}
+};
 
 export default CreateBlogForm;
