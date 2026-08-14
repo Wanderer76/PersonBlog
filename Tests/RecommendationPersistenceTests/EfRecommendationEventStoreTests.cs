@@ -107,6 +107,33 @@ public sealed class EfRecommendationEventStoreTests
         Assert.Contains(services, x => x.ServiceType == typeof(IReadWriteRepository<IRecommendationEntity>));
         Assert.Contains(services, x => x.ServiceType == typeof(IDbInitializer));
         Assert.Contains(services, x => x.ServiceType == typeof(IRecommendationEventStore));
+        Assert.Contains(services, x => x.ServiceType == typeof(IRecommendationFeedStore));
+    }
+
+    [Fact]
+    public async Task FeedStore_LoadsPersonalSignalsFromOwnReadModel()
+    {
+        await using var context = CreateContext();
+        var userId = Guid.NewGuid();
+        var blogId = Guid.NewGuid();
+        var post = CreateSnapshot(Guid.NewGuid(), blogId, [10]);
+        context.PostSnapshots.Add(post);
+        context.UserCategoryAffinities.Add(new UserCategoryAffinity(userId, 10, 7, Now));
+        context.UserBlogAffinities.Add(new UserBlogAffinity(userId, blogId, 4, Now));
+        context.UserSubscriptions.Add(new UserSubscription(userId, blogId, Now));
+        context.UserInteractions.Add(new UserInteraction(
+            Guid.NewGuid(), userId, null, post.PostId, InteractionType.Open, Now));
+        await context.SaveChangesAsync();
+        var store = new EfRecommendationFeedStore(context);
+
+        var candidates = await store.LoadCandidatesAsync(
+            userId, null, 20, Now.AddDays(-1));
+
+        var candidate = Assert.Single(candidates);
+        Assert.Equal(7, candidate.CategoryAffinity);
+        Assert.Equal(4, candidate.BlogAffinity);
+        Assert.True(candidate.IsSubscribed);
+        Assert.True(candidate.WasSeen);
     }
 
     private static RecommendationDbContext CreateContext(string? databaseName = null)
@@ -117,14 +144,17 @@ public sealed class EfRecommendationEventStoreTests
         return new RecommendationDbContext(options);
     }
 
-    private static PostSnapshot CreateSnapshot(Guid postId) => PostSnapshot.Create(new PostSnapshotData
+    private static PostSnapshot CreateSnapshot(
+        Guid postId,
+        Guid? blogId = null,
+        IReadOnlyCollection<int>? categories = null) => PostSnapshot.Create(new PostSnapshotData
     {
         PostId = postId,
         SourceVersion = 1,
-        BlogId = Guid.NewGuid(),
+        BlogId = blogId ?? Guid.NewGuid(),
         PostType = PostType.Text,
         Title = "Test post",
-        CategoryIds = [10],
+        CategoryIds = categories ?? [10],
         Visibility = PostVisibility.Public,
         ProcessState = PostProcessState.Complete,
         IsDeleted = false,

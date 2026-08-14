@@ -15,14 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\BlogService\Blog.Persistence\Blog.Persistence.csproj" />
     <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Recommendation.Persistence\Recommendation.Persistence.csproj" />
-    <ProjectReference Include="..\Recommendation.Service\Recommendation.Service.csproj" />
+    <ProjectReference Include="..\Recommendation.Services\Recommendation.Services.csproj" />
   </ItemGroup>
 
 </Project>

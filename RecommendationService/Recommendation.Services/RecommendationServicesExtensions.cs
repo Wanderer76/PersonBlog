@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using MessageBus;
 using MessageBus.Models;
@@ -22,11 +23,26 @@ public static class RecommendationServicesExtensions
 
         services.AddSingleton<IOptions<AffinityOptions>>(
             Microsoft.Extensions.Options.Options.Create(options));
-        services.AddSingleton<IClock, SystemClock>();
+        services.TryAddSingleton<IClock, SystemClock>();
         services.AddSingleton<AffinityCalculator>();
         services.AddScoped<PostCatalogChangedV2Handler>();
         services.AddScoped<UserInteractionRecordedV1Handler>();
         services.AddScoped<SubscriptionChangedV1Handler>();
+        return services;
+    }
+
+    public static IServiceCollection AddRecommendationFeedServices(
+        this IServiceCollection services,
+        Action<RecommendationFeedOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        var options = new RecommendationFeedOptions();
+        configure(options);
+        services.AddSingleton<IOptions<RecommendationFeedOptions>>(
+            Microsoft.Extensions.Options.Options.Create(options));
+        services.TryAddSingleton<IClock, SystemClock>();
+        services.AddScoped<IRecommendationFeedService, HeuristicRecommendationFeedService>();
+        services.AddScoped<IRecommendationCatalogService, RecommendationCatalogService>();
         return services;
     }
 

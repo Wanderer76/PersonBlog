@@ -253,14 +253,14 @@ score =
 
 Фильтры выполняются независимо от score:
 
-- [ ] Только `Public`, `Complete`, `!IsDeleted`, `!IsBanned`.
-- [ ] Исключить `currentPostId`.
-- [ ] Исключить недоступный пользователю платный контент.
-- [ ] Исключить недавно просмотренные посты либо применить настроенный штраф.
+- [x] Только `Public`, `Complete`, `!IsDeleted`, `!IsBanned`.
+- [x] Исключить `currentPostId`.
+- [x] Исключить недоступный пользователю платный контент.
+- [x] Исключить недавно просмотренные посты либо применить настроенный штраф.
 - [ ] Исключить заблокированные пользователем блоги, когда появится такой сигнал.
-- [ ] Ограничить число постов одного автора на странице.
+- [x] Ограничить число постов одного автора на странице.
 - [ ] Не допускать длинной последовательности одной категории.
-- [ ] Добавить стабильный tie-breaker: `score`, затем `CreatedAt`, затем `PostId`.
+- [x] Добавить стабильный tie-breaker: `score`, затем `CreatedAt`, затем `PostId`.
 
 ## Этап 8. API и cursor pagination
 
@@ -288,15 +288,15 @@ X-Anonymous-Session-Id: ...
 
 ### Задачи
 
-- [ ] Получать текущего пользователя из доверенного JWT, а не из query string.
-- [ ] Поддержать anonymous session ID.
-- [ ] Валидировать `1 <= limit <= 100`.
-- [ ] Сделать cursor непрозрачным, versioned и защищённым от изменения.
-- [ ] Передавать `CancellationToken` во все async-операции.
-- [ ] Возвращать `requestId` и `algorithmVersion`.
+- [x] Получать текущего пользователя из доверенного JWT, а не из query string.
+- [x] Поддержать anonymous session ID.
+- [x] Валидировать `1 <= limit <= 100`.
+- [x] Сделать cursor непрозрачным, versioned и защищённым от изменения.
+- [x] Передавать `CancellationToken` во все async-операции.
+- [x] Возвращать `requestId` и `algorithmVersion`.
 - [ ] Добавить endpoint readiness/liveness через Service Defaults.
 - [ ] Ограничить внутренний debug endpoint авторизацией.
-- [ ] На время миграции сохранить adapter для текущего `/recommendations`.
+- [x] На время миграции сохранить adapter для текущего `/recommendations`.
 - [ ] Удалить `postListByIds` из Recommendation API после появления bulk hydration в Blog API.
 
 ## Этап 9. Интеграция Gateway и Blog Service

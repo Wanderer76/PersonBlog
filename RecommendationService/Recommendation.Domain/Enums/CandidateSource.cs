@@ -3,6 +3,7 @@ namespace Recommendation.Domain.Enums;
 public enum CandidateSource
 {
     Subscription,
+    BlogAffinity,
     CategoryAffinity,
     CurrentPostSimilarity,
     Trending24Hours,

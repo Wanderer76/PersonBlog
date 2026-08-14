@@ -26,6 +26,7 @@ public static class RecommendationPersistenceExtensions
         services.AddNpgSqlDbContext<RecommendationDbContext>(connectionString);
         services.AddScoped<IDbInitializer, RecommendationDbInitializer>();
         services.AddScoped<IRecommendationEventStore, EfRecommendationEventStore>();
+        services.AddScoped<IRecommendationFeedStore, EfRecommendationFeedStore>();
         return services;
     }
 }

@@ -1,47 +1,67 @@
-﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Recommendation.Service.Service;
+using Recommendation.Application.Services;
+using Recommendation.Services.Abstractions;
+using Recommendation.Services.Models;
 
-namespace Blog.Application.Controllers
+namespace Recommendation.Application.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public sealed class ContentController(
+    IRecommendationFeedService feedService,
+    IRecommendationCatalogService catalogService,
+    IRecommendationSubjectResolver subjectResolver) : ControllerBase
 {
-    /// <summary>
-    /// Тут будут методы для просмотра/комментирования контента
-    /// </summary>
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ContentController : BaseApiController
+    [HttpGet("recommendations")]
+    [Obsolete("Use GET /api/v1/feed with cursor pagination.")]
+    public async Task<ActionResult<RecommendationFeedResponse>> GetRecommendations(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] Guid? currentPostId = null,
+        CancellationToken cancellationToken = default)
     {
-        private readonly IRecommendationService _recommendationService;
-        public ContentController(ILogger<BaseApiController> logger, IRecommendationService recommendationService) : base(logger)
+        if (!subjectResolver.TryResolve(HttpContext, out var subject, out var error))
+            return BadRequest(new ProblemDetails { Title = "Invalid recommendation subject", Detail = error });
+        if (page < 1) return BadRequest(new ProblemDetails { Title = "Page must be positive." });
+
+        int offset;
+        try
         {
-            _recommendationService = recommendationService;
+            offset = checked((page - 1) * pageSize);
+            var response = await feedService.GetFeedAsync(new RecommendationFeedRequest(
+                subject.UserId,
+                subject.AnonymousSessionId,
+                pageSize,
+                null,
+                currentPostId,
+                offset), cancellationToken);
+            return Ok(response);
         }
-
-        //  получить ленту постов(в перемешку видео/текст, есть возможность сразу посмотреть видео или перейти к блогу)
-
-
-        //Получение информации о блоге от лица пользователя
-        [HttpGet("blog/{id:guid}")]
-        public async Task<IActionResult> GetBlog(Guid id)
+        catch (ArgumentException exception)
         {
-            return Ok();
+            return BadRequest(new ProblemDetails { Title = "Invalid recommendation request", Detail = exception.Message });
         }
-
-        [HttpGet("recommendations")]
-        public async Task<IActionResult> GetRecommendations(int page, int pageSize, Guid? currentPostId)
+        catch (OverflowException)
         {
-            return Ok(await _recommendationService.GetRecommendationsAsync(page, pageSize, currentPostId));
-        }
-
-        [HttpPost("postListByIds")]
-        public async Task<IActionResult> GetRecommendations([FromBody] PostForm form)
-        {
-            return Ok(await _recommendationService.GetRecommendationsAsync(form.PostIds));
+            return BadRequest(new ProblemDetails { Title = "Requested page is too large." });
         }
     }
 
-    public class PostForm
+    [HttpPost("postListByIds")]
+    [Obsolete("Move this hydration operation to Blog Service bulk API.")]
+    public async Task<ActionResult<IReadOnlyList<RecommendationPostSummary>>> GetPostsByIds(
+        [FromBody] PostListByIdsRequest request,
+        CancellationToken cancellationToken = default)
     {
-        public List<Guid> PostIds { get; set; }
+        try
+        {
+            return Ok(await catalogService.GetPostsByIdsAsync(request.PostIds, cancellationToken));
+        }
+        catch (ArgumentException exception)
+        {
+            return BadRequest(new ProblemDetails { Title = "Invalid post list", Detail = exception.Message });
+        }
     }
 }
+
+public sealed record PostListByIdsRequest(IReadOnlyList<Guid> PostIds);

@@ -1,12 +1,11 @@
-using Blog.Persistence;
-using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Configs;
+using Recommendation.Application.Services;
 using Recommendation.Persistence;
-using Recommendation.Service;
 using Recommendation.Services;
+using Recommendation.Services.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,12 +15,13 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddBlogServices();
-builder.Services.AddFileStorage(builder.Configuration);
-builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();
 builder.Services.AddRecommendationEventServices();
+builder.Services.AddRecommendationFeedServices(options =>
+    builder.Configuration.GetSection(RecommendationFeedOptions.SectionName).Bind(options));
 builder.Services.AddRecommendationPersistence(builder.Configuration);
+builder.Services.AddScoped<IRecommendationSubjectResolver, RecommendationSubjectResolver>();
 builder.Services
     .AddRabbitMqMessageBus(
         builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()
@@ -47,6 +47,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapControllers();
