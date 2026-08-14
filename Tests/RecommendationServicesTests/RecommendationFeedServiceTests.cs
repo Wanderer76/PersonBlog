@@ -51,6 +51,49 @@ public sealed class RecommendationFeedServiceTests
     }
 
     [Fact]
+    public async Task Feed_DoesNotDropPostsWhenSingleBlogExceedsDiversificationLimit()
+    {
+        var blogId = Guid.NewGuid();
+        var postIds = Enumerable.Range(0, 3).Select(_ => Guid.NewGuid()).ToArray();
+        var store = new FeedStore(postIds
+            .Select((postId, index) => Candidate(postId, blogId, views: 100 - index))
+            .ToArray());
+        var service = CreateService(store);
+
+        var response = await service.GetFeedAsync(new RecommendationFeedRequest(
+            null, "single-blog-session", 10, null, null));
+
+        Assert.Equal(3, response.Items.Count);
+        Assert.Null(response.NextCursor);
+        Assert.Equal(postIds.Order(), response.Items.Select(x => x.PostId).Order());
+    }
+
+    [Fact]
+    public async Task Cursor_DoesNotLoseDeferredPostsFromSameBlog()
+    {
+        var blogId = Guid.NewGuid();
+        var store = new FeedStore(Enumerable.Range(0, 5)
+            .Select(index => Candidate(Guid.NewGuid(), blogId, views: 100 - index))
+            .ToArray());
+        var service = CreateService(store);
+        const string sessionId = "same-blog-session";
+
+        var first = await service.GetFeedAsync(new RecommendationFeedRequest(
+            null, sessionId, 2, null, null));
+        var second = await service.GetFeedAsync(new RecommendationFeedRequest(
+            null, sessionId, 2, first.NextCursor, null));
+        var third = await service.GetFeedAsync(new RecommendationFeedRequest(
+            null, sessionId, 2, second.NextCursor, null));
+
+        var postIds = first.Items.Concat(second.Items).Concat(third.Items)
+            .Select(x => x.PostId)
+            .ToArray();
+        Assert.Equal(5, postIds.Length);
+        Assert.Equal(5, postIds.Distinct().Count());
+        Assert.Null(third.NextCursor);
+    }
+
+    [Fact]
     public async Task Cursor_RejectsTampering()
     {
         var store = new FeedStore(Enumerable.Range(0, 3)

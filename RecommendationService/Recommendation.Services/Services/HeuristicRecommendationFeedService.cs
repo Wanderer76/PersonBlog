@@ -66,7 +66,8 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
             generatedAt.AddDays(-_options.SeenWindowDays),
             cancellationToken);
         var ranked = Rank(candidates, requestId, generatedAt);
-        var page = SelectPage(ranked, offset, request.Limit);
+        var diversified = Diversify(ranked);
+        var page = SelectPage(diversified, offset, request.Limit);
 
         var impressions = page.Items.Select((item, position) => new RecommendationImpression(
             requestId,
@@ -86,7 +87,7 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
         var items = page.Items
             .Select(item => new RecommendationFeedItem(item.Candidate.PostId, ToReason(item.Source)))
             .ToArray();
-        var nextCursor = page.NextOffset < ranked.Count
+        var nextCursor = page.NextOffset < diversified.Count
             ? _cursorCodec.Encode(
                 requestId,
                 page.NextOffset,
@@ -149,23 +150,45 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
         return new RankedRecommendationCandidate(candidate, score, source);
     }
 
-    private PageSelection SelectPage(
+    private IReadOnlyList<RankedRecommendationCandidate> Diversify(
+        IReadOnlyList<RankedRecommendationCandidate> ranked)
+    {
+        var result = new List<RankedRecommendationCandidate>(ranked.Count);
+        var remaining = ranked.ToList();
+
+        while (remaining.Count > 0)
+        {
+            var postsPerBlog = new Dictionary<Guid, int>();
+            var deferred = new List<RankedRecommendationCandidate>();
+
+            foreach (var candidate in remaining)
+            {
+                var blogId = candidate.Candidate.BlogId;
+                var blogCount = postsPerBlog.GetValueOrDefault(blogId);
+                if (blogCount >= _options.MaxPostsPerBlog)
+                {
+                    deferred.Add(candidate);
+                    continue;
+                }
+
+                postsPerBlog[blogId] = blogCount + 1;
+                result.Add(candidate);
+            }
+
+            remaining = deferred;
+        }
+
+        return result;
+    }
+
+    private static PageSelection SelectPage(
         IReadOnlyList<RankedRecommendationCandidate> ranked,
         int offset,
         int limit)
     {
-        var items = new List<RankedRecommendationCandidate>(limit);
-        var postsPerBlog = new Dictionary<Guid, int>();
-        var index = Math.Min(offset, ranked.Count);
-        while (index < ranked.Count && items.Count < limit)
-        {
-            var candidate = ranked[index++];
-            var authorCount = postsPerBlog.GetValueOrDefault(candidate.Candidate.BlogId);
-            if (authorCount >= _options.MaxPostsPerBlog) continue;
-            postsPerBlog[candidate.Candidate.BlogId] = authorCount + 1;
-            items.Add(candidate);
-        }
-        return new PageSelection(items, index);
+        var safeOffset = Math.Min(offset, ranked.Count);
+        var items = ranked.Skip(safeOffset).Take(limit).ToArray();
+        return new PageSelection(items, safeOffset + items.Length);
     }
 
     private static double GetTrendingRaw(RecommendationCandidateData candidate) =>

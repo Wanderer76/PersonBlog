@@ -4,7 +4,7 @@ public sealed class RecommendationFeedOptions
 {
     public const string SectionName = "Recommendation:Feed";
 
-    public string AlgorithmVersion { get; set; } = "heuristic-v1";
+    public string AlgorithmVersion { get; set; } = "heuristic-v2";
     public string CursorSigningKey { get; set; } = string.Empty;
     public int DefaultLimit { get; set; } = 20;
     public int MaxLimit { get; set; } = 100;
