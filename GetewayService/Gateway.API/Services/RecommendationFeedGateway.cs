@@ -22,21 +22,6 @@ public sealed class RecommendationFeedGateway(
         return await HydrateAsync(ranking, cancellationToken);
     }
 
-    public async Task<RecommendationFeedResponse> GetLegacyFeedAsync(
-        int page,
-        int pageSize,
-        Guid? currentPostId,
-        CancellationToken cancellationToken)
-    {
-        var ranking = await recommendationClient.GetLegacyFeedAsync(
-            page,
-            pageSize,
-            currentPostId,
-            cancellationToken);
-
-        return await HydrateAsync(ranking, cancellationToken);
-    }
-
     private async Task<RecommendationFeedResponse> HydrateAsync(
         RecommendationRankingResponse ranking,
         CancellationToken cancellationToken)

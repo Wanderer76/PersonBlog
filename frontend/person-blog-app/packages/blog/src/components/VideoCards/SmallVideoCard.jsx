@@ -9,8 +9,12 @@ const SmallVideoCard = function (props) {
         <img src={props.videoCardModel.previewUrl} className={styles.thumbnail} alt="Превью" />
         <div className={styles.info}>
             <div className={styles.title}>{props.videoCardModel.title}</div>
-            <div className={styles.channel}>{props.videoCardModel.blogName}</div>
-            <div className={styles.stats}> {props.videoCardModel.viewCount} просмотров • 2 дня назад</div>
+            {props.videoCardModel.blogName && (
+                <div className={styles.channel}>{props.videoCardModel.blogName}</div>
+            )}
+            {Number.isFinite(props.videoCardModel.viewCount) && (
+                <div className={styles.stats}>{props.videoCardModel.viewCount} просмотров</div>
+            )}
         </div>
     </button>
 }

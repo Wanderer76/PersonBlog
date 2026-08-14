@@ -15,7 +15,7 @@ declare global {
 // ✅ Создаём ОДИН instance на всё приложение
 const instance = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL}/video`,
-  withCredentials: false,
+  withCredentials: true,
   timeout: 30000,
 });
 

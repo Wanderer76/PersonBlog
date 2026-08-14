@@ -21,17 +21,21 @@ const BigVideoCard = React.forwardRef(function BigVideoCard({ videoCardModel }, 
                 <h2 className={styles.videoTitle}>
                     <Link to={videoUrl}>{videoCardModel.title}</Link>
                 </h2>
-                <Link className={styles.channelInfo} to={`/channel/${videoCardModel.blogId}`}>
-                    <img
-                        src={videoCardModel.blogLogo || logo}
-                        className={styles.channelIcon}
-                        alt=""
-                    />
-                    <span className={styles.channelName}>{videoCardModel.blogName}</span>
-                </Link>
-                <div className={styles.videoStats}>
-                    Просмотров: {videoCardModel.viewCount}
-                </div>
+                {videoCardModel.blogId && (
+                    <Link className={styles.channelInfo} to={`/channel/${videoCardModel.blogId}`}>
+                        <img
+                            src={videoCardModel.blogLogo || logo}
+                            className={styles.channelIcon}
+                            alt=""
+                        />
+                        <span className={styles.channelName}>{videoCardModel.blogName}</span>
+                    </Link>
+                )}
+                {Number.isFinite(videoCardModel.viewCount) && (
+                    <div className={styles.videoStats}>
+                        Просмотров: {videoCardModel.viewCount}
+                    </div>
+                )}
             </div>
         </article>
     );

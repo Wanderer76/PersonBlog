@@ -5,7 +5,8 @@
  * OpenAPI spec version: 1.0
  */
 import type {
-  GetRecommendationsParams
+  GetApiV1FeedParams,
+  RecommendationFeedResponse
 } from '.././models';
 
 import { customInstance } from '../../mutator';
@@ -13,14 +14,14 @@ import { customInstance } from '../../mutator';
 
 
   export const getRecommendation = () => {
-const getRecommendations = (
-    params?: GetRecommendationsParams,
+const getApiV1Feed = (
+    params?: GetApiV1FeedParams,
  ) => {
-      return customInstance<void>(
-      {url: `/recommendations`, method: 'GET',
+      return customInstance<RecommendationFeedResponse>(
+      {url: `/api/v1/feed`, method: 'GET',
         params
     },
       );
     }
-  return {getRecommendations}};
-export type GetRecommendationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getRecommendation>['getRecommendations']>>>
+  return {getApiV1Feed}};
+export type GetApiV1FeedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getRecommendation>['getApiV1Feed']>>>

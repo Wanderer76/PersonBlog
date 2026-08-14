@@ -125,13 +125,12 @@ const VideoPage = function () {
                 if (isActive) setIsLoading(false);
             });
 
-        recommendationApi.getRecommendations({
-            page: 1,
+        recommendationApi.getApiV1Feed({
             limit: recommendationsLimit,
             currentPostId: postId,
         })
             .then((response) => {
-                if (isActive) setRecommendations(response.data ?? []);
+                if (isActive) setRecommendations(response.data?.items ?? []);
             })
             .catch((error) => {
                 if (isActive) console.warn('Не удалось загрузить рекомендации:', error);

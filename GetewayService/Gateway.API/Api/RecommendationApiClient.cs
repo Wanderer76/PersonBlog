@@ -25,24 +25,6 @@ public sealed class RecommendationApiClient(HttpClient httpClient)
         return GetAsync($"v1/feed{QueryString.Create(query)}", cancellationToken);
     }
 
-    public Task<RecommendationRankingResponse> GetLegacyFeedAsync(
-        int page,
-        int pageSize,
-        Guid? currentPostId,
-        CancellationToken cancellationToken)
-    {
-        var query = new List<KeyValuePair<string, string?>>
-        {
-            new("page", page.ToString(System.Globalization.CultureInfo.InvariantCulture)),
-            new("pageSize", pageSize.ToString(System.Globalization.CultureInfo.InvariantCulture))
-        };
-
-        if (currentPostId.HasValue)
-            query.Add(new("currentPostId", currentPostId.Value.ToString()));
-
-        return GetAsync($"Content/recommendations{QueryString.Create(query)}", cancellationToken);
-    }
-
     private async Task<RecommendationRankingResponse> GetAsync(
         string requestUri,
         CancellationToken cancellationToken)

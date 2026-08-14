@@ -19,6 +19,7 @@ const MainPage = function () {
     const [activeSearchQuery, setActiveSearchQuery] = useState('');
     const loadMoreRef = useRef(null);
     const requestIdRef = useRef(0);
+    const recommendationCursorRef = useRef(null);
 
     const fetchVideos = useCallback(async () => {
         const requestId = ++requestIdRef.current;
@@ -33,18 +34,27 @@ const MainPage = function () {
                     page,
                     limit: PAGE_SIZE,
                 })
-                : await getRecommendation().getRecommendations({
-                    page,
+                : await getRecommendation().getApiV1Feed({
                     limit: PAGE_SIZE,
+                    cursor: page === 1 ? undefined : recommendationCursorRef.current,
                 });
 
             if (requestId !== requestIdRef.current) return;
 
             if (response.status === 200) {
+                const responseVideos = activeSearchQuery
+                    ? (response.data ?? [])
+                    : (response.data?.items ?? []);
+
                 setVideos((currentVideos) => (
-                    page === 1 ? response.data : [...currentVideos, ...response.data]
+                    page === 1 ? responseVideos : [...currentVideos, ...responseVideos]
                 ));
-                setHasMore(response.data.length >= PAGE_SIZE);
+                if (activeSearchQuery) {
+                    setHasMore(responseVideos.length >= PAGE_SIZE);
+                } else {
+                    recommendationCursorRef.current = response.data?.nextCursor ?? null;
+                    setHasMore(Boolean(recommendationCursorRef.current));
+                }
             }
         } catch (error) {
             if (requestId !== requestIdRef.current) return;
@@ -77,6 +87,7 @@ const MainPage = function () {
     const startSearch = (query) => {
         if (query === activeSearchQuery && page === 1) return;
         requestIdRef.current += 1;
+        recommendationCursorRef.current = null;
         setVideos([]);
         setHasMore(true);
         setIsLoading(true);

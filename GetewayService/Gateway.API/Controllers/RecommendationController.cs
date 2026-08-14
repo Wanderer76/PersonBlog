@@ -26,18 +26,6 @@ public sealed class RecommendationController(
             response => Ok(response),
             cancellationToken);
 
-    [HttpGet("/recommendations")]
-    [Obsolete("Use GET /api/v1/feed with cursor pagination.")]
-    public Task<IActionResult> GetRecommendedPosts(
-        [FromQuery] int page = 1,
-        [FromQuery] int limit = 20,
-        [FromQuery] Guid? currentPostId = null,
-        CancellationToken cancellationToken = default) =>
-        ExecuteAsync(
-            () => feedGateway.GetLegacyFeedAsync(page, limit, currentPostId, cancellationToken),
-            response => Ok(response.Items),
-            cancellationToken);
-
     private async Task<IActionResult> ExecuteAsync(
         Func<Task<RecommendationFeedResponse>> action,
         Func<RecommendationFeedResponse, IActionResult> onSuccess,
