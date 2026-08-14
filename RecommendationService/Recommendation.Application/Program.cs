@@ -1,3 +1,4 @@
+using Authentication.Contract;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
@@ -17,6 +18,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddUserSessionServices(options =>
+    options.BaseUrl = builder.Configuration["AppUrls:Auth"]
+        ?? throw new InvalidOperationException("Auth service URL is not configured."));
 builder.Services.AddRecommendationEventServices();
 builder.Services.AddRecommendationFeedServices(options =>
     builder.Configuration.GetSection(RecommendationFeedOptions.SectionName).Bind(options));

@@ -269,7 +269,6 @@ score =
 ```http
 GET /api/v1/feed?limit=20&cursor=...&currentPostId=...
 Authorization: Bearer ...
-X-Anonymous-Session-Id: ...
 ```
 
 ```json
@@ -288,8 +287,8 @@ X-Anonymous-Session-Id: ...
 
 ### Задачи
 
-- [x] Получать текущего пользователя из доверенного JWT, а не из query string.
-- [x] Поддержать anonymous session ID.
+- [x] Получать текущего пользователя через `ICurrentUserService`, а не из query string.
+- [ ] Поддержать anonymous session ID после появления общей anonymous-session инфраструктуры.
 - [x] Валидировать `1 <= limit <= 100`.
 - [x] Сделать cursor непрозрачным, versioned и защищённым от изменения.
 - [x] Передавать `CancellationToken` во все async-операции.
@@ -307,7 +306,7 @@ X-Anonymous-Session-Id: ...
 - [ ] Не считать пропавшую карточку ошибкой всей страницы.
 - [ ] Добавить timeout, retry только для безопасных запросов и circuit breaker.
 - [ ] Увеличить/настроить текущий двухсекундный timeout на основании измерений.
-- [ ] Передавать Authorization, correlation ID и anonymous session ID.
+- [x] Передавать Authorization и correlation ID.
 - [ ] Обновить OpenAPI-клиент frontend.
 
 ## Этап 10. Redis

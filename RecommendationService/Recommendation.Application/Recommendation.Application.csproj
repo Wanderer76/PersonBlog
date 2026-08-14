@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
     <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Recommendation.Persistence\Recommendation.Persistence.csproj" />
     <ProjectReference Include="..\Recommendation.Services\Recommendation.Services.csproj" />

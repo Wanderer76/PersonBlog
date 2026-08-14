@@ -178,6 +178,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationPersistenceTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecommendationApplicationTests", "Tests\RecommendationApplicationTests\RecommendationApplicationTests.csproj", "{F606B3EA-5E9B-4CA4-B106-E850CF301438}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatewayApiTests", "Tests\GatewayApiTests\GatewayApiTests.csproj", "{DEECB3CA-6480-4F87-8822-99A54C96DB5D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -468,6 +470,10 @@ Global
 		{F606B3EA-5E9B-4CA4-B106-E850CF301438}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F606B3EA-5E9B-4CA4-B106-E850CF301438}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F606B3EA-5E9B-4CA4-B106-E850CF301438}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DEECB3CA-6480-4F87-8822-99A54C96DB5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEECB3CA-6480-4F87-8822-99A54C96DB5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEECB3CA-6480-4F87-8822-99A54C96DB5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEECB3CA-6480-4F87-8822-99A54C96DB5D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -544,6 +550,7 @@ Global
 		{729273DE-0C47-459C-98AF-4E8C0E63F8DD} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 		{B4E3D1D2-34BE-4E51-B1B2-5F45EC689B2D} = {F73ED5B6-7823-44EA-84D9-3AFCB788A9C7}
 		{F606B3EA-5E9B-4CA4-B106-E850CF301438} = {F73ED5B6-7823-44EA-84D9-3AFCB788A9C7}
+		{DEECB3CA-6480-4F87-8822-99A54C96DB5D} = {F73ED5B6-7823-44EA-84D9-3AFCB788A9C7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

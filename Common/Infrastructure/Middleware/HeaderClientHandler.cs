@@ -25,7 +25,7 @@ public class HeaderClientHandler : DelegatingHandler
 
         if (context?.Request.Headers.TryGetValue(CorrelationMiddleware.CorrelationId, out var correlationId) == true)
         {
-            request.Headers.Add(CorrelationMiddleware.CorrelationId, correlationId.ToString());
+            request.Headers.TryAddWithoutValidation(CorrelationMiddleware.CorrelationId, correlationId.ToString());
         }
 
         return base.SendAsync(request, cancellationToken);

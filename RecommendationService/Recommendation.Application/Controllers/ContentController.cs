@@ -20,8 +20,14 @@ public sealed class ContentController(
         [FromQuery] Guid? currentPostId = null,
         CancellationToken cancellationToken = default)
     {
-        if (!subjectResolver.TryResolve(HttpContext, out var subject, out var error))
-            return BadRequest(new ProblemDetails { Title = "Invalid recommendation subject", Detail = error });
+        var subject = await subjectResolver.ResolveAsync(cancellationToken);
+        if (subject is null)
+            return Unauthorized(new ProblemDetails
+            {
+                Status = StatusCodes.Status401Unauthorized,
+                Title = "Authentication required",
+                Detail = "Authenticated user is required."
+            });
         if (page < 1) return BadRequest(new ProblemDetails { Title = "Page must be positive." });
 
         int offset;
@@ -30,7 +36,7 @@ public sealed class ContentController(
             offset = checked((page - 1) * pageSize);
             var response = await feedService.GetFeedAsync(new RecommendationFeedRequest(
                 subject.UserId,
-                subject.AnonymousSessionId,
+                null,
                 pageSize,
                 null,
                 currentPostId,

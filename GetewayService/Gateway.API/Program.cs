@@ -3,6 +3,7 @@ using Blog.Contracts;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Gateway.API;
+using Gateway.API.Api;
 using Gateway.API.Services;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
@@ -42,11 +43,17 @@ builder.Services.AddHttpClient("Profile", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
-builder.Services.AddHttpClient("Recommendation", x =>
+builder.Services.AddHttpClient<RecommendationApiClient>(x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]);
-    x.Timeout = TimeSpan.FromSeconds(2);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddHttpClient<BlogFeedApiClient>(x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
+}).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddScoped<RecommendationFeedGateway>();
 builder.Services.AddHttpClient("Reacting", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Reacting"]);
