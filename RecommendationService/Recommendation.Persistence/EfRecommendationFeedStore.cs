@@ -3,10 +3,12 @@ using Recommendation.Domain.Entities;
 using Recommendation.Domain.Enums;
 using Recommendation.Services.Abstractions;
 using Recommendation.Services.Models;
+using Shared.Persistence;
 
 namespace Recommendation.Persistence;
 
-public sealed class EfRecommendationFeedStore(RecommendationDbContext dbContext)
+public sealed class EfRecommendationFeedStore(
+    IReadWriteRepository<IRecommendationEntity> repository)
     : IRecommendationFeedStore
 {
     public async Task<IReadOnlyList<RecommendationCandidateData>> LoadCandidatesAsync(
@@ -16,8 +18,7 @@ public sealed class EfRecommendationFeedStore(RecommendationDbContext dbContext)
         DateTimeOffset seenSince,
         CancellationToken cancellationToken = default)
     {
-        var eligible = dbContext.PostSnapshots
-            .AsNoTracking()
+        var eligible = repository.Get<PostSnapshot>()
             .Where(x => x.Visibility == PostVisibility.Public)
             .Where(x => x.ProcessState == PostProcessState.Complete)
             .Where(x => !x.IsDeleted && !x.IsBanned)
@@ -46,15 +47,13 @@ public sealed class EfRecommendationFeedStore(RecommendationDbContext dbContext)
             .Take(limit)
             .ToArray();
 
-        var posts = await dbContext.PostSnapshots
-            .AsNoTracking()
+        var posts = await repository.Get<PostSnapshot>()
             .Include(x => x.Categories)
             .Where(x => candidateIds.Contains(x.PostId))
             .ToListAsync(cancellationToken);
 
         var currentCategories = currentPostId.HasValue
-            ? (await dbContext.PostCategories
-                .AsNoTracking()
+            ? (await repository.Get<PostCategory>()
                 .Where(x => x.PostId == currentPostId.Value)
                 .Select(x => x.CategoryId)
                 .ToListAsync(cancellationToken)).ToHashSet()
@@ -67,22 +66,18 @@ public sealed class EfRecommendationFeedStore(RecommendationDbContext dbContext)
         if (userId.HasValue)
         {
             var categoryIds = posts.SelectMany(x => x.Categories).Select(x => x.CategoryId).Distinct().ToArray();
-            categoryAffinities = await dbContext.UserCategoryAffinities
-                .AsNoTracking()
+            categoryAffinities = await repository.Get<UserCategoryAffinity>()
                 .Where(x => x.UserId == userId.Value && categoryIds.Contains(x.CategoryId))
                 .ToDictionaryAsync(x => x.CategoryId, x => x.Score, cancellationToken);
             var blogIds = posts.Select(x => x.BlogId).Distinct().ToArray();
-            blogAffinities = await dbContext.UserBlogAffinities
-                .AsNoTracking()
+            blogAffinities = await repository.Get<UserBlogAffinity>()
                 .Where(x => x.UserId == userId.Value && blogIds.Contains(x.BlogId))
                 .ToDictionaryAsync(x => x.BlogId, x => x.Score, cancellationToken);
-            subscriptions = (await dbContext.UserSubscriptions
-                .AsNoTracking()
+            subscriptions = (await repository.Get<UserSubscription>()
                 .Where(x => x.UserId == userId.Value && blogIds.Contains(x.BlogId))
                 .Select(x => x.BlogId)
                 .ToListAsync(cancellationToken)).ToHashSet();
-            seenPosts = (await dbContext.UserInteractions
-                .AsNoTracking()
+            seenPosts = (await repository.Get<UserInteraction>()
                 .Where(x => x.UserId == userId.Value && x.OccurredAt >= seenSince)
                 .Select(x => x.PostId)
                 .Distinct()
@@ -124,8 +119,7 @@ public sealed class EfRecommendationFeedStore(RecommendationDbContext dbContext)
         if (impressions.Count == 0) return;
         var requestIds = impressions.Select(x => x.RequestId).Distinct().ToArray();
         var postIds = impressions.Select(x => x.PostId).Distinct().ToArray();
-        var existing = (await dbContext.RecommendationImpressions
-            .AsNoTracking()
+        var existing = (await repository.Get<RecommendationImpression>()
             .Where(x => requestIds.Contains(x.RequestId) && postIds.Contains(x.PostId))
             .Select(x => new { x.RequestId, x.PostId })
             .ToListAsync(cancellationToken))
@@ -135,16 +129,20 @@ public sealed class EfRecommendationFeedStore(RecommendationDbContext dbContext)
             .Where(x => !existing.Contains((x.RequestId, x.PostId)))
             .ToArray();
         if (newImpressions.Length == 0) return;
-        dbContext.RecommendationImpressions.AddRange(newImpressions);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        foreach (var impression in newImpressions)
+        {
+            repository.Add(impression);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        await repository.SaveChangesAsync();
     }
 
     public async Task<IReadOnlyList<RecommendationPostSummary>> LoadPostSummariesAsync(
         IReadOnlyCollection<Guid> postIds,
         CancellationToken cancellationToken = default)
     {
-        var posts = await dbContext.PostSnapshots
-            .AsNoTracking()
+        var posts = await repository.Get<PostSnapshot>()
             .Where(x => postIds.Contains(x.PostId))
             .Where(x => x.Visibility == PostVisibility.Public)
             .Where(x => x.ProcessState == PostProcessState.Complete)

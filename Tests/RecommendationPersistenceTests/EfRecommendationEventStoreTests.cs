@@ -124,7 +124,12 @@ public sealed class EfRecommendationEventStoreTests
         context.UserInteractions.Add(new UserInteraction(
             Guid.NewGuid(), userId, null, post.PostId, InteractionType.Open, Now));
         await context.SaveChangesAsync();
-        var store = new EfRecommendationFeedStore(context);
+        var readRepository = new DefaultReadRepository<RecommendationDbContext, IRecommendationEntity>(context);
+        var writeRepository = new DefaultWriteRepository<RecommendationDbContext, IRecommendationEntity>(context);
+        var repository = new DefaultRepository<RecommendationDbContext, IRecommendationEntity>(
+            readRepository,
+            writeRepository);
+        var store = new EfRecommendationFeedStore(repository);
 
         var candidates = await store.LoadCandidatesAsync(
             userId, null, 20, Now.AddDays(-1));
