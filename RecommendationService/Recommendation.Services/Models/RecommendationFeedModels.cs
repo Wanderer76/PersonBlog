@@ -18,19 +18,6 @@ public sealed record RecommendationFeedResponse(
 
 public sealed record RecommendationFeedItem(Guid PostId, string Reason);
 
-public sealed record RecommendationPostSummary(
-    Guid PostId,
-    Guid BlogId,
-    string PostType,
-    string Title,
-    string? Description,
-    string? PreviewObjectName,
-    double? DurationSeconds,
-    int ViewCount,
-    int LikeCount,
-    int DislikeCount,
-    DateTimeOffset CreatedAt);
-
 public sealed record RecommendationCandidateData(
     Guid PostId,
     Guid BlogId,

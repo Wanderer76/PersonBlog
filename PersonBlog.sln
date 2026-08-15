@@ -22,8 +22,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{A3FC3B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProfileService", "ProfileService", "{96D77ACD-07C9-4B1C-9917-3FE2B715C042}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recommendation.Service", "RecommendationService\Recommendation.Service\Recommendation.Service.csproj", "{46748D11-B790-4BC2-BC43-2E1360874836}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Recommendation.Application", "RecommendationService\Recommendation.Application\Recommendation.Application.csproj", "{451B2606-E33D-42E5-9493-6FCCC13B5B76}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFmpeg.Service", "Common\FFmpeg.Service\FFmpeg.Service.csproj", "{51670340-2EF4-448B-B8DE-936CCDE65A17}"
@@ -186,10 +184,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{46748D11-B790-4BC2-BC43-2E1360874836}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{46748D11-B790-4BC2-BC43-2E1360874836}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{46748D11-B790-4BC2-BC43-2E1360874836}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{46748D11-B790-4BC2-BC43-2E1360874836}.Release|Any CPU.Build.0 = Release|Any CPU
 		{451B2606-E33D-42E5-9493-6FCCC13B5B76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{451B2606-E33D-42E5-9493-6FCCC13B5B76}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{451B2606-E33D-42E5-9493-6FCCC13B5B76}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -479,7 +473,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{46748D11-B790-4BC2-BC43-2E1360874836} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 		{451B2606-E33D-42E5-9493-6FCCC13B5B76} = {36D591C7-65C7-A0D1-1CBC-10CDE441BDC8}
 		{51670340-2EF4-448B-B8DE-936CCDE65A17} = {A3FC3B7B-AC51-453A-BC27-D03A0DBDC740}
 		{A991AFA5-1F40-4519-B500-4111E6F2281E} = {A3FC3B7B-AC51-453A-BC27-D03A0DBDC740}

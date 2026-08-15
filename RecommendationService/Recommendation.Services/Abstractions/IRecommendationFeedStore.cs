@@ -15,8 +15,4 @@ public interface IRecommendationFeedStore
     Task SaveImpressionsAsync(
         IReadOnlyCollection<RecommendationImpression> impressions,
         CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<RecommendationPostSummary>> LoadPostSummariesAsync(
-        IReadOnlyCollection<Guid> postIds,
-        CancellationToken cancellationToken = default);
 }

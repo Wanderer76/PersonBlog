@@ -138,41 +138,4 @@ public sealed class EfRecommendationFeedStore(
         await repository.SaveChangesAsync();
     }
 
-    public async Task<IReadOnlyList<RecommendationPostSummary>> LoadPostSummariesAsync(
-        IReadOnlyCollection<Guid> postIds,
-        CancellationToken cancellationToken = default)
-    {
-        var posts = await repository.Get<PostSnapshot>()
-            .Where(x => postIds.Contains(x.PostId))
-            .Where(x => x.Visibility == PostVisibility.Public)
-            .Where(x => x.ProcessState == PostProcessState.Complete)
-            .Where(x => !x.IsDeleted && !x.IsBanned && x.PaymentSubscriptionId == null)
-            .Select(x => new
-            {
-                x.PostId,
-                x.BlogId,
-                x.PostType,
-                x.Title,
-                x.Description,
-                x.PreviewObjectName,
-                x.DurationSeconds,
-                x.ViewCount,
-                x.LikeCount,
-                x.DislikeCount,
-                x.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
-        return posts.Select(x => new RecommendationPostSummary(
-            x.PostId,
-            x.BlogId,
-            x.PostType.ToString(),
-            x.Title,
-            x.Description,
-            x.PreviewObjectName,
-            x.DurationSeconds,
-            x.ViewCount,
-            x.LikeCount,
-            x.DislikeCount,
-            x.CreatedAt)).ToArray();
-    }
 }

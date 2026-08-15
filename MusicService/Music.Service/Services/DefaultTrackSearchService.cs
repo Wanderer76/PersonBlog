@@ -34,7 +34,7 @@ namespace Music.Service.Services
             {
                 return await GetTrackByFilterAsync(new SearchFilter { Ids = recommendations.Value }, page, size);
             }
-            return new(0, 0, []);
+            return new(0, 0, 0, []);
         }
 
         public async Task<PagedListViewModel<TrackViewItem>> GetTrackByFilterAsync(SearchFilter filter, int page, int size)

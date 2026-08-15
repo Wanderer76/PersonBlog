@@ -42,7 +42,6 @@ public static class RecommendationServicesExtensions
             Microsoft.Extensions.Options.Options.Create(options));
         services.TryAddSingleton<IClock, SystemClock>();
         services.AddScoped<IRecommendationFeedService, HeuristicRecommendationFeedService>();
-        services.AddScoped<IRecommendationCatalogService, RecommendationCatalogService>();
         return services;
     }
 

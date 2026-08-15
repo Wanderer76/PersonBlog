@@ -145,8 +145,6 @@ Recommendation API возвращает только `PostId` и `reason`. Gatew
 
 Основной endpoint: `GET /api/v1/feed?limit=20&cursor=...&currentPostId=...`. Допустимый `limit` — от 1 до `MaxLimit` (по умолчанию 100). Subject определяется по текущему пользователю; для анонимного запроса используется cookie/header `AnonymousSessionId`.
 
-Старые `GET /api/Content/recommendations` с page/offset и `POST /api/Content/postListByIds` оставлены только для совместимости и помечены `Obsolete`.
-
 ## Границы ответственности
 
 Recommendation Service отвечает за:
@@ -188,8 +186,6 @@ RecommendationService/
   Recommendation.Tests.Integration/
 ```
 
-`Recommendation.Service` следует постепенно заменить проектами выше. Общие transport-контракты не должны зависеть от EF или доменных сущностей Blog/Profile.
-
 ## Этап 0. Зафиксировать продуктовые правила
 
 - [ ] Определить основной сценарий первой версии: рекомендации рядом с видео, главная лента или оба сценария.
@@ -209,11 +205,11 @@ RecommendationService/
 
 - [x] Создать `Recommendation.Contracts` без ссылок на Blog/Profile проекты.
 - [x] Создать `Recommendation.Domain` без ASP.NET Core и EF Core.
-- [ ] Создать `Recommendation.Persistence` с отдельным `RecommendationDbContext`.
-- [ ] Перенести use cases и интерфейсы из старого `Recommendation.Service`.
-- [ ] Удалить ссылку Application на `Blog.Persistence`.
-- [ ] Удалить ссылки Recommendation-проектов на `Blog.Domain` и `Profile.Domain`.
-- [ ] Переименовать `AddBlogServices` в `AddRecommendationServices`.
+- [x] Создать `Recommendation.Persistence` с отдельным `RecommendationDbContext`.
+- [x] Удалить старый `Recommendation.Service`.
+- [x] Удалить ссылку Application на `Blog.Persistence`.
+- [x] Удалить ссылки Recommendation-проектов на `Blog.Domain` и `Profile.Domain`.
+- [x] Использовать `AddRecommendationServices` для регистрации сервисов.
 - [ ] Добавить отдельную connection string и отдельного пользователя PostgreSQL.
 - [ ] Добавить Recommendation DB в Docker Compose и Aspire AppHost.
 - [ ] Настроить health checks PostgreSQL, RabbitMQ и Redis.
@@ -436,8 +432,6 @@ Authorization: Bearer ...
 - [x] Возвращать `requestId` и `algorithmVersion`.
 - [ ] Добавить endpoint readiness/liveness через Service Defaults.
 - [ ] Ограничить внутренний debug endpoint авторизацией.
-- [x] На время миграции сохранить adapter для текущего `/recommendations`.
-- [ ] Удалить `postListByIds` из Recommendation API после появления bulk hydration в Blog API.
 
 ## Этап 9. Интеграция Gateway и Blog Service
 

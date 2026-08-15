@@ -250,7 +250,6 @@ Auth, Blog, Profile, Recommendation, Search, Conference и Comments получа
 - `Blog.Service`;
 - `Profile.Service` и `Profile.Domain`;
 - `PlayListService.Services`;
-- `Recommendation.Service`;
 - Domain-проекты Comments и Conference.
 
 Это связывает сборку Gateway с реализацией микросервисов и приводит к сотням транзитивных предупреждений.

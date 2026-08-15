@@ -167,9 +167,5 @@ public sealed class RecommendationFeedServiceTests
             return Task.CompletedTask;
         }
 
-        public Task<IReadOnlyList<RecommendationPostSummary>> LoadPostSummariesAsync(
-            IReadOnlyCollection<Guid> postIds,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<RecommendationPostSummary>>([]);
     }
 }
