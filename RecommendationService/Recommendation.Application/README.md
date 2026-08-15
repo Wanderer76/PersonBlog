@@ -6,6 +6,147 @@
 
 Первый production-вариант не использует ML. Архитектура должна позволять позднее добавить embeddings и обучаемый ranker без изменения публичного API.
 
+## Фактически реализованные алгоритмы
+
+Ниже описано поведение `heuristic-v2` в текущем коде. Последующие разделы файла содержат roadmap и могут описывать ещё не реализованное целевое состояние.
+
+### 1. Построение локальной read model
+
+Сервис не читает базы Blog/Profile. Три RabbitMQ consumer-а обновляют собственную PostgreSQL-схему `Recommendation`:
+
+- `PostCatalogChangedV2` создаёт или обновляет `PostSnapshot`. Событие применяется, только если его `AggregateVersion` больше сохранённого `SourceVersion`; поэтому повторное или более старое событие каталога не откатывает snapshot. Вместе со snapshot полностью заменяется набор категорий поста.
+- `UserInteractionRecordedV1` сохраняет interaction. Для авторизованного пользователя событие также обновляет affinity блога и каждой категории поста, если соответствующий `PostSnapshot` уже существует.
+- `SubscriptionChangedV1` добавляет или удаляет пару `UserId + BlogId`.
+
+Каждый consumer обрабатывает событие через inbox. `EventId` записывается в `InboxMessages` в одной транзакции с изменением проекции; уже присутствующий `EventId` повторно не применяется.
+
+### 2. Расчёт affinity
+
+Каждому типу взаимодействия соответствует приращение `delta`:
+
+| Сигнал | `delta` по умолчанию |
+| --- | ---: |
+| impression | `0` |
+| open | `0.5` |
+| view progress | `0.5` |
+| view progress при `WatchRatio >= 0.7` | `3` |
+| completed view | `4` |
+| like | `5` |
+| dislike | `-6` |
+| удаление like/dislike | приращение, обратное удалённой реакции |
+
+Перед добавлением нового сигнала накопленный score экспоненциально затухает с half-life 30 дней:
+
+```text
+decay(score, ageDays) = score * 0.5 ^ (ageDays / 30)
+```
+
+Для события, пришедшего по времени после текущего состояния:
+
+```text
+newScore = decay(currentScore, occurredAt - updatedAt) + delta
+newUpdatedAt = occurredAt
+```
+
+Если событие пришло не по порядку, затухает само `delta` до текущего `updatedAt`, а время состояния не переводится назад:
+
+```text
+newScore = currentScore + decay(delta, updatedAt - occurredAt)
+newUpdatedAt = updatedAt
+```
+
+Один и тот же `delta` целиком применяется к affinity блога и к affinity каждой категории поста.
+
+### 3. Отбор кандидатов
+
+`EfRecommendationFeedStore` сначала применяет hard filters. В выдачу допускается только пост, который одновременно:
+
+- публичный (`Visibility = Public`);
+- полностью обработан (`ProcessState = Complete`);
+- не удалён и не заблокирован;
+- не требует платной подписки (`PaymentSubscriptionId = null`);
+- не равен `currentPostId`, если он передан.
+
+Из доступных постов строятся два списка размером до `CandidatePoolSize` (по умолчанию 500):
+
+1. `fresh` — по убыванию `CreatedAt`;
+2. `trending` — по убыванию `ViewCount + 2 * LikeCount - DislikeCount`.
+
+Списки чередуются (`fresh[0]`, `trending[0]`, `fresh[1]`, `trending[1]`, ...), дубликаты удаляются, после чего остаются первые `CandidatePoolSize` уникальных постов. Подписки и affinity не создают отдельные candidate pools — они влияют только на ranking уже выбранных fresh/trending-кандидатов.
+
+Для каждого кандидата дополнительно загружаются:
+
+- максимальный category affinity пользователя среди категорий поста;
+- blog affinity;
+- факт подписки на блог;
+- факт interaction пользователя с постом за последние `SeenWindowDays` (по умолчанию 30);
+- Jaccard similarity категорий кандидата и `currentPostId`.
+
+Для анонимной сессии персональные affinity, подписки и признак `WasSeen` сейчас не рассчитываются.
+
+### 4. Ranking `heuristic-v2`
+
+Используются следующие нормализации:
+
+```text
+normalizeAffinity(x) = 0,                              если x <= 0
+normalizeAffinity(x) = 1 - exp(-x / 10),              если x > 0
+
+trendingRaw = log(1 + max(0, views + 2*likes - dislikes))
+trending = trendingRaw / maxTrendingRaw * 0.5 ^ (ageDays / 7)
+freshness = 0.5 ^ (ageDays / 3)
+subscription = 1, если пользователь подписан, иначе normalizeAffinity(blogAffinity)
+exploration = SHA-256(requestId + postId), приведённый к [0, 1]
+```
+
+Итоговый score:
+
+```text
+score = 0.30 * normalizeAffinity(categoryAffinity)
+      + 0.20 * clamp(currentPostSimilarity, 0, 1)
+      + 0.18 * trending
+      + 0.15 * subscription
+      + 0.10 * freshness
+      + 0.07 * exploration
+      - (WasSeen ? SeenPenalty : 0)
+```
+
+`SeenPenalty` по умолчанию равен `0.4`. Exploration детерминирован внутри одного `requestId`, поэтому при неизменном наборе кандидатов повторный расчёт страниц даёт тот же случайный компонент.
+
+Кандидаты сортируются по `score` по убыванию, затем по `CreatedAt` по убыванию и по `PostId` по возрастанию. Поле `reason` выбирается по компоненте с максимальным взвешенным вкладом; штраф `WasSeen` на `reason` не влияет. Trending получает reason `trending_24h` для постов не старше 24 часов и `trending_7d` для остальных.
+
+### 5. Диверсификация
+
+После ranking выполняется несколько проходов по оставшимся кандидатам. За один проход в результат переносится не более `MaxPostsPerBlog` постов каждого блога, остальные откладываются на следующий проход. Алгоритм не удаляет посты и сохраняет их относительный порядок внутри каждого прохода.
+
+Это мягкая round-robin диверсификация, а не строгий лимит на страницу: если на странице начинается следующий проход, в ней может оказаться больше `MaxPostsPerBlog` постов одного блога.
+
+### 6. Cursor pagination
+
+Для первого запроса создаются `requestId` и `generatedAt`; страница выбирается обычным `offset + limit`. Следующий cursor содержит:
+
+- версию формата;
+- `requestId`, следующий offset и `generatedAt`;
+- SHA-256 fingerprint пользователя или anonymous session;
+- `currentPostId`;
+- версию алгоритма.
+
+Payload сериализуется в JSON, кодируется Base64Url и подписывается HMAC-SHA256. При чтении проверяются подпись и привязка к subject, `currentPostId` и версии алгоритма. Для ключа требуется не менее 32 байт в `Recommendation:Feed:CursorSigningKey`.
+
+Cursor фиксирует время ranking и deterministic exploration, но не сохраняет snapshot кандидатов или affinity. Между страницами read model может измениться; в таком случае offset pagination способна пропустить или повторить пост.
+
+### 7. Impressions и hydration
+
+Для элементов выбранной страницы Recommendation Service сохраняет `RecommendationImpression` с ключом `RequestId + PostId`, абсолютной позицией, score, reason-source и версией алгоритма. Сейчас impression фиксируется при формировании ответа Recommendation Service, до фактического показа клиентом.
+
+Recommendation API возвращает только `PostId` и `reason`. Gateway одним bulk-запросом получает актуальные карточки из Blog Service, восстанавливает исходный порядок и отбрасывает IDs, для которых Blog Service не вернул карточку. Cursor при этом не пересчитывается.
+
+### 8. API и значения по умолчанию
+
+Основной endpoint: `GET /api/v1/feed?limit=20&cursor=...&currentPostId=...`. Допустимый `limit` — от 1 до `MaxLimit` (по умолчанию 100). Subject определяется по текущему пользователю; для анонимного запроса используется cookie/header `AnonymousSessionId`.
+
+Старые `GET /api/Content/recommendations` с page/offset и `POST /api/Content/postListByIds` оставлены только для совместимости и помечены `Obsolete`.
+
 ## Границы ответственности
 
 Recommendation Service отвечает за:
