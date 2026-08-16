@@ -1,31 +1,26 @@
 using Authentication.Contract.Models;
 using Authentication.Service.Models;
 using Authentication.Service.Service;
-using Blog.Contracts.Models.Blog;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
-using System.Net.Http.Json;
 
 namespace AuthenticationApplication.Controllers;
 
 public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
-    private readonly IBlogUserProvisioningService _blogUserProvisioningService;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IUserContextService _userContextService;
 
     public AuthController(
         ILogger<AuthController> logger,
         IAuthService authService,
-        IBlogUserProvisioningService blogUserProvisioningService,
-        IHttpClientFactory httpClientFactory)
+        IUserContextService userContextService)
         : base(logger)
     {
         _authService = authService;
-        _blogUserProvisioningService = blogUserProvisioningService;
-        _httpClientFactory = httpClientFactory;
+        _userContextService = userContextService;
     }
 
     [HttpPost("create")]
@@ -63,39 +58,38 @@ public class AuthController : BaseApiController
         return Ok(await _authService.GetCurrentUserAsync(token));
     }
 
-    [HttpPost("blog-context")]
+    [HttpPost("context")]
     [Authorize]
     [ProducesResponseType(typeof(UserModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<UserModel>> SetBlogContext([FromBody] BlogContextRequest request)
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<UserModel>> ActivateContext(
+        [FromBody] ActivateUserContextRequest request,
+        CancellationToken cancellationToken)
     {
-        var token = HttpContext.Request.Headers.Authorization.FirstOrDefault()?["Bearer ".Length..];
-        var currentUserResult = await _authService.GetCurrentUserAsync(token);
-        if (currentUserResult.IsFailure || currentUserResult.Value.IsAnonymous)
-        {
+        var userIdValue = User.FindFirst(AppClaimTypes.UserId)?.Value;
+        if (!Guid.TryParse(userIdValue, out var userId))
             return Unauthorized();
-        }
 
-        var blogClient = _httpClientFactory.CreateClient("Blog");
-        var blogResponse = await blogClient.GetAsync($"Blog/blog/{request.BlogId}");
-        if (!blogResponse.IsSuccessStatusCode)
-        {
-            return StatusCode(
-                StatusCodes.Status502BadGateway,
-                "Не удалось подтвердить владельца блога");
-        }
+        if (request.ContextId == Guid.Empty || string.IsNullOrWhiteSpace(request.ContextType))
+            return BadRequest("ContextType and ContextId are required.");
 
-        var blog = await blogResponse.Content.ReadFromJsonAsync<BlogModel>();
-        if (blog is null || blog.UserId != currentUserResult.Value.UserId)
-        {
+        if (request.UserId != userId)
             return Forbid();
-        }
 
-        var session = await _blogUserProvisioningService.ProvisionBlogAsync(
-            currentUserResult.Value.UserId,
-            request.BlogId);
+        var result = await _userContextService.GrantAndActivateAsync(
+            request.UserId,
+            request.ContextType,
+            request.ContextId,
+            request.RoleId,
+            cancellationToken);
 
-        return Ok(session);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        return BadRequest(result.Errors);
     }
+
 }

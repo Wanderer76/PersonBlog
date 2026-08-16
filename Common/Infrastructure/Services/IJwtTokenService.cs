@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using Shared;
 using Shared.Utils;
+using Shared.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -22,7 +23,10 @@ internal sealed class DefauleJWtTokenService : IJwtTokenService
             new(AppClaimTypes.Login,access.Login),
             new(AppClaimTypes.UserId,access.UserId.ToString()),
             new(AppClaimTypes.Type,access.Type),
-            new(AppClaimTypes.BlogId,access.BlogId.ToString()),
+            new(ContextClaimTypes.Type, access.ContextType ?? string.Empty),
+            new(ContextClaimTypes.Id, access.ContextId.ToString()),
+            new(AppClaimTypes.BlogId,
+                (access.ContextType == UserContextTypes.Blog ? access.ContextId : Guid.Empty).ToString()),
             new(AppClaimTypes.ExpiredAt,access.ExpiredAt.ToString()),
         };
 
@@ -33,7 +37,10 @@ internal sealed class DefauleJWtTokenService : IJwtTokenService
             new(AppClaimTypes.Login,refresh.Login),
             new(AppClaimTypes.UserId,refresh.UserId.ToString()),
             new(AppClaimTypes.Type,refresh.Type),
-            new(AppClaimTypes.BlogId,refresh.BlogId.ToString()),
+            new(ContextClaimTypes.Type, refresh.ContextType ?? string.Empty),
+            new(ContextClaimTypes.Id, refresh.ContextId.ToString()),
+            new(AppClaimTypes.BlogId,
+                (refresh.ContextType == UserContextTypes.Blog ? refresh.ContextId : Guid.Empty).ToString()),
             new(AppClaimTypes.ExpiredAt,refresh.ExpiredAt.ToString()),
         };
 
@@ -66,6 +73,18 @@ internal sealed class DefauleJWtTokenService : IJwtTokenService
                 return Result<TokenModel>.Failure(new Error("cannot read token"));
             }
 
+            var contextType = jwtToken.Claims.FirstOrDefault(x => x.Type == ContextClaimTypes.Type)?.Value;
+            var contextIdValue = jwtToken.Claims.FirstOrDefault(x => x.Type == ContextClaimTypes.Id)?.Value;
+            var legacyBlogIdValue = jwtToken.Claims.FirstOrDefault(x => x.Type == AppClaimTypes.BlogId)?.Value;
+            var contextId = Guid.TryParse(contextIdValue, out var parsedContextId)
+                ? parsedContextId
+                : Guid.TryParse(legacyBlogIdValue, out var parsedBlogId)
+                    ? parsedBlogId
+                    : Guid.Empty;
+
+            if (string.IsNullOrWhiteSpace(contextType) && contextId != Guid.Empty)
+                contextType = UserContextTypes.Blog;
+
             return new TokenModel
             {
                 Id = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.Id).Value),
@@ -74,7 +93,8 @@ internal sealed class DefauleJWtTokenService : IJwtTokenService
                 Type = jwtToken.Claims.First(x => x.Type == AppClaimTypes.Type).Value,
                 ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(jwtToken.Claims.First(x => x.Type == "exp").Value)).ToUniversalTime(),
                 Login = jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.Login)!.Value,
-                BlogId = Guid.Parse(jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.BlogId)!.Value)
+                ContextType = contextType,
+                ContextId = contextId
             };
         }
         return Result<TokenModel>.Failure(new Error("", "cannot read token"));

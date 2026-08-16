@@ -8,6 +8,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Models;
 using System.Net.Http.Json;
 
 namespace Gateway.API.Controllers.Blog;
@@ -182,6 +183,49 @@ public sealed class BlogController : BaseApiController
     }
 
     /// <summary>
+    /// Проверяет владение блогом и активирует его как текущий пользовательский контекст.
+    /// </summary>
+    [HttpPost("context/{blogId:guid}")]
+    [AuthFilter(Roles.User)]
+    [ProducesResponseType(typeof(UserModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<UserModel>> ActivateBlogContext(
+        Guid blogId,
+        CancellationToken cancellationToken)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+        if (user.IsAnonymous)
+            return Unauthorized();
+
+        var blogResult = await _blogClient.GetBlogByIdAsync(blogId);
+        if (blogResult.IsFailure)
+        {
+            return blogResult.Errors.Any(error => error.Key == "NotFound")
+                ? NotFound(blogResult.Errors)
+                : BadRequest(blogResult.Errors.ToValidationProblem());
+        }
+
+        if (blogResult.Value.UserId != user.UserId)
+            return Forbid();
+
+        using var authResponse = await ActivateContextInAuthAsync(
+            user.UserId,
+            blogId,
+            cancellationToken);
+
+        if (!authResponse.IsSuccessStatusCode)
+            return StatusCode((int)authResponse.StatusCode);
+
+        var session = await authResponse.Content.ReadFromJsonAsync<UserModel>(cancellationToken);
+        return session is null
+            ? StatusCode(StatusCodes.Status502BadGateway)
+            : Ok(session);
+    }
+
+    /// <summary>
     /// Создание нового блога
     /// </summary>
     [HttpPost("create")]
@@ -196,6 +240,10 @@ public sealed class BlogController : BaseApiController
             return BadRequest(ModelState);
         }
 
+        var user = await _currentUserService.GetCurrentUserAsync();
+        if (user.IsAnonymous)
+            return Unauthorized();
+
         var result = await _blogClient.CreateBlogAsync(form);
 
         if (result.IsFailure)
@@ -203,10 +251,13 @@ public sealed class BlogController : BaseApiController
             return BadRequest(result.Errors.ToValidationProblem());
         }
 
-        var authClient = _httpClientFactory.CreateClient("Auth");
-        var authResponse = await authClient.PostAsJsonAsync(
-            "Auth/blog-context",
-            new BlogContextRequest(result.Value.Id));
+        if (result.Value.UserId != user.UserId)
+            return Forbid();
+
+        using var authResponse = await ActivateContextInAuthAsync(
+            user.UserId,
+            result.Value.Id,
+            HttpContext.RequestAborted);
 
         if (!authResponse.IsSuccessStatusCode)
         {
@@ -221,6 +272,22 @@ public sealed class BlogController : BaseApiController
         }
 
         return Ok(result.Value);
+    }
+
+    private Task<HttpResponseMessage> ActivateContextInAuthAsync(
+        Guid userId,
+        Guid blogId,
+        CancellationToken cancellationToken)
+    {
+        var authClient = _httpClientFactory.CreateClient("Auth");
+        return authClient.PostAsJsonAsync(
+            "Auth/context",
+            new ActivateUserContextRequest(
+                userId,
+                UserContextTypes.Blog,
+                blogId,
+                Roles.BloggerRoleId),
+            cancellationToken);
     }
 
     ///// <summary>

@@ -26,7 +26,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\BlogService\Blog.Contracts\Blog.Contracts.csproj" />
 		<ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
 		<ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\Authentication.Domain\Authentication.Domain.csproj" />

@@ -110,7 +110,13 @@ internal sealed class DefaultTokenService : ITokenService
         var (access, refresh) = CreateTokenForUser(user);
 
         var tokenId = claims.ContainsKey(AppClaimTypes.Id) ? Guid.Parse(claims[AppClaimTypes.Id]) : Guid.Empty;
-        var blogId = claims.ContainsKey(AppClaimTypes.BlogId) ? Guid.Parse(claims[AppClaimTypes.BlogId]) : Guid.Empty;
+        var contextType = claims.GetValueOrDefault(Shared.Models.ContextClaimTypes.Type);
+        var contextId = claims.TryGetValue(Shared.Models.ContextClaimTypes.Id, out var contextIdValue)
+            ? Guid.Parse(contextIdValue)
+            : claims.TryGetValue(AppClaimTypes.BlogId, out var blogIdValue)
+                ? Guid.Parse(blogIdValue)
+                : Guid.Empty;
+        contextType ??= contextId == Guid.Empty ? null : Shared.Models.UserContextTypes.Blog;
         var roleId = claims.ContainsKey(AppClaimTypes.RoleId) ? Guid.Parse(claims[AppClaimTypes.RoleId]) : user.AppUserRoles.First().UserRoleId;
         var userId = claims.ContainsKey(AppClaimTypes.UserId) ? Guid.Parse(claims[AppClaimTypes.UserId]) : user.Id;
         var login = claims.ContainsKey(AppClaimTypes.Login) ? claims[AppClaimTypes.Login] : user.Login;
@@ -121,7 +127,8 @@ internal sealed class DefaultTokenService : ITokenService
             Id = access.Id,
             CreatedAt = access.CreatedAt,
             ExpiredAt = access.ExpiredAt,
-            BlogId = blogId,
+            ContextType = contextType,
+            ContextId = contextId,
             Login = login,
             RoleId = roleId,
             UserId = userId,
@@ -133,7 +140,8 @@ internal sealed class DefaultTokenService : ITokenService
             Id = tokenId,
             CreatedAt = refresh.CreatedAt,
             ExpiredAt = refresh.ExpiredAt,
-            BlogId = blogId,
+            ContextType = contextType,
+            ContextId = contextId,
             Login = login,
             RoleId = roleId,
             UserId = userId,

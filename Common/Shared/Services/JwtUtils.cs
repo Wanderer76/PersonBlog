@@ -2,6 +2,7 @@
 using Shared.Utils;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Shared.Models;
 
 namespace Shared.Services
 {
@@ -13,6 +14,18 @@ namespace Shared.Services
             if (handler.CanReadToken(token))
             {
                 var jwtToken = handler.ReadToken(token) as JwtSecurityToken;
+                var contextType = jwtToken.Claims.FirstOrDefault(x => x.Type == ContextClaimTypes.Type)?.Value;
+                var contextIdValue = jwtToken.Claims.FirstOrDefault(x => x.Type == ContextClaimTypes.Id)?.Value;
+                var legacyBlogIdValue = jwtToken.Claims.FirstOrDefault(x => x.Type == AppClaimTypes.BlogId)?.Value;
+                var contextId = Guid.TryParse(contextIdValue, out var parsedContextId)
+                    ? parsedContextId
+                    : Guid.TryParse(legacyBlogIdValue, out var parsedBlogId)
+                        ? parsedBlogId
+                        : Guid.Empty;
+
+                if (string.IsNullOrWhiteSpace(contextType) && contextId != Guid.Empty)
+                    contextType = UserContextTypes.Blog;
+
                 return new TokenModel
                 {
                     Id = Guid.Parse(jwtToken.Claims.First(x => x.Type == AppClaimTypes.Id).Value),
@@ -21,7 +34,8 @@ namespace Shared.Services
                     Type = jwtToken.Claims.First(x => x.Type == AppClaimTypes.Type).Value,
                     ExpiredAt = DateTimeOffset.FromUnixTimeSeconds(long.Parse(jwtToken.Claims.First(x => x.Type == "exp").Value)).ToUniversalTime(),
                     Login = jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.Login).Value,
-                    BlogId = Guid.Parse(jwtToken.Claims.FirstOrDefault(s => s.Type == AppClaimTypes.BlogId).Value)
+                    ContextType = contextType,
+                    ContextId = contextId
                 };
             }
             return Result<TokenModel>.Failure(new Error("", "cannot read token"));
@@ -36,7 +50,10 @@ namespace Shared.Services
                 new Claim(AppClaimTypes.Login,access.Login),
                 new Claim(AppClaimTypes.UserId,access.UserId.ToString()),
                 new Claim(AppClaimTypes.Type,access.Type),
-                new Claim(AppClaimTypes.BlogId,access.BlogId.ToString()),
+                new Claim(ContextClaimTypes.Type, access.ContextType ?? string.Empty),
+                new Claim(ContextClaimTypes.Id, access.ContextId.ToString()),
+                new Claim(AppClaimTypes.BlogId,
+                    (access.ContextType == UserContextTypes.Blog ? access.ContextId : Guid.Empty).ToString()),
                 new Claim(AppClaimTypes.ExpiredAt,access.ExpiredAt.ToString()),
                 //new Claim(AppClaimTypes.Name,access.Name),
             };
@@ -47,7 +64,10 @@ namespace Shared.Services
                 new Claim(AppClaimTypes.Login,refresh.Login),
                 new Claim(AppClaimTypes.UserId,refresh.UserId.ToString()),
                 new Claim(AppClaimTypes.Type,refresh.Type),
-                new Claim(AppClaimTypes.BlogId,refresh.BlogId.ToString()),
+                new Claim(ContextClaimTypes.Type, refresh.ContextType ?? string.Empty),
+                new Claim(ContextClaimTypes.Id, refresh.ContextId.ToString()),
+                new Claim(AppClaimTypes.BlogId,
+                    (refresh.ContextType == UserContextTypes.Blog ? refresh.ContextId : Guid.Empty).ToString()),
                 new Claim(AppClaimTypes.ExpiredAt,refresh.ExpiredAt.ToString()),
             };
 

@@ -287,7 +287,8 @@ public class AuthenticationTest
         {
             UserId = userId,
             Login = "test",
-            BlogId = Guid.NewGuid(),
+            ContextType = "conference",
+            ContextId = Guid.NewGuid(),
             ExpiredAt = DateTimeService.Now().AddHours(1)
         };
 
@@ -304,5 +305,7 @@ public class AuthenticationTest
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.IsAnonymous);
         Assert.Equal(userId, result.Value.UserId);
+        Assert.Equal(tokenData.ContextType, result.Value.ContextType);
+        Assert.Equal(tokenData.ContextId, result.Value.ContextId);
     }
 }

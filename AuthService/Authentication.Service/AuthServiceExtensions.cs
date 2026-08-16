@@ -11,7 +11,7 @@ public static class AuthServiceExtensions
     {
         services.AddSingleton<TokenOptions>(x => tokenOptions);
         services.AddScoped<IAuthService, DefaultAuthService>();
-        services.AddScoped<IBlogUserProvisioningService, DefaultBlogUserProvisioningService>();
+        services.AddScoped<IUserContextService, DefaultUserContextService>();
         services.AddScoped<IOAuthService, DefaultOAuthService>();
         services.AddScoped<ITokenService, DefaultTokenService>();
     }

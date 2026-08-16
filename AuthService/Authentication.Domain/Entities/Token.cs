@@ -31,6 +31,10 @@ public static class TokenExtensions
 {
     public static TokenModel ToTokenModel(this Token token, AppUser user)
     {
+        var context = user.UserContexts
+            .OrderByDescending(x => x.ContextType == Shared.Models.UserContextTypes.Blog)
+            .FirstOrDefault();
+
         return new TokenModel
         {
             Id = token.Id,
@@ -40,7 +44,8 @@ public static class TokenExtensions
             RoleId = token.RoleId,
             UserId = token.AppUserId,
             Type = token.TokenType,
-            BlogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId ?? Guid.Empty
+            ContextType = context?.ContextType,
+            ContextId = context?.ContextId ?? Guid.Empty
         };
     }
 }

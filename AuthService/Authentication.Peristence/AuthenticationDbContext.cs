@@ -104,6 +104,7 @@ public class AuthenticationDbContext : BaseDbContext
         {
             var entity = modelBuilder.Entity<UserContext>();
             entity.HasKey(x => new { x.UserId, x.ContextType, x.ContextId });
+            entity.Property(x => x.ContextType).HasMaxLength(100);
         }
         {
             var entity = modelBuilder.Entity<Client>();

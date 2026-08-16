@@ -5,7 +5,6 @@ using Authentication.Service.Models;
 using Authentication.Service.Models.Options;
 using Authentication.Service.Service;
 using AuthenticationApplication.HostedServices;
-using Blog.Contracts.Events;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Infrastructure.Services;
@@ -28,17 +27,10 @@ builder.Services.AddAuthenticationPersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthServices(builder.Configuration.GetSection("TokenOptions").Get<TokenOptions>()!);
-builder.Services.AddHttpClient("Blog", x =>
-{
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
-});
 builder.Services.AddUserSessionServices();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
-    .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(cfg =>
-    {
-        cfg.QueueName = "auth-blog";
-    });
+builder.Services.AddRabbitMqMessageBus(
+    builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!);
 
 builder.Services.AddHostedService<EventPublishService>();
 builder.Services.AddHostedService<TokenCleanerHostedService>();
