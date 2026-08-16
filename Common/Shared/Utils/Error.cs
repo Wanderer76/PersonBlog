@@ -2,7 +2,7 @@
 
 namespace Shared.Utils;
 
-public sealed class Error
+public sealed class Error : IResultError
 {
     public string Key { get; }
     public string Message { get; }

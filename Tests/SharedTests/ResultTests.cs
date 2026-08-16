@@ -3,6 +3,30 @@ using Shared.Utils;
 
 namespace SharedTests;
 
+public sealed class ResultJsonConverterFactoryTests
+{
+    [Theory]
+    [InlineData(typeof(Result))]
+    [InlineData(typeof(Result<int>))]
+    [InlineData(typeof(Result<int, DomainError>))]
+    public void CanConvert_SupportsEveryResultVariant(Type resultType)
+    {
+        var factory = new ResultJsonConverterFactory();
+
+        Assert.True(factory.CanConvert(resultType));
+    }
+
+    [Fact]
+    public void CanConvert_RejectsUnrelatedType()
+    {
+        var factory = new ResultJsonConverterFactory();
+
+        Assert.False(factory.CanConvert(typeof(string)));
+    }
+
+    public sealed record DomainError(string Code) : IResultError;
+}
+
 public sealed class ResultTests
 {
     [Fact]
@@ -63,24 +87,39 @@ public sealed class ResultTests
     }
 
     [Fact]
-    public void JsonSerialization_WritesErrorsWithoutStateFlags()
+    public void JsonSerialization_UsesStableEnvelope()
     {
         var result = Result.Failure("name", "Name is required.");
 
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(result));
 
-        Assert.False(json.RootElement.TryGetProperty("IsSuccess", out _));
-        Assert.False(json.RootElement.TryGetProperty("IsFailure", out _));
-        Assert.Single(json.RootElement.GetProperty("Errors").EnumerateArray());
+        Assert.Equal(JsonValueKind.Null, json.RootElement.GetProperty("value").ValueKind);
+        Assert.Single(json.RootElement.GetProperty("errors").EnumerateArray());
+        Assert.Equal(2, json.RootElement.EnumerateObject().Count());
     }
 
-    [Fact]
-    public void JsonDeserialization_IsNotSupported()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void JsonRoundTrip_PreservesState(bool successful)
     {
-        const string json = """{"Errors":[]}""";
+        var source = successful
+            ? Result.Success()
+            : Result.Failure("name", "Name is required.");
 
-        Assert.Throws<NotSupportedException>(() =>
-            JsonSerializer.Deserialize<Result>(json));
+        var json = JsonSerializer.Serialize(source);
+        var restored = JsonSerializer.Deserialize<Result>(json);
+
+        Assert.NotNull(restored);
+        Assert.Equal(source.IsSuccess, restored.IsSuccess);
+        Assert.Equal(source.Errors.Count, restored.Errors.Count);
+
+        if (!successful)
+        {
+            var error = Assert.Single(restored.Errors);
+            Assert.Equal("name", error.Key);
+            Assert.Equal("Name is required.", error.Message);
+        }
     }
 }
 
@@ -192,6 +231,23 @@ public sealed class ResultOfValueTests
 public sealed class ResultOfValueAndErrorTests
 {
     [Fact]
+    public void GenericContract_AllowsSingleErrorType()
+    {
+        var resultType = typeof(Result<,>).MakeGenericType(typeof(int), typeof(Error));
+
+        Assert.Equal(typeof(Result<int, Error>), resultType);
+    }
+
+    [Theory]
+    [InlineData(typeof(object))]
+    [InlineData(typeof(Error[]))]
+    public void GenericContract_RejectsTypesThatDoNotRepresentSingleError(Type errorType)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            typeof(Result<,>).MakeGenericType(typeof(int), errorType));
+    }
+
+    [Fact]
     public void Success_ExposesValueAndNoError()
     {
         var result = Result<int, DomainError>.Success(42);
@@ -258,30 +314,63 @@ public sealed class ResultOfValueAndErrorTests
                 exception => new DomainError("operation", exception.Message)));
     }
 
-    [Fact]
-    public void FailedResult_JsonSerializationIsNotSupported()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void JsonRoundTrip_PreservesState(bool successful)
     {
-        var result = Result<int, DomainError>.Failure(
-            new DomainError("not_found", "Entity was not found."));
+        var source = successful
+            ? Result<int, DomainError>.Success(42)
+            : Result<int, DomainError>.Failure(
+                new DomainError("not_found", "Entity was not found."));
 
-        Assert.Throws<InvalidOperationException>(() =>
-            JsonSerializer.Serialize(result));
+        var json = JsonSerializer.Serialize(source);
+        var restored = JsonSerializer.Deserialize<Result<int, DomainError>>(json);
+
+        Assert.NotNull(restored);
+        Assert.Equal(source.IsSuccess, restored.IsSuccess);
+        Assert.Equal(source.Errors.Count, restored.Errors.Count);
+
+        if (successful)
+        {
+            Assert.Equal(42, restored.Value);
+        }
+        else
+        {
+            Assert.Equal("not_found", restored.Error!.Code);
+            Assert.Equal("Entity was not found.", restored.Error.Message);
+        }
     }
 
     [Fact]
-    public void JsonDeserialization_IsNotSupported()
+    public void Failure_WithMultipleErrors_RoundTripsEveryError()
     {
-        const string json = """
+        var source = Result<int, DomainError>.Failure(
+            new DomainError[]
             {
-              "Errors": [],
-              "Error": null,
-              "Value": 42
-            }
-            """;
+                new("first", "First error."),
+                new("second", "Second error.")
+            });
 
-        Assert.Throws<NotSupportedException>(() =>
-            JsonSerializer.Deserialize<Result<int, DomainError>>(json));
+        var json = JsonSerializer.Serialize(source);
+        var restored = JsonSerializer.Deserialize<Result<int, DomainError>>(json);
+
+        Assert.NotNull(restored);
+        Assert.Equal(2, restored.Errors.Count);
+        Assert.Equal("first", restored.Error!.Code);
     }
 
-    private sealed record DomainError(string Code, string Message);
+    [Fact]
+    public void JsonSerialization_UsesSameEnvelopeAsOtherResults()
+    {
+        var result = Result<int, DomainError>.Success(42);
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(result));
+
+        Assert.Equal(42, json.RootElement.GetProperty("value").GetInt32());
+        Assert.Empty(json.RootElement.GetProperty("errors").EnumerateArray());
+        Assert.Equal(2, json.RootElement.EnumerateObject().Count());
+    }
+
+    public sealed record DomainError(string Code, string Message) : IResultError;
 }

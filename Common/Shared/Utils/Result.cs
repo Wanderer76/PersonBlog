@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 /// Common immutable state for all result types.
 /// </summary>
 /// <typeparam name="TError">The error representation used by the result.</typeparam>
-public abstract class ResultBase<TError> where TError : class
+public abstract class ResultBase<TError> where TError : class, IResultError
 {
     private readonly IReadOnlyList<TError> _errors;
 
@@ -41,6 +41,7 @@ public abstract class ResultBase<TError> where TError : class
 /// <summary>
 /// Result of an operation that returns no value and uses the standard <see cref="Error"/> type.
 /// </summary>
+[JsonConverter(typeof(ResultJsonConverterFactory))]
 public sealed class Result : ResultBase<Error>
 {
     private Result()
@@ -112,8 +113,13 @@ public sealed class Result<TValue> : ResultBase<Error>
 /// <summary>
 /// Result of an operation that returns a value and uses a domain-specific error type.
 /// Prefer <see cref="Result{TValue}"/> when the standard <see cref="Error"/> model is sufficient.
+/// <typeparamref name="TError"/> must represent one atomic error and implement
+/// <see cref="IResultError"/>; arrays and other error collections are not valid error types.
+/// Use <see cref="Failure(IReadOnlyList{TError})"/> to create a failure with multiple errors.
 /// </summary>
-public sealed class Result<TValue, TError> : ResultBase<TError> where TError : class
+[JsonConverter(typeof(ResultJsonConverterFactory))]
+public sealed class Result<TValue, TError> : ResultBase<TError>
+    where TError : class, IResultError
 {
     private readonly TValue? _value;
 
@@ -122,8 +128,8 @@ public sealed class Result<TValue, TError> : ResultBase<TError> where TError : c
         _value = value;
     }
 
-    private Result(TError error)
-        : base(ToErrors(error))
+    private Result(IEnumerable<TError> errors)
+        : base(errors)
     {
         _value = default;
     }
@@ -136,7 +142,9 @@ public sealed class Result<TValue, TError> : ResultBase<TError> where TError : c
 
     public static Result<TValue, TError> Success(TValue value) => new(value);
 
-    public static Result<TValue, TError> Failure(TError error) => new(error);
+    public static Result<TValue, TError> Failure(TError error) => new(ToErrors(error));
+
+    public static Result<TValue, TError> Failure(IReadOnlyList<TError> errors) => new(errors);
 
     public static implicit operator Result<TValue, TError>(TValue value) => Success(value);
 
@@ -168,21 +176,70 @@ public sealed class Result<TValue, TError> : ResultBase<TError> where TError : c
 }
 
 /// <summary>
-/// Makes the safe JSON representation of <see cref="Result{TValue}"/> available in every service
-/// without requiring per-application serializer registration.
+/// Makes the unified JSON representation of every result type available in every service without
+/// requiring per-application serializer registration.
 /// </summary>
-public sealed class ResultJsonConverterFactory : JsonConverterFactory
+public class ResultJsonConverterFactory : JsonConverterFactory
 {
-    public override bool CanConvert(Type typeToConvert) =>
-        typeToConvert.IsGenericType &&
-        typeToConvert.GetGenericTypeDefinition() == typeof(Result<>);
+    public override bool CanConvert(Type typeToConvert)
+    {
+        if (typeToConvert == typeof(Result))
+            return true;
+
+        if (!typeToConvert.IsGenericType)
+            return false;
+
+        var genericType = typeToConvert.GetGenericTypeDefinition();
+        return genericType == typeof(Result<>) || genericType == typeof(Result<,>);
+    }
 
     public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
-        var valueType = typeToConvert.GetGenericArguments()[0];
-        var converterType = typeof(ResultConverter<>).MakeGenericType(valueType);
+        if (typeToConvert == typeof(Result))
+            return new ResultConverter();
+
+        var typeArguments = typeToConvert.GetGenericArguments();
+        var converterType = typeArguments.Length switch
+        {
+            1 => typeof(ResultConverter<>).MakeGenericType(typeArguments),
+            2 => typeof(ResultConverter<,>).MakeGenericType(typeArguments),
+            _ => throw new NotSupportedException($"Unsupported result type: {typeToConvert}.")
+        };
+
         return (JsonConverter)Activator.CreateInstance(converterType)!;
     }
+}
+
+public sealed class ResultConverter : JsonConverter<Result>
+{
+    public override Result Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
+    {
+        using var document = JsonDocument.ParseValue(ref reader);
+        var root = ResultJsonSerialization.GetObjectRoot(document);
+        var hasValue = ResultJsonSerialization.TryGetProperty(root, "value", options, out var value);
+        var errors = ResultJsonSerialization.ReadErrors<Error>(root, options);
+
+        if (hasValue && value.ValueKind != JsonValueKind.Null)
+            throw new JsonException("A result without a return value cannot contain a value.");
+
+        return errors.Count > 0
+            ? Result.Failure(errors)
+            : Result.Success();
+    }
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        Result result,
+        JsonSerializerOptions options) =>
+        ResultJsonSerialization.Write<object?, Error>(
+            writer,
+            result.IsSuccess,
+            null,
+            result.Errors,
+            options);
 }
 
 public sealed class ResultConverter<TValue> : JsonConverter<Result<TValue>>
@@ -193,13 +250,13 @@ public sealed class ResultConverter<TValue> : JsonConverter<Result<TValue>>
         JsonSerializerOptions options)
     {
         using var document = JsonDocument.ParseValue(ref reader);
-        var root = document.RootElement;
-
-        if (root.ValueKind != JsonValueKind.Object)
-            throw new JsonException("A result must be represented by a JSON object.");
-
-        var hasValue = root.TryGetProperty("value", out var valueProperty);
-        var errors = ReadErrors(root, options);
+        var root = ResultJsonSerialization.GetObjectRoot(document);
+        var hasValue = ResultJsonSerialization.TryGetProperty(
+            root,
+            "value",
+            options,
+            out var valueProperty);
+        var errors = ResultJsonSerialization.ReadErrors<Error>(root, options);
 
         if (errors.Count > 0)
         {
@@ -221,37 +278,137 @@ public sealed class ResultConverter<TValue> : JsonConverter<Result<TValue>>
         Result<TValue> result,
         JsonSerializerOptions options)
     {
-        writer.WriteStartObject();
-
-        writer.WritePropertyName("value");
-        if (result.IsSuccess)
-            JsonSerializer.Serialize(writer, result.Value, options);
-        else
-            writer.WriteNullValue();
-
-        writer.WritePropertyName("errors");
-        JsonSerializer.Serialize(writer, result.Errors, options);
-
-        writer.WriteEndObject();
+        ResultJsonSerialization.Write(
+            writer,
+            result.IsSuccess,
+            result.IsSuccess ? result.Value : default,
+            result.Errors,
+            options);
     }
+}
 
-    private static IReadOnlyList<Error> ReadErrors(
-        JsonElement root,
+public sealed class ResultConverter<TValue, TError> : JsonConverter<Result<TValue, TError>>
+    where TError : class, IResultError
+{
+    public override Result<TValue, TError> Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
         JsonSerializerOptions options)
     {
-        if (!root.TryGetProperty("errors", out var errorsProperty) ||
+        using var document = JsonDocument.ParseValue(ref reader);
+        var root = ResultJsonSerialization.GetObjectRoot(document);
+        var hasValue = ResultJsonSerialization.TryGetProperty(
+            root,
+            "value",
+            options,
+            out var valueProperty);
+        var errors = ResultJsonSerialization.ReadErrors<TError>(root, options);
+
+        if (errors.Count > 0)
+        {
+            if (hasValue && valueProperty.ValueKind != JsonValueKind.Null)
+                throw new JsonException("A failed result cannot contain a value.");
+
+            return Result<TValue, TError>.Failure(errors);
+        }
+
+        if (!hasValue)
+            throw new JsonException("A successful result must contain a value.");
+
+        var value = valueProperty.Deserialize<TValue>(options);
+        return Result<TValue, TError>.Success(value!);
+    }
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        Result<TValue, TError> result,
+        JsonSerializerOptions options)
+    {
+        ResultJsonSerialization.Write(
+            writer,
+            result.IsSuccess,
+            result.IsSuccess ? result.Value : default,
+            result.Errors,
+            options);
+    }
+}
+
+internal static class ResultJsonSerialization
+{
+    internal static JsonElement GetObjectRoot(JsonDocument document)
+    {
+        var root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object)
+            throw new JsonException("A result must be represented by a JSON object.");
+
+        return root;
+    }
+
+    internal static bool TryGetProperty(
+        JsonElement root,
+        string propertyName,
+        JsonSerializerOptions options,
+        out JsonElement value)
+    {
+        if (root.TryGetProperty(propertyName, out value))
+            return true;
+
+        if (options.PropertyNameCaseInsensitive)
+        {
+            foreach (var property in root.EnumerateObject())
+            {
+                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    internal static IReadOnlyList<TError> ReadErrors<TError>(
+        JsonElement root,
+        JsonSerializerOptions options)
+        where TError : class, IResultError
+    {
+        if (!TryGetProperty(root, "errors", options, out var errorsProperty) ||
             errorsProperty.ValueKind == JsonValueKind.Null)
         {
-            return Array.Empty<Error>();
+            return Array.Empty<TError>();
         }
 
         if (errorsProperty.ValueKind != JsonValueKind.Array)
             throw new JsonException("The errors property must be an array.");
 
-        var errors = errorsProperty.Deserialize<List<Error>>(options);
+        var errors = errorsProperty.Deserialize<List<TError>>(options);
         if (errors is null || errors.Any(error => error is null))
             throw new JsonException("The errors property cannot contain null errors.");
 
         return errors;
+    }
+
+    internal static void Write<TValue, TError>(
+        Utf8JsonWriter writer,
+        bool isSuccess,
+        TValue? value,
+        IReadOnlyList<TError> errors,
+        JsonSerializerOptions options)
+        where TError : class, IResultError
+    {
+        writer.WriteStartObject();
+
+        writer.WritePropertyName("value");
+        if (isSuccess)
+            JsonSerializer.Serialize(writer, value, options);
+        else
+            writer.WriteNullValue();
+
+        writer.WritePropertyName("errors");
+        JsonSerializer.Serialize(writer, errors, options);
+
+        writer.WriteEndObject();
     }
 }

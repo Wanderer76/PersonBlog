@@ -1,24 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Text.Json;
-using System.Threading.Tasks;
-
 namespace Infrastructure.Services;
-public class ResultConverterFactory : JsonConverterFactory
-{
-    public override bool CanConvert(Type typeToConvert)
-    {
-        return typeToConvert.IsGenericType &&
-               typeToConvert.GetGenericTypeDefinition() == typeof(Result<>);
-    }
 
-    public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
-    {
-        var valueType = typeToConvert.GetGenericArguments()[0];
-        var converterType = typeof(ResultConverter<>).MakeGenericType(valueType);
-        return (JsonConverter)Activator.CreateInstance(converterType)!;
-    }
+/// <summary>
+/// Backward-compatible registration name for applications that already add this factory globally.
+/// Serialization behavior is implemented by the shared result converter factory.
+/// </summary>
+public sealed class ResultConverterFactory : ResultJsonConverterFactory
+{
 }
