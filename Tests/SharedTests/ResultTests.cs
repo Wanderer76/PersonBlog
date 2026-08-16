@@ -226,6 +226,36 @@ public sealed class ResultOfValueTests
         Assert.Throws<JsonException>(() =>
             JsonSerializer.Deserialize<Result<int>>(json));
     }
+
+    [Fact]
+    public void JsonDeserialization_ReadsPropertiesInAnyOrderAndSkipsUnknownContent()
+    {
+        const string json = """
+            {
+              "errors": [],
+              "metadata": { "traceId": "test", "tags": [1, 2, 3] },
+              "value": 42
+            }
+            """;
+
+        var result = JsonSerializer.Deserialize<Result<int>>(json);
+
+        Assert.NotNull(result);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(42, result.Value);
+    }
+
+    [Fact]
+    public void JsonDeserialization_HonorsCaseInsensitiveOption()
+    {
+        const string json = """{"ERRORS":[],"VALUE":42}""";
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        var result = JsonSerializer.Deserialize<Result<int>>(json, options);
+
+        Assert.NotNull(result);
+        Assert.Equal(42, result.Value);
+    }
 }
 
 public sealed class ResultOfValueAndErrorTests

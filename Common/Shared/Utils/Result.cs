@@ -217,16 +217,13 @@ public sealed class ResultConverter : JsonConverter<Result>
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        using var document = JsonDocument.ParseValue(ref reader);
-        var root = ResultJsonSerialization.GetObjectRoot(document);
-        var hasValue = ResultJsonSerialization.TryGetProperty(root, "value", options, out var value);
-        var errors = ResultJsonSerialization.ReadErrors<Error>(root, options);
+        var envelope = ResultJsonSerialization.Read<object?, Error>(
+            ref reader,
+            options,
+            acceptsValue: false);
 
-        if (hasValue && value.ValueKind != JsonValueKind.Null)
-            throw new JsonException("A result without a return value cannot contain a value.");
-
-        return errors.Count > 0
-            ? Result.Failure(errors)
+        return envelope.Errors.Count > 0
+            ? Result.Failure(envelope.Errors)
             : Result.Success();
     }
 
@@ -249,28 +246,23 @@ public sealed class ResultConverter<TValue> : JsonConverter<Result<TValue>>
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        using var document = JsonDocument.ParseValue(ref reader);
-        var root = ResultJsonSerialization.GetObjectRoot(document);
-        var hasValue = ResultJsonSerialization.TryGetProperty(
-            root,
-            "value",
+        var envelope = ResultJsonSerialization.Read<TValue, Error>(
+            ref reader,
             options,
-            out var valueProperty);
-        var errors = ResultJsonSerialization.ReadErrors<Error>(root, options);
+            acceptsValue: true);
 
-        if (errors.Count > 0)
+        if (envelope.Errors.Count > 0)
         {
-            if (hasValue && valueProperty.ValueKind != JsonValueKind.Null)
+            if (envelope.HasValue && !envelope.ValueIsNull)
                 throw new JsonException("A failed result cannot contain a value.");
 
-            return Result<TValue>.Failure(errors);
+            return Result<TValue>.Failure(envelope.Errors);
         }
 
-        if (!hasValue)
+        if (!envelope.HasValue)
             throw new JsonException("A successful result must contain a value.");
 
-        var value = valueProperty.Deserialize<TValue>(options);
-        return Result<TValue>.Success(value!);
+        return Result<TValue>.Success(envelope.Value!);
     }
 
     public override void Write(
@@ -295,28 +287,23 @@ public sealed class ResultConverter<TValue, TError> : JsonConverter<Result<TValu
         Type typeToConvert,
         JsonSerializerOptions options)
     {
-        using var document = JsonDocument.ParseValue(ref reader);
-        var root = ResultJsonSerialization.GetObjectRoot(document);
-        var hasValue = ResultJsonSerialization.TryGetProperty(
-            root,
-            "value",
+        var envelope = ResultJsonSerialization.Read<TValue, TError>(
+            ref reader,
             options,
-            out var valueProperty);
-        var errors = ResultJsonSerialization.ReadErrors<TError>(root, options);
+            acceptsValue: true);
 
-        if (errors.Count > 0)
+        if (envelope.Errors.Count > 0)
         {
-            if (hasValue && valueProperty.ValueKind != JsonValueKind.Null)
+            if (envelope.HasValue && !envelope.ValueIsNull)
                 throw new JsonException("A failed result cannot contain a value.");
 
-            return Result<TValue, TError>.Failure(errors);
+            return Result<TValue, TError>.Failure(envelope.Errors);
         }
 
-        if (!hasValue)
+        if (!envelope.HasValue)
             throw new JsonException("A successful result must contain a value.");
 
-        var value = valueProperty.Deserialize<TValue>(options);
-        return Result<TValue, TError>.Success(value!);
+        return Result<TValue, TError>.Success(envelope.Value!);
     }
 
     public override void Write(
@@ -335,59 +322,116 @@ public sealed class ResultConverter<TValue, TError> : JsonConverter<Result<TValu
 
 internal static class ResultJsonSerialization
 {
-    internal static JsonElement GetObjectRoot(JsonDocument document)
+    internal static ResultJsonEnvelope<TValue, TError> Read<TValue, TError>(
+        ref Utf8JsonReader reader,
+        JsonSerializerOptions options,
+        bool acceptsValue)
+        where TError : class, IResultError
     {
-        var root = document.RootElement;
-        if (root.ValueKind != JsonValueKind.Object)
+        if (reader.TokenType != JsonTokenType.StartObject)
             throw new JsonException("A result must be represented by a JSON object.");
 
-        return root;
-    }
+        var hasValue = false;
+        var valueIsNull = false;
+        TValue? value = default;
+        var hasErrors = false;
+        IReadOnlyList<TError> errors = Array.Empty<TError>();
+        var reachedEnd = false;
 
-    internal static bool TryGetProperty(
-        JsonElement root,
-        string propertyName,
-        JsonSerializerOptions options,
-        out JsonElement value)
-    {
-        if (root.TryGetProperty(propertyName, out value))
-            return true;
-
-        if (options.PropertyNameCaseInsensitive)
+        while (reader.Read())
         {
-            foreach (var property in root.EnumerateObject())
+            if (reader.TokenType == JsonTokenType.EndObject)
             {
-                if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
-                {
-                    value = property.Value;
-                    return true;
-                }
+                reachedEnd = true;
+                break;
             }
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                throw new JsonException("A result can contain only JSON properties.");
+
+            var property = GetProperty(ref reader, options);
+
+            if (!reader.Read())
+                throw new JsonException("A result property must contain a value.");
+
+            if (property == ResultProperty.Value)
+            {
+                if (hasValue)
+                    throw new JsonException("The value property cannot occur more than once.");
+
+                hasValue = true;
+                valueIsNull = reader.TokenType == JsonTokenType.Null;
+
+                if (!acceptsValue && !valueIsNull)
+                    throw new JsonException("A result without a return value cannot contain a value.");
+
+                if (acceptsValue && !valueIsNull)
+                    value = JsonSerializer.Deserialize<TValue>(ref reader, options);
+
+                continue;
+            }
+
+            if (property == ResultProperty.Errors)
+            {
+                if (hasErrors)
+                    throw new JsonException("The errors property cannot occur more than once.");
+
+                hasErrors = true;
+                errors = ReadErrors<TError>(ref reader, options);
+                continue;
+            }
+
+            reader.Skip();
         }
 
-        value = default;
-        return false;
+        if (!reachedEnd)
+            throw new JsonException("The result JSON object is incomplete.");
+
+        return new ResultJsonEnvelope<TValue, TError>(
+            hasValue,
+            valueIsNull,
+            value,
+            errors);
     }
 
-    internal static IReadOnlyList<TError> ReadErrors<TError>(
-        JsonElement root,
+    private static IReadOnlyList<TError> ReadErrors<TError>(
+        ref Utf8JsonReader reader,
         JsonSerializerOptions options)
         where TError : class, IResultError
     {
-        if (!TryGetProperty(root, "errors", options, out var errorsProperty) ||
-            errorsProperty.ValueKind == JsonValueKind.Null)
-        {
+        if (reader.TokenType == JsonTokenType.Null)
             return Array.Empty<TError>();
-        }
 
-        if (errorsProperty.ValueKind != JsonValueKind.Array)
+        if (reader.TokenType != JsonTokenType.StartArray)
             throw new JsonException("The errors property must be an array.");
 
-        var errors = errorsProperty.Deserialize<List<TError>>(options);
+        var errors = JsonSerializer.Deserialize<List<TError>>(ref reader, options);
         if (errors is null || errors.Any(error => error is null))
             throw new JsonException("The errors property cannot contain null errors.");
 
         return errors;
+    }
+
+    private static ResultProperty GetProperty(
+        ref Utf8JsonReader reader,
+        JsonSerializerOptions options)
+    {
+        if (reader.ValueTextEquals("value"u8))
+            return ResultProperty.Value;
+
+        if (reader.ValueTextEquals("errors"u8))
+            return ResultProperty.Errors;
+
+        if (!options.PropertyNameCaseInsensitive)
+            return ResultProperty.Unknown;
+
+        var propertyName = reader.GetString();
+        if (string.Equals(propertyName, "value", StringComparison.OrdinalIgnoreCase))
+            return ResultProperty.Value;
+
+        return string.Equals(propertyName, "errors", StringComparison.OrdinalIgnoreCase)
+            ? ResultProperty.Errors
+            : ResultProperty.Unknown;
     }
 
     internal static void Write<TValue, TError>(
@@ -411,4 +455,18 @@ internal static class ResultJsonSerialization
 
         writer.WriteEndObject();
     }
+
+    private enum ResultProperty
+    {
+        Unknown,
+        Value,
+        Errors
+    }
 }
+
+internal readonly record struct ResultJsonEnvelope<TValue, TError>(
+    bool HasValue,
+    bool ValueIsNull,
+    TValue? Value,
+    IReadOnlyList<TError> Errors)
+    where TError : class, IResultError;
