@@ -1,4 +1,5 @@
 ﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Events;
 using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using Authentication.Service.Service;
@@ -128,6 +129,7 @@ public class AuthenticationTest
     {
         // Arrange
         var userList = new List<AppUser>();
+        var eventList = new List<AuthEvent>();
         var users = userList.BuildMockDbSet();
         _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
 
@@ -146,6 +148,10 @@ public class AuthenticationTest
                 {
                     userList.Add(user);
                 }
+                else if (entity is AuthEvent authEvent)
+                {
+                    eventList.Add(authEvent);
+                }
             });
 
         _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
@@ -159,6 +165,10 @@ public class AuthenticationTest
         _repoMock.Verify(x => x.SaveChangesAsync(), Times.AtLeastOnce);
         Assert.Single(userList);
         Assert.Equal("newuser", userList[0].Login);
+        var authEvent = Assert.Single(eventList);
+        Assert.Equal(nameof(ProfileRegisterEvent), authEvent.EventType);
+        Assert.Contains("\"Name\":\"test\"", authEvent.EventData);
+        Assert.Contains("\"UserName\":\"newuser\"", authEvent.EventData);
     }
 
     [Fact]

@@ -110,22 +110,15 @@ internal class DefaultAuthService : IAuthService
         };
         _context.Add(user);
 
-        var profileCreateModel = new ProfileRegisterEvent
+        var userRegisteredEvent = new ProfileRegisterEvent
         (
             registerModel.UserName,
+            user.Login,
             userId,
             createdAt
         );
 
-        var userCreateEvent = new UserCreateEvent
-        {
-            UserId = userId,
-            CreatedAt = createdAt,
-            UserName = user.Login
-        };
-
-        _context.Add(AuthEvent.Create(userCreateEvent));
-        _context.Add(AuthEvent.Create(profileCreateModel));
+        _context.Add(AuthEvent.Create(userRegisteredEvent));
         await _context.SaveChangesAsync();
         return Result.Success();
     }

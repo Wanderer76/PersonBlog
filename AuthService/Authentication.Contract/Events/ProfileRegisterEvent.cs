@@ -6,16 +6,23 @@ namespace Authentication.Contract.Events
     public class ProfileRegisterEvent
     {
         public string? Name { get; set; }
-        //public DateTimeOffset? Birthdate { get; set; }
+        public string UserName { get; set; }
         public Guid UserId { get; set; }
-        //public string Email { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
+        public string? PhotoUrl { get; set; }
 
-        public ProfileRegisterEvent(string? name, Guid userId, DateTimeOffset createdAt)
+        public ProfileRegisterEvent(
+            string? name,
+            string userName,
+            Guid userId,
+            DateTimeOffset createdAt,
+            string? photoUrl = null)
         {
             Name = name;
+            UserName = userName;
             UserId = userId;
             CreatedAt = createdAt;
+            PhotoUrl = photoUrl;
         }
     }
 }

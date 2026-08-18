@@ -24,7 +24,7 @@ builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddProfileHttpClient(builder.Configuration);
 builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
-    .AddSubscription<UserCreateEvent, UserCreateEventHandler>(cfg =>
+    .AddSubscription<ProfileRegisterEvent, UserCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "comment-userprofile-create";
     });
