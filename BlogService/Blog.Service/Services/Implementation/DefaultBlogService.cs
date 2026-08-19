@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Events;
+using Blog.Contracts.Events;
 using Blog.Contracts.Models.Blog;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
@@ -69,16 +69,23 @@ internal sealed class DefaultBlogService : IBlogService
 
     public async Task<Result> DeleteBlogAsync(Guid id)
     {
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
         var blog = await _context.Get<PersonBlog>()
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (blog == null)
         {
-            return Result.Failure(nameof(id), "Blog doesn't exists");
+            return Result.Failure(new Error("NotFound", "Блог не найден"));
+        }
+
+        if (blog.UserId != currentUser.UserId)
+        {
+            return Result.Failure(new Error("Forbidden", "Блог не принадлежит текущему пользователю"));
         }
 
         _context.Remove(blog);
         await _context.SaveChangesAsync();
+        await RemoveBlogCacheAsync(blog);
         return Result.Success();
     }
 
@@ -109,9 +116,66 @@ internal sealed class DefaultBlogService : IBlogService
         return await blog.ToBlogModel(storage);
     }
 
-    public Task<BlogModel> UpdateBlogAsync(BlogEditRequest model)
+    public async Task<Result<BlogModel>> UpdateBlogAsync(BlogEditRequest model)
     {
-        throw new NotImplementedException();
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
+        var blog = await _context.Get<PersonBlog>()
+            .FirstOrDefaultAsync(x => x.Id == model.Id);
+
+        if (blog == null)
+        {
+            return Result<BlogModel>.Failure(new Error("NotFound", "Блог не найден"));
+        }
+
+        if (blog.UserId != currentUser.UserId)
+        {
+            return Result<BlogModel>.Failure(new Error("Forbidden", "Блог не принадлежит текущему пользователю"));
+        }
+
+        using var storage = _fileStorageFactory.CreateFileStorage();
+        var previousPhoto = blog.PhotoUrl;
+        string? newPhoto = null;
+
+        if (model.PhotoUrl is { Length: > 0 })
+        {
+            var extension = Path.GetExtension(model.PhotoUrl.FileName);
+            var objectName = $"{GuidService.GetNewGuid()}{extension}";
+            newPhoto = await storage.PutFileAsync(blog.Id, objectName, model.PhotoUrl.OpenReadStream());
+        }
+
+        _context.Attach(blog);
+        var updateResult = blog.Update(model.Title, model.Description, newPhoto ?? previousPhoto);
+        if (updateResult.IsFailure)
+        {
+            if (newPhoto != null)
+            {
+                await storage.RemoveFileAsync(blog.Id, newPhoto);
+            }
+
+            return Result<BlogModel>.Failure(updateResult.Errors);
+        }
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            if (newPhoto != null)
+            {
+                await storage.RemoveFileAsync(blog.Id, newPhoto);
+            }
+
+            throw;
+        }
+
+        if (newPhoto != null && previousPhoto != null && previousPhoto != newPhoto)
+        {
+            await storage.RemoveFileAsync(blog.Id, previousPhoto);
+        }
+
+        await RemoveBlogCacheAsync(blog);
+        return await blog.ToBlogModel(storage);
     }
 
     public async Task<BlogUserInfoViewModel> GetBlogByPostIdAsync(Guid id, Guid? userId)
@@ -135,6 +199,12 @@ internal sealed class DefaultBlogService : IBlogService
         var isBlogAlreadyExists = await _context.Get<PersonBlog>()
             .AnyAsync(x => x.UserId == userId);
         return isBlogAlreadyExists;
+    }
+
+    private async Task RemoveBlogCacheAsync(PersonBlog blog)
+    {
+        await _cacheService.RemoveCachedDataAsync(new BlogByIdCacheKey(blog.Id));
+        await _cacheService.RemoveCachedDataAsync(new BlogByUserIdCacheKey(blog.UserId));
     }
 }
 

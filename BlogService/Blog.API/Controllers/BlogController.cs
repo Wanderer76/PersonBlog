@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Blog.API.Models;
 using Infrastructure.Middleware;
@@ -34,6 +34,24 @@ public sealed class BlogController(
         }
     }
 
+    [HttpPut("{blogId:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<BlogModel>> UpdateBlog(Guid blogId, [FromForm] BlogEditRequest request)
+    {
+        request.Id = blogId;
+        var result = await blogService.UpdateBlogAsync(request);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        if (result.Errors.Any(error => error.Key == "NotFound"))
+            return NotFound(result.Errors);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return BadRequest(result.Errors);
+    }
+
     [HttpGet("hasBlog/{userId:guid}")]
     [Produces<bool>]
     public async Task<ActionResult<bool>> GetBlogDetail(Guid userId)
@@ -61,19 +79,80 @@ public sealed class BlogController(
     }
 
     [HttpGet("subscriptionLevelCreate")]
+    [HttpGet("subscription-levels")]
     [AuthFilter(Roles.Blogger)]
     public async Task<IActionResult> CreateSubscriptionLevel()
     {
         var result = await subscriptionLevelService.GetAllSubscriptionsAsync();
-        return Ok(new { SubscriptionLevels = result });
+        return Ok(result);
     }
 
     [HttpPost("subscriptionLevelCreate")]
+    [HttpPost("subscription-levels")]
     [AuthFilter(Roles.Blogger)]
     public async Task<ActionResult<SubscriptionLevelModel>> CreateSubscriptionLevel([FromBody] SubscriptionCreateDto form)
     {
         var result = await subscriptionLevelService.CreateSubscriptionAsync(form);
-        return Ok(result);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        if (result.Errors.Any(error => error.Key == "NotFound"))
+            return NotFound(result.Errors);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return BadRequest(result.Errors);
+    }
+
+    [HttpGet("subscription-levels/blog/{blogId:guid}")]
+    public async Task<ActionResult<IEnumerable<SubscriptionLevelModel>>> GetSubscriptionLevelsByBlog(Guid blogId)
+    {
+        return Ok(await subscriptionLevelService.GetAllSubscriptionsByBlogIdAsync(blogId));
+    }
+
+    [HttpGet("subscription-levels/{id:guid}")]
+    public async Task<ActionResult<SubscriptionLevelModel>> GetSubscriptionLevel(Guid id)
+    {
+        var result = await subscriptionLevelService.GetSubscriptionByIdAsync(id);
+        return result.IsSuccess ? Ok(result.Value) : NotFound(result.Errors);
+    }
+
+    [HttpPut("subscription-levels/{id:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<SubscriptionLevelModel>> UpdateSubscriptionLevel(
+        Guid id,
+        [FromBody] SubscriptionUpdateDto form)
+    {
+        form.Id = id;
+        var result = await subscriptionLevelService.UpdateSubscriptionAsync(form);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        if (result.Errors.Any(error => error.Key == "NotFound"))
+            return NotFound(result.Errors);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return BadRequest(result.Errors);
+    }
+
+    [HttpDelete("subscription-levels/{id:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<IActionResult> DeleteSubscriptionLevel(Guid id)
+    {
+        var result = await subscriptionLevelService.DeleteSubscriptionAsync(id);
+        if (result.IsSuccess)
+            return NoContent();
+
+        if (result.Errors.Any(error => error.Key == "NotFound"))
+            return NotFound(result.Errors);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return BadRequest(result.Errors);
     }
 
     [HttpGet("blogByPost/{postId:guid}")]
