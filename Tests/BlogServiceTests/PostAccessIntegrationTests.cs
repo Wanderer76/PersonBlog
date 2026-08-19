@@ -209,6 +209,7 @@ public sealed class PostAccessIntegrationTests
         public Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input) => Task.FromResult(objectName);
         public Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task RemoveFileAsync(Guid bucketId, string objectName) => Task.CompletedTask;
+        public Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task RemoveBucketAsync(string bucketId) => Task.CompletedTask;
         public Task CreateTempBucketAsync(Guid bucketId) => Task.CompletedTask;
         public Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options) => Task.FromResult(id.ToString());

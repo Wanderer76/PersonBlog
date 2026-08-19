@@ -227,6 +227,7 @@ public sealed class BlogManagementIntegrationTests
             RemovedObjects.Add(objectName);
             return Task.CompletedTask;
         }
+        public Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task RemoveBucketAsync(string bucketId) => Task.CompletedTask;
         public Task CreateTempBucketAsync(Guid bucketId) => Task.CompletedTask;

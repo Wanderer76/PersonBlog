@@ -14,6 +14,7 @@ using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
 using Profile.Domain.Events;
 using Shared.Models;
 using Shared.Persistence;
@@ -310,6 +311,73 @@ public sealed class BlogFeatureIntegrationTests
         Assert.Equal(0, await ignored.PublishPendingAsync());
     }
 
+    [Fact]
+    public async Task Expired_deleted_post_files_are_removed_by_prefix_from_blog_bucket()
+    {
+        await using var context = await CreateContextAsync();
+        var post = CreateVideoPost(PostVisibility.Public, ProcessState.Complete);
+        post.Delete();
+        context.AddRange(
+            CreateBlog(),
+            post,
+            new PostRemoveEvent(post.Id, DateTimeOffset.UtcNow.AddDays(-3)));
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var storage = new TrackingFileStorage();
+        var cleanup = CreateCleanupService(context, storage);
+
+        var count = await cleanup.CleanupExpiredAsync(DateTimeOffset.UtcNow.AddDays(-2));
+
+        Assert.Equal(1, count);
+        Assert.Contains((BlogId, $"{post.Id}/"), storage.RemovedPrefixes);
+        context.ChangeTracker.Clear();
+        Assert.Empty(await context.PostRemoveEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Recent_deleted_post_is_kept_until_retention_period_expires()
+    {
+        await using var context = await CreateContextAsync();
+        var post = CreateVideoPost(PostVisibility.Public, ProcessState.Complete);
+        post.Delete();
+        context.AddRange(CreateBlog(), post, new PostRemoveEvent(post.Id, DateTimeOffset.UtcNow));
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var storage = new TrackingFileStorage();
+
+        var count = await CreateCleanupService(context, storage)
+            .CleanupExpiredAsync(DateTimeOffset.UtcNow.AddDays(-2));
+
+        Assert.Equal(0, count);
+        Assert.Empty(storage.RemovedPrefixes);
+        Assert.Single(await context.PostRemoveEvents.ToListAsync());
+    }
+
+    [Fact]
+    public async Task Storage_failure_keeps_cleanup_event_for_retry()
+    {
+        await using var context = await CreateContextAsync();
+        var post = CreateVideoPost(PostVisibility.Public, ProcessState.Complete);
+        post.Delete();
+        context.AddRange(
+            CreateBlog(),
+            post,
+            new PostRemoveEvent(post.Id, DateTimeOffset.UtcNow.AddDays(-3)));
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var storage = new TrackingFileStorage { FailPrefixRemoval = true };
+        var cleanup = CreateCleanupService(context, storage);
+
+        Assert.Equal(0, await cleanup.CleanupExpiredAsync(DateTimeOffset.UtcNow.AddDays(-2)));
+        Assert.Single(await context.PostRemoveEvents.ToListAsync());
+
+        context.ChangeTracker.Clear();
+        storage.FailPrefixRemoval = false;
+        Assert.Equal(1, await cleanup.CleanupExpiredAsync(DateTimeOffset.UtcNow.AddDays(-2)));
+        context.ChangeTracker.Clear();
+        Assert.Empty(await context.PostRemoveEvents.ToListAsync());
+    }
+
     private static DefaultProfilePostV2Service CreateProfileService(
         BlogDbContext context,
         UserModel user,
@@ -330,6 +398,9 @@ public sealed class BlogFeatureIntegrationTests
 
     private static DefaultVideoService CreateVideoService(BlogDbContext context, ICurrentUserService currentUser) =>
         new(CreateRepository(context), new TrackingCacheService(), new StubFileStorageFactory(new TrackingFileStorage()), currentUser);
+
+    private static PostFileCleanupService CreateCleanupService(BlogDbContext context, TrackingFileStorage storage) =>
+        new(CreateRepository(context), new StubFileStorageFactory(storage), NullLogger<PostFileCleanupService>.Instance);
 
     private static async Task<BlogDbContext> CreateContextAsync()
     {
@@ -409,6 +480,8 @@ public sealed class BlogFeatureIntegrationTests
     {
         public List<string> UploadedObjects { get; } = [];
         public List<string> RemovedObjects { get; } = [];
+        public List<(Guid BucketId, string Prefix)> RemovedPrefixes { get; } = [];
+        public bool FailPrefixRemoval { get; set; }
         public void Dispose() { }
         public Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input)
         {
@@ -419,6 +492,14 @@ public sealed class BlogFeatureIntegrationTests
         public Task RemoveFileAsync(Guid bucketId, string objectName)
         {
             RemovedObjects.Add(objectName);
+            return Task.CompletedTask;
+        }
+        public Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default)
+        {
+            if (FailPrefixRemoval)
+                throw new InvalidOperationException("storage unavailable");
+
+            RemovedPrefixes.Add((bucketId, prefix));
             return Task.CompletedTask;
         }
         public Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default) => Task.CompletedTask;

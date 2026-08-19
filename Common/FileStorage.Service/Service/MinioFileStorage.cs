@@ -1,4 +1,4 @@
-﻿using FileStorage.Service.Models;
+using FileStorage.Service.Models;
 using Infrastructure.Services;
 using Microsoft.Extensions.Options;
 using Minio;
@@ -42,6 +42,24 @@ internal class MinioFileStorage : IFileStorage
         await _client.RemoveObjectAsync(new RemoveObjectArgs()
             .WithBucket(bucketId.ToString())
             .WithObject(objectName));
+    }
+
+    public async Task RemoveFilesByPrefixAsync(
+        Guid bucketId,
+        string prefix,
+        CancellationToken cancellationToken = default)
+    {
+        var objects = _client.ListObjectsEnumAsync(new ListObjectsArgs()
+            .WithBucket(bucketId.ToString())
+            .WithPrefix(prefix)
+            .WithRecursive(true), cancellationToken);
+
+        await foreach (var item in objects.WithCancellation(cancellationToken))
+        {
+            await _client.RemoveObjectAsync(new RemoveObjectArgs()
+                .WithBucket(bucketId.ToString())
+                .WithObject(item.Key), cancellationToken);
+        }
     }
 
     private string GeFileNameFromId(Guid fileId, VideoResolution videoResolution)

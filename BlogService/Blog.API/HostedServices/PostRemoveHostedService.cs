@@ -1,55 +1,24 @@
-﻿
-using Blog.Domain.Entities;
-using Infrastructure.Services;
-using Microsoft.EntityFrameworkCore;
-using Shared.Persistence;
+
+using Blog.Service.Services.Implementation;
 using Shared.Services;
 
 namespace Blog.API.HostedServices
 {
-    public class PostRemoveHostedService : IHostedService
+    public sealed class PostRemoveHostedService(IServiceProvider serviceProvider) : BackgroundService
     {
-        private readonly IFileStorageFactory _fileStorageFactory;
-        private readonly IServiceProvider _serviceProvider;
-
-        public PostRemoveHostedService(IServiceProvider serviceProvider, IFileStorageFactory fileStorageFactory)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _serviceProvider = serviceProvider;
-            _fileStorageFactory = fileStorageFactory;
-        }
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            //_ = HandlePostRemove(cancellationToken);
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        private async Task HandlePostRemove(CancellationToken cancellationToken)
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var repository = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
-
-            while (!cancellationToken.IsCancellationRequested)
+            while (!stoppingToken.IsCancellationRequested)
             {
-                var date = DateTimeService.Now().AddDays(-2);
-
-                var posts  = await repository.Get<PostRemoveEvent>()
-                    .Where(x => x.DeletedAt <= date)
-                    .Take(10)
-                    .ToListAsync();
-                using var storage = _fileStorageFactory.CreateFileStorage();
-                foreach (var post in posts)
+                using (var scope = serviceProvider.CreateScope())
                 {
-                    await storage.RemoveBucketAsync(post.Id.ToString());
-                    repository.Remove(post);
+                    var cleanupService = scope.ServiceProvider.GetRequiredService<PostFileCleanupService>();
+                    await cleanupService.CleanupExpiredAsync(
+                        DateTimeService.Now().AddDays(-2),
+                        stoppingToken);
                 }
-                await repository.SaveChangesAsync();
-                await Task.Delay(3000);
+
+                await Task.Delay(TimeSpan.FromSeconds(3), stoppingToken);
             }
         }
     }

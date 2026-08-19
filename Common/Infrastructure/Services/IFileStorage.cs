@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public interface IFileStorage : IDisposable
 {
@@ -6,6 +6,7 @@ public interface IFileStorage : IDisposable
     Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default);
     Task<string> GetFileUrlAsync(Guid bucketId, string objectName);
     Task RemoveFileAsync(Guid bucketId, string objectName);
+    Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default);
     Task RemoveBucketAsync(string bucketId);
     Task CreateTempBucketAsync(Guid bucketId);
     Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options);
