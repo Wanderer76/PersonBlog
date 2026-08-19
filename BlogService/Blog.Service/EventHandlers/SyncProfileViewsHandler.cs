@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Events;
+using Blog.Contracts.Events;
 using Blog.Contracts.Models;
 using Blog.Domain.Entities;
 using Infrastructure.Services;
@@ -33,7 +33,9 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
 
         var existView = await _context.Get<PostViewer>()
             .Where(x => x.PostId == post.Id)
-            .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
+            .Where(x => userId.HasValue
+                ? x.UserId == userId
+                : x.UserId == null && x.UserIpAddress == ipAddress)
             .FirstOrDefaultAsync();
 
         _context.Attach(post);
@@ -49,7 +51,7 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
                 Id = GuidService.GetNewGuid(),
                 PostId = @event.Message.PostId,
                 UserId = userId,
-                UserIpAddress = ipAddress ?? string.Empty,
+                UserIpAddress = ipAddress,
                 IsViewed = @event.Message.IsViewed,
             };
             _context.Add(existView);
@@ -62,7 +64,7 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
             }
             _context.Attach(existView);
             existView.UserId = userId;
-            existView.UserIpAddress = ipAddress ?? string.Empty;
+            existView.UserIpAddress = ipAddress;
             existView.IsViewed = @event.Message.IsViewed;
         }
         await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
@@ -111,7 +113,7 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
                 PostId = @event.Message.PostId,
                 IsLike = @event.Message.IsLike,
                 UserId = userId,
-                UserIpAddress = remoteIp ?? string.Empty
+                UserIpAddress = remoteIp
             };
             _context.Add(existView);
         }
@@ -141,7 +143,7 @@ public sealed class SyncProfileViewsHandler : IEventHandler<UserViewedSyncEvent>
             _context.Attach(existView);
             existView.IsLike = @event.Message.IsLike;
             existView.UserId = userId;
-            existView.UserIpAddress = remoteIp ?? string.Empty;
+            existView.UserIpAddress = remoteIp;
         }
         await _context.SaveChangesAsync();
         await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));

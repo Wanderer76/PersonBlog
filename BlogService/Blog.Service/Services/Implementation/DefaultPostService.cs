@@ -199,7 +199,9 @@ internal class DefaultPostService : IPostService
 
         var existView = await _context.Get<PostViewer>()
             .Where(x => x.PostId == post.Id)
-            .Where(x => x.UserId == userId || x.UserIpAddress == ipAddress)
+            .Where(x => userId.HasValue
+                ? x.UserId == userId
+                : x.UserId == null && x.UserIpAddress == ipAddress)
             .FirstOrDefaultAsync();
 
         _context.Attach(post);
@@ -222,7 +224,8 @@ internal class DefaultPostService : IPostService
                 PostId = @event.PostId,
                 IsLike = @event.IsLike,
                 UserId = userId,
-                UserIpAddress = ipAddress!,
+                UserIpAddress = ipAddress,
+                CreatedAt = DateTimeService.Now(),
             };
             _context.Add(existView);
         }
@@ -256,10 +259,11 @@ internal class DefaultPostService : IPostService
             _context.Attach(existView);
             existView.IsLike = @event.IsLike == existView.IsLike ? null : @event.IsLike;
             existView.UserId = userId;
-            existView.UserIpAddress = ipAddress!;
+            existView.UserIpAddress = ipAddress;
         }
 
         await _context.SaveChangesAsync();
+        await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(post.Id));
     }
 
     public IEnumerable<SelectItem<PostVisibility>> GetPostVisibilityList()

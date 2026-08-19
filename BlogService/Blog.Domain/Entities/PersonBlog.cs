@@ -69,4 +69,8 @@ public class PersonBlog : IBlogEntity
         PhotoUrl = photoUrl;
         return Result.Success();
     }
+
+    public void AddSubscriber() => SubscriptionsCount++;
+
+    public void RemoveSubscriber() => SubscriptionsCount = Math.Max(SubscriptionsCount - 1, 0);
 }

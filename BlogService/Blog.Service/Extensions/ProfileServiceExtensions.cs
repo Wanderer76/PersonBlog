@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Services;
+using Blog.Contracts.Services;
 using Blog.Service.Services.Implementation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +16,7 @@ namespace Blog.Service.Extensions
             //services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
             services.AddScoped<ISubscriptionLevelService, DefaultSubscriptionLevelService>();
             services.AddScoped<ICategoryService, DefaultCategoryService>();
+            services.AddScoped<OutboxPublisher>();
         }
     }
 }
