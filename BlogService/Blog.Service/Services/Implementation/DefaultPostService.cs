@@ -1,4 +1,4 @@
-﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Constants;
 using Blog.Contracts.Events;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.File;
@@ -116,15 +116,32 @@ internal class DefaultPostService : IPostService
 
     public async Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId)
     {
-        var isBanned = await _context.Get<Post>()
+        var accessInfo = await _context.Get<Post>()
             .Where(x => x.Id == postId)
-            .Select(x => new { x.BanMessageId, x.BlogId })
-            .FirstAsync();
+            .Select(x => new
+            {
+                x.BanMessageId,
+                x.IsDelete,
+                x.Visibility,
+                OwnerUserId = x.Blog.UserId
+            })
+            .FirstOrDefaultAsync();
+
+        if (accessInfo == null || accessInfo.IsDelete)
+        {
+            return null;
+        }
 
         var currentUser = await _userService.GetCurrentUserAsync();
+        var isOwner = !currentUser.IsAnonymous && currentUser.UserId == accessInfo.OwnerUserId;
+        var isModerator = currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any();
 
-        if ((isBanned.BanMessageId.HasValue && !currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any())
-            && !(currentUser.HasBlog && isBanned.BlogId == currentUser.BlogId))
+        if (accessInfo.Visibility == PostVisibility.Private && !isOwner)
+        {
+            return null;
+        }
+
+        if (accessInfo.BanMessageId.HasValue && !isOwner && !isModerator)
         {
             return null;
         }
@@ -139,14 +156,6 @@ internal class DefaultPostService : IPostService
             .Include(x => x.Blog)
             .FirstAsync(x => x.Id == postId);
 
-            if (post.Visibility == PostVisibility.Private)
-            {
-                var session = await _userService.GetCurrentUserAsync();
-                if (session.UserId != post.Blog.UserId)
-                {
-                    throw new ArgumentException();
-                }
-            }
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
             var previewUrl = !post.VideoPostInfo.PreviewId.HasValue

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -9,6 +9,10 @@
 
     <ItemGroup>
       <PackageReference Include="FFMpegCore" Version="5.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <InternalsVisibleTo Include="BlogServiceTests" />
     </ItemGroup>
 
     <ItemGroup>

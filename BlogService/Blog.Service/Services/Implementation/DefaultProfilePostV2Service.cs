@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Events;
+using Blog.Contracts.Events;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
@@ -90,11 +90,14 @@ internal sealed class DefaultProfilePostV2Service(
         var query = BuildBasePostQuery(requestedBlogId, postType);
 
         var user = await currentUserService.GetCurrentUserAsync();
-        var currentBlogId = user.BlogId;
+        var isOwner = user.HasBlog && requestedBlogId == user.BlogId;
 
-        if (requestedBlogId != currentBlogId)
+        if (!isOwner)
         {
-            query = query.Where(x => x.ProcessState == ProcessState.Complete);
+            query = query.Where(x =>
+                x.ProcessState == ProcessState.Complete
+                && x.Visibility == PostVisibility.Public
+                && !x.BanMessageId.HasValue);
         }
 
         var totalCount = await query.CountAsync();
