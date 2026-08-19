@@ -205,16 +205,16 @@ public sealed class PostAccessIntegrationTests
     private sealed class StubFileStorage : IFileStorage
     {
         public void Dispose() { }
-        public Task<string> GetFileUrlAsync(Guid bucketId, string objectName) => Task.FromResult(objectName);
-        public Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input) => Task.FromResult(objectName);
+        public Task<string> GetFileUrlAsync(Guid bucketId, string objectName, CancellationToken cancellationToken = default) => Task.FromResult(objectName);
+        public Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input, CancellationToken cancellationToken = default) => Task.FromResult(objectName);
         public Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task RemoveFileAsync(Guid bucketId, string objectName) => Task.CompletedTask;
+        public Task RemoveFileAsync(Guid bucketId, string objectName, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task RemoveBucketAsync(string bucketId) => Task.CompletedTask;
-        public Task CreateTempBucketAsync(Guid bucketId) => Task.CompletedTask;
-        public Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options) => Task.FromResult(id.ToString());
-        public Task<long> ReadFileByChunksAsync(Guid bucketId, string objectName, long offset, long length, Stream output) => Task.FromResult(0L);
-        public async IAsyncEnumerable<(string Objectname, IReadOnlyDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, ChunkUploadingInfo options)
+        public Task RemoveBucketAsync(Guid bucketId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task CreateTempBucketAsync(Guid bucketId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options, CancellationToken cancellationToken = default) => Task.FromResult(id.ToString());
+        public Task<long> ReadFileByChunksAsync(Guid bucketId, string objectName, long offset, long length, Stream output, CancellationToken cancellationToken = default) => Task.FromResult(0L);
+        public async IAsyncEnumerable<(string ObjectName, IReadOnlyDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, ChunkUploadingInfo options, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             await Task.CompletedTask;
             yield break;

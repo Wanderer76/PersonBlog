@@ -63,7 +63,7 @@ public class VideoConversionServiceTests : IDisposable
         var postId = Guid.NewGuid();
         var hasPreviewId = false;
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(string.Empty);
 
         // Act
@@ -83,7 +83,7 @@ public class VideoConversionServiceTests : IDisposable
         var postId = Guid.NewGuid();
         var hasPreviewId = false;
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string)null!);
 
         // Act
@@ -104,7 +104,7 @@ public class VideoConversionServiceTests : IDisposable
         var hasPreviewId = false;
         var testUrl = "https://test.com/video.mp4";
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(testUrl);
 
         _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
@@ -136,7 +136,7 @@ public class VideoConversionServiceTests : IDisposable
             BitRate: 32132132
             );
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(testUrl);
 
         _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
@@ -154,8 +154,12 @@ public class VideoConversionServiceTests : IDisposable
             .Returns(Task.CompletedTask);
 
         // Setup for file upload
-        _mockStorage.Setup(s => s.PutFileAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Stream>()))
-            .ReturnsAsync((Guid bucketId, string objectName, Stream stream) => objectName);
+        _mockStorage.Setup(s => s.PutFileAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid bucketId, string objectName, Stream stream, CancellationToken cancellationToken) => objectName);
 
         // Act
         var result = await _service.ProcessConversionAsync(command, postId, hasPreviewId);
@@ -188,7 +192,7 @@ public class VideoConversionServiceTests : IDisposable
             BitRate: 32132132
             );
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(testUrl);
 
         _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
@@ -215,8 +219,12 @@ public class VideoConversionServiceTests : IDisposable
             })
             .Returns(Task.CompletedTask);
 
-        _mockStorage.Setup(s => s.PutFileAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Stream>()))
-            .ReturnsAsync((Guid bucketId, string objectName, Stream stream) => objectName);
+        _mockStorage.Setup(s => s.PutFileAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid bucketId, string objectName, Stream stream, CancellationToken cancellationToken) => objectName);
 
         // Act
         var result = await _service.ProcessConversionAsync(command, postId, hasPreviewId);
@@ -241,7 +249,7 @@ public class VideoConversionServiceTests : IDisposable
         var testUrl = "https://test.com/video.mp4";
         var expectedError = "FFmpeg processing failed";
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(testUrl);
 
         _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
@@ -263,7 +271,7 @@ public class VideoConversionServiceTests : IDisposable
         var testUrl = "https://test.com/video.mp4";
         var videoStream = new VideoMediaInfo("h264", 1080, 1920, "video", 120.5, 3_000_000);
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(command.BlogId, command.ObjectName))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(command.BlogId, command.ObjectName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(testUrl);
         _mockFfmpegService.Setup(f => f.GetVideoMediaInfoAsync(testUrl))
             .ReturnsAsync(videoStream);
@@ -279,7 +287,11 @@ public class VideoConversionServiceTests : IDisposable
         Assert.Equal(ProcessState.Error, result.ProcessState);
         Assert.Contains("master HLS playlist", result.Error);
         _mockStorage.Verify(
-            x => x.PutFileAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<Stream>()),
+            x => x.PutFileAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<string>(),
+                It.IsAny<Stream>(),
+                It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -292,7 +304,7 @@ public class VideoConversionServiceTests : IDisposable
         var hasPreviewId = true;
         var expectedError = "Storage connection failed";
 
-        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>()))
+        _mockStorage.Setup(s => s.GetFileUrlAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException(expectedError));
 
         // Act
