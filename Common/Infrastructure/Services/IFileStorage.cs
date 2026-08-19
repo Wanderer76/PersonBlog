@@ -9,8 +9,14 @@ public interface IFileStorage : IDisposable
     Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default);
     Task RemoveBucketAsync(string bucketId);
     Task CreateTempBucketAsync(Guid bucketId);
+
+    [Obsolete($"Устаревший после {nameof(IMultipartFileUpload)}")]
     Task<string> PutFileChunkAsync(Guid bucketId, Guid id, Stream input, ChunkUploadingInfo options);
+
+    [Obsolete($"Устаревший после {nameof(IMultipartFileUpload)}")]
     Task<long> ReadFileByChunksAsync(Guid bucketId, string objectName, long offset, long length, Stream output);
+
+    [Obsolete($"Устаревший после {nameof(IMultipartFileUpload)}")]
     IAsyncEnumerable<(string Objectname, IReadOnlyDictionary<string, string> Headers)> GetAllBucketObjects(Guid bucketId, ChunkUploadingInfo options);
 }
 
