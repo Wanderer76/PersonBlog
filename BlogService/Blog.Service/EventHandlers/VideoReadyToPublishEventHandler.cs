@@ -51,40 +51,53 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
         if (fileMetadata == null || post == null)
             return;
 
-        _repository.Attach(fileMetadata);
-        _repository.Attach(post);
+        var alreadyProcessed = @event.Error != null
+            ? post.ProcessState == ProcessState.Error && fileMetadata.ErrorMessage == @event.Error
+            : post.ProcessState == ProcessState.Complete
+              && post.VideoPostInfo.VideoFileId == fileMetadata.Id
+              && fileMetadata.ObjectName == @event.ObjectName;
 
-        if (@event.Error != null)
+        if (!alreadyProcessed)
         {
-            fileMetadata.ErrorMessage = @event.Error;
-            post.ProcessState = ProcessState.Error;
-        }
-        else
-        {
-            if (@event.PreviewId != null)
+            _repository.Attach(fileMetadata);
+            _repository.Attach(post);
+
+            if (@event.Error != null)
             {
-                post.VideoPostInfo.PreviewId = @event.PreviewId;
+                fileMetadata.ErrorMessage = @event.Error;
+                post.ProcessState = ProcessState.Error;
             }
-            fileMetadata.ObjectName = @event.ObjectName;
-            fileMetadata.Duration = @event.Duration;
-            post.ProcessState = ProcessState.Complete;
-            post.VideoPostInfo.VideoFileId = fileMetadata.Id;
-            post.VideoPostInfo.VideoFile = fileMetadata;
-        }
-        post.MarkRecommendationChanged();
-        var postUpdateEvent = new PostUpdateEvent
-        {
-            BlogId = post.BlogId,
-            PostId = post.Id,
-            ViewCount = post.ViewCount,
-            CreatedAt = post.CreatedAt,
-            Description = post.VideoPostInfo.Description,
-            Title = post.Title,
-            UpdateType = UpdateType.Create
-        };
+            else
+            {
+                if (@event.PreviewId != null)
+                {
+                    post.VideoPostInfo.PreviewId = @event.PreviewId;
+                }
+                fileMetadata.ObjectName = @event.ObjectName;
+                fileMetadata.Duration = @event.Duration;
+                post.ProcessState = ProcessState.Complete;
+                post.VideoPostInfo.VideoFileId = fileMetadata.Id;
+                post.VideoPostInfo.VideoFile = fileMetadata;
+                post.MarkRecommendationChanged();
 
-        _repository.Add(VideoProcessEvent.Create(postUpdateEvent));
-        _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+                var postUpdateEvent = new PostUpdateEvent
+                {
+                    BlogId = post.BlogId,
+                    PostId = post.Id,
+                    ViewCount = post.ViewCount,
+                    CreatedAt = post.CreatedAt,
+                    Description = post.VideoPostInfo.Description,
+                    Title = post.Title,
+                    UpdateType = UpdateType.Create
+                };
+
+                _repository.Add(VideoProcessEvent.Create(postUpdateEvent));
+                _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+            }
+        }
+
+        // This also commits a preview queued by VideoProcessSagaHandler. Replayed
+        // responses reach this save without producing duplicate outbox messages.
         await _repository.SaveChangesAsync();
         await _cacheService.RemoveCachedDataAsync(new PostModelCacheKey(post.Id));
         await _cacheService.RemoveCachedDataAsync(new VideoMetadataCacheKey(post.Id));

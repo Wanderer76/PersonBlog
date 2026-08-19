@@ -285,6 +285,7 @@ namespace Blog.Persistence.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<int>("ProcessState")
+                        .IsConcurrencyToken()
                         .HasColumnType("integer");
 
                     b.Property<string>("Title")

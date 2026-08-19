@@ -16,7 +16,7 @@ public sealed class OutboxPublisherService(IServiceProvider serviceProvider, IMe
             var dbContext = scope.ServiceProvider.GetRequiredService<IReadWriteRepository<IBlogEntity>>();
 
             var messages = await dbContext.Get<VideoProcessEvent>()
-                .Where(m => m.State == EventState.Pending && m.RetryCount < 3)
+                .Where(m => m.State == EventState.Pending && m.RetryCount < VideoProcessEvent.MaxPublishAttempts)
                 .OrderBy(m => m.CreatedAt)
                 .Take(100)
                 .ToListAsync(stoppingToken);
@@ -33,15 +33,7 @@ public sealed class OutboxPublisherService(IServiceProvider serviceProvider, IMe
                 catch (Exception ex)
                 {
                     dbContext.Attach(message);
-                    if (message.RetryCount == 3)
-                    {
-                        message.SetErrorMessage(ex.Message);
-                    }
-                    else
-                    {
-                        message.RetryCount++;
-                        message.ResetEvent();
-                    }
+                    message.RegisterPublishFailure(ex.Message);
                     await dbContext.SaveChangesAsync();
                 }
             }

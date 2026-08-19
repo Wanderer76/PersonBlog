@@ -20,6 +20,7 @@ public sealed class Post : IBlogEntity, ISoftDelete
     public int DislikeCount { get; set; } = 0;
     public long RecommendationVersion { get; private set; } = 1;
     public PostVisibility Visibility { get; set; }
+    [ConcurrencyCheck]
     public ProcessState ProcessState { get; set; }
 
     public VideoPostInfo VideoPostInfo { get; set; }

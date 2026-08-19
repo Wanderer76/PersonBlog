@@ -218,7 +218,14 @@ internal sealed class DefaultVideoService : IVideoService
         {
             _context.Attach(post);
             post.ProcessState = ProcessState.Draft;
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Success();
+            }
             return Result.Success();
         }
 
@@ -237,7 +244,16 @@ internal sealed class DefaultVideoService : IVideoService
         var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
         post.ProcessState = ProcessState.Draft;
         _context.Add(videoEvent);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // A concurrent CompleteUpload request already moved the post out of
+            // Load and persisted its conversion command in the same unit of work.
+            return Result.Success();
+        }
         return Result.Success();
     }
 }
