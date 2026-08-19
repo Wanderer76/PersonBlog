@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FileStorage.Service;
 
-public sealed class DefaultFileStorageFactory(IServiceScopeFactory serviceScopeFactory) : IFileStorageFactory
+internal sealed class DefaultFileStorageFactory(IServiceScopeFactory serviceScopeFactory) : IFileStorageFactory
 {
     public IFileStorage CreateFileStorage()
     {
