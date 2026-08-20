@@ -26,3 +26,9 @@ public sealed record BlogPostCard(
     string Title,
     string? Description,
     string? PreviewObjectName);
+
+public enum RecommendationPostType
+{
+    Text,
+    Video
+}

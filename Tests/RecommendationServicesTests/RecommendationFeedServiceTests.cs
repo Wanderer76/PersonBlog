@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using Recommendation.Domain.Entities;
+using Recommendation.Domain.Enums;
 using Recommendation.Services.Abstractions;
 using Recommendation.Services.Models;
 using Recommendation.Services.Options;
@@ -28,6 +29,7 @@ public sealed class RecommendationFeedServiceTests
         Assert.Equal("preferred_category", response.Items[0].Reason);
         Assert.Equal(2, store.Impressions.Count);
         Assert.All(store.Impressions, x => Assert.Equal(response.RequestId, x.RequestId));
+        Assert.Equal(PostType.Video, store.LastPostType);
     }
 
     [Fact]
@@ -110,6 +112,26 @@ public sealed class RecommendationFeedServiceTests
                 null, "session", 1, tampered, null)));
     }
 
+    [Fact]
+    public async Task Cursor_CannotBeReusedForAnotherPostType()
+    {
+        var store = new FeedStore(Enumerable.Range(0, 3)
+            .Select(_ => Candidate(Guid.NewGuid(), Guid.NewGuid()))
+            .ToArray());
+        var service = CreateService(store);
+        var first = await service.GetFeedAsync(new RecommendationFeedRequest(
+            null, "session", 1, null, null));
+
+        await Assert.ThrowsAsync<InvalidRecommendationCursorException>(() =>
+            service.GetFeedAsync(new RecommendationFeedRequest(
+                null,
+                "session",
+                1,
+                first.NextCursor,
+                null,
+                PostType: PostType.Text)));
+    }
+
     private static HeuristicRecommendationFeedService CreateService(FeedStore store) => new(
         store,
         new TestClock(Now),
@@ -147,13 +169,19 @@ public sealed class RecommendationFeedServiceTests
         : IRecommendationFeedStore
     {
         public List<RecommendationImpression> Impressions { get; } = [];
+        public PostType? LastPostType { get; private set; }
 
         public Task<IReadOnlyList<RecommendationCandidateData>> LoadCandidatesAsync(
             Guid? userId,
             Guid? currentPostId,
+            PostType postType,
             int limit,
             DateTimeOffset seenSince,
-            CancellationToken cancellationToken = default) => Task.FromResult(candidates);
+            CancellationToken cancellationToken = default)
+        {
+            LastPostType = postType;
+            return Task.FromResult(candidates);
+        }
 
         public Task SaveImpressionsAsync(
             IReadOnlyCollection<RecommendationImpression> impressions,

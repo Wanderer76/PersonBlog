@@ -1,4 +1,5 @@
 using Gateway.API.Api;
+using Gateway.API.Models.Recommendation;
 using Gateway.API.Services;
 using System.Net;
 using System.Text;
@@ -54,6 +55,7 @@ public sealed class RecommendationFeedGatewayTests
             20,
             "previous+cursor=",
             firstPostId,
+            RecommendationPostType.Video,
             CancellationToken.None);
 
         Assert.Equal(requestId, result.RequestId);
@@ -74,6 +76,7 @@ public sealed class RecommendationFeedGatewayTests
                 Assert.Equal("Second", second.Title);
             });
         Assert.Contains("limit=20", recommendationRequestUri);
+        Assert.Contains("postType=Video", recommendationRequestUri);
         Assert.Contains("cursor=previous%2Bcursor%3D", recommendationRequestUri);
         Assert.Contains($"currentPostId={firstPostId}", recommendationRequestUri);
     }

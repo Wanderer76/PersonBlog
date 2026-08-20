@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Infrastructure.Services;
 using Recommendation.Application.Controllers;
 using Recommendation.Application.Services;
+using Recommendation.Domain.Enums;
 using Recommendation.Services.Abstractions;
 using Recommendation.Services.Models;
 using Shared.Models;
@@ -34,6 +35,7 @@ public sealed class RecommendationControllersTests
         Assert.Same(response, ok.Value);
         Assert.Equal(userId, feedService.LastRequest!.UserId);
         Assert.Null(feedService.LastRequest.AnonymousSessionId);
+        Assert.Equal(PostType.Video, feedService.LastRequest.PostType);
     }
 
     [Fact]
@@ -54,6 +56,23 @@ public sealed class RecommendationControllersTests
         Assert.IsType<OkObjectResult>(result.Result);
         Assert.Null(feedService.LastRequest!.UserId);
         Assert.Equal(sessionId, feedService.LastRequest.AnonymousSessionId);
+    }
+
+    [Fact]
+    public async Task FeedController_ForwardsRequestedPostType()
+    {
+        var feedService = new FeedService(new RecommendationFeedResponse(
+            Guid.NewGuid(), "heuristic-v1", [], null));
+        var controller = new FeedController(
+            feedService,
+            new SubjectResolver(new RecommendationSubject(Guid.NewGuid())))
+        {
+            ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+        };
+
+        await controller.GetFeed(postType: PostType.Text);
+
+        Assert.Equal(PostType.Text, feedService.LastRequest!.PostType);
     }
 
     [Fact]

@@ -132,13 +132,35 @@ public sealed class EfRecommendationEventStoreTests
         var store = new EfRecommendationFeedStore(repository);
 
         var candidates = await store.LoadCandidatesAsync(
-            userId, null, 20, Now.AddDays(-1));
+            userId, null, PostType.Video, 20, Now.AddDays(-1));
 
         var candidate = Assert.Single(candidates);
         Assert.Equal(7, candidate.CategoryAffinity);
         Assert.Equal(4, candidate.BlogAffinity);
         Assert.True(candidate.IsSubscribed);
         Assert.True(candidate.WasSeen);
+    }
+
+    [Fact]
+    public async Task FeedStore_FiltersCandidatesByPostType()
+    {
+        await using var context = CreateContext();
+        var videoPost = CreateSnapshot(Guid.NewGuid(), postType: PostType.Video);
+        var textPost = CreateSnapshot(Guid.NewGuid(), postType: PostType.Text);
+        context.PostSnapshots.AddRange(videoPost, textPost);
+        await context.SaveChangesAsync();
+        var repository = new DefaultRepository<RecommendationDbContext, IRecommendationEntity>(
+            new DefaultReadRepository<RecommendationDbContext, IRecommendationEntity>(context),
+            new DefaultWriteRepository<RecommendationDbContext, IRecommendationEntity>(context));
+        var store = new EfRecommendationFeedStore(repository);
+
+        var videoCandidates = await store.LoadCandidatesAsync(
+            null, null, PostType.Video, 20, Now.AddDays(-1));
+        var textCandidates = await store.LoadCandidatesAsync(
+            null, null, PostType.Text, 20, Now.AddDays(-1));
+
+        Assert.Equal(videoPost.PostId, Assert.Single(videoCandidates).PostId);
+        Assert.Equal(textPost.PostId, Assert.Single(textCandidates).PostId);
     }
 
     private static RecommendationDbContext CreateContext(string? databaseName = null)
@@ -152,12 +174,13 @@ public sealed class EfRecommendationEventStoreTests
     private static PostSnapshot CreateSnapshot(
         Guid postId,
         Guid? blogId = null,
-        IReadOnlyCollection<int>? categories = null) => PostSnapshot.Create(new PostSnapshotData
+        IReadOnlyCollection<int>? categories = null,
+        PostType postType = PostType.Video) => PostSnapshot.Create(new PostSnapshotData
     {
         PostId = postId,
         SourceVersion = 1,
         BlogId = blogId ?? Guid.NewGuid(),
-        PostType = PostType.Text,
+        PostType = postType,
         Title = "Test post",
         CategoryIds = categories ?? [10],
         Visibility = PostVisibility.Public,

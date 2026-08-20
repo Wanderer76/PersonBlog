@@ -14,11 +14,13 @@ public sealed class EfRecommendationFeedStore(
     public async Task<IReadOnlyList<RecommendationCandidateData>> LoadCandidatesAsync(
         Guid? userId,
         Guid? currentPostId,
+        PostType postType,
         int limit,
         DateTimeOffset seenSince,
         CancellationToken cancellationToken = default)
     {
         var eligible = repository.Get<PostSnapshot>()
+            .Where(x => x.PostType == postType)
             .Where(x => x.Visibility == PostVisibility.Public)
             .Where(x => x.ProcessState == PostProcessState.Complete)
             .Where(x => !x.IsDeleted && !x.IsBanned)

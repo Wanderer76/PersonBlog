@@ -14,6 +14,40 @@ namespace BlogServiceTests;
 public sealed class PostAccessIntegrationTests
 {
     [Fact]
+    public async Task Post_cards_support_mixed_video_and_text_posts()
+    {
+        await using var context = await CreateContextAsync();
+        var blog = CreateBlog();
+        var videoPost = CreatePost(PostVisibility.Public);
+        var textPost = new Post(
+            Guid.NewGuid(),
+            BlogId,
+            PostType.Text,
+            null,
+            "Text title",
+            null,
+            PostVisibility.Public,
+            [],
+            "Text content");
+        context.AddRange(blog, videoPost, textPost);
+        await context.SaveChangesAsync();
+
+        var service = new DefaultPostService(
+            CreateRepository(context),
+            new StubFileStorageFactory(),
+            new MemoryCacheService(),
+            new MutableCurrentUserService(UserModel.AnonymousUser()));
+
+        var cards = await service.GetPostCommonModelAsync([videoPost.Id, textPost.Id]);
+
+        Assert.Equal(2, cards.Count);
+        Assert.Equal("description", Assert.Single(cards, card => card.Id == videoPost.Id).Description);
+        var textCard = Assert.Single(cards, card => card.Id == textPost.Id);
+        Assert.Equal("Text content", textCard.Description);
+        Assert.Null(textCard.PreviewObjectName);
+    }
+
+    [Fact]
     public async Task Cached_private_post_is_not_returned_to_anonymous_user()
     {
         await using var context = await CreateContextAsync();

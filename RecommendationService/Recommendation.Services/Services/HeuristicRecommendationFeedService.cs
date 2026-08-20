@@ -53,6 +53,7 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
                 request.Cursor,
                 subjectFingerprint,
                 request.CurrentPostId,
+                request.PostType,
                 _options.AlgorithmVersion);
             requestId = decoded.RequestId;
             offset = decoded.Offset;
@@ -62,6 +63,7 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
         var candidates = await _store.LoadCandidatesAsync(
             request.UserId,
             request.CurrentPostId,
+            request.PostType,
             _options.CandidatePoolSize,
             generatedAt.AddDays(-_options.SeenWindowDays),
             cancellationToken);
@@ -94,6 +96,7 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
                 generatedAt,
                 subjectFingerprint,
                 request.CurrentPostId,
+                request.PostType,
                 _options.AlgorithmVersion)
             : null;
 

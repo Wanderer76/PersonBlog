@@ -11,12 +11,14 @@ public sealed class RecommendationFeedGateway(
         int limit,
         string? cursor,
         Guid? currentPostId,
+        RecommendationPostType postType,
         CancellationToken cancellationToken)
     {
         var ranking = await recommendationClient.GetFeedAsync(
             limit,
             cursor,
             currentPostId,
+            postType,
             cancellationToken);
 
         return await HydrateAsync(ranking, cancellationToken);

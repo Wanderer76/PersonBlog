@@ -1,14 +1,12 @@
 using Authentication.Contract.Constants;
 using Blog.Contracts.Events;
 using Blog.Contracts.Models;
-using Blog.Contracts.Models.File;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Blog.Service.Events;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
@@ -206,7 +204,6 @@ internal class DefaultPostService : IPostService
 
         _context.Attach(post);
 
-
         if (existView == null)
         {
             if (@event.IsLike == true)
@@ -308,16 +305,27 @@ internal class DefaultPostService : IPostService
             .Where(x => postIds.Contains(x.Id))
             .Include(x => x.VideoPostInfo)
             .Include(x => x.VideoPostInfo.PreviewFile)
+            .Include(x => x.TextPostInfo)
             .ToListAsync();
 
         var result = posts.Select(async post =>
         {
+            var description = post.Type == PostType.Video
+                ? post.VideoPostInfo?.Description
+                : post.TextPostInfo?.Text;
+            var previewObjectName = post.Type == PostType.Video
+                && post.VideoPostInfo?.PreviewFile is not null
+                    ? await fileStorage.GetFileUrlAsync(
+                        post.BlogId,
+                        post.VideoPostInfo.PreviewFile.ObjectName)
+                    : null;
+
             return new PostCommonModel
             {
                 Id = post.Id,
-                Description = post.VideoPostInfo.Description,
+                Description = description,
                 Title = post.Title,
-                PreviewObjectName = post.VideoPostInfo.PreviewId.HasValue ? await fileStorage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName) : null
+                PreviewObjectName = previewObjectName
             };
         });
 

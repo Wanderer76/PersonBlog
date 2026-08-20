@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Recommendation.Application.Services;
+using Recommendation.Domain.Enums;
 using Recommendation.Services.Abstractions;
 using Recommendation.Services.Models;
 
@@ -17,6 +18,7 @@ public sealed class FeedController(
         [FromQuery] int limit = 20,
         [FromQuery] string? cursor = null,
         [FromQuery] Guid? currentPostId = null,
+        [FromQuery] PostType postType = PostType.Video,
         CancellationToken cancellationToken = default)
     {
         var subject = await subjectResolver.ResolveAsync(cancellationToken);
@@ -30,7 +32,8 @@ public sealed class FeedController(
                 subject.AnonymousSessionId,
                 limit,
                 cursor,
-                currentPostId), cancellationToken));
+                currentPostId,
+                PostType: postType), cancellationToken));
         }
         catch (InvalidRecommendationCursorException exception)
         {

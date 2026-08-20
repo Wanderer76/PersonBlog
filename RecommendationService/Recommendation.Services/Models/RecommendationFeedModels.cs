@@ -8,7 +8,8 @@ public sealed record RecommendationFeedRequest(
     int Limit,
     string? Cursor,
     Guid? CurrentPostId,
-    int InitialOffset = 0);
+    int InitialOffset = 0,
+    PostType PostType = PostType.Video);
 
 public sealed record RecommendationFeedResponse(
     Guid RequestId,

@@ -10,11 +10,13 @@ public sealed class RecommendationApiClient(HttpClient httpClient)
         int limit,
         string? cursor,
         Guid? currentPostId,
+        RecommendationPostType postType,
         CancellationToken cancellationToken)
     {
         var query = new List<KeyValuePair<string, string?>>
         {
-            new("limit", limit.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            new("limit", limit.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+            new("postType", postType.ToString())
         };
 
         if (!string.IsNullOrWhiteSpace(cursor))

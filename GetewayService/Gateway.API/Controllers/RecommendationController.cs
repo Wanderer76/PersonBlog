@@ -20,9 +20,10 @@ public sealed class RecommendationController(
         [FromQuery] int limit = 20,
         [FromQuery] string? cursor = null,
         [FromQuery] Guid? currentPostId = null,
+        [FromQuery] RecommendationPostType postType = RecommendationPostType.Video,
         CancellationToken cancellationToken = default) =>
         ExecuteAsync(
-            () => feedGateway.GetFeedAsync(limit, cursor, currentPostId, cancellationToken),
+            () => feedGateway.GetFeedAsync(limit, cursor, currentPostId, postType, cancellationToken),
             response => Ok(response),
             cancellationToken);
 

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Recommendation.Domain.Enums;
 using Recommendation.Services.Models;
 using Recommendation.Services.Options;
 
@@ -8,7 +9,7 @@ namespace Recommendation.Services.Services;
 
 internal sealed class RecommendationCursorCodec(RecommendationFeedOptions options)
 {
-    private const int Version = 1;
+    private const int Version = 2;
     private readonly byte[] _key = GetKey(options.CursorSigningKey);
 
     public string Encode(
@@ -17,6 +18,7 @@ internal sealed class RecommendationCursorCodec(RecommendationFeedOptions option
         DateTimeOffset generatedAt,
         string subjectFingerprint,
         Guid? currentPostId,
+        PostType postType,
         string algorithmVersion)
     {
         var payload = JsonSerializer.SerializeToUtf8Bytes(new CursorPayload(
@@ -26,6 +28,7 @@ internal sealed class RecommendationCursorCodec(RecommendationFeedOptions option
             generatedAt,
             subjectFingerprint,
             currentPostId,
+            postType,
             algorithmVersion));
         var signature = HMACSHA256.HashData(_key, payload);
         return $"{Base64UrlEncode(payload)}.{Base64UrlEncode(signature)}";
@@ -35,6 +38,7 @@ internal sealed class RecommendationCursorCodec(RecommendationFeedOptions option
         string cursor,
         string subjectFingerprint,
         Guid? currentPostId,
+        PostType postType,
         string algorithmVersion)
     {
         try
@@ -53,6 +57,7 @@ internal sealed class RecommendationCursorCodec(RecommendationFeedOptions option
                 throw new InvalidRecommendationCursorException("Cursor version or offset is invalid.");
             if (payload.SubjectFingerprint != subjectFingerprint
                 || payload.CurrentPostId != currentPostId
+                || payload.PostType != postType
                 || payload.AlgorithmVersion != algorithmVersion)
                 throw new InvalidRecommendationCursorException("Cursor does not belong to this feed.");
 
@@ -98,6 +103,7 @@ internal sealed class RecommendationCursorCodec(RecommendationFeedOptions option
         DateTimeOffset GeneratedAt,
         string SubjectFingerprint,
         Guid? CurrentPostId,
+        PostType PostType,
         string AlgorithmVersion);
 
     public sealed record DecodedCursor(Guid RequestId, int Offset, DateTimeOffset GeneratedAt);
