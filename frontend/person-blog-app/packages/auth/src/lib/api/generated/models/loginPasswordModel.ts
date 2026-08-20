@@ -11,5 +11,7 @@ export interface LoginPasswordModel {
   /** @minLength 1 */
   password: string;
   /** @nullable */
+  clientId?: string | null;
+  /** @nullable */
   redirectUrl?: string | null;
 }

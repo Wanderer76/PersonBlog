@@ -31,7 +31,11 @@ public class AuthController : BaseApiController
         if (response.IsSuccess)
         {
             return await _authService.Authenticate(
-                new LoginPasswordModel(registerModel.Login, registerModel.Password));
+                new LoginPasswordModel(registerModel.Login, registerModel.Password)
+                {
+                    ClientId = registerModel.ClientId,
+                    RedirectUrl = registerModel.RedirectUrl
+                });
         }
 
         return Result<AuthCodeResponse>.Failure(response.Errors);

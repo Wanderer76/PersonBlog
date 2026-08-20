@@ -63,6 +63,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToSignIn }) => {
         try {
              // Валидация redirect_uri
             const redirectUri = searchParams.get("redirectUri") || searchParams.get("redirect") || '/';
+            const clientId = searchParams.get("client_id");
 
             // Шаг 1: Регистрация пользователя
             const registerResponse = await authApi.postApiAuthCreate({
@@ -70,7 +71,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onSwitchToSignIn }) => {
                 password: formData.password,
                 userName: formData.userName,
                 passwordConfirm: formData.passwordConfirm,
-                redirectUrl: redirectUri
+                redirectUrl: redirectUri,
+                clientId
             });
 
             if (registerResponse.status !== 200 && registerResponse.status !== 201) {

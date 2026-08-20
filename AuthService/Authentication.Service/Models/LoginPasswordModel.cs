@@ -10,6 +10,8 @@ public class LoginPasswordModel
     [Required]
     public string Password { get; set; } = null!;
 
+    public string? ClientId { get; set; }
+
     public string? RedirectUrl { get; set; }
 
     public LoginPasswordModel()
@@ -20,7 +22,7 @@ public class LoginPasswordModel
     {
         Login = login;
         Password = password;
-    }   
+    }
 }
 
 public class LoginRequest
@@ -28,7 +30,7 @@ public class LoginRequest
     [Required]
     public LoginPasswordModel Login { get; set; }
 
-    public Dictionary<string,string> Claims {  get; set; }
+    public Dictionary<string, string> Claims { get; set; }
 
     public LoginRequest(LoginPasswordModel login, Dictionary<string, string> claims)
     {

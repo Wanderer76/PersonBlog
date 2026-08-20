@@ -10,7 +10,7 @@ using Shared.Services;
 using Shared.Utils;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-[assembly: InternalsVisibleTo("AuthTests",AllInternalsVisible =true)]
+[assembly: InternalsVisibleTo("AuthTests", AllInternalsVisible = true)]
 
 namespace Authentication.Service.Service.Implementation;
 
@@ -47,6 +47,14 @@ internal class DefaultAuthService : IAuthService
                 return new Error("400", "Неверный логин/пароль");
             }
 
+            var client = await _context.Get<Client>()
+                .FirstOrDefaultAsync(x => x.ClientId == loginModel.ClientId);
+            if (client == null ||
+                !string.Equals(client.RedirectUri, loginModel.RedirectUrl, StringComparison.Ordinal))
+            {
+                return new Error("invalid_request", "Invalid client or redirect URI");
+            }
+
             var context = GetDefaultContext(user);
 
             await _cacheService.SetCachedDataAsync(
@@ -61,13 +69,13 @@ internal class DefaultAuthService : IAuthService
                 TimeSpan.FromMinutes(10));
             await _context.SaveChangesAsync();
 
-            var authCode =  RandomCodeGenerator.GenerateRandomCode();
+            var authCode = RandomCodeGenerator.GenerateRandomCode();
 
             await _cacheService.SetCachedDataAsync(AuthCode.GetCacheKey(authCode), new AuthCode
             {
                 Code = authCode,
                 UserId = user.Id,
-                ClientId = "",
+                ClientId = client.ClientId,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(10)
             }, TimeSpan.FromMinutes(10));
 

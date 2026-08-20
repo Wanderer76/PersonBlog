@@ -12,6 +12,7 @@ using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using System.Reflection;
 
 namespace AuthTests;
 
@@ -88,19 +89,48 @@ public class AuthenticationTest
         };
         var users = new List<AppUser> { user }.BuildMockDbSet();
         _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+        _repoMock.Setup(x => x.Get<Client>()).Returns(
+            new List<Client> { CreateClient("blog", "https://client.example/callback") }
+                .BuildMockDbSet().Object);
         _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
         _cacheServiceMock.Setup(x => x.SetCachedDataAsync(It.IsAny<ICacheKey>(), It.IsAny<object>(), It.IsAny<TimeSpan>()))
             .Returns(Task.CompletedTask);
+        AuthCode? cachedCode = null;
+        _cacheServiceMock.Setup(x => x.SetCachedDataAsync(
+                It.IsAny<ICacheKey>(),
+                It.IsAny<AuthCode>(),
+                It.IsAny<TimeSpan>()))
+            .Callback<ICacheKey, AuthCode, TimeSpan>((_, value, _) => cachedCode = value)
+            .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _authService.Authenticate(new LoginPasswordModel("test", "correct"));
+        var result = await _authService.Authenticate(new LoginPasswordModel("test", "correct")
+        {
+            ClientId = "blog",
+            RedirectUrl = "https://client.example/callback"
+        });
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.AuthCode);
+        Assert.NotNull(cachedCode);
+        Assert.Equal("blog", cachedCode.ClientId);
         _repoMock.Verify(x => x.SaveChangesAsync(), Times.Once);
         _cacheServiceMock.Verify(x => x.SetCachedDataAsync(It.IsAny<SessionKey>(), It.IsAny<UserModel>(), It.IsAny<TimeSpan>()), Times.Once);
+    }
+
+    private static Client CreateClient(string clientId, string redirectUri)
+    {
+        var constructor = typeof(Client).GetConstructor(
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            Type.EmptyTypes,
+            modifiers: null)!;
+        var client = (Client)constructor.Invoke(null);
+        typeof(Client).GetProperty(nameof(Client.ClientId))!.SetValue(client, clientId);
+        typeof(Client).GetProperty(nameof(Client.RedirectUri))!.SetValue(client, redirectUri);
+        return client;
     }
 
     [Fact]

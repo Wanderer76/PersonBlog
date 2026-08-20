@@ -33,7 +33,14 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
 
         try {
             // Шаг 1: Аутентификация → получаем authCode
-            const loginResponse = await authApi.postApiAuthLogin({ login, password });
+            const clientId = searchParams.get("client_id");
+            const redirectUri = searchParams.get("redirectUri");
+            const loginResponse = await authApi.postApiAuthLogin({
+                login,
+                password,
+                clientId,
+                redirectUrl: redirectUri
+            });
 
             if (loginResponse.status !== 200 || !loginResponse.data) {
                 throw new Error('Invalid login response');
@@ -41,8 +48,7 @@ const SignInForm: React.FC<SignInFormProps> = ({ onSwitchToSignUp }) => {
 
             const { authCode } = loginResponse.data;
             const state = searchParams.get("state");
-            const redirectUri = searchParams.get("redirectUri")!;
-            const redirectUrl = buildAuthRedirectUrl(redirectUri, authCode!, state);
+            const redirectUrl = buildAuthRedirectUrl(redirectUri!, authCode!, state);
             window.location.href = redirectUrl;
 
         } catch (e: any) {

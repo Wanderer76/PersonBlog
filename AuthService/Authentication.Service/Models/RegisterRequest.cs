@@ -13,5 +13,6 @@ public class RegisterRequest
     [Required]
     public string UserName { get; set; } = null!;
 
-    public string? RedirectUrl {  get; set; }
+    public string? ClientId { get; set; }
+    public string? RedirectUrl { get; set; }
 }
