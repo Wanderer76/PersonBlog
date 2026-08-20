@@ -4,15 +4,16 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { PostTypeModel } from './postTypeModel';
 
-export interface RecommendationFeedItem {
-  postId?: string;
-  /** @nullable */
-  reason?: string | null;
+export interface PostCommonModelV2 {
+  id?: string;
+  blogId?: string;
   /** @nullable */
   title?: string | null;
-  /** @nullable */
-  description?: string | null;
+  postType?: PostTypeModel;
   /** @nullable */
   previewUrl?: string | null;
+  /** @nullable */
+  text?: string | null;
 }

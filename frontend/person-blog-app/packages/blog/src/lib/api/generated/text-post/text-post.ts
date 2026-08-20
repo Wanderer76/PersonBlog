@@ -11,24 +11,25 @@ import type {
   TextPostEditViewModel,
   UserPostInfoModel
 } from '.././models';
-import type { AxiosRequestConfig } from 'axios';
 
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getTextPost = () => {
 const getApiTextPostCreate = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<CreatePostModelViewModel>>,) => {
       return customInstance<CreatePostModelViewModel>(
       {url: `/api/TextPost/create`, method: 'GET'
     },
-      );
+      options);
     }
   const postApiTextPostCreateTextPost = (
     postApiTextPostCreateTextPostBody: PostApiTextPostCreateTextPostBody,
- ) => {const formData = new FormData();
+ options?: SecondParameter<typeof customInstance<UserPostInfoModel>>,) => {const formData = new FormData();
 formData.append(`Title`, postApiTextPostCreateTextPostBody.Title);
 if(postApiTextPostCreateTextPostBody.Text !== undefined) {
  formData.append(`Text`, postApiTextPostCreateTextPostBody.Text);
@@ -45,12 +46,11 @@ if(postApiTextPostCreateTextPostBody.Media !== undefined) {
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData
     },
-      );
+      options);
     }
   const getApiTextPostEditPostId = (
     postId: string,
-    options?: AxiosRequestConfig,
- ) => {
+ options?: SecondParameter<typeof customInstance<TextPostEditViewModel>>,) => {
       return customInstance<TextPostEditViewModel>(
       {url: `/api/TextPost/edit/${postId}`, method: 'GET'
     },
@@ -58,13 +58,17 @@ if(postApiTextPostCreateTextPostBody.Media !== undefined) {
     }
   const postApiTextPostEdit = (
     postApiTextPostEditBody: PostApiTextPostEditBody,
- ) => {const formData = new FormData();
-formData.append(`Id`, postApiTextPostEditBody.Id);
+ options?: SecondParameter<typeof customInstance<void>>,) => {const formData = new FormData();
+if(postApiTextPostEditBody.Id !== undefined) {
+ formData.append(`Id`, postApiTextPostEditBody.Id);
+ }
 formData.append(`Title`, postApiTextPostEditBody.Title);
 if(postApiTextPostEditBody.Text !== undefined) {
  formData.append(`Text`, postApiTextPostEditBody.Text);
  }
-formData.append(`Visibility`, postApiTextPostEditBody.Visibility.toString())
+if(postApiTextPostEditBody.Visibility !== undefined) {
+ formData.append(`Visibility`, postApiTextPostEditBody.Visibility.toString())
+ }
 if(postApiTextPostEditBody.Media !== undefined) {
  postApiTextPostEditBody.Media.forEach(value => formData.append(`Media`, value));
  }
@@ -77,7 +81,7 @@ if(postApiTextPostEditBody.RemovedMediaIds !== undefined) {
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData
     },
-      );
+      options);
     }
   return {getApiTextPostCreate,postApiTextPostCreateTextPost,getApiTextPostEditPostId,postApiTextPostEdit}};
 export type GetApiTextPostCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['getApiTextPostCreate']>>>

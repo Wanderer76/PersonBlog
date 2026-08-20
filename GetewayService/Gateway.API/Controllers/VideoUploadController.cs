@@ -41,4 +41,19 @@ public sealed class VideoUploadController(
         await videoUploadApiClient.AbortUploadAsync(request);
         return Ok();
     }
+
+    [HttpGet("session/{uploadId}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<MultipartUploadSession>> GetSession(string uploadId)
+    {
+        var session = await videoUploadApiClient.GetSessionAsync(uploadId);
+        return session is null ? NotFound() : Ok(session);
+    }
+
+    [HttpGet("parts/{uploadId}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<List<MultipartUploadPart>>> GetParts(string uploadId)
+    {
+        return Ok(await videoUploadApiClient.GetPartsAsync(uploadId));
+    }
 }

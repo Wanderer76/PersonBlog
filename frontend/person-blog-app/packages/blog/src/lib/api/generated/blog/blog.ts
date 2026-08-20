@@ -9,84 +9,150 @@ import type {
   BlogUserInfoViewModel,
   HasBlogResponse,
   PostApiBlogCreateBody,
+  PutApiBlogBlogIdBody,
   SubscriptionCreateDto,
-  SubscriptionLevelModel
+  SubscriptionLevelModel,
+  SubscriptionUpdateDto,
+  UserModel
 } from '.././models';
 
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getBlog = () => {
 const getApiBlogHasBlogUserId = (
     userId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<boolean>>,) => {
       return customInstance<boolean>(
       {url: `/api/Blog/hasBlog/${userId}`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiBlogHasUserBlog = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<HasBlogResponse>>,) => {
       return customInstance<HasBlogResponse>(
       {url: `/api/Blog/hasUserBlog`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiBlogDetail = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<BlogModel>>,) => {
       return customInstance<BlogModel>(
       {url: `/api/Blog/detail`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiBlogSubscriptionLevelCreate = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
       return customInstance<unknown>(
       {url: `/api/Blog/subscriptionLevelCreate`, method: 'GET'
     },
-      );
+      options);
     }
   const postApiBlogSubscriptionLevelCreate = (
     subscriptionCreateDto: SubscriptionCreateDto,
- ) => {
+ options?: SecondParameter<typeof customInstance<SubscriptionLevelModel>>,) => {
       return customInstance<SubscriptionLevelModel>(
       {url: `/api/Blog/subscriptionLevelCreate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: subscriptionCreateDto
     },
-      );
+      options);
+    }
+  const getApiBlogSubscriptionLevels = (
+
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
+      {url: `/api/Blog/subscription-levels`, method: 'GET'
+    },
+      options);
+    }
+  const postApiBlogSubscriptionLevels = (
+    subscriptionCreateDto: SubscriptionCreateDto,
+ options?: SecondParameter<typeof customInstance<SubscriptionLevelModel>>,) => {
+      return customInstance<SubscriptionLevelModel>(
+      {url: `/api/Blog/subscription-levels`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: subscriptionCreateDto
+    },
+      options);
+    }
+  const getApiBlogSubscriptionLevelsBlogBlogId = (
+    blogId: string,
+ options?: SecondParameter<typeof customInstance<SubscriptionLevelModel[]>>,) => {
+      return customInstance<SubscriptionLevelModel[]>(
+      {url: `/api/Blog/subscription-levels/blog/${blogId}`, method: 'GET'
+    },
+      options);
+    }
+  const getApiBlogSubscriptionLevelsId = (
+    id: string,
+ options?: SecondParameter<typeof customInstance<SubscriptionLevelModel>>,) => {
+      return customInstance<SubscriptionLevelModel>(
+      {url: `/api/Blog/subscription-levels/${id}`, method: 'GET'
+    },
+      options);
+    }
+  const putApiBlogSubscriptionLevelsId = (
+    id: string,
+    subscriptionUpdateDto: SubscriptionUpdateDto,
+ options?: SecondParameter<typeof customInstance<SubscriptionLevelModel>>,) => {
+      return customInstance<SubscriptionLevelModel>(
+      {url: `/api/Blog/subscription-levels/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: subscriptionUpdateDto
+    },
+      options);
+    }
+  const deleteApiBlogSubscriptionLevelsId = (
+    id: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/Blog/subscription-levels/${id}`, method: 'DELETE'
+    },
+      options);
     }
   const getApiBlogBlogByPostPostId = (
     postId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<BlogModel>>,) => {
       return customInstance<BlogModel>(
       {url: `/api/Blog/blogByPost/${postId}`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiBlogBlogViewerInfoByPostPostId = (
     postId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<BlogUserInfoViewModel>>,) => {
       return customInstance<BlogUserInfoViewModel>(
       {url: `/api/Blog/blogViewerInfoByPost/${postId}`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiBlogBlogBlogId = (
     blogId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<BlogModel>>,) => {
       return customInstance<BlogModel>(
       {url: `/api/Blog/blog/${blogId}`, method: 'GET'
     },
-      );
+      options);
+    }
+  const postApiBlogContextBlogId = (
+    blogId: string,
+ options?: SecondParameter<typeof customInstance<UserModel>>,) => {
+      return customInstance<UserModel>(
+      {url: `/api/Blog/context/${blogId}`, method: 'POST'
+    },
+      options);
     }
   const postApiBlogCreate = (
     postApiBlogCreateBody: PostApiBlogCreateBody,
- ) => {const formData = new FormData();
+ options?: SecondParameter<typeof customInstance<BlogModel>>,) => {const formData = new FormData();
 if(postApiBlogCreateBody.Title !== undefined) {
  formData.append(`Title`, postApiBlogCreateBody.Title);
  }
@@ -102,15 +168,45 @@ if(postApiBlogCreateBody.PhotoUrl !== undefined) {
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData
     },
-      );
+      options);
     }
-  return {getApiBlogHasBlogUserId,getApiBlogHasUserBlog,getApiBlogDetail,getApiBlogSubscriptionLevelCreate,postApiBlogSubscriptionLevelCreate,getApiBlogBlogByPostPostId,getApiBlogBlogViewerInfoByPostPostId,getApiBlogBlogBlogId,postApiBlogCreate}};
+  const putApiBlogBlogId = (
+    blogId: string,
+    putApiBlogBlogIdBody: PutApiBlogBlogIdBody,
+ options?: SecondParameter<typeof customInstance<BlogModel>>,) => {const formData = new FormData();
+if(putApiBlogBlogIdBody.Id !== undefined) {
+ formData.append(`Id`, putApiBlogBlogIdBody.Id);
+ }
+formData.append(`Title`, putApiBlogBlogIdBody.Title);
+if(putApiBlogBlogIdBody.Description !== undefined) {
+ formData.append(`Description`, putApiBlogBlogIdBody.Description);
+ }
+if(putApiBlogBlogIdBody.PhotoUrl !== undefined) {
+ formData.append(`PhotoUrl`, putApiBlogBlogIdBody.PhotoUrl);
+ }
+
+      return customInstance<BlogModel>(
+      {url: `/api/Blog/${blogId}`, method: 'PUT',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  return {getApiBlogHasBlogUserId,getApiBlogHasUserBlog,getApiBlogDetail,getApiBlogSubscriptionLevelCreate,postApiBlogSubscriptionLevelCreate,getApiBlogSubscriptionLevels,postApiBlogSubscriptionLevels,getApiBlogSubscriptionLevelsBlogBlogId,getApiBlogSubscriptionLevelsId,putApiBlogSubscriptionLevelsId,deleteApiBlogSubscriptionLevelsId,getApiBlogBlogByPostPostId,getApiBlogBlogViewerInfoByPostPostId,getApiBlogBlogBlogId,postApiBlogContextBlogId,postApiBlogCreate,putApiBlogBlogId}};
 export type GetApiBlogHasBlogUserIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogHasBlogUserId']>>>
 export type GetApiBlogHasUserBlogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogHasUserBlog']>>>
 export type GetApiBlogDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogDetail']>>>
 export type GetApiBlogSubscriptionLevelCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogSubscriptionLevelCreate']>>>
 export type PostApiBlogSubscriptionLevelCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['postApiBlogSubscriptionLevelCreate']>>>
+export type GetApiBlogSubscriptionLevelsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogSubscriptionLevels']>>>
+export type PostApiBlogSubscriptionLevelsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['postApiBlogSubscriptionLevels']>>>
+export type GetApiBlogSubscriptionLevelsBlogBlogIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogSubscriptionLevelsBlogBlogId']>>>
+export type GetApiBlogSubscriptionLevelsIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogSubscriptionLevelsId']>>>
+export type PutApiBlogSubscriptionLevelsIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['putApiBlogSubscriptionLevelsId']>>>
+export type DeleteApiBlogSubscriptionLevelsIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['deleteApiBlogSubscriptionLevelsId']>>>
 export type GetApiBlogBlogByPostPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogBlogByPostPostId']>>>
 export type GetApiBlogBlogViewerInfoByPostPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogBlogViewerInfoByPostPostId']>>>
 export type GetApiBlogBlogBlogIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['getApiBlogBlogBlogId']>>>
+export type PostApiBlogContextBlogIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['postApiBlogContextBlogId']>>>
 export type PostApiBlogCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['postApiBlogCreate']>>>
+export type PutApiBlogBlogIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBlog>['putApiBlogBlogId']>>>

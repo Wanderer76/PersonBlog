@@ -118,7 +118,9 @@ public class ProfilePostV2Controller(
             textPostCreateForm.Media?.Select(x => x.ConvertToFileMetadata()).ToList(),
             null));
 
-        return Ok(postCreateResult);
+        return postCreateResult.IsSuccess
+            ? Ok(postCreateResult.Value)
+            : BadRequest(postCreateResult.Errors);
     }
 
     [HttpGet("textEdit/{postId:guid}")]

@@ -12,16 +12,18 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getRecommendation = () => {
 const getApiV1Feed = (
     params?: GetApiV1FeedParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<RecommendationFeedResponse>>,) => {
       return customInstance<RecommendationFeedResponse>(
       {url: `/api/v1/feed`, method: 'GET',
         params
     },
-      );
+      options);
     }
   return {getApiV1Feed}};
 export type GetApiV1FeedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getRecommendation>['getApiV1Feed']>>>

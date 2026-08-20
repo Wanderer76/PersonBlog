@@ -6,41 +6,56 @@
  */
 import type {
   CreatePostModelViewModel,
+  GetApiProfilePostV2AvailablePostByBlogIdBlogIdParams,
   GetApiProfilePostV2MyParams,
   PostApiProfilePostV2CreateBody,
+  PostApiProfilePostV2CreateTextPostBody,
   PostApiProfilePostV2EditBody,
+  PostApiProfilePostV2TextEditBody,
+  PostCommonModelV2PagedListViewModel,
   PostEditViewModel,
+  TextPostEditViewModel,
   UserPostInfoModel,
   UserPostInfoModelPagedListViewModel
 } from '.././models';
-import type { AxiosRequestConfig } from 'axios';
 
 import { customInstance } from '../../mutator';
 
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getProfilePostV2 = () => {
 const getApiProfilePostV2My = (
     params?: GetApiProfilePostV2MyParams,
-    options?: AxiosRequestConfig,
- ) => {
+ options?: SecondParameter<typeof customInstance<UserPostInfoModelPagedListViewModel>>,) => {
       return customInstance<UserPostInfoModelPagedListViewModel>(
       {url: `/api/ProfilePostV2/my`, method: 'GET',
         params
     },
       options);
     }
+  const getApiProfilePostV2AvailablePostByBlogIdBlogId = (
+    blogId: string,
+    params?: GetApiProfilePostV2AvailablePostByBlogIdBlogIdParams,
+ options?: SecondParameter<typeof customInstance<PostCommonModelV2PagedListViewModel>>,) => {
+      return customInstance<PostCommonModelV2PagedListViewModel>(
+      {url: `/api/ProfilePostV2/availablePostByBlogId/${blogId}`, method: 'GET',
+        params
+    },
+      options);
+    }
   const getApiProfilePostV2Create = (
 
- ) => {
+ options?: SecondParameter<typeof customInstance<CreatePostModelViewModel>>,) => {
       return customInstance<CreatePostModelViewModel>(
       {url: `/api/ProfilePostV2/create`, method: 'GET'
     },
-      );
+      options);
     }
   const postApiProfilePostV2Create = (
     postApiProfilePostV2CreateBody: PostApiProfilePostV2CreateBody,
- ) => {const formData = new FormData();
+ options?: SecondParameter<typeof customInstance<UserPostInfoModel>>,) => {const formData = new FormData();
 if(postApiProfilePostV2CreateBody.Title !== undefined) {
  formData.append(`Title`, postApiProfilePostV2CreateBody.Title);
  }
@@ -62,27 +77,27 @@ if(postApiProfilePostV2CreateBody['VideoPostData.Categories'] !== undefined) {
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData
     },
-      );
+      options);
     }
   const postApiProfilePostV2RemovePostId = (
     postId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/ProfilePostV2/remove/${postId}`, method: 'POST'
     },
-      );
+      options);
     }
   const getApiProfilePostV2EditPostId = (
     postId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<PostEditViewModel>>,) => {
       return customInstance<PostEditViewModel>(
       {url: `/api/ProfilePostV2/edit/${postId}`, method: 'GET'
     },
-      );
+      options);
     }
   const postApiProfilePostV2Edit = (
     postApiProfilePostV2EditBody: PostApiProfilePostV2EditBody,
- ) => {const formData = new FormData();
+ options?: SecondParameter<typeof customInstance<void>>,) => {const formData = new FormData();
 if(postApiProfilePostV2EditBody.Id !== undefined) {
  formData.append(`Id`, postApiProfilePostV2EditBody.Id);
  }
@@ -107,12 +122,72 @@ if(postApiProfilePostV2EditBody.Visibility !== undefined) {
       headers: {'Content-Type': 'multipart/form-data', },
        data: formData
     },
-      );
+      options);
     }
-  return {getApiProfilePostV2My,getApiProfilePostV2Create,postApiProfilePostV2Create,postApiProfilePostV2RemovePostId,getApiProfilePostV2EditPostId,postApiProfilePostV2Edit}};
+  const postApiProfilePostV2CreateTextPost = (
+    postApiProfilePostV2CreateTextPostBody: PostApiProfilePostV2CreateTextPostBody,
+ options?: SecondParameter<typeof customInstance<UserPostInfoModel>>,) => {const formData = new FormData();
+formData.append(`Title`, postApiProfilePostV2CreateTextPostBody.Title);
+if(postApiProfilePostV2CreateTextPostBody.Text !== undefined) {
+ formData.append(`Text`, postApiProfilePostV2CreateTextPostBody.Text);
+ }
+if(postApiProfilePostV2CreateTextPostBody.Visibility !== undefined) {
+ formData.append(`Visibility`, postApiProfilePostV2CreateTextPostBody.Visibility.toString())
+ }
+if(postApiProfilePostV2CreateTextPostBody.Media !== undefined) {
+ postApiProfilePostV2CreateTextPostBody.Media.forEach(value => formData.append(`Media`, value));
+ }
+
+      return customInstance<UserPostInfoModel>(
+      {url: `/api/ProfilePostV2/createTextPost`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  const getApiProfilePostV2TextEditPostId = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance<TextPostEditViewModel>>,) => {
+      return customInstance<TextPostEditViewModel>(
+      {url: `/api/ProfilePostV2/textEdit/${postId}`, method: 'GET'
+    },
+      options);
+    }
+  const postApiProfilePostV2TextEdit = (
+    postApiProfilePostV2TextEditBody: PostApiProfilePostV2TextEditBody,
+ options?: SecondParameter<typeof customInstance<void>>,) => {const formData = new FormData();
+if(postApiProfilePostV2TextEditBody.Id !== undefined) {
+ formData.append(`Id`, postApiProfilePostV2TextEditBody.Id);
+ }
+formData.append(`Title`, postApiProfilePostV2TextEditBody.Title);
+if(postApiProfilePostV2TextEditBody.Text !== undefined) {
+ formData.append(`Text`, postApiProfilePostV2TextEditBody.Text);
+ }
+if(postApiProfilePostV2TextEditBody.Visibility !== undefined) {
+ formData.append(`Visibility`, postApiProfilePostV2TextEditBody.Visibility.toString())
+ }
+if(postApiProfilePostV2TextEditBody.Media !== undefined) {
+ postApiProfilePostV2TextEditBody.Media.forEach(value => formData.append(`Media`, value));
+ }
+if(postApiProfilePostV2TextEditBody.RemovedMediaIds !== undefined) {
+ postApiProfilePostV2TextEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
+ }
+
+      return customInstance<void>(
+      {url: `/api/ProfilePostV2/textEdit`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
+    },
+      options);
+    }
+  return {getApiProfilePostV2My,getApiProfilePostV2AvailablePostByBlogIdBlogId,getApiProfilePostV2Create,postApiProfilePostV2Create,postApiProfilePostV2RemovePostId,getApiProfilePostV2EditPostId,postApiProfilePostV2Edit,postApiProfilePostV2CreateTextPost,getApiProfilePostV2TextEditPostId,postApiProfilePostV2TextEdit}};
 export type GetApiProfilePostV2MyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['getApiProfilePostV2My']>>>
+export type GetApiProfilePostV2AvailablePostByBlogIdBlogIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['getApiProfilePostV2AvailablePostByBlogIdBlogId']>>>
 export type GetApiProfilePostV2CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['getApiProfilePostV2Create']>>>
 export type PostApiProfilePostV2CreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['postApiProfilePostV2Create']>>>
 export type PostApiProfilePostV2RemovePostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['postApiProfilePostV2RemovePostId']>>>
 export type GetApiProfilePostV2EditPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['getApiProfilePostV2EditPostId']>>>
 export type PostApiProfilePostV2EditResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['postApiProfilePostV2Edit']>>>
+export type PostApiProfilePostV2CreateTextPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['postApiProfilePostV2CreateTextPost']>>>
+export type GetApiProfilePostV2TextEditPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['getApiProfilePostV2TextEditPostId']>>>
+export type PostApiProfilePostV2TextEditResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfilePostV2>['postApiProfilePostV2TextEdit']>>>

@@ -12,27 +12,29 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getConferenceChat = () => {
 const postApiConferenceChatSendMessage = (
     createMessageForm: CreateMessageForm,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/ConferenceChat/sendMessage`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createMessageForm
     },
-      );
+      options);
     }
   const getApiConferenceChatMessagesConferenceId = (
     conferenceId: string,
     params?: GetApiConferenceChatMessagesConferenceIdParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/ConferenceChat/messages/${conferenceId}`, method: 'GET',
         params
     },
-      );
+      options);
     }
   return {postApiConferenceChatSendMessage,getApiConferenceChatMessagesConferenceId}};
 export type PostApiConferenceChatSendMessageResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getConferenceChat>['postApiConferenceChatSendMessage']>>>

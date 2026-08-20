@@ -14,7 +14,7 @@ using Shared.Utils;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Threading;
+using System.Net;
 
 namespace Blog.Contracts;
 public sealed class PostApiClient
@@ -55,6 +55,43 @@ public sealed class PostApiClient
         return Result<IReadOnlyList<PostCommonModel>>.Success([]);
     }
 
+    public async Task<Result<PostDetailViewModel>> GetPostDetailAsync(Guid postId)
+    {
+        var response = await httpClient.GetAsync($"Post/detail/{postId}");
+        return await ToResultAsync<PostDetailViewModel>(response);
+    }
+
+    public async Task<HttpStatusCode> CheckVideoAccessAsync(Guid blogId, Guid postId)
+    {
+        var response = await httpClient.GetAsync($"Post/video-access/{blogId}/{postId}");
+        return response.StatusCode;
+    }
+
+    public async Task<Result<UserViewInfo>> GetUserViewInfoAsync(Guid postId, Guid? userId, string? address)
+    {
+        var query = new List<string>();
+        if (userId.HasValue)
+            query.Add($"userId={userId.Value}");
+        if (!string.IsNullOrWhiteSpace(address))
+            query.Add($"address={Uri.EscapeDataString(address)}");
+
+        var suffix = query.Count == 0 ? string.Empty : $"?{string.Join('&', query)}";
+        var response = await httpClient.GetAsync($"Post/userInfo/{postId}{suffix}");
+        return await ToResultAsync<UserViewInfo>(response);
+    }
+
+    public async Task<Result> SetReactionAsync(Guid postId, bool? isLike)
+    {
+        var response = await httpClient.PostAsync($"Post/setReaction/{postId}?isLike={isLike}", null);
+        return await ToCommandResultAsync(response);
+    }
+
+    public async Task<Result> DeletePostAsync(Guid postId)
+    {
+        var response = await httpClient.DeleteAsync($"Post/delete/{postId}");
+        return await ToCommandResultAsync(response);
+    }
+
     [HttpGet("create")]
     public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()
     {
@@ -66,6 +103,16 @@ public sealed class PostApiClient
     {
         return (await httpClient.GetFromJsonAsync<PagedListViewModel<UserPostInfoModel>>(
             $"ProfilePostV2/my?page={page}&pageSize={pageSize}&postType={(int)postType}"))!;
+    }
+
+    public async Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(
+        Guid blogId,
+        int page,
+        int pageSize,
+        PostType postType)
+    {
+        return (await httpClient.GetFromJsonAsync<PagedListViewModel<PostCommonModelV2>>(
+            $"ProfilePostV2/availablePostByBlogId/{blogId}?page={page}&pageSize={pageSize}&postType={(int)postType}"))!;
     }
 
     public async Task<Result<UserPostInfoModel>> CreatePostAsync(VideoPostCreateRequest request)
@@ -131,7 +178,7 @@ public sealed class PostApiClient
 
         using var formData = new MultipartFormDataContent();
         formData.Add(new StringContent(request.Title), "Title");
-        formData.Add(new StringContent(request.Text), "Text");
+        formData.Add(new StringContent(request.Text ?? string.Empty), "Text");
         formData.Add(new StringContent(request.Visibility.ToString()), "Visibility");
 
         if (request.Media != null)
@@ -144,7 +191,7 @@ public sealed class PostApiClient
             }
         }
         var response = await httpClient.PostAsync($"ProfilePostV2/createTextPost", formData);
-        return await response.Content.ReadFromJsonAsync<UserPostInfoModel>();
+        return await ToResultAsync<UserPostInfoModel>(response);
     }
 
     public async Task<Result<TextPostEditViewModel>> GetTextPostEditModelAsync(Guid postId)
@@ -190,8 +237,23 @@ public sealed class PostApiClient
         if (response.IsSuccessStatusCode)
             return (await response.Content.ReadFromJsonAsync<T>())!;
 
-        return Result<T>.Failure(new Error("ProfilePost", await response.Content.ReadAsStringAsync()));
+        return Result<T>.Failure(new Error(GetErrorKey(response), await response.Content.ReadAsStringAsync()));
     }
+
+    private static async Task<Result> ToCommandResultAsync(HttpResponseMessage response)
+    {
+        return response.IsSuccessStatusCode
+            ? Result.Success()
+            : Result.Failure(new Error(GetErrorKey(response), await response.Content.ReadAsStringAsync()));
+    }
+
+    private static string GetErrorKey(HttpResponseMessage response) => response.StatusCode switch
+    {
+        HttpStatusCode.NotFound => "NotFound",
+        HttpStatusCode.Forbidden => "Forbidden",
+        HttpStatusCode.Unauthorized => "Unauthorized",
+        _ => "Post"
+    };
 }
 
 file record PostCommonCacheKey(int Id) : ICacheKey

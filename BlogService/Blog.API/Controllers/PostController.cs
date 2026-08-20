@@ -55,7 +55,9 @@ public class PostController : BaseApiController
     public async Task<ActionResult> SetReactionToVideo(Guid postId, bool? isLike)
     {
         HttpContext.TryGetUserFromContext(out var userId);
-        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+        var remoteIp = userId.HasValue
+            ? null
+            : AnonymousSession.GetOrCreate(HttpContext);
         await _postService.SetReactionToPost(new ReactionCreateModel
         {
             IsLike = isLike,

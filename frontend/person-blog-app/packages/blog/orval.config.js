@@ -1,7 +1,7 @@
 // orval.config.js
 export const profile = {
     input: {
-        target: 'http://localhost:7892/video/swagger/v1/swagger.json',
+        target: './swagger.json',
     },
     output: {
         target: './src/lib/api/generated',

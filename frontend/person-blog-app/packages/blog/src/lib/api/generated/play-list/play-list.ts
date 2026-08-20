@@ -15,90 +15,91 @@ import type {
   PlayListWithPostsViewModel,
   PostCommonModel
 } from '.././models';
-import type { AxiosRequestConfig } from 'axios';
 
 import { customInstance } from '../../mutator';
 
+
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getPlayList = () => {
 const getApiPlayListItemId = (
     id: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<PlayListWithPostsViewModel>>,) => {
       return customInstance<PlayListWithPostsViewModel>(
       {url: `/api/PlayList/item/${id}`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiPlayListList = (
     params: GetApiPlayListListParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<PlayListListItem[]>>,) => {
       return customInstance<PlayListListItem[]>(
       {url: `/api/PlayList/list`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const getApiPlayListAvailableVideos = (
     params?: GetApiPlayListAvailableVideosParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<PostCommonModel[]>>,) => {
       return customInstance<PostCommonModel[]>(
       {url: `/api/PlayList/availableVideos`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const postApiPlayListCreate = (
     createPlayListRequest: CreatePlayListRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<PlayListWithPostsViewModel>>,) => {
       return customInstance<PlayListWithPostsViewModel>(
       {url: `/api/PlayList/create`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createPlayListRequest
     },
-      );
+      options);
     }
   const postApiPlayListAddVideo = (
     playListItemAddRequest: PlayListItemAddRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<PlayListListItem>>,) => {
       return customInstance<PlayListListItem>(
       {url: `/api/PlayList/addVideo`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: playListItemAddRequest
     },
-      );
+      options);
     }
   const postApiPlayListUpdatePositions = (
     changePostPositionRequest: ChangePostPositionRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<PlayListListItem>>,) => {
       return customInstance<PlayListListItem>(
       {url: `/api/PlayList/updatePositions`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: changePostPositionRequest
     },
-      );
+      options);
     }
   const postApiPlayListRemovePlaylistId = (
     id: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/PlayList/removePlaylist/${id}`, method: 'POST'
     },
-      );
+      options);
     }
   const postApiPlayListRemoveVideo = (
     playListItemRemoveRequest: PlayListItemRemoveRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/PlayList/removeVideo`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: playListItemRemoveRequest
     },
-      );
+      options);
     }
   const getApiPlayListMyList = (
-    options?: AxiosRequestConfig,
- ) => {
+
+ options?: SecondParameter<typeof customInstance<PlayListListItem[]>>,) => {
       return customInstance<PlayListListItem[]>(
       {url: `/api/PlayList/my/list`, method: 'GET'
     },

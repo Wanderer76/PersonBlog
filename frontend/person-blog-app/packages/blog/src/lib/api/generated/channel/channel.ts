@@ -11,33 +11,35 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getChannel = () => {
 const getApiChannelChannelId = (
     channelId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Channel/${channelId}`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiChannelPostsChannelId = (
     channelId: string,
     params?: GetApiChannelPostsChannelIdParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Channel/posts/${channelId}`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const getApiChannelPlayListsChannelId = (
     channelId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Channel/playLists/${channelId}`, method: 'GET'
     },
-      );
+      options);
     }
   return {getApiChannelChannelId,getApiChannelPostsChannelId,getApiChannelPlayListsChannelId}};
 export type GetApiChannelChannelIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getChannel>['getApiChannelChannelId']>>>

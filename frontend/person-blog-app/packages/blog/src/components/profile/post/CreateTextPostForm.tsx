@@ -5,14 +5,14 @@ import { Button } from '@/shared/ui/Button/Button';
 import { PrivacySelect, TitleInput } from './CommonComponents';
 import { PostVisibility } from '@/lib/api/generated/models';
 import type { PostVisibilitySelectItem, TextPostMediaViewModel } from '@/lib/api/generated/models';
-import { getTextPost } from '@/lib/api/generated/text-post/text-post';
+import { getProfilePostV2 } from '@/lib/api/generated/profile-post-v2/profile-post-v2';
 import { MediaUploader } from '@/features/post-management/components/MediaUploader/MediaUploader';
 import { RichTextEditor } from '@/features/post-management/components/RichTextEditor/RichTextEditor';
 import { hasErrors, validateForm } from './CreateTextPostForm.validation';
 import type { FormErrors, TextPostFormData } from './CreateTextPostForm.validation';
 import './CreateTextPostForm.css';
 
-const textPostApi = getTextPost();
+const profilePostApi = getProfilePostV2();
 
 const CreateTextPostForm = () => {
     const navigate = useNavigate();
@@ -56,7 +56,7 @@ const CreateTextPostForm = () => {
         setIsSubmitting(true);
         try {
             const result = isEditing && postId
-                ? await textPostApi.postApiTextPostEdit({
+                ? await profilePostApi.postApiProfilePostV2TextEdit({
                     Id: postId,
                     Title: formData.Title,
                     Text: formData.Text,
@@ -64,7 +64,7 @@ const CreateTextPostForm = () => {
                     Media: formData.Media,
                     RemovedMediaIds: removedMediaIds
                 })
-                : await textPostApi.postApiTextPostCreateTextPost(formData);
+                : await profilePostApi.postApiProfilePostV2CreateTextPost(formData);
             if (result.status === 200) navigate('/profile');
         } catch {
             setErrors(previous => ({
@@ -84,9 +84,9 @@ const CreateTextPostForm = () => {
         const loadCreateModel = async () => {
             try {
                 const [createResponse, editResponse] = await Promise.all([
-                    textPostApi.getApiTextPostCreate(),
+                    profilePostApi.getApiProfilePostV2Create(),
                     postId
-                        ? textPostApi.getApiTextPostEditPostId(postId, { signal: controller.signal })
+                        ? profilePostApi.getApiProfilePostV2TextEditPostId(postId, { signal: controller.signal })
                         : Promise.resolve(null)
                 ]);
                 if (!isActive) return;

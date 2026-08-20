@@ -33,4 +33,21 @@ public sealed class VideoUploadApiClient(HttpClient httpClient)
         var response = await httpClient.PostAsJsonAsync("VideoUpload/abort", request);
         response.EnsureSuccessStatusCode();
     }
+
+    public async Task<MultipartUploadSession?> GetSessionAsync(string uploadId)
+    {
+        var response = await httpClient.GetAsync($"VideoUpload/session/{Uri.EscapeDataString(uploadId)}");
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<MultipartUploadSession>();
+    }
+
+    public async Task<List<MultipartUploadPart>> GetPartsAsync(string uploadId)
+    {
+        var response = await httpClient.GetAsync($"VideoUpload/parts/{Uri.EscapeDataString(uploadId)}");
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync<List<MultipartUploadPart>>()) ?? [];
+    }
 }

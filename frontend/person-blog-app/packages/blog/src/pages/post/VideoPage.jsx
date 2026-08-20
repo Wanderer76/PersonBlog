@@ -6,6 +6,8 @@ import { JwtTokenService } from '../../shared/TokenStrorage.js';
 import SmallVideoCard from '../../components/VideoCards/SmallVideoCard';
 import CommentsList from '../../components/comment/Comment';
 import { getVideo } from '@/lib/api/generated/video/video';
+import { getBlog } from '@/lib/api/generated/blog/blog';
+import { getPost } from '@/lib/api/generated/post/post';
 import { getRecommendation } from '@/lib/api/generated/recommendation/recommendation';
 import { getComments } from '@/lib/api/generated/comments/comments';
 import { getSubscriber } from '@/lib/api/generated/subscriber/subscriber';
@@ -21,6 +23,8 @@ import {
 } from '../../components/VideoWatch/VideoWatch';
 
 const videoApi = getVideo();
+const blogApi = getBlog();
+const postApi = getPost();
 const recommendationApi = getRecommendation();
 const commentsApi = getComments();
 const subscriberApi = getSubscriber();
@@ -98,21 +102,28 @@ const VideoPage = function () {
         nextThresholdRef.current = 30;
         lastCallTimeRef.current = 0;
 
-        videoApi.getVideoVideoPostId(postId)
-            .then((response) => {
+        Promise.all([
+            postApi.getApiPostDetailPostId(postId),
+            blogApi.getApiBlogBlogViewerInfoByPostPostId(postId),
+            postApi.getApiPostUserInfoPostId(postId),
+        ])
+            .then(([postResponse, blogResponse, userResponse]) => {
                 if (!isActive) return;
 
-                if (!response.data?.post || !response.data?.blog) {
+                if (!postResponse.data?.id || !blogResponse.data?.id) {
                     throw new Error('Видео не найдено');
                 }
 
-                const savedTime = Number(response.data.userPostInfo?.watchedTime);
-                const resumeTime = urlTime ?? (Number.isFinite(savedTime) && savedTime > 0 ? savedTime : null);
-
-                setPostData(response.data.post);
-                setBlog(response.data.blog);
-                setUserView(response.data.userPostInfo ?? emptyUserView);
-                setTime(resumeTime);
+                setPostData(postResponse.data);
+                setBlog(blogResponse.data);
+                setUserView({
+                    ...emptyUserView,
+                    ...userResponse.data,
+                    hasSubscription: blogResponse.data.hasSubscription
+                        ?? userResponse.data.isSubscribe
+                        ?? false,
+                });
+                setTime(urlTime);
             })
             .catch((error) => {
                 if (!isActive) return;
@@ -178,17 +189,12 @@ const VideoPage = function () {
     };
 
     const setReaction = async (isLike) => {
-        if (!JwtTokenService.isAuth()) {
-            await redirectToSignIn();
-            return;
-        }
-
         if (reactionPending) return;
         setReactionPending(true);
         setActionMessage('');
 
         try {
-            await videoApi.postVideoSetReactionPostId(post.id, { isLike });
+            await postApi.postApiPostSetReactionPostId(post.id, { isLike });
 
             setPostData((previousPost) => {
                 const previousReaction = userView.isLike;

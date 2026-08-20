@@ -11,16 +11,18 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getSearch = () => {
 const getApiSearchSearchByTitle = (
     params?: GetApiSearchSearchByTitleParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Search/searchByTitle`, method: 'GET',
         params
     },
-      );
+      options);
     }
   return {getApiSearchSearchByTitle}};
 export type GetApiSearchSearchByTitleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getSearch>['getApiSearchSearchByTitle']>>>

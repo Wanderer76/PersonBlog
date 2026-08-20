@@ -9,6 +9,7 @@ import type {
   CompleteUploadRequest,
   GenerateUrlRequest,
   InitiateUploadRequest,
+  MultipartUploadPart,
   MultipartUploadSession,
   PreSignedUrl
 } from '.././models';
@@ -16,50 +17,70 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getVideoUpload = () => {
 const postApiVideoUploadInitiate = (
     initiateUploadRequest: InitiateUploadRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<MultipartUploadSession>>,) => {
       return customInstance<MultipartUploadSession>(
       {url: `/api/VideoUpload/initiate`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: initiateUploadRequest
     },
-      );
+      options);
     }
   const postApiVideoUploadGenerateUrl = (
     generateUrlRequest: GenerateUrlRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<PreSignedUrl>>,) => {
       return customInstance<PreSignedUrl>(
       {url: `/api/VideoUpload/generate-url`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: generateUrlRequest
     },
-      );
+      options);
     }
   const postApiVideoUploadComplete = (
     completeUploadRequest: CompleteUploadRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<string>>,) => {
       return customInstance<string>(
       {url: `/api/VideoUpload/complete`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: completeUploadRequest
     },
-      );
+      options);
     }
   const postApiVideoUploadAbort = (
     abortUploadRequest: AbortUploadRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/VideoUpload/abort`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: abortUploadRequest
     },
-      );
+      options);
     }
-  return {postApiVideoUploadInitiate,postApiVideoUploadGenerateUrl,postApiVideoUploadComplete,postApiVideoUploadAbort}};
+  const getApiVideoUploadSessionUploadId = (
+    uploadId: string,
+ options?: SecondParameter<typeof customInstance<MultipartUploadSession>>,) => {
+      return customInstance<MultipartUploadSession>(
+      {url: `/api/VideoUpload/session/${uploadId}`, method: 'GET'
+    },
+      options);
+    }
+  const getApiVideoUploadPartsUploadId = (
+    uploadId: string,
+ options?: SecondParameter<typeof customInstance<MultipartUploadPart[]>>,) => {
+      return customInstance<MultipartUploadPart[]>(
+      {url: `/api/VideoUpload/parts/${uploadId}`, method: 'GET'
+    },
+      options);
+    }
+  return {postApiVideoUploadInitiate,postApiVideoUploadGenerateUrl,postApiVideoUploadComplete,postApiVideoUploadAbort,getApiVideoUploadSessionUploadId,getApiVideoUploadPartsUploadId}};
 export type PostApiVideoUploadInitiateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideoUpload>['postApiVideoUploadInitiate']>>>
 export type PostApiVideoUploadGenerateUrlResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideoUpload>['postApiVideoUploadGenerateUrl']>>>
 export type PostApiVideoUploadCompleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideoUpload>['postApiVideoUploadComplete']>>>
 export type PostApiVideoUploadAbortResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideoUpload>['postApiVideoUploadAbort']>>>
+export type GetApiVideoUploadSessionUploadIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideoUpload>['getApiVideoUploadSessionUploadId']>>>
+export type GetApiVideoUploadPartsUploadIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideoUpload>['getApiVideoUploadPartsUploadId']>>>

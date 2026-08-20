@@ -7,23 +7,25 @@
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getProfile = () => {
 const getApiProfileMy = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Profile/my`, method: 'GET'
     },
-      );
+      options);
     }
   const getApiProfilePlayLists = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Profile/playLists`, method: 'GET'
     },
-      );
+      options);
     }
   return {getApiProfileMy,getApiProfilePlayLists}};
 export type GetApiProfileMyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfile>['getApiProfileMy']>>>

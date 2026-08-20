@@ -7,15 +7,17 @@
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getHealth = () => {
 const getHealth = (
-    
- ) => {
+
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/health`, method: 'GET'
     },
-      );
+      options);
     }
   return {getHealth}};
 export type GetHealthResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getHealth>['getHealth']>>>

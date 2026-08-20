@@ -11,17 +11,19 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getBan = () => {
 const postApiBanSendPostBanRequest = (
     postReportForm: PostReportForm,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Ban/sendPostBanRequest`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: postReportForm
     },
-      );
+      options);
     }
   return {postApiBanSendPostBanRequest}};
 export type PostApiBanSendPostBanRequestResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getBan>['postApiBanSendPostBanRequest']>>>

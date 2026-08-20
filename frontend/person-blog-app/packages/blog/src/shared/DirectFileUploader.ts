@@ -28,6 +28,10 @@ export class DirectFileUploader {
         this.onProgress = callback;
     }
 
+    canResume(): boolean {
+        return this.uploadId.length > 0;
+    }
+
     async initiateUpload(postId: string, duration: number, file: File): Promise<MultipartUploadSession> {
         const { data } = await videoUploadApi.postApiVideoUploadInitiate({
             postId,
@@ -50,14 +54,36 @@ export class DirectFileUploader {
         this.abortController = new AbortController();
 
         const totalParts = Math.ceil(file.size / this.chunkSize);
-        const partNumbers = Array.from({ length: totalParts }, (_, index) => index + 1);
+        const uploadedPartNumbers = new Set(this.parts.map(part => part.partNumber));
+        const partNumbers = Array.from({ length: totalParts }, (_, index) => index + 1)
+            .filter(partNumber => !uploadedPartNumbers.has(partNumber));
 
-        for (let index = 0; index < totalParts; index += MAX_CONCURRENT_UPLOADS) {
+        for (let index = 0; index < partNumbers.length; index += MAX_CONCURRENT_UPLOADS) {
             const batch = partNumbers.slice(index, index + MAX_CONCURRENT_UPLOADS);
             await Promise.all(batch.map(partNumber => this.uploadPartWithRetry(file, partNumber, totalParts)));
         }
 
         await this.completeUpload();
+    }
+
+    async resumeUpload(file: File): Promise<void> {
+        if (!this.uploadId) throw new Error('Upload session is not initialized');
+
+        const [{ data: session }, { data: parts }] = await Promise.all([
+            videoUploadApi.getApiVideoUploadSessionUploadId(this.uploadId),
+            videoUploadApi.getApiVideoUploadPartsUploadId(this.uploadId)
+        ]);
+
+        if (session.status === 1) {
+            this.onProgress?.(100);
+            return;
+        }
+        if (session.status !== 0) throw new Error('Upload session can no longer be resumed');
+
+        this.parts = parts;
+        const totalParts = Math.ceil(file.size / this.chunkSize);
+        this.onProgress?.(Math.round((this.parts.length / totalParts) * 100));
+        await this.uploadFile(file);
     }
 
     private async uploadPartWithRetry(file: File, partNumber: number, totalParts: number): Promise<void> {

@@ -53,13 +53,13 @@ public sealed class BlogApiClient
 
     public async Task<Result<List<SubscriptionLevelModel>>> GetAllSubscriptionsAsync()
     {
-        var response = await _httpClient.GetAsync("Blog/subscriptionLevelCreate");
+        var response = await _httpClient.GetAsync("Blog/subscription-levels");
         return await HandleResponseAsync<List<SubscriptionLevelModel>>(response);
     }
 
     public async Task<Result<SubscriptionLevelModel>> CreateSubscriptionAsync(SubscriptionCreateDto form)
     {
-        var response = await _httpClient.PostAsJsonAsync("Blog/subscriptionLevelCreate", form);
+        var response = await _httpClient.PostAsJsonAsync("Blog/subscription-levels", form);
         return await HandleResponseAsync<SubscriptionLevelModel>(response);
     }
 
@@ -87,14 +87,16 @@ public sealed class BlogApiClient
         return await HandleCommandResponseAsync(response);
     }
 
-    public async Task<Result<BlogModel>> GetBlogByPostIdAsync(Guid postId, Guid? viewerId = null)
+    public async Task<Result<BlogModel>> GetBlogByPostIdAsync(Guid postId)
     {
-        var url = viewerId.HasValue
-            ? $"Blog/blogViewerInfoByPost/{postId}?viewerId={viewerId}"
-            : $"Blog/blogByPost/{postId}";
-
-        var response = await _httpClient.GetAsync(url);
+        var response = await _httpClient.GetAsync($"Blog/blogByPost/{postId}");
         return await HandleResponseAsync<BlogModel>(response);
+    }
+
+    public async Task<Result<BlogUserInfoViewModel>> GetBlogViewerInfoByPostIdAsync(Guid postId)
+    {
+        var response = await _httpClient.GetAsync($"Blog/blogViewerInfoByPost/{postId}");
+        return await HandleResponseAsync<BlogUserInfoViewModel>(response);
     }
 
     public async Task<Result<BlogModel>> GetBlogByIdAsync(Guid blogId)

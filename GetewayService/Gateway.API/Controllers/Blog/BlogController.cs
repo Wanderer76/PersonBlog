@@ -88,6 +88,7 @@ public sealed class BlogController : BaseApiController
     /// Получение списка уровней подписки для создания
     /// </summary>
     [HttpGet("subscriptionLevelCreate")]
+    [HttpGet("subscription-levels")]
     [AuthFilter(Roles.Blogger)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -105,6 +106,7 @@ public sealed class BlogController : BaseApiController
     /// Создание уровня подписки
     /// </summary>
     [HttpPost("subscriptionLevelCreate")]
+    [HttpPost("subscription-levels")]
     [AuthFilter(Roles.Blogger)]
     [ProducesResponseType(typeof(SubscriptionLevelModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -206,9 +208,7 @@ public sealed class BlogController : BaseApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BlogUserInfoViewModel>> GetBlogViewerInfoByPostId(Guid postId)
     {
-        var user = await _currentUserService.GetCurrentUserAsync();
-        Guid? viewerId = user.IsAnonymous ? null : user.UserId;
-        var result = await _blogClient.GetBlogByPostIdAsync(postId, viewerId);
+        var result = await _blogClient.GetBlogViewerInfoByPostIdAsync(postId);
 
         return result.IsSuccess
             ? Ok(result.Value)

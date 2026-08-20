@@ -13,34 +13,36 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getConferenceRoom = () => {
 const postApiConferenceRoomCreateConferenceToPost = (
     params?: PostApiConferenceRoomCreateConferenceToPostParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/ConferenceRoom/createConferenceToPost`, method: 'POST',
         params
     },
-      );
+      options);
     }
   const getApiConferenceRoomJoinLink = (
     params?: GetApiConferenceRoomJoinLinkParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/ConferenceRoom/joinLink`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const getApiConferenceRoomJoin = (
     params?: GetApiConferenceRoomJoinParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/ConferenceRoom/join`, method: 'GET',
         params
     },
-      );
+      options);
     }
   return {postApiConferenceRoomCreateConferenceToPost,getApiConferenceRoomJoinLink,getApiConferenceRoomJoin}};
 export type PostApiConferenceRoomCreateConferenceToPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getConferenceRoom>['postApiConferenceRoomCreateConferenceToPost']>>>

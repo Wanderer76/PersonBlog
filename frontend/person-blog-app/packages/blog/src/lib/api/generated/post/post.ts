@@ -4,21 +4,97 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type {
+  PostApiPostSetReactionPostIdParams,
+  PostCommonModel,
+  PostDetailViewModel,
+  UserViewInfo
+} from '.././models';
+
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getPost = () => {
-/**
- * @deprecated
- */
-const getApiPostPostId = (
-    id: string,
- ) => {
-      return customInstance<void>(
-      {url: `/api/Post/post/${id}`, method: 'GET'
+const getApiPostDetailPostId = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance<PostDetailViewModel>>,) => {
+      return customInstance<PostDetailViewModel>(
+      {url: `/api/Post/detail/${postId}`, method: 'GET'
     },
-      );
+      options);
     }
-  return {getApiPostPostId}};
-export type GetApiPostPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['getApiPostPostId']>>>
+  const getApiPostVideoAccessBlogIdPostId = (
+    blogId: string,
+    postId: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/Post/video-access/${blogId}/${postId}`, method: 'GET'
+    },
+      options);
+    }
+  const getApiPostUserInfoPostId = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance<UserViewInfo>>,) => {
+      return customInstance<UserViewInfo>(
+      {url: `/api/Post/userInfo/${postId}`, method: 'GET'
+    },
+      options);
+    }
+  const postApiPostSetReactionPostId = (
+    postId: string,
+    params?: PostApiPostSetReactionPostIdParams,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/Post/setReaction/${postId}`, method: 'POST',
+        params
+    },
+      options);
+    }
+  const deleteApiPostDeletePostId = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/Post/delete/${postId}`, method: 'DELETE'
+    },
+      options);
+    }
+  const postApiPostCommonByIds = (
+    postApiPostCommonByIdsBody: string[],
+ options?: SecondParameter<typeof customInstance<PostCommonModel[]>>,) => {
+      return customInstance<PostCommonModel[]>(
+      {url: `/api/Post/commonByIds`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiPostCommonByIdsBody
+    },
+      options);
+    }
+  const postApiPostCommonWithExcludeIds = (
+    postApiPostCommonWithExcludeIdsBody: string[],
+ options?: SecondParameter<typeof customInstance<PostCommonModel[]>>,) => {
+      return customInstance<PostCommonModel[]>(
+      {url: `/api/Post/commonWithExcludeIds`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postApiPostCommonWithExcludeIdsBody
+    },
+      options);
+    }
+  const getApiPostMyList = (
+
+ options?: SecondParameter<typeof customInstance<PostCommonModel[]>>,) => {
+      return customInstance<PostCommonModel[]>(
+      {url: `/api/Post/my/list`, method: 'GET'
+    },
+      options);
+    }
+  return {getApiPostDetailPostId,getApiPostVideoAccessBlogIdPostId,getApiPostUserInfoPostId,postApiPostSetReactionPostId,deleteApiPostDeletePostId,postApiPostCommonByIds,postApiPostCommonWithExcludeIds,getApiPostMyList}};
+export type GetApiPostDetailPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['getApiPostDetailPostId']>>>
+export type GetApiPostVideoAccessBlogIdPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['getApiPostVideoAccessBlogIdPostId']>>>
+export type GetApiPostUserInfoPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['getApiPostUserInfoPostId']>>>
+export type PostApiPostSetReactionPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['postApiPostSetReactionPostId']>>>
+export type DeleteApiPostDeletePostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['deleteApiPostDeletePostId']>>>
+export type PostApiPostCommonByIdsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['postApiPostCommonByIds']>>>
+export type PostApiPostCommonWithExcludeIdsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['postApiPostCommonWithExcludeIds']>>>
+export type GetApiPostMyListResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPost>['getApiPostMyList']>>>

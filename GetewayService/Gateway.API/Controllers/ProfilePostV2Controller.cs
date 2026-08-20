@@ -1,5 +1,6 @@
 using Authentication.Contract.Constants;
 using Blog.Contracts;
+using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
@@ -22,6 +23,16 @@ public sealed class ProfilePostV2Controller(
         PostType postType = PostType.Video)
     {
         return Ok(await postApiClient.GetCurrentUserPostsAsync(page, pageSize, postType));
+    }
+
+    [HttpGet("availablePostByBlogId/{blogId:guid}")]
+    public async Task<ActionResult<PagedListViewModel<PostCommonModelV2>>> GetAvailablePostsByBlogId(
+        Guid blogId,
+        int page,
+        int pageSize,
+        PostType postType = PostType.Video)
+    {
+        return Ok(await postApiClient.GetAvailablePostsByBlogIdAsync(blogId, page, pageSize, postType));
     }
 
     [HttpGet("create")]
@@ -57,5 +68,26 @@ public sealed class ProfilePostV2Controller(
     public async Task<ActionResult> UpdatePost([FromForm] PostEditDto request)
     {
         return ToActionResult(await postApiClient.UpdatePostAsync(request));
+    }
+
+    [HttpPost("createTextPost")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<UserPostInfoModel>> CreateTextPost([FromForm] TextPostCreateForm request)
+    {
+        return ToActionResult(await postApiClient.CreateTextPostAsync(request));
+    }
+
+    [HttpGet("textEdit/{postId:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<TextPostEditViewModel>> GetTextPostEditModel(Guid postId)
+    {
+        return ToActionResult(await postApiClient.GetTextPostEditModelAsync(postId));
+    }
+
+    [HttpPost("textEdit")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult> UpdateTextPost([FromForm] TextPostEditDto request)
+    {
+        return ToActionResult(await postApiClient.UpdateTextPostAsync(request));
     }
 }

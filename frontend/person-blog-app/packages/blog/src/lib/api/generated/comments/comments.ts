@@ -12,26 +12,28 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getComments = () => {
 const getApiCommentsList = (
     params?: GetApiCommentsListParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Comments/list`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const postApiCommentsCreate = (
     commentCreateRequest: CommentCreateRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Comments/create`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: commentCreateRequest
     },
-      );
+      options);
     }
   return {getApiCommentsList,postApiCommentsCreate}};
 export type GetApiCommentsListResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getComments>['getApiCommentsList']>>>

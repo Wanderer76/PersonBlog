@@ -5,7 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface SubscriptionCreateDto {
+export interface SubscriptionUpdateDto {
   blogId?: string;
   /** @minLength 1 */
   title: string;
@@ -17,4 +17,5 @@ export interface SubscriptionCreateDto {
   description?: string | null;
   /** @nullable */
   photoUrl?: string | null;
+  id?: string;
 }

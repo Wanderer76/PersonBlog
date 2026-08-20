@@ -8,7 +8,10 @@ import type { RecommendationFeedItem } from './recommendationFeedItem';
 
 export interface RecommendationFeedResponse {
   requestId?: string;
+  /** @nullable */
   algorithmVersion?: string | null;
+  /** @nullable */
   items?: RecommendationFeedItem[] | null;
+  /** @nullable */
   nextCursor?: string | null;
 }

@@ -11,32 +11,34 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getSubscriber = () => {
 const postApiSubscriberSubscribeBlogId = (
     blogId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Subscriber/subscribe/${blogId}`, method: 'POST'
     },
-      );
+      options);
     }
   const postApiSubscriberUnsubscribeBlogId = (
     blogId: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Subscriber/unsubscribe/${blogId}`, method: 'POST'
     },
-      );
+      options);
     }
   const getApiSubscriberSubscriptions = (
     params?: GetApiSubscriberSubscriptionsParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/Subscriber/subscriptions`, method: 'GET',
         params
     },
-      );
+      options);
     }
   return {postApiSubscriberSubscribeBlogId,postApiSubscriberUnsubscribeBlogId,getApiSubscriberSubscriptions}};
 export type PostApiSubscriberSubscribeBlogIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getSubscriber>['postApiSubscriberSubscribeBlogId']>>>

@@ -13,47 +13,49 @@ import type {
 import { customInstance } from '../../mutator';
 
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
 
   export const getVideo = () => {
 const getVideoBlogIdPostIdFile = (
     blogId: string,
     postId: string,
     file: string,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/Video/${blogId}/${postId}/${file}`, method: 'GET'
     },
-      );
+      options);
     }
   const getVideoVideoPostId = (
     postId: string,
     params?: GetVideoVideoPostIdParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/Video/video/${postId}`, method: 'GET',
         params
     },
-      );
+      options);
     }
   const postVideoSetView = (
     setViewRequest: SetViewRequest,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/Video/setView`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: setViewRequest
     },
-      );
+      options);
     }
   const postVideoSetReactionPostId = (
     postId: string,
     params?: PostVideoSetReactionPostIdParams,
- ) => {
+ options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/Video/setReaction/${postId}`, method: 'POST',
         params
     },
-      );
+      options);
     }
   return {getVideoBlogIdPostIdFile,getVideoVideoPostId,postVideoSetView,postVideoSetReactionPostId}};
 export type GetVideoBlogIdPostIdFileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getVideo>['getVideoBlogIdPostIdFile']>>>

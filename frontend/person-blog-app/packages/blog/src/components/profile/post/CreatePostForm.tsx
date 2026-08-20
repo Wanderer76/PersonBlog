@@ -132,11 +132,15 @@ const CreatePostForm = () => {
   };
 
   const uploadVideo = async (postId: string, file: File) => {
-    const uploader = new DirectFileUploader();
-    uploaderRef.current = uploader;
+    const uploader = uploaderRef.current ?? new DirectFileUploader();
+    uploaderRef.current ??= uploader;
     uploader.setProgressCallback(setUploadProgress);
-    await uploader.initiateUpload(postId, videoDuration, file);
-    await uploader.uploadFile(file);
+    if (uploader.canResume()) {
+      await uploader.resumeUpload(file);
+    } else {
+      await uploader.initiateUpload(postId, videoDuration, file);
+      await uploader.uploadFile(file);
+    }
   };
 
   const sendForm = async () => {
@@ -155,7 +159,6 @@ const CreatePostForm = () => {
       await uploadVideo(postId, postForm.video);
       navigate('/profile');
     } catch (error: unknown) {
-      if (uploaderRef.current) await uploaderRef.current.abortUpload().catch(() => undefined);
       setErrorMessage(error instanceof Error ? error.message : 'Не удалось создать публикацию');
     } finally {
       setIsSubmitting(false);
