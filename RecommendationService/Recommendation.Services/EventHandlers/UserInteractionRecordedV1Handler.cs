@@ -18,7 +18,7 @@ public sealed class UserInteractionRecordedV1Handler(
     {
         ArgumentNullException.ThrowIfNull(message);
         var interaction = Map(message);
-        var inbox = new InboxMessage(message.EventId, nameof(UserInteractionRecordedV1), clock.UtcNow);
+        var inbox = InboxMessage.Create(message.EventId, nameof(UserInteractionRecordedV1), clock.UtcNow).Value;
 
         return store.ExecuteOnceAsync(inbox, async (session, token) =>
         {
@@ -59,7 +59,7 @@ public sealed class UserInteractionRecordedV1Handler(
         var affinity = await session.GetBlogAffinityAsync(userId, blogId, cancellationToken);
         if (affinity is null)
         {
-            session.AddBlogAffinity(new UserBlogAffinity(userId, blogId, delta, occurredAt));
+            session.AddBlogAffinity(UserBlogAffinity.Create(userId, blogId, delta, occurredAt).Value);
             return;
         }
 
@@ -78,7 +78,7 @@ public sealed class UserInteractionRecordedV1Handler(
         var affinity = await session.GetCategoryAffinityAsync(userId, categoryId, cancellationToken);
         if (affinity is null)
         {
-            session.AddCategoryAffinity(new UserCategoryAffinity(userId, categoryId, delta, occurredAt));
+            session.AddCategoryAffinity(UserCategoryAffinity.Create(userId, categoryId, delta, occurredAt).Value);
             return;
         }
 
@@ -86,7 +86,7 @@ public sealed class UserInteractionRecordedV1Handler(
         affinity.Update(updated.Score, updated.UpdatedAt);
     }
 
-    private static UserInteraction Map(UserInteractionRecordedV1 message) => new(
+    private static UserInteraction Map(UserInteractionRecordedV1 message) => UserInteraction.Create(
         message.EventId,
         message.UserId,
         message.AnonymousSessionId,
@@ -106,5 +106,5 @@ public sealed class UserInteractionRecordedV1Handler(
         message.WatchedSeconds,
         message.WatchRatio,
         message.Reaction,
-        message.PreviousReaction);
+        message.PreviousReaction).Value;
 }

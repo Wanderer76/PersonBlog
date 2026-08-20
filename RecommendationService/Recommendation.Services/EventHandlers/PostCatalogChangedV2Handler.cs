@@ -18,7 +18,7 @@ public sealed class PostCatalogChangedV2Handler(
     public Task HandleAsync(PostCatalogChangedV2 message, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message);
-        var inbox = new InboxMessage(message.EventId, nameof(PostCatalogChangedV2), clock.UtcNow);
+        var inbox = InboxMessage.Create(message.EventId, nameof(PostCatalogChangedV2), clock.UtcNow).Value;
 
         return store.ExecuteOnceAsync(inbox, async (session, token) =>
         {

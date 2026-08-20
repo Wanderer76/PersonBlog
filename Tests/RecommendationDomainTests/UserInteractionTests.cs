@@ -6,35 +6,36 @@ namespace RecommendationDomainTests;
 public sealed class UserInteractionTests
 {
     [Fact]
-    public void Constructor_requires_exactly_one_subject()
+    public void Create_requires_exactly_one_subject()
     {
-        Assert.Throws<ArgumentException>(() => Create(userId: null, anonymousSessionId: null));
-        Assert.Throws<ArgumentException>(() => Create(Guid.NewGuid(), "session"));
+        Assert.True(Create(userId: null, anonymousSessionId: null).IsFailure);
+        Assert.True(Create(Guid.NewGuid(), "session").IsFailure);
     }
 
     [Fact]
-    public void Constructor_validates_reaction_semantics()
+    public void Create_validates_reaction_semantics()
     {
-        Assert.Throws<ArgumentException>(() => Create(
+        Assert.True(Create(
             Guid.NewGuid(),
             null,
             InteractionType.Like,
-            reaction: false));
+            reaction: false).IsFailure);
 
-        var interaction = Create(
+        var result = Create(
             Guid.NewGuid(),
             null,
             InteractionType.Like,
             reaction: true);
 
-        Assert.True(interaction.Reaction);
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value.Reaction);
     }
 
-    private static UserInteraction Create(
+    private static Result<UserInteraction> Create(
         Guid? userId,
         string? anonymousSessionId,
         InteractionType type = InteractionType.Open,
-        bool? reaction = null) => new(
+        bool? reaction = null) => UserInteraction.Create(
             Guid.NewGuid(),
             userId,
             anonymousSessionId,

@@ -1,3 +1,5 @@
+using Shared.Utils;
+
 namespace Recommendation.Domain.Entities;
 
 public sealed class UserCategoryAffinity : IRecommendationEntity
@@ -11,13 +13,28 @@ public sealed class UserCategoryAffinity : IRecommendationEntity
     {
     }
 
-    public UserCategoryAffinity(Guid userId, int categoryId, double score, DateTimeOffset updatedAt)
+    private UserCategoryAffinity(Guid userId, int categoryId, double score, DateTimeOffset updatedAt)
     {
-        if (userId == Guid.Empty) throw new ArgumentException("UserId is required.", nameof(userId));
-        if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId));
         UserId = userId;
         CategoryId = categoryId;
-        Update(score, updatedAt);
+        Score = score;
+        UpdatedAt = updatedAt;
+    }
+
+    public static Result<UserCategoryAffinity> Create(
+        Guid userId,
+        int categoryId,
+        double score,
+        DateTimeOffset updatedAt)
+    {
+        if (userId == Guid.Empty)
+            return new Error(nameof(userId), "UserId is required.");
+        if (categoryId <= 0)
+            return new Error(nameof(categoryId), "CategoryId must be positive.");
+        if (!double.IsFinite(score))
+            return new Error(nameof(score), "Score must be finite.");
+
+        return new UserCategoryAffinity(userId, categoryId, score, updatedAt);
     }
 
     public void Update(double score, DateTimeOffset updatedAt)

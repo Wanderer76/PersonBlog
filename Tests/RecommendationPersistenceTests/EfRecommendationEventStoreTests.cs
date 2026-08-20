@@ -22,7 +22,7 @@ public sealed class EfRecommendationEventStoreTests
     {
         await using var context = CreateContext();
         var store = new EfRecommendationEventStore(context, new TestClock(Now.AddSeconds(1)));
-        var message = new InboxMessage(Guid.NewGuid(), "PostCatalogChangedV2", Now);
+        var message = InboxMessage.Create(Guid.NewGuid(), "PostCatalogChangedV2", Now).Value;
         var postId = Guid.NewGuid();
         var calls = 0;
 
@@ -35,7 +35,7 @@ public sealed class EfRecommendationEventStoreTests
 
         await store.ExecuteOnceAsync(message, Apply);
         await store.ExecuteOnceAsync(
-            new InboxMessage(message.EventId, message.EventType, Now.AddMinutes(1)),
+            InboxMessage.Create(message.EventId, message.EventType, Now.AddMinutes(1)).Value,
             Apply);
 
         Assert.Equal(1, calls);
@@ -52,7 +52,7 @@ public sealed class EfRecommendationEventStoreTests
         await using (var context = CreateContext(databaseName))
         {
             var store = new EfRecommendationEventStore(context, new TestClock(Now.AddSeconds(1)));
-            var message = new InboxMessage(Guid.NewGuid(), "BrokenEvent", Now);
+            var message = InboxMessage.Create(Guid.NewGuid(), "BrokenEvent", Now).Value;
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => store.ExecuteOnceAsync(
                 message,
@@ -118,11 +118,11 @@ public sealed class EfRecommendationEventStoreTests
         var blogId = Guid.NewGuid();
         var post = CreateSnapshot(Guid.NewGuid(), blogId, [10]);
         context.PostSnapshots.Add(post);
-        context.UserCategoryAffinities.Add(new UserCategoryAffinity(userId, 10, 7, Now));
-        context.UserBlogAffinities.Add(new UserBlogAffinity(userId, blogId, 4, Now));
-        context.UserSubscriptions.Add(new UserSubscription(userId, blogId, Now));
-        context.UserInteractions.Add(new UserInteraction(
-            Guid.NewGuid(), userId, null, post.PostId, InteractionType.Open, Now));
+        context.UserCategoryAffinities.Add(UserCategoryAffinity.Create(userId, 10, 7, Now).Value);
+        context.UserBlogAffinities.Add(UserBlogAffinity.Create(userId, blogId, 4, Now).Value);
+        context.UserSubscriptions.Add(UserSubscription.Create(userId, blogId, Now).Value);
+        context.UserInteractions.Add(UserInteraction.Create(
+            Guid.NewGuid(), userId, null, post.PostId, InteractionType.Open, Now).Value);
         await context.SaveChangesAsync();
         var readRepository = new DefaultReadRepository<RecommendationDbContext, IRecommendationEntity>(context);
         var writeRepository = new DefaultWriteRepository<RecommendationDbContext, IRecommendationEntity>(context);

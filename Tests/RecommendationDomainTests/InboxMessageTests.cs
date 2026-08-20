@@ -8,7 +8,7 @@ public sealed class InboxMessageTests
     public void MarkFailed_tracks_retries_and_MarkProcessed_completes_message()
     {
         var receivedAt = DateTimeOffset.UtcNow;
-        var message = new InboxMessage(Guid.NewGuid(), "PostCatalogChangedV2", receivedAt);
+        var message = InboxMessage.Create(Guid.NewGuid(), "PostCatalogChangedV2", receivedAt).Value;
 
         message.MarkFailed("temporary error");
         message.MarkProcessed(receivedAt.AddSeconds(1));

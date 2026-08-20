@@ -14,7 +14,7 @@ public sealed class SubscriptionChangedV1Handler(
     public Task HandleAsync(SubscriptionChangedV1 message, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message);
-        var inbox = new InboxMessage(message.EventId, nameof(SubscriptionChangedV1), clock.UtcNow);
+        var inbox = InboxMessage.Create(message.EventId, nameof(SubscriptionChangedV1), clock.UtcNow).Value;
 
         return store.ExecuteOnceAsync(inbox, async (session, token) =>
         {
@@ -23,7 +23,10 @@ public sealed class SubscriptionChangedV1Handler(
             {
                 if (current is null)
                 {
-                    session.AddSubscription(new UserSubscription(message.UserId, message.BlogId, message.OccurredAt));
+                    session.AddSubscription(UserSubscription.Create(
+                        message.UserId,
+                        message.BlogId,
+                        message.OccurredAt).Value);
                 }
                 return;
             }

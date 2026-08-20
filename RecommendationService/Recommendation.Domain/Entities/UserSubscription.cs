@@ -1,3 +1,5 @@
+using Shared.Utils;
+
 namespace Recommendation.Domain.Entities;
 
 public sealed class UserSubscription : IRecommendationEntity
@@ -10,12 +12,20 @@ public sealed class UserSubscription : IRecommendationEntity
     {
     }
 
-    public UserSubscription(Guid userId, Guid blogId, DateTimeOffset createdAt)
+    private UserSubscription(Guid userId, Guid blogId, DateTimeOffset createdAt)
     {
-        if (userId == Guid.Empty) throw new ArgumentException("UserId is required.", nameof(userId));
-        if (blogId == Guid.Empty) throw new ArgumentException("BlogId is required.", nameof(blogId));
         UserId = userId;
         BlogId = blogId;
         CreatedAt = createdAt;
+    }
+
+    public static Result<UserSubscription> Create(Guid userId, Guid blogId, DateTimeOffset createdAt)
+    {
+        if (userId == Guid.Empty)
+            return new Error(nameof(userId), "UserId is required.");
+        if (blogId == Guid.Empty)
+            return new Error(nameof(blogId), "BlogId is required.");
+
+        return new UserSubscription(userId, blogId, createdAt);
     }
 }

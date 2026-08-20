@@ -69,7 +69,7 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
         var diversified = Diversify(ranked);
         var page = SelectPage(diversified, offset, request.Limit);
 
-        var impressions = page.Items.Select((item, position) => new RecommendationImpression(
+        var impressions = page.Items.Select((item, position) => RecommendationImpression.Create(
             requestId,
             item.Candidate.PostId,
             request.UserId,
@@ -78,7 +78,7 @@ public sealed class HeuristicRecommendationFeedService : IRecommendationFeedServ
             _options.AlgorithmVersion,
             item.Source,
             item.Score,
-            _clock.UtcNow)).ToArray();
+            _clock.UtcNow).Value).ToArray();
         if (impressions.Length > 0)
         {
             await _store.SaveImpressionsAsync(impressions, cancellationToken);

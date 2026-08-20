@@ -1,3 +1,5 @@
+using Shared.Utils;
+
 namespace Recommendation.Domain.Entities;
 
 public sealed class InboxMessage : IRecommendationEntity
@@ -15,13 +17,21 @@ public sealed class InboxMessage : IRecommendationEntity
     {
     }
 
-    public InboxMessage(Guid eventId, string eventType, DateTimeOffset receivedAt)
+    private InboxMessage(Guid eventId, string eventType, DateTimeOffset receivedAt)
     {
-        if (eventId == Guid.Empty) throw new ArgumentException("EventId is required.", nameof(eventId));
-        if (string.IsNullOrWhiteSpace(eventType)) throw new ArgumentException("EventType is required.", nameof(eventType));
         EventId = eventId;
         EventType = eventType.Trim();
         ReceivedAt = receivedAt;
+    }
+
+    public static Result<InboxMessage> Create(Guid eventId, string eventType, DateTimeOffset receivedAt)
+    {
+        if (eventId == Guid.Empty)
+            return new Error(nameof(eventId), "EventId is required.");
+        if (string.IsNullOrWhiteSpace(eventType))
+            return new Error(nameof(eventType), "EventType is required.");
+
+        return new InboxMessage(eventId, eventType, receivedAt);
     }
 
     public void MarkProcessed(DateTimeOffset processedAt)

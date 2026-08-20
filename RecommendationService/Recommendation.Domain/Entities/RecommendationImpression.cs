@@ -1,4 +1,5 @@
 using Recommendation.Domain.Enums;
+using Shared.Utils;
 
 namespace Recommendation.Domain.Entities;
 
@@ -18,7 +19,7 @@ public sealed class RecommendationImpression : IRecommendationEntity
     {
     }
 
-    public RecommendationImpression(
+    private RecommendationImpression(
         Guid requestId,
         Guid postId,
         Guid? userId,
@@ -29,17 +30,6 @@ public sealed class RecommendationImpression : IRecommendationEntity
         double score,
         DateTimeOffset shownAt)
     {
-        if (requestId == Guid.Empty) throw new ArgumentException("RequestId is required.", nameof(requestId));
-        if (postId == Guid.Empty) throw new ArgumentException("PostId is required.", nameof(postId));
-        if (position < 0) throw new ArgumentOutOfRangeException(nameof(position));
-        if (string.IsNullOrWhiteSpace(algorithmVersion)) throw new ArgumentException("AlgorithmVersion is required.", nameof(algorithmVersion));
-        if (!double.IsFinite(score)) throw new ArgumentOutOfRangeException(nameof(score));
-
-        var hasUser = userId.HasValue && userId.Value != Guid.Empty;
-        var hasAnonymousSession = !string.IsNullOrWhiteSpace(anonymousSessionId);
-        if (hasUser == hasAnonymousSession)
-            throw new ArgumentException("Exactly one impression subject must be specified.");
-
         RequestId = requestId;
         PostId = postId;
         UserId = userId;
@@ -49,5 +39,44 @@ public sealed class RecommendationImpression : IRecommendationEntity
         CandidateSource = candidateSource;
         Score = score;
         ShownAt = shownAt;
+    }
+
+    public static Result<RecommendationImpression> Create(
+        Guid requestId,
+        Guid postId,
+        Guid? userId,
+        string? anonymousSessionId,
+        int position,
+        string algorithmVersion,
+        CandidateSource candidateSource,
+        double score,
+        DateTimeOffset shownAt)
+    {
+        if (requestId == Guid.Empty)
+            return new Error(nameof(requestId), "RequestId is required.");
+        if (postId == Guid.Empty)
+            return new Error(nameof(postId), "PostId is required.");
+        if (position < 0)
+            return new Error(nameof(position), "Position cannot be negative.");
+        if (string.IsNullOrWhiteSpace(algorithmVersion))
+            return new Error(nameof(algorithmVersion), "AlgorithmVersion is required.");
+        if (!double.IsFinite(score))
+            return new Error(nameof(score), "Score must be finite.");
+
+        var hasUser = userId.HasValue && userId.Value != Guid.Empty;
+        var hasAnonymousSession = !string.IsNullOrWhiteSpace(anonymousSessionId);
+        if (hasUser == hasAnonymousSession)
+            return new Error("subject", "Exactly one impression subject must be specified.");
+
+        return new RecommendationImpression(
+            requestId,
+            postId,
+            userId,
+            anonymousSessionId,
+            position,
+            algorithmVersion,
+            candidateSource,
+            score,
+            shownAt);
     }
 }

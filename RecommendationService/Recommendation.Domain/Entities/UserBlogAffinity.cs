@@ -1,3 +1,5 @@
+using Shared.Utils;
+
 namespace Recommendation.Domain.Entities;
 
 public sealed class UserBlogAffinity : IRecommendationEntity
@@ -11,13 +13,28 @@ public sealed class UserBlogAffinity : IRecommendationEntity
     {
     }
 
-    public UserBlogAffinity(Guid userId, Guid blogId, double score, DateTimeOffset updatedAt)
+    private UserBlogAffinity(Guid userId, Guid blogId, double score, DateTimeOffset updatedAt)
     {
-        if (userId == Guid.Empty) throw new ArgumentException("UserId is required.", nameof(userId));
-        if (blogId == Guid.Empty) throw new ArgumentException("BlogId is required.", nameof(blogId));
         UserId = userId;
         BlogId = blogId;
-        Update(score, updatedAt);
+        Score = score;
+        UpdatedAt = updatedAt;
+    }
+
+    public static Result<UserBlogAffinity> Create(
+        Guid userId,
+        Guid blogId,
+        double score,
+        DateTimeOffset updatedAt)
+    {
+        if (userId == Guid.Empty)
+            return new Error(nameof(userId), "UserId is required.");
+        if (blogId == Guid.Empty)
+            return new Error(nameof(blogId), "BlogId is required.");
+        if (!double.IsFinite(score))
+            return new Error(nameof(score), "Score must be finite.");
+
+        return new UserBlogAffinity(userId, blogId, score, updatedAt);
     }
 
     public void Update(double score, DateTimeOffset updatedAt)
