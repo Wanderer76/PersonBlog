@@ -1,0 +1,15 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+}
+
+.app-loader {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  padding: var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: 15px;
+}

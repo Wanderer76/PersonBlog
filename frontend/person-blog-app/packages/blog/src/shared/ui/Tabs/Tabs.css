@@ -5,7 +5,7 @@
   gap: 20px;
   margin-bottom: 22px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #ededee;
+  border-bottom: 1px solid var(--color-border);
   flex-wrap: wrap;
 }
 
@@ -19,7 +19,7 @@
   border: none;
   padding: 8px 12px;
   font-size: 15px;
-  color: #666;
+  color: var(--color-text-secondary);
   cursor: pointer;
   position: relative;
   transition: 0.3s;
@@ -27,11 +27,11 @@
 }
 
 .tabButton:hover {
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .tabButton.active {
-  color: #333;
+  color: var(--color-text-primary);
   font-weight: 500;
 }
 
@@ -43,7 +43,7 @@
   right: 0;
   height: 3px;
   border-radius: 3px 3px 0 0;
-  background: #ff7b00;
+  background: var(--color-brand-500);
 }
 
 .tabButton:focus {
@@ -51,7 +51,7 @@
 }
 
 .tabButton:focus-visible {
-  outline: 2px solid #ff7b00;
+  outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -71,7 +71,7 @@
   .tabButtons {
     justify-content: center;
     width: 100%;
-    border-bottom: 2px solid #eee;
+    border-bottom: 2px solid var(--color-border);
     padding-bottom: 10px;
   }
 

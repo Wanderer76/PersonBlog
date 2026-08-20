@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { isServiceWorkerResponse, type ServiceWorkerResponse } from '@/serviceWorker/messages';
+import { isServiceWorkerResponse, type ServiceWorkerResponse } from '@/shared/lib/service-worker/messages';
 
 type MessageHandler = (message: ServiceWorkerResponse) => void;
 

@@ -4,13 +4,13 @@ export const profile = {
         target: './swagger.json',
     },
     output: {
-        target: './src/lib/api/generated',
-        schemas: './src/lib/api/generated/models',
+        target: './src/shared/api/generated',
+        schemas: './src/shared/api/generated/models',
         client: 'axios',
         mode: 'tags-split',
         override: {
             mutator: {
-                path: './src/lib/api/mutator.ts',
+                path: './src/shared/api/mutator.ts',
                 name: 'customInstance',
             },
             query: {
@@ -34,14 +34,14 @@ export const authGateway = {
         target: '../auth/swagger.json',
     },
     output: {
-        target: './src/lib/api/generated/auth-gateway',
-        schemas: './src/lib/api/generated/auth-gateway/models',
+        target: './src/shared/api/generated/auth-gateway',
+        schemas: './src/shared/api/generated/auth-gateway/models',
         client: 'axios',
         mode: 'tags-split',
         override: {
             requestOptions: true,
             mutator: {
-                path: './src/lib/api/authGatewayMutator.ts',
+                path: './src/shared/api/authGatewayMutator.ts',
                 name: 'authGatewayInstance',
             },
         },

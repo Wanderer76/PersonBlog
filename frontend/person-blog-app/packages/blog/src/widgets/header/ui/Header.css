@@ -1,0 +1,119 @@
+.youtube-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+    padding: 0 16px;
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    font-family: Roboto, Arial, sans-serif;
+}
+
+.youtube-header .left-section,
+.youtube-header .right-section {
+    display: flex;
+    align-items: center;
+}
+
+.youtube-header .logo {
+    display: flex;
+    align-items: center;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.menu-button {
+    display: none;
+    width: 40px;
+    height: 40px;
+    padding: 10px 8px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+}
+
+.menu-button span {
+    display: block;
+    height: 2px;
+    margin: 4px 0;
+    border-radius: 2px;
+    background: var(--color-text-primary);
+}
+
+.youtube-header .right-section {
+    gap: 16px;
+}
+
+.youtube-header .auth-button {
+    padding: 8px 16px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--color-brand-500);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.youtube-header .auth-button:hover,
+.youtube-header .profile-button:hover {
+    background: var(--color-brand-600);
+}
+
+.youtube-header .profile-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-brand-500);
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.youtube-header :is(a, button):focus-visible {
+    outline: 3px solid var(--color-brand-500);
+    outline-offset: 2px;
+}
+
+.menu-backdrop {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .youtube-header {
+        padding: 0 12px;
+    }
+
+    .menu-button {
+        display: block;
+        margin-right: 6px;
+    }
+
+    .menu-backdrop {
+        display: block;
+        position: fixed;
+        inset: 56px 0 0;
+        width: 100%;
+        border: 0;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: 98;
+        cursor: default;
+    }
+}
+
+@media (max-width: 420px) {
+    .youtube-header .logo {
+        font-size: 17px;
+    }
+}

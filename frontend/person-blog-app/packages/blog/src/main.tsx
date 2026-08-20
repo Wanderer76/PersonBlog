@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { getAccessToken } from './shared/TokenStrorage.ts'
-import type { ServiceWorkerRequest } from './serviceWorker/messages.ts'
+import '@/app/styles/index.css'
+import App from '@/app/App'
+import { getAccessToken } from '@/shared/auth/tokenStorage'
+import type { ServiceWorkerRequest } from '@/shared/lib/service-worker/messages'
 
 const root = createRoot(document.getElementById('root')!);
 if ('serviceWorker' in navigator) {

@@ -1,5 +1,5 @@
 import { KeyboardEvent, ReactNode, useRef } from 'react';
-import './Tabs.css';
+import '@/shared/ui/Tabs/Tabs.css';
 
 interface TabItem {
   id: string;
