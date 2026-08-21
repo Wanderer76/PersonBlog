@@ -5,6 +5,7 @@ import styles from '@/entities/post/ui/BigVideoCard/BigVideoCard.module.css';
 
 const BigVideoCard = React.forwardRef(function BigVideoCard({ videoCardModel }, ref) {
     const videoUrl = `/videoPage/${videoCardModel.postId}`;
+    const creator = videoCardModel.creator;
 
     return (
         <article ref={ref} className={styles.videoCard}>
@@ -21,15 +22,20 @@ const BigVideoCard = React.forwardRef(function BigVideoCard({ videoCardModel }, 
                 <h2 className={styles.videoTitle}>
                     <Link to={videoUrl}>{videoCardModel.title}</Link>
                 </h2>
-                {videoCardModel.blogId && (
-                    <Link className={styles.channelInfo} to={`/channel/${videoCardModel.blogId}`}>
+                {creator?.blogId ? (
+                    <Link className={styles.channelInfo} to={`/channel/${creator.blogId}`}>
                         <img
-                            src={videoCardModel.blogLogo || logo}
+                            src={creator.avatarUrl || logo}
                             className={styles.channelIcon}
                             alt=""
                         />
-                        <span className={styles.channelName}>{videoCardModel.blogName}</span>
+                        <span className={styles.channelName}>{creator.name || 'Неизвестный автор'}</span>
                     </Link>
+                ) : (
+                    <div className={styles.channelInfo}>
+                        <img src={logo} className={styles.channelIcon} alt="" />
+                        <span className={styles.channelName}>Неизвестный автор</span>
+                    </div>
                 )}
                 {Number.isFinite(videoCardModel.viewCount) && (
                     <div className={styles.videoStats}>

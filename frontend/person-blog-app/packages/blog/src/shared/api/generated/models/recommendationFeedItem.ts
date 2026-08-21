@@ -4,6 +4,7 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { PostCreatorModel } from './postCreatorModel';
 
 export interface RecommendationFeedItem {
   postId?: string;
@@ -15,4 +16,5 @@ export interface RecommendationFeedItem {
   description?: string | null;
   /** @nullable */
   previewUrl?: string | null;
+  creator?: PostCreatorModel;
 }

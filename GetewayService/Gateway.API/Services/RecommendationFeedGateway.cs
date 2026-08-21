@@ -45,7 +45,8 @@ public sealed class RecommendationFeedGateway(
                     item.Reason,
                     card.Title,
                     card.Description,
-                    card.PreviewObjectName);
+                    card.PreviewObjectName,
+                    card.Creator);
             })
             .ToArray();
 

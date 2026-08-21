@@ -1,3 +1,5 @@
+using Blog.Contracts.Models;
+
 namespace Gateway.API.Models.Recommendation;
 
 public sealed record RecommendationFeedResponse(
@@ -11,7 +13,8 @@ public sealed record RecommendationFeedItem(
     string Reason,
     string Title,
     string? Description,
-    string? PreviewUrl);
+    string? PreviewUrl,
+    PostCreatorModel Creator);
 
 public sealed record RecommendationRankingResponse(
     Guid RequestId,
@@ -25,7 +28,8 @@ public sealed record BlogPostCard(
     Guid Id,
     string Title,
     string? Description,
-    string? PreviewObjectName);
+    string? PreviewObjectName,
+    PostCreatorModel Creator);
 
 public enum RecommendationPostType
 {

@@ -3809,6 +3809,9 @@
           "title": {
             "type": "string",
             "nullable": true
+          },
+          "creator": {
+            "$ref": "#/components/schemas/PostCreatorModel"
           }
         },
         "additionalProperties": false
@@ -4204,6 +4207,28 @@
         },
         "additionalProperties": false
       },
+      "PostCreatorModel": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "blogId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "PostCommonModelV2": {
         "type": "object",
         "properties": {
@@ -4489,6 +4514,9 @@
           "previewUrl": {
             "type": "string",
             "nullable": true
+          },
+          "creator": {
+            "$ref": "#/components/schemas/PostCreatorModel"
           }
         },
         "additionalProperties": false

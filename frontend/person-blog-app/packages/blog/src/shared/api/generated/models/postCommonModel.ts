@@ -4,6 +4,7 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { PostCreatorModel } from './postCreatorModel';
 
 export interface PostCommonModel {
   id?: string;
@@ -13,4 +14,5 @@ export interface PostCommonModel {
   description?: string | null;
   /** @nullable */
   title?: string | null;
+  creator?: PostCreatorModel;
 }

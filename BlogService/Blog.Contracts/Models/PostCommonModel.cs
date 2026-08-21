@@ -1,4 +1,4 @@
-﻿namespace Blog.Contracts.Models;
+namespace Blog.Contracts.Models;
 
 public class PostCommonModel
 {
@@ -6,6 +6,15 @@ public class PostCommonModel
     public string? PreviewObjectName { get; set; }
     public string? Description { get; set; }
     public string Title { get; set; }
+    public PostCreatorModel Creator { get; set; } = null!;
+}
+
+public sealed class PostCreatorModel
+{
+    public Guid UserId { get; set; }
+    public Guid BlogId { get; set; }
+    public string Name { get; set; } = null!;
+    public string? AvatarUrl { get; set; }
 }
 
 public class PostCommonModelV2

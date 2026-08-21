@@ -15,6 +15,8 @@ public sealed class RecommendationFeedGatewayTests
         var secondPostId = Guid.NewGuid();
         var missingPostId = Guid.NewGuid();
         var requestId = Guid.NewGuid();
+        var creatorUserId = Guid.NewGuid();
+        var creatorBlogId = Guid.NewGuid();
         string? recommendationRequestUri = null;
 
         var recommendationJson = $$"""
@@ -31,8 +33,20 @@ public sealed class RecommendationFeedGatewayTests
             """;
         var blogJson = $$"""
             [
-              { "id": "{{secondPostId}}", "title": "Second", "description": null, "previewObjectName": "second.jpg" },
-              { "id": "{{firstPostId}}", "title": "First", "description": "Description", "previewObjectName": "first.jpg" }
+              {
+                "id": "{{secondPostId}}",
+                "title": "Second",
+                "description": null,
+                "previewObjectName": "second.jpg",
+                "creator": { "userId": "{{creatorUserId}}", "blogId": "{{creatorBlogId}}", "name": "Creator", "avatarUrl": "avatar.jpg" }
+              },
+              {
+                "id": "{{firstPostId}}",
+                "title": "First",
+                "description": "Description",
+                "previewObjectName": "first.jpg",
+                "creator": { "userId": "{{creatorUserId}}", "blogId": "{{creatorBlogId}}", "name": "Creator", "avatarUrl": "avatar.jpg" }
+              }
             ]
             """;
         var recommendationHandler = new StubHandler(request =>
@@ -68,6 +82,10 @@ public sealed class RecommendationFeedGatewayTests
                 Assert.Equal(firstPostId, first.PostId);
                 Assert.Equal("similar_category", first.Reason);
                 Assert.Equal("First", first.Title);
+                Assert.Equal(creatorUserId, first.Creator.UserId);
+                Assert.Equal(creatorBlogId, first.Creator.BlogId);
+                Assert.Equal("Creator", first.Creator.Name);
+                Assert.Equal("avatar.jpg", first.Creator.AvatarUrl);
             },
             second =>
             {

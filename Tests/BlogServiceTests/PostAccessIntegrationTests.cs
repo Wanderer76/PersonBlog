@@ -45,6 +45,9 @@ public sealed class PostAccessIntegrationTests
         var textCard = Assert.Single(cards, card => card.Id == textPost.Id);
         Assert.Equal("Text content", textCard.Description);
         Assert.Null(textCard.PreviewObjectName);
+        Assert.Equal(OwnerUserId, textCard.Creator.UserId);
+        Assert.Equal(BlogId, textCard.Creator.BlogId);
+        Assert.Equal("Test blog", textCard.Creator.Name);
     }
 
     [Fact]

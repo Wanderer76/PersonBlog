@@ -3,6 +3,8 @@ import { PageShell } from '@/widgets/page-shell';
 import { BigVideoCard } from '@/entities/post';
 import { getRecommendation } from '@/shared/api/generated/recommendation/recommendation';
 import { getSearch } from '@/shared/api/generated/search/search';
+import defaultProfilePic from '@/shared/assets/defaultProfilePic.png';
+import { Link } from 'react-router-dom';
 import './MainPage.css';
 
 const PAGE_SIZE = 10;
@@ -293,12 +295,26 @@ const TextFeedCard = ({ post }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const text = useMemo(() => getPlainText(post.description), [post.description]);
     const readingTime = Math.max(1, Math.ceil(text.split(/\s+/).filter(Boolean).length / 180));
+    const creator = post.creator;
+    const creatorName = creator?.name || 'Неизвестный автор';
+    const creatorAvatar = creator?.avatarUrl || defaultProfilePic;
+    const creatorContent = (
+        <>
+            <img className="text-feed-avatar" src={creatorAvatar} alt="" />
+            <span className="text-feed-source">{creatorName}</span>
+        </>
+    );
 
     return (
         <article className={`text-feed-card ${isExpanded ? 'text-feed-card-expanded' : ''}`}>
             <header className="text-feed-card-header">
-                <span className="text-feed-avatar" aria-hidden="true">P</span>
-                <span className="text-feed-source">PlayView</span>
+                {creator?.blogId ? (
+                    <Link className="text-feed-creator" to={`/channel/${creator.blogId}`}>
+                        {creatorContent}
+                    </Link>
+                ) : (
+                    <span className="text-feed-creator">{creatorContent}</span>
+                )}
                 <span className="text-feed-kind">Статья</span>
             </header>
             <h2 className="text-feed-title">{post.title || 'Без названия'}</h2>

@@ -48,6 +48,7 @@ export * from './postApiProfilePostV2TextEditBody';
 export * from './postApiTextPostCreateTextPostBody';
 export * from './postApiTextPostEditBody';
 export * from './postCommonModel';
+export * from './postCreatorModel';
 export * from './postCommonModelPagedListViewModel';
 export * from './postCommonModelV2';
 export * from './postCommonModelV2PagedListViewModel';
