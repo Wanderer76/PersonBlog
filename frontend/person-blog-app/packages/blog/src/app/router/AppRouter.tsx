@@ -18,6 +18,7 @@ const CreateBlogPage = lazy(() => import('@/pages/blog-create'));
 const LikedPage = lazy(() => import('@/pages/liked'));
 const OAuthCallbackPage = lazy(() => import('@/pages/callback'));
 const TextPostEditorPage = lazy(() => import('@/pages/text-post-editor'));
+const TextPostPage = lazy(() => import('@/pages/text-post'));
 
 const PrivateRoute = () => {
   const isAuthenticated = JwtTokenService.isAuth();
@@ -37,6 +38,7 @@ export const AppRouter = () => (
     <Routes>
       <Route path="/" element={<MainPage />} />
       <Route path="/videoPage/:postId" element={<VideoPage />} />
+      <Route path="/textPost/:postId" element={<TextPostPage />} />
       <Route path="/channel/:channelId" element={<ChannelPage />} />
       <Route path="/callback" element={<OAuthCallbackPage />} />
       <Route path="/playlist/:playlistId" element={<PlaylistPage />} />

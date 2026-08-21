@@ -292,7 +292,6 @@ const MainPage = function () {
 };
 
 const TextFeedCard = ({ post }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
     const text = useMemo(() => getPlainText(post.description), [post.description]);
     const readingTime = Math.max(1, Math.ceil(text.split(/\s+/).filter(Boolean).length / 180));
     const creator = post.creator;
@@ -306,7 +305,12 @@ const TextFeedCard = ({ post }) => {
     );
 
     return (
-        <article className={`text-feed-card ${isExpanded ? 'text-feed-card-expanded' : ''}`}>
+        <article className="text-feed-card">
+            <Link
+                className="text-feed-card-link"
+                to={`/textPost/${post.postId}`}
+                aria-label={`Открыть статью «${post.title || 'Без названия'}»`}
+            />
             <header className="text-feed-card-header">
                 {creator?.blogId ? (
                     <Link className="text-feed-creator" to={`/channel/${creator.blogId}`}>
@@ -317,16 +321,14 @@ const TextFeedCard = ({ post }) => {
                 )}
                 <span className="text-feed-kind">Статья</span>
             </header>
-            <h2 className="text-feed-title">{post.title || 'Без названия'}</h2>
+            <h2 className="text-feed-title">
+                <Link to={`/textPost/${post.postId}`}>{post.title || 'Без названия'}</Link>
+            </h2>
             <p className="text-feed-excerpt">{text || 'Автор пока не добавил текст публикации.'}</p>
             <footer className="text-feed-footer">
                 <span>{readingTime} мин чтения</span>
                 {post.reason && <span className="text-feed-reason">{post.reason}</span>}
-                {text.length > 220 && (
-                    <button type="button" onClick={() => setIsExpanded((expanded) => !expanded)}>
-                        {isExpanded ? 'Свернуть' : 'Читать целиком'}
-                    </button>
-                )}
+                <Link className="text-feed-open" to={`/textPost/${post.postId}`}>Читать статью</Link>
             </footer>
         </article>
     );
