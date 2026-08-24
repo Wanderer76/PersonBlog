@@ -12,6 +12,7 @@ using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using System.Text.RegularExpressions;
 
 namespace Blog.Service.Services.Implementation;
 
@@ -230,6 +231,46 @@ internal sealed class DefaultProfilePostV2Service(
             post.TextPostInfo.UpdateFiles(files);
         }
 
+        if (command.Type == PostType.Text && command.InlineTextFiles?.Any() == true)
+        {
+            var inlineFiles = new List<PostFile>();
+            var text = post.TextPostInfo.Text;
+            foreach (var inlineFile in command.InlineTextFiles)
+            {
+                if (inlineFile.File.Length == 0 || !ContainsInlineReference(text, inlineFile.ReferenceId))
+                    continue;
+
+                if (!inlineFile.File.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return Result.Failure(new Error("inlineMedia", "В текст можно вставлять только изображения"));
+
+                var fileId = GuidService.GetNewGuid();
+                var fileToUpload = await PrepareTextPostFileAsync(inlineFile.File);
+                if (fileToUpload.IsFailure)
+                    return Result.Failure(fileToUpload.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    blogId,
+                    $"{postId}/{fileId}",
+                    fileToUpload.Value.ContentStream);
+
+                inlineFiles.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = postId,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(fileToUpload.Value.FileName),
+                    ContentType = fileToUpload.Value.ContentType,
+                    Length = fileToUpload.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = fileToUpload.Value.FileExtension
+                });
+                text = BindInlineReference(text, inlineFile.ReferenceId, fileId);
+            }
+
+            post.TextPostInfo.UpdateFiles(inlineFiles);
+            post.TextPostInfo.UpdateText(RemoveTransientImageSources(text));
+        }
+
         if (command.Type == PostType.Video && command.Thumbnail != null && command.Thumbnail.Length > 0)
         {
             var thumbId = GuidService.GetNewGuid();
@@ -362,6 +403,9 @@ internal sealed class DefaultProfilePostV2Service(
 
     public async Task<Result> UpdateTextPostAsync(TextPostEditDto request)
     {
+        if ((request.InlineMedia?.Count ?? 0) != request.InlineMediaIds.Count)
+            return Result.Failure(new Error("inlineMedia", "Количество встроенных изображений не совпадает с количеством их идентификаторов"));
+
         var user = await currentUserService.GetCurrentUserAsync();
         var post = await repository.Get<Post>()
             .Include(x => x.TextPostInfo)
@@ -375,8 +419,13 @@ internal sealed class DefaultProfilePostV2Service(
             return Result.Failure(new Error("id", "Пост не принадлежит пользователю"));
 
         using var storage = fileStorageFactory.CreateFileStorage();
+        var removedInlineMediaIds = GetInlineMediaIds(post.TextPostInfo.Text)
+            .Except(GetInlineMediaIds(request.Text));
+        var mediaIdsToRemove = request.RemovedMediaIds
+            .Concat(removedInlineMediaIds)
+            .ToHashSet();
         var filesToRemove = post.TextPostInfo.Files
-            .Where(file => request.RemovedMediaIds.Contains(file.Id))
+            .Where(file => mediaIdsToRemove.Contains(file.Id))
             .ToList();
         var newFiles = new List<PostFile>();
 
@@ -416,10 +465,48 @@ internal sealed class DefaultProfilePostV2Service(
             }
         }
 
+        var text = request.Text;
+        if (request.InlineMedia != null)
+        {
+            for (var index = 0; index < request.InlineMedia.Count; index++)
+            {
+                var mediaFile = request.InlineMedia[index];
+                var referenceId = request.InlineMediaIds[index];
+                if (mediaFile.Length == 0 || !ContainsInlineReference(text, referenceId))
+                    continue;
+
+                if (!mediaFile.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return Result.Failure(new Error("inlineMedia", "В текст можно вставлять только изображения"));
+
+                var fileId = GuidService.GetNewGuid();
+                var convertedFile = await PrepareTextPostFileAsync(mediaFile.ConvertToFileMetadata());
+                if (convertedFile.IsFailure)
+                    return Result.Failure(convertedFile.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    post.BlogId,
+                    $"{post.Id}/{fileId}",
+                    convertedFile.Value.ContentStream);
+
+                newFiles.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = post.Id,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(convertedFile.Value.FileName),
+                    ContentType = convertedFile.Value.ContentType,
+                    Length = convertedFile.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = convertedFile.Value.FileExtension
+                });
+                text = BindInlineReference(text, referenceId, fileId);
+            }
+        }
+
         repository.Attach(post);
         post.Title = request.Title.Trim();
         post.Visibility = request.Visibility;
-        post.TextPostInfo.UpdateText(request.Text);
+        post.TextPostInfo.UpdateText(RemoveTransientImageSources(text));
         post.TextPostInfo.RemoveFiles(filesToRemove.Select(file => file.Id));
         post.TextPostInfo.UpdateFiles(newFiles);
         foreach (var file in newFiles) repository.Add(file);
@@ -461,6 +548,36 @@ internal sealed class DefaultProfilePostV2Service(
             return file;
 
         return await imageConvertService.ConvertImageToPngAsync(file);
+    }
+
+    private static bool ContainsInlineReference(string? text, Guid referenceId) =>
+        text?.Contains($"data-media-reference=\"{referenceId:D}\"", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string? BindInlineReference(string? text, Guid referenceId, Guid fileId) =>
+        text?.Replace(
+            $"data-media-reference=\"{referenceId:D}\"",
+            $"data-media-id=\"{fileId:D}\"",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static string? RemoveTransientImageSources(string? text) => string.IsNullOrWhiteSpace(text)
+        ? text
+        : Regex.Replace(
+            text,
+            "\\s+src=\"[^\"]*\"",
+            string.Empty,
+            RegexOptions.IgnoreCase);
+
+    private static HashSet<Guid> GetInlineMediaIds(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return [];
+
+        return Regex.Matches(
+                text,
+                "data-media-id=\"(?<id>[0-9a-f-]{36})\"",
+                RegexOptions.IgnoreCase)
+            .Select(match => Guid.TryParse(match.Groups["id"].Value, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .ToHashSet();
     }
 
     public async Task<Result> UpdatePostAsync(PostUpdateRequest updateRequest)

@@ -4,9 +4,17 @@ const RICH_TEXT_TAGS = [
   'p', 'br', 'strong', 'b', 'em', 'i', 's', 'strike', 'span',
   'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li',
   'blockquote', 'pre', 'code', 'hr',
+  'img',
   'table', 'caption', 'colgroup', 'col', 'thead', 'tbody', 'tfoot',
   'tr', 'th', 'td',
 ];
+
+interface TextPostRenderableMedia {
+  id?: string | null;
+  name?: string | null;
+  url?: string | null;
+  contentType?: string | null;
+}
 
 const TABLE_SEPARATOR_CELL = /^:?-{3,}:?$/;
 
@@ -168,10 +176,44 @@ const wrapTables = (root: DocumentFragment) => {
   });
 };
 
-export const sanitizeTextPostHtml = (html: string): string => {
+export const getTextPostInlineMediaIds = (html: string): Set<string> => {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  return new Set(Array.from(template.content.querySelectorAll<HTMLElement>('[data-media-id]'))
+    .map((element) => element.dataset.mediaId?.toLowerCase())
+    .filter((id): id is string => Boolean(id)));
+};
+
+const resolveInlineImages = (root: DocumentFragment, media: TextPostRenderableMedia[]) => {
+  const mediaById = new Map(media
+    .filter((item) => item.id && item.url && item.contentType?.startsWith('image/'))
+    .map((item) => [item.id!.toLowerCase(), item]));
+
+  root.querySelectorAll<HTMLImageElement>('img').forEach((image) => {
+    const mediaId = image.dataset.mediaId?.toLowerCase();
+    const item = mediaId ? mediaById.get(mediaId) : undefined;
+    if (!item?.url) {
+      image.remove();
+      return;
+    }
+
+    image.src = item.url;
+    image.alt = image.alt || item.name || '';
+    image.loading = 'lazy';
+    image.decoding = 'async';
+  });
+};
+
+export const sanitizeTextPostHtml = (
+  html: string,
+  media: TextPostRenderableMedia[] = [],
+): string => {
   const sanitizedHtml = DOMPurify.sanitize(html, {
     ALLOWED_TAGS: RICH_TEXT_TAGS,
-    ALLOWED_ATTR: ['style', 'colspan', 'rowspan', 'colwidth', 'scope'],
+    ALLOWED_ATTR: [
+      'style', 'colspan', 'rowspan', 'colwidth', 'scope',
+      'src', 'alt', 'title', 'loading', 'decoding', 'data-media-id',
+    ],
     ALLOW_DATA_ATTR: false,
   });
   const template = document.createElement('template');
@@ -182,6 +224,7 @@ export const sanitizeTextPostHtml = (html: string): string => {
     element.removeAttribute('style');
     if (color) element.style.color = color;
   });
+  resolveInlineImages(template.content, media);
   wrapTables(template.content);
   return template.innerHTML;
 };

@@ -14,4 +14,6 @@ export type PostApiProfilePostV2TextEditBody = {
   Visibility?: PostVisibility;
   Media?: Blob[];
   RemovedMediaIds?: string[];
+  InlineMedia?: Blob[];
+  InlineMediaIds?: string[];
 };

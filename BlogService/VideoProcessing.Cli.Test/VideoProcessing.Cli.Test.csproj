@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MediaProcessing.Contract\MediaProcessing.Contract.csproj" />
     <ProjectReference Include="..\VideoProcessing.Cli\VideoProcessing.Cli.csproj" />
   </ItemGroup>
 

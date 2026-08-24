@@ -173,7 +173,7 @@ public sealed class PostApiClient
     [HttpPost("createTextPost")]
     public async Task<Result<UserPostInfoModel>> CreateTextPostAsync([FromForm] TextPostCreateForm request)
     {
-        if (string.IsNullOrWhiteSpace(request.Text) && request.Media == null)
+        if (string.IsNullOrWhiteSpace(request.Text) && request.Media == null && request.InlineMedia == null)
             return Result<UserPostInfoModel>.Failure(new Shared.Utils.Error("no content"));
 
         using var formData = new MultipartFormDataContent();
@@ -189,6 +189,15 @@ public sealed class PostApiClient
                 streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
                 formData.Add(streamContent, "Media", file.FileName);
             }
+        }
+
+        foreach (var inlineMediaId in request.InlineMediaIds)
+            formData.Add(new StringContent(inlineMediaId.ToString()), "InlineMediaIds");
+
+        if (request.InlineMedia != null)
+        {
+            foreach (var file in request.InlineMedia)
+                AddFile(formData, file, "InlineMedia");
         }
         var response = await httpClient.PostAsync($"ProfilePostV2/createTextPost", formData);
         return await ToResultAsync<UserPostInfoModel>(response);
@@ -213,10 +222,20 @@ public sealed class PostApiClient
         foreach (var removedMediaId in request.RemovedMediaIds)
             formData.Add(new StringContent(removedMediaId.ToString()), "RemovedMediaIds");
 
+        foreach (var inlineMediaId in request.InlineMediaIds)
+            formData.Add(new StringContent(inlineMediaId.ToString()), "InlineMediaIds");
+
         if (request.Media != null)
         {
             foreach (var file in request.Media)
                 AddFile(formData, file, "Media");
+        }
+
+
+        if (request.InlineMedia != null)
+        {
+            foreach (var file in request.InlineMedia)
+                AddFile(formData, file, "InlineMedia");
         }
 
         var response = await httpClient.PostAsync("ProfilePostV2/textEdit", formData);

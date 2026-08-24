@@ -260,6 +260,18 @@
   overscroll-behavior-inline: contain;
 }
 
+.content > img,
+.content p > img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: min(76vh, 820px);
+  margin: 30px auto;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow: 0 8px 28px rgba(21, 24, 30, 0.1);
+}
+
 .content [data-rich-text-table-wrapper]:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
@@ -282,6 +294,24 @@
   border-bottom: 1px solid var(--color-border);
   text-align: left;
   vertical-align: top;
+}
+
+.content th img,
+.content td img {
+  display: block;
+  width: 180px;
+  max-width: 180px;
+  max-height: 140px;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: var(--color-surface-subtle);
+  object-fit: contain;
+}
+
+.content th:has(img),
+.content td:has(img) {
+  padding: 8px;
+  vertical-align: middle;
 }
 
 .content th:last-child,

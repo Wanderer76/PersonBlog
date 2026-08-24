@@ -17,6 +17,10 @@ public sealed class TextPostEditDto
 
     public IFormFileCollection? Media { get; set; }
 
+    public IFormFileCollection? InlineMedia { get; set; }
+
+    public List<Guid> InlineMediaIds { get; set; } = [];
+
     public List<Guid> RemovedMediaIds { get; set; } = [];
 }
 

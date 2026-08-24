@@ -2715,6 +2715,20 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "InlineMedia": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
                   }
                 }
               },
@@ -2729,6 +2743,12 @@
                   "style": "form"
                 },
                 "Media": {
+                  "style": "form"
+                },
+                "InlineMedia": {
+                  "style": "form"
+                },
+                "InlineMediaIds": {
                   "style": "form"
                 }
               }
@@ -2834,6 +2854,20 @@
                       "format": "binary"
                     }
                   },
+                  "InlineMedia": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
                   "RemovedMediaIds": {
                     "type": "array",
                     "items": {
@@ -2857,6 +2891,12 @@
                   "style": "form"
                 },
                 "Media": {
+                  "style": "form"
+                },
+                "InlineMedia": {
+                  "style": "form"
+                },
+                "InlineMediaIds": {
                   "style": "form"
                 },
                 "RemovedMediaIds": {
@@ -3373,6 +3413,20 @@
                       "type": "string",
                       "format": "binary"
                     }
+                  },
+                  "InlineMedia": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
                   }
                 }
               },
@@ -3387,6 +3441,12 @@
                   "style": "form"
                 },
                 "Media": {
+                  "style": "form"
+                },
+                "InlineMedia": {
+                  "style": "form"
+                },
+                "InlineMediaIds": {
                   "style": "form"
                 }
               }
@@ -3492,6 +3552,20 @@
                       "format": "binary"
                     }
                   },
+                  "InlineMedia": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
                   "RemovedMediaIds": {
                     "type": "array",
                     "items": {
@@ -3515,6 +3589,12 @@
                   "style": "form"
                 },
                 "Media": {
+                  "style": "form"
+                },
+                "InlineMedia": {
+                  "style": "form"
+                },
+                "InlineMediaIds": {
                   "style": "form"
                 },
                 "RemovedMediaIds": {

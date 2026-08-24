@@ -11,4 +11,6 @@ export type PostApiProfilePostV2CreateTextPostBody = {
   Text?: string;
   Visibility?: PostVisibility;
   Media?: Blob[];
+  InlineMedia?: Blob[];
+  InlineMediaIds?: string[];
 };

@@ -57,6 +57,12 @@ if(postApiTextPostCreateTextPostBody.Visibility !== undefined) {
 if(postApiTextPostCreateTextPostBody.Media !== undefined) {
  postApiTextPostCreateTextPostBody.Media.forEach(value => formData.append(`Media`, value));
  }
+if(postApiTextPostCreateTextPostBody.InlineMedia !== undefined) {
+ postApiTextPostCreateTextPostBody.InlineMedia.forEach(value => formData.append(`InlineMedia`, value));
+ }
+if(postApiTextPostCreateTextPostBody.InlineMediaIds !== undefined) {
+ postApiTextPostCreateTextPostBody.InlineMediaIds.forEach(value => formData.append(`InlineMediaIds`, value));
+ }
 
       return customInstance<UserPostInfoModel>(
       {url: `/api/TextPost/createTextPost`, method: 'POST',
@@ -91,6 +97,12 @@ if(postApiTextPostEditBody.Media !== undefined) {
  }
 if(postApiTextPostEditBody.RemovedMediaIds !== undefined) {
  postApiTextPostEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
+ }
+if(postApiTextPostEditBody.InlineMedia !== undefined) {
+ postApiTextPostEditBody.InlineMedia.forEach(value => formData.append(`InlineMedia`, value));
+ }
+if(postApiTextPostEditBody.InlineMediaIds !== undefined) {
+ postApiTextPostEditBody.InlineMediaIds.forEach(value => formData.append(`InlineMediaIds`, value));
  }
 
       return customInstance<void>(

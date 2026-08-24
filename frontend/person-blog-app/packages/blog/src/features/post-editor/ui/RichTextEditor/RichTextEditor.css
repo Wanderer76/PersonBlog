@@ -79,6 +79,42 @@
   font-size: 12px;
 }
 
+.rich-text-editor-image-input {
+  display: none;
+}
+
+.rich-text-editor-content .ProseMirror img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 720px;
+  margin: 20px auto;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.rich-text-editor-content .ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid rgba(255, 122, 0, 0.38);
+  outline-offset: 3px;
+}
+
+.rich-text-editor-content .ProseMirror th img,
+.rich-text-editor-content .ProseMirror td img {
+  width: 180px;
+  max-width: 180px;
+  max-height: 140px;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: #f6f7f8;
+  object-fit: contain;
+}
+
+.rich-text-editor-content .ProseMirror th:has(img),
+.rich-text-editor-content .ProseMirror td:has(img) {
+  padding: 8px;
+  vertical-align: middle;
+}
+
 .rich-text-editor-hint code {
   color: #9a3412;
 }

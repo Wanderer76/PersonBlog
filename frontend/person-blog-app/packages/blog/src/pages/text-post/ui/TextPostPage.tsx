@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { sanitizeTextPostHtml } from '@/entities/post';
+import { getTextPostInlineMediaIds, sanitizeTextPostHtml } from '@/entities/post';
 import { JwtTokenService } from '@/shared/auth';
 import type { TextPostDetailResponse, TextPostMedia } from '@/shared/api/generated/models';
 import { getPost } from '@/shared/api/generated/post/post';
@@ -107,7 +107,11 @@ const TextPostPage = () => {
   }, [postId, reloadKey]);
 
   const sanitizedHtml = useMemo(
-    () => sanitizeTextPostHtml(post?.text ?? ''),
+    () => sanitizeTextPostHtml(post?.text ?? '', post?.media ?? []),
+    [post?.text, post?.media],
+  );
+  const inlineMediaIds = useMemo(
+    () => getTextPostInlineMediaIds(post?.text ?? ''),
     [post?.text],
   );
 
@@ -213,7 +217,8 @@ const TextPostPage = () => {
     );
   }
 
-  const mediaItems = (post.media ?? []).filter((media) => Boolean(media.url));
+  const mediaItems = (post.media ?? []).filter((media) =>
+    Boolean(media.url) && !inlineMediaIds.has(media.id?.toLowerCase() ?? ''));
   const heroMedia = mediaItems.find((media) => media.contentType?.startsWith('image/'));
   const remainingMedia = heroMedia
     ? mediaItems.filter((media) => media.id !== heroMedia.id)

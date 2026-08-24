@@ -71,6 +71,8 @@ public sealed class TextPostCreateForm
 
     public PostVisibility Visibility { get; set; }
     public IFormFileCollection? Media { get; set; }
+    public IFormFileCollection? InlineMedia { get; set; }
+    public List<Guid> InlineMediaIds { get; set; } = [];
 }
 
 public class UserPostInfoModel
@@ -101,6 +103,11 @@ public record PostCreateCommand(
     string? TextContent,
     IReadOnlyList<int>? CategoryIds,
     IReadOnlyList<FileMetadataModel>? TextFiles,
-    FileMetadataModel? Thumbnail);
+    FileMetadataModel? Thumbnail,
+    IReadOnlyList<TextPostInlineFile>? InlineTextFiles = null);
+
+public sealed record TextPostInlineFile(
+    Guid ReferenceId,
+    FileMetadataModel File);
 
 public record PostFileUpload(Stream ContentStream, string FileName, long Length, string ContentType);

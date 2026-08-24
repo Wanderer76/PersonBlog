@@ -137,6 +137,12 @@ if(postApiProfilePostV2CreateTextPostBody.Visibility !== undefined) {
 if(postApiProfilePostV2CreateTextPostBody.Media !== undefined) {
  postApiProfilePostV2CreateTextPostBody.Media.forEach(value => formData.append(`Media`, value));
  }
+if(postApiProfilePostV2CreateTextPostBody.InlineMedia !== undefined) {
+ postApiProfilePostV2CreateTextPostBody.InlineMedia.forEach(value => formData.append(`InlineMedia`, value));
+ }
+if(postApiProfilePostV2CreateTextPostBody.InlineMediaIds !== undefined) {
+ postApiProfilePostV2CreateTextPostBody.InlineMediaIds.forEach(value => formData.append(`InlineMediaIds`, value));
+ }
 
       return customInstance<UserPostInfoModel>(
       {url: `/api/ProfilePostV2/createTextPost`, method: 'POST',
@@ -171,6 +177,12 @@ if(postApiProfilePostV2TextEditBody.Media !== undefined) {
  }
 if(postApiProfilePostV2TextEditBody.RemovedMediaIds !== undefined) {
  postApiProfilePostV2TextEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
+ }
+if(postApiProfilePostV2TextEditBody.InlineMedia !== undefined) {
+ postApiProfilePostV2TextEditBody.InlineMedia.forEach(value => formData.append(`InlineMedia`, value));
+ }
+if(postApiProfilePostV2TextEditBody.InlineMediaIds !== undefined) {
+ postApiProfilePostV2TextEditBody.InlineMediaIds.forEach(value => formData.append(`InlineMediaIds`, value));
  }
 
       return customInstance<void>(

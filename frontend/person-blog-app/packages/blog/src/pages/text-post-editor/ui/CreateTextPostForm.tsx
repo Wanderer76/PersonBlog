@@ -3,6 +3,8 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button/Button';
 import { MediaUploader, PrivacySelect, RichTextEditor, TitleInput } from '@/features/post-editor';
+import type { InlineImageUpload } from '@/features/post-editor';
+import { getTextPostInlineMediaIds } from '@/entities/post';
 import { PostVisibility } from '@/shared/api/generated/models';
 import type { PostVisibilitySelectItem, TextPostMediaViewModel } from '@/shared/api/generated/models';
 import { getProfilePostV2 } from '@/shared/api/generated/profile-post-v2/profile-post-v2';
@@ -30,6 +32,8 @@ const CreateTextPostForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [existingMedia, setExistingMedia] = useState<TextPostMediaViewModel[]>([]);
     const [removedMediaIds, setRemovedMediaIds] = useState<string[]>([]);
+    const [inlineImages, setInlineImages] = useState<InlineImageUpload[]>([]);
+    const [existingInlineMediaIds, setExistingInlineMediaIds] = useState<Set<string>>(new Set());
 
     const handleChange = <K extends keyof TextPostFormData>(
         field: K,
@@ -60,9 +64,15 @@ const CreateTextPostForm = () => {
                     Text: formData.Text,
                     Visibility: formData.Visibility ?? PostVisibility.NUMBER_0,
                     Media: formData.Media,
+                    InlineMedia: inlineImages.map((image) => image.file),
+                    InlineMediaIds: inlineImages.map((image) => image.referenceId),
                     RemovedMediaIds: removedMediaIds
                 })
-                : await profilePostApi.postApiProfilePostV2CreateTextPost(formData);
+                : await profilePostApi.postApiProfilePostV2CreateTextPost({
+                    ...formData,
+                    InlineMedia: inlineImages.map((image) => image.file),
+                    InlineMediaIds: inlineImages.map((image) => image.referenceId),
+                });
             if (result.status === 200) navigate('/profile');
         } catch {
             setErrors(previous => ({
@@ -97,6 +107,7 @@ const CreateTextPostForm = () => {
                         Visibility: editResponse.data.visibility
                     });
                     setExistingMedia(editResponse.data.media ?? []);
+                    setExistingInlineMediaIds(getTextPostInlineMediaIds(editResponse.data.text ?? ''));
                 }
             } catch {
                 if (isActive && !controller.signal.aborted) {
@@ -160,7 +171,20 @@ const CreateTextPostForm = () => {
 
                         <div className="create-text-post-form__field">
                             <label>Текст</label>
-                            <RichTextEditor value={formData.Text ?? ''} onChange={(value) => handleChange('Text', value)} placeholder="Напишите что-нибудь…" />
+                            <RichTextEditor
+                                value={formData.Text ?? ''}
+                                onChange={(value) => handleChange('Text', value)}
+                                media={existingMedia
+                                    .filter((file) => Boolean(file.id && file.url))
+                                    .map((file) => ({
+                                        id: file.id!,
+                                        name: file.name ?? 'Изображение',
+                                        url: file.url!,
+                                        contentType: file.contentType ?? 'application/octet-stream',
+                                    }))}
+                                onInlineImagesChange={setInlineImages}
+                                placeholder="Напишите что-нибудь…"
+                            />
                             {errors.text && <p className="create-text-post-form__error" role="alert">{errors.text}</p>}
                         </div>
                     </section>
@@ -174,7 +198,7 @@ const CreateTextPostForm = () => {
                             files={formData.Media ?? []}
                             onChange={(files) => handleChange('Media', files)}
                             existingFiles={existingMedia
-                                .filter((file) => Boolean(file.id))
+                                .filter((file) => Boolean(file.id) && !existingInlineMediaIds.has(file.id!.toLowerCase()))
                                 .map((file) => ({
                                     id: file.id!,
                                     name: file.name ?? 'Медиафайл',

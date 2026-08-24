@@ -1,5 +1,6 @@
 export { MediaUploader } from './ui/MediaUploader/MediaUploader';
 export { RichTextEditor } from './ui/RichTextEditor/RichTextEditor';
+export type { InlineImageUpload, RichTextMedia } from './ui/RichTextEditor/RichTextEditor';
 export { ALLOWED_MEDIA_TYPES, MAX_FILE_SIZE } from './ui/MediaUploader/MediaUploader.constants';
 export {
   ActionButtons,

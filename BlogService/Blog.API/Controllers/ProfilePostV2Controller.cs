@@ -108,6 +108,14 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<IActionResult> CreateTextPost([FromForm] TextPostCreateForm textPostCreateForm)
     {
+        if ((textPostCreateForm.InlineMedia?.Count ?? 0) != textPostCreateForm.InlineMediaIds.Count)
+            return BadRequest("Количество встроенных изображений не совпадает с количеством их идентификаторов.");
+
+        var inlineFiles = textPostCreateForm.InlineMedia?
+            .Select((file, index) => new TextPostInlineFile(
+                textPostCreateForm.InlineMediaIds[index],
+                file.ConvertToFileMetadata()))
+            .ToList();
         var postCreateResult = await profilePostService.CreatePostAsync(new PostCreateCommand(
             PostType.Text,
             textPostCreateForm.Title,
@@ -116,7 +124,8 @@ public class ProfilePostV2Controller(
             textPostCreateForm.Text,
             [],
             textPostCreateForm.Media?.Select(x => x.ConvertToFileMetadata()).ToList(),
-            null));
+            null,
+            inlineFiles));
 
         return postCreateResult.IsSuccess
             ? Ok(postCreateResult.Value)
@@ -135,6 +144,9 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<IActionResult> EditTextPost([FromForm] TextPostEditDto request)
     {
+        if ((request.InlineMedia?.Count ?? 0) != request.InlineMediaIds.Count)
+            return BadRequest("Количество встроенных изображений не совпадает с количеством их идентификаторов.");
+
         var result = await profilePostService.UpdateTextPostAsync(request);
         return result.IsSuccess ? Ok() : BadRequest(result.Errors);
     }

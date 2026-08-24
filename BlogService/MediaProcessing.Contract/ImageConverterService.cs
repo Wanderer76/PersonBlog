@@ -11,9 +11,9 @@ public sealed class ImageConverterService(HttpClient httpClient) : IImageConvert
         if (model.FileExtension.Contains("png"))
             return model;
 
-        var streamContent = new StreamContent(model.ContentStream);
+        using var streamContent = new StreamContent(model.ContentStream);
         streamContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        var multipart = new MultipartFormDataContent { { streamContent, "image", model.Name } };
+        using var multipart = new MultipartFormDataContent { { streamContent, "image", model.FileName } };
         using var response = await httpClient.PostAsync("Convert/convertToPng", multipart, cancellationToken);
 
         if (!response.IsSuccessStatusCode)
