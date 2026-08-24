@@ -1,5 +1,13 @@
 import axios from 'axios';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+} from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getTextPostInlineMediaIds, sanitizeTextPostHtml } from '@/entities/post';
 import { JwtTokenService } from '@/shared/auth';
@@ -13,6 +21,7 @@ import { PageShell } from '@/widgets/page-shell';
 import styles from './TextPostPage.module.css';
 
 type Reaction = true | false;
+type PreviewImage = { src: string; alt: string };
 
 const postApi = getPost();
 const subscriberApi = getSubscriber();
@@ -38,6 +47,25 @@ const TextPostPage = () => {
   const [reactionPending, setReactionPending] = useState(false);
   const [subscriptionPending, setSubscriptionPending] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [previewImage, setPreviewImage] = useState<PreviewImage | null>(null);
+  const lightboxCloseRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!previewImage) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    lightboxCloseRef.current?.focus();
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPreviewImage(null);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [previewImage]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -121,6 +149,22 @@ const TextPostPage = () => {
       return;
     }
     navigate('/');
+  };
+
+  const openImageFromTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLImageElement) || !target.currentSrc) return;
+    setPreviewImage({ src: target.currentSrc, alt: target.alt });
+  };
+
+  const handleArticleImageClick = (event: ReactMouseEvent<HTMLElement>) => {
+    openImageFromTarget(event.target);
+  };
+
+  const handleArticleImageKeyDown = (event: ReactKeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (!(event.target instanceof HTMLImageElement)) return;
+    event.preventDefault();
+    openImageFromTarget(event.target);
   };
 
   const handleReaction = async (reaction: Reaction) => {
@@ -231,7 +275,11 @@ const TextPostPage = () => {
   return (
     <PageShell className={styles.shell} contentClassName={styles.page}>
       <div className={styles.layout}>
-        <article className={styles.article}>
+        <article
+          className={styles.article}
+          onClick={handleArticleImageClick}
+          onKeyDown={handleArticleImageKeyDown}
+        >
           <header className={styles.articleHeader}>
             <button className={styles.backButton} type="button" onClick={handleBack}>
               <ArrowLeftIcon />
@@ -254,7 +302,13 @@ const TextPostPage = () => {
 
           {heroMedia && (
             <div className={styles.hero}>
-              <img src={heroMedia.url!} alt={heroMedia.name ?? ''} />
+              <img
+                src={heroMedia.url!}
+                alt={heroMedia.name ?? ''}
+                role="button"
+                tabIndex={0}
+                aria-label={`Открыть изображение ${heroMedia.name ?? ''}`.trim()}
+              />
             </div>
           )}
 
@@ -336,6 +390,33 @@ const TextPostPage = () => {
           </div>
         </aside>
       </div>
+      {previewImage && (
+        <div
+          className={styles.lightbox}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Полноразмерное изображение"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) setPreviewImage(null);
+          }}
+        >
+          <button
+            ref={lightboxCloseRef}
+            className={styles.lightboxClose}
+            type="button"
+            aria-label="Закрыть изображение"
+            onClick={() => setPreviewImage(null)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
+          </button>
+          <figure className={styles.lightboxContent}>
+            <img src={previewImage.src} alt={previewImage.alt} />
+            {previewImage.alt && <figcaption>{previewImage.alt}</figcaption>}
+          </figure>
+        </div>
+      )}
     </PageShell>
   );
 };
@@ -352,7 +433,18 @@ const TextPostState = ({ title, children }: { title?: string; children: ReactNod
 const PostMedia = ({ media }: { media: TextPostMedia }) => {
   if (!media.url) return null;
   if (media.contentType?.startsWith('image/')) {
-    return <figure><img src={media.url} alt={media.name ?? ''} />{media.name && <figcaption>{media.name}</figcaption>}</figure>;
+    return (
+      <figure>
+        <img
+          src={media.url}
+          alt={media.name ?? ''}
+          role="button"
+          tabIndex={0}
+          aria-label={`Открыть изображение ${media.name ?? ''}`.trim()}
+        />
+        {media.name && <figcaption>{media.name}</figcaption>}
+      </figure>
+    );
   }
   if (media.contentType?.startsWith('video/')) {
     return <video controls preload="metadata" src={media.url}>Ваш браузер не поддерживает видео.</video>;

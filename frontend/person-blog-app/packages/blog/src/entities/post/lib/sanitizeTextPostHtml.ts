@@ -201,6 +201,9 @@ const resolveInlineImages = (root: DocumentFragment, media: TextPostRenderableMe
     image.alt = image.alt || item.name || '';
     image.loading = 'lazy';
     image.decoding = 'async';
+    image.tabIndex = 0;
+    image.role = 'button';
+    image.setAttribute('aria-label', `Открыть изображение ${image.alt}`.trim());
   });
 };
 
