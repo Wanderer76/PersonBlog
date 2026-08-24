@@ -12,6 +12,7 @@ using Infrastructure.Services;
 using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -124,6 +125,7 @@ public sealed class BlogFeatureIntegrationTests
         Assert.Equal(1, post.DislikeCount);
         Assert.Equal(2, post.ViewCount);
         Assert.Equal(2, await context.PostViewers.CountAsync());
+        Assert.All(await context.PostViewers.ToListAsync(), viewer => Assert.True(viewer.IsViewed));
         context.ChangeTracker.Clear();
 
         await service.SetReactionToPost(new ReactionCreateModel
@@ -394,7 +396,12 @@ public sealed class BlogFeatureIntegrationTests
         BlogDbContext context,
         ICurrentUserService currentUser,
         TrackingCacheService cache) =>
-        new(CreateRepository(context), new StubFileStorageFactory(new TrackingFileStorage()), cache, currentUser);
+        new(
+            CreateRepository(context),
+            new StubFileStorageFactory(new TrackingFileStorage()),
+            cache,
+            currentUser,
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
 
     private static DefaultVideoService CreateVideoService(BlogDbContext context, ICurrentUserService currentUser) =>
         new(CreateRepository(context), new TrackingCacheService(), new StubFileStorageFactory(new TrackingFileStorage()), currentUser);

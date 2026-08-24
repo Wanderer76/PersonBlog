@@ -7,7 +7,6 @@ using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.Services;
 
 namespace Blog.API.Controllers;
 
@@ -17,14 +16,17 @@ public class PostController : BaseApiController
 {
     private readonly IPostService _postService;
     private readonly IUserPostService _userPostService;
+    private readonly ICurrentUserService _currentUserService;
     public PostController(
         ILogger<PostController> logger,
         IPostService postService,
-        IUserPostService userPostService)
+        IUserPostService userPostService,
+        ICurrentUserService currentUserService)
         : base(logger)
     {
         _postService = postService;
         _userPostService = userPostService;
+        _currentUserService = currentUserService;
     }
 
     [HttpGet("detail/{postId:guid}")]
@@ -54,7 +56,8 @@ public class PostController : BaseApiController
     [HttpPost("setReaction/{postId:guid}")]
     public async Task<ActionResult> SetReactionToVideo(Guid postId, bool? isLike)
     {
-        HttpContext.TryGetUserFromContext(out var userId);
+        var user = await _currentUserService.GetCurrentUserAsync();
+        Guid? userId = user.IsAnonymous ? null : user.UserId;
         var remoteIp = userId.HasValue
             ? null
             : AnonymousSession.GetOrCreate(HttpContext);
@@ -67,6 +70,14 @@ public class PostController : BaseApiController
         });
         return Ok();
     }
+
+    [HttpPost("setView/{postId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RegisterViewAsync(Guid postId) =>
+        await _postService.RegisterPostViewAsync(postId)
+            ? NoContent()
+            : NotFound();
 
 
     [HttpDelete("delete/{id:guid}")]

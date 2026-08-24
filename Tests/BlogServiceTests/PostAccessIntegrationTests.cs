@@ -4,6 +4,7 @@ using Blog.Domain.Entities;
 using Blog.Persistence;
 using Blog.Service.Services.Implementation;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;
@@ -13,6 +14,148 @@ namespace BlogServiceTests;
 
 public sealed class PostAccessIntegrationTests
 {
+    [Fact]
+    public async Task Text_post_detail_contains_content_author_media_and_viewer_state()
+    {
+        await using var context = await CreateContextAsync();
+        var blog = CreateBlog();
+        var post = new Post(
+            Guid.NewGuid(),
+            BlogId,
+            PostType.Text,
+            null,
+            "Text title",
+            null,
+            PostVisibility.Public,
+            [],
+            $"<p>{string.Join(' ', Enumerable.Repeat("word", 201))}</p>");
+        post.TextPostInfo.UpdateFiles([new PostFile
+        {
+            Id = Guid.NewGuid(),
+            PostId = post.Id,
+            Name = "attachment.txt",
+            ObjectName = "stored-attachment",
+            ContentType = "text/plain",
+            FileExtension = ".txt",
+            Length = 42,
+            CreatedAt = DateTimeOffset.UtcNow
+        }]);
+        var viewerId = Guid.NewGuid();
+        context.AddRange(
+            blog,
+            post,
+            new Subscriber
+            {
+                Id = Guid.NewGuid(),
+                BlogId = BlogId,
+                UserId = viewerId,
+                SubscriptionStartDate = DateTimeOffset.UtcNow
+            },
+            new PostViewer
+            {
+                Id = Guid.NewGuid(),
+                PostId = post.Id,
+                UserId = viewerId,
+                IsViewed = true,
+                IsLike = true,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var service = new DefaultPostService(
+            CreateRepository(context),
+            new StubFileStorageFactory(),
+            new MemoryCacheService(),
+            new MutableCurrentUserService(new UserModel(viewerId, "viewer", null, Guid.Empty, [])),
+            CreateHttpContextAccessor());
+
+        var result = await service.GetTextPostDetailAsync(post.Id);
+
+        Assert.True(result.IsSuccess);
+        var detail = result.Value;
+        Assert.NotNull(detail);
+        Assert.Equal("Text title", detail.Title);
+        Assert.Equal(2, detail.EstimatedReadingTimeMinutes);
+        Assert.Equal("stored-attachment", Assert.Single(detail.Media).Url);
+        Assert.Equal("Test blog", detail.Author.Name);
+        Assert.Equal(1, detail.Author.PostsCount);
+        Assert.True(detail.Viewer.IsViewed);
+        Assert.True(detail.Viewer.IsLike);
+        Assert.True(detail.Viewer.IsSubscribed);
+        Assert.False(detail.Viewer.CanEdit);
+    }
+
+    [Fact]
+    public async Task Text_post_view_is_idempotent_for_anonymous_session()
+    {
+        await using var context = await CreateContextAsync();
+        var post = new Post(
+            Guid.NewGuid(),
+            BlogId,
+            PostType.Text,
+            null,
+            "Text title",
+            null,
+            PostVisibility.Public,
+            [],
+            "Text content");
+        context.AddRange(CreateBlog(), post);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var service = new DefaultPostService(
+            CreateRepository(context),
+            new StubFileStorageFactory(),
+            new MemoryCacheService(),
+            new MutableCurrentUserService(UserModel.AnonymousUser()),
+            CreateHttpContextAccessor(AnonymousSessionId));
+
+        Assert.True(await service.RegisterPostViewAsync(post.Id));
+        context.ChangeTracker.Clear();
+        Assert.True(await service.RegisterPostViewAsync(post.Id));
+        context.ChangeTracker.Clear();
+
+        Assert.Equal(1, (await context.Posts.SingleAsync()).ViewCount);
+        var viewer = await context.PostViewers.SingleAsync();
+        Assert.True(viewer.IsViewed);
+        Assert.Equal(AnonymousSessionId, viewer.UserIpAddress);
+    }
+
+    [Fact]
+    public async Task Text_post_detail_returns_explicit_not_found_and_forbidden_errors()
+    {
+        await using var context = await CreateContextAsync();
+        var privatePost = new Post(
+            Guid.NewGuid(),
+            BlogId,
+            PostType.Text,
+            null,
+            "Private text",
+            null,
+            PostVisibility.Private,
+            [],
+            "Text content");
+        context.AddRange(CreateBlog(), privatePost);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var service = new DefaultPostService(
+            CreateRepository(context),
+            new StubFileStorageFactory(),
+            new MemoryCacheService(),
+            new MutableCurrentUserService(UserModel.AnonymousUser()),
+            CreateHttpContextAccessor(AnonymousSessionId));
+
+        var missingResult = await service.GetTextPostDetailAsync(Guid.NewGuid());
+        var forbiddenResult = await service.GetTextPostDetailAsync(privatePost.Id);
+
+        Assert.True(missingResult.IsFailure);
+        Assert.Equal("NotFound", Assert.Single(missingResult.Errors).Key);
+        Assert.True(forbiddenResult.IsFailure);
+        Assert.Equal("Forbidden", Assert.Single(forbiddenResult.Errors).Key);
+    }
+
     [Fact]
     public async Task Post_cards_support_mixed_video_and_text_posts()
     {
@@ -36,7 +179,8 @@ public sealed class PostAccessIntegrationTests
             CreateRepository(context),
             new StubFileStorageFactory(),
             new MemoryCacheService(),
-            new MutableCurrentUserService(UserModel.AnonymousUser()));
+            new MutableCurrentUserService(UserModel.AnonymousUser()),
+            CreateHttpContextAccessor());
 
         var cards = await service.GetPostCommonModelAsync([videoPost.Id, textPost.Id]);
 
@@ -64,7 +208,8 @@ public sealed class PostAccessIntegrationTests
             CreateRepository(context),
             new StubFileStorageFactory(),
             new MemoryCacheService(),
-            currentUser);
+            currentUser,
+            CreateHttpContextAccessor());
 
         Assert.NotNull(await service.GetDetailPostByIdAsync(post.Id));
 
@@ -88,7 +233,8 @@ public sealed class PostAccessIntegrationTests
             CreateRepository(context),
             new StubFileStorageFactory(),
             new MemoryCacheService(),
-            currentUser);
+            currentUser,
+            CreateHttpContextAccessor());
 
         Assert.Null(await service.GetDetailPostByIdAsync(post.Id));
 
@@ -200,8 +346,20 @@ public sealed class PostAccessIntegrationTests
             new DefaultReadRepository<BlogDbContext, IBlogEntity>(context),
             new DefaultWriteRepository<BlogDbContext, IBlogEntity>(context));
 
+    private static IHttpContextAccessor CreateHttpContextAccessor(string? anonymousSessionId = null)
+    {
+        var context = new DefaultHttpContext();
+        if (anonymousSessionId != null)
+        {
+            context.Request.Headers[AnonymousSession.HeaderName] = anonymousSessionId;
+        }
+
+        return new HttpContextAccessor { HttpContext = context };
+    }
+
     private static readonly Guid BlogId = Guid.Parse("10000000-0000-0000-0000-000000000001");
     private static readonly Guid OwnerUserId = Guid.Parse("10000000-0000-0000-0000-000000000002");
+    private const string AnonymousSessionId = "10000000000000000000000000000003";
 
     private sealed class MutableCurrentUserService(UserModel user) : ICurrentUserService
     {

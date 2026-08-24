@@ -2,31 +2,44 @@ using Authentication.Contract.Constants;
 using Blog.Contracts.Events;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
+using Blog.Contracts.Models.TextPost;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Blog.Service.Events;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Blog.Service.Services.Implementation;
 
 internal class DefaultPostService : IPostService
 {
+    private const int WordsPerMinute = 200;
+    private static readonly Regex HtmlTagRegex = new("<[^>]+>", RegexOptions.Compiled);
     private readonly IReadWriteRepository<IBlogEntity> _context;
     private readonly IFileStorageFactory _fileStorageFactory;
     private readonly ICacheService _cacheService;
     private readonly ICurrentUserService _userService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public DefaultPostService(IReadWriteRepository<IBlogEntity> context, IFileStorageFactory fileStorageFactory, ICacheService cacheService, ICurrentUserService userService)
+    public DefaultPostService(
+        IReadWriteRepository<IBlogEntity> context,
+        IFileStorageFactory fileStorageFactory,
+        ICacheService cacheService,
+        ICurrentUserService userService,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _fileStorageFactory = fileStorageFactory;
         _cacheService = cacheService;
         _userService = userService;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     [Obsolete]
@@ -187,6 +200,229 @@ internal class DefaultPostService : IPostService
         return cacheData;
     }
 
+    public async Task<Result<TextPostDetailResponse>> GetTextPostDetailAsync(Guid postId)
+    {
+        var currentUser = await _userService.GetCurrentUserAsync();
+        var post = await _context.Get<Post>()
+            .Include(x => x.TextPostInfo)
+            .ThenInclude(x => x.Files)
+            .Include(x => x.Blog)
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null ||
+            post.IsDelete ||
+            post.Type != PostType.Text ||
+            post.ProcessState != ProcessState.Complete ||
+            post.TextPostInfo == null)
+        {
+            return new Error("NotFound", "Текстовый пост не найден");
+        }
+
+        var accessInfo = new PostAccessInfo(
+            post.IsDelete,
+            post.Visibility,
+            post.BanMessageId,
+            post.Blog.UserId);
+        if (!CanAccessPost(accessInfo, currentUser))
+        {
+            return new Error("Forbidden", "Нет доступа к текстовому посту");
+        }
+
+        Guid? viewerId = currentUser.IsAnonymous ? null : currentUser.UserId;
+        var anonymousSessionId = GetAnonymousSessionId(currentUser);
+
+        var viewer = await FindViewerAsync(postId, viewerId, anonymousSessionId);
+        var isSubscribed = viewerId.HasValue && await _context.Get<Subscriber>()
+            .Active()
+            .AnyAsync(x => x.BlogId == post.BlogId && x.UserId == viewerId.Value);
+
+        var authorStatistics = await _context.Get<Post>()
+            .Where(x => x.BlogId == post.BlogId && !x.IsDelete)
+            .GroupBy(_ => 1)
+            .Select(x => new
+            {
+                PostsCount = x.Count(),
+                TotalViewsCount = x.Sum(postItem => (long)postItem.ViewCount)
+            })
+            .FirstOrDefaultAsync();
+
+        using var storage = _fileStorageFactory.CreateFileStorage();
+        var mediaTasks = post.TextPostInfo.Files.Select(async file =>
+            new TextPostMedia(
+                file.Id,
+                file.Name,
+                await storage.GetFileUrlAsync(post.BlogId, file.ObjectName),
+                file.ContentType,
+                file.Length));
+        var photoUrlTask = string.IsNullOrWhiteSpace(post.Blog.PhotoUrl)
+            ? Task.FromResult<string?>(null)
+            : GetPhotoUrlAsync(storage, post.BlogId, post.Blog.PhotoUrl);
+
+        var media = await Task.WhenAll(mediaTasks);
+        var photoUrl = await photoUrlTask;
+        var text = post.TextPostInfo.Text ?? string.Empty;
+        var isOwner = viewerId.HasValue && viewerId.Value == accessInfo.OwnerUserId;
+
+        return new TextPostDetailResponse(
+            post.Id,
+            post.Title,
+            Lead: null,
+            text,
+            post.CreatedAt,
+            CalculateEstimatedReadingTime(text),
+            post.ViewCount,
+            post.LikeCount,
+            post.DislikeCount,
+            Categories: [],
+            media,
+            new TextPostAuthor(
+                post.BlogId,
+                post.Blog.Title,
+                post.Blog.Description,
+                photoUrl,
+                post.Blog.SubscriptionsCount,
+                authorStatistics?.PostsCount ?? 0,
+                authorStatistics?.TotalViewsCount ?? 0),
+            new TextPostViewerState(
+                viewer?.IsViewed == true,
+                viewer?.IsLike,
+                isSubscribed,
+                CanEdit: isOwner,
+                CanDelete: isOwner));
+    }
+
+    private static async Task<string?> GetPhotoUrlAsync(
+        IFileStorage storage,
+        Guid blogId,
+        string objectName) =>
+        await storage.GetFileUrlAsync(blogId, objectName);
+
+    public async Task<bool> RegisterPostViewAsync(Guid postId)
+    {
+        var currentUser = await _userService.GetCurrentUserAsync();
+        var accessInfo = await GetPostAccessInfoAsync(postId, PostType.Text);
+        if (accessInfo == null || !CanAccessPost(accessInfo, currentUser))
+        {
+            return false;
+        }
+
+        Guid? viewerId = currentUser.IsAnonymous ? null : currentUser.UserId;
+        var anonymousSessionId = GetAnonymousSessionId(currentUser);
+        if (!viewerId.HasValue && anonymousSessionId == null)
+        {
+            return false;
+        }
+
+        var existingViewer = await FindViewerAsync(postId, viewerId, anonymousSessionId);
+        if (existingViewer != null)
+        {
+            if (!existingViewer.IsViewed)
+            {
+                _context.Attach(existingViewer);
+                existingViewer.IsViewed = true;
+
+                var existingPost = await _context.Get<Post>().FirstAsync(x => x.Id == postId);
+                _context.Attach(existingPost);
+                existingPost.ViewCount++;
+                await _context.SaveChangesAsync();
+                await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(postId));
+            }
+
+            return true;
+        }
+
+        var post = await _context.Get<Post>().FirstAsync(x => x.Id == postId);
+        _context.Attach(post);
+        post.ViewCount++;
+        _context.Add(new PostViewer
+        {
+            Id = GuidService.GetNewGuid(),
+            PostId = postId,
+            UserId = viewerId,
+            UserIpAddress = anonymousSessionId,
+            IsViewed = true,
+            CreatedAt = DateTimeService.Now()
+        });
+
+        await _context.SaveChangesAsync();
+        await _cacheService.RemoveCachedDataAsync(new PostDetailViewModelCacheKey(postId));
+        return true;
+    }
+
+    private async Task<PostAccessInfo?> GetPostAccessInfoAsync(Guid postId, PostType type) =>
+        await _context.Get<Post>()
+            .Where(x => x.Id == postId && x.Type == type && x.ProcessState == ProcessState.Complete)
+            .Select(x => new PostAccessInfo(
+                x.IsDelete,
+                x.Visibility,
+                x.BanMessageId,
+                x.Blog.UserId))
+            .FirstOrDefaultAsync();
+
+    private static bool CanAccessPost(PostAccessInfo post, UserModel currentUser)
+    {
+        if (post.IsDelete)
+        {
+            return false;
+        }
+
+        if (post.Visibility != PostVisibility.Private && !post.BanMessageId.HasValue)
+        {
+            return true;
+        }
+
+        var isOwner = !currentUser.IsAnonymous && currentUser.UserId == post.OwnerUserId;
+        var isModerator = currentUser.Roles.Intersect([Roles.SuperAdminRoleId, Roles.AdminRoleId]).Any();
+
+        return (post.Visibility != PostVisibility.Private || isOwner)
+            && (!post.BanMessageId.HasValue || isOwner || isModerator);
+    }
+
+    private string? GetAnonymousSessionId(UserModel currentUser)
+    {
+        if (!currentUser.IsAnonymous)
+        {
+            return null;
+        }
+
+        var httpContext = _httpContextAccessor.HttpContext;
+        return httpContext == null ? null : AnonymousSession.GetOrCreate(httpContext);
+    }
+
+    private async Task<PostViewer?> FindViewerAsync(
+        Guid postId,
+        Guid? viewerId,
+        string? anonymousSessionId)
+    {
+        if (!viewerId.HasValue && string.IsNullOrWhiteSpace(anonymousSessionId))
+        {
+            return null;
+        }
+
+        return await _context.Get<PostViewer>()
+            .Where(x => x.PostId == postId)
+            .Where(x => viewerId.HasValue
+                ? x.UserId == viewerId.Value
+                : x.UserId == null && x.UserIpAddress == anonymousSessionId)
+            .FirstOrDefaultAsync();
+    }
+
+    private static int CalculateEstimatedReadingTime(string html)
+    {
+        var plainText = WebUtility.HtmlDecode(HtmlTagRegex.Replace(html, " "));
+        var wordCount = plainText.Split(
+            (char[]?)null,
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length;
+
+        return Math.Max(1, (int)Math.Ceiling(wordCount / (double)WordsPerMinute));
+    }
+
+    private sealed record PostAccessInfo(
+        bool IsDelete,
+        PostVisibility Visibility,
+        Guid? BanMessageId,
+        Guid OwnerUserId);
+
     public async Task SetReactionToPost(ReactionCreateModel @event)
     {
         var userId = @event.UserId;
@@ -220,6 +456,7 @@ internal class DefaultPostService : IPostService
                 Id = GuidService.GetNewGuid(),
                 PostId = @event.PostId,
                 IsLike = @event.IsLike,
+                IsViewed = true,
                 UserId = userId,
                 UserIpAddress = ipAddress,
                 CreatedAt = DateTimeService.Now(),

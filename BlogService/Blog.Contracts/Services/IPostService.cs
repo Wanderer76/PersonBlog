@@ -1,5 +1,6 @@
-﻿using Blog.Contracts.Models;
+using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
+using Blog.Contracts.Models.TextPost;
 using Blog.Domain.Entities;
 using Shared.Models;
 using Shared.Utils;
@@ -22,6 +23,8 @@ public interface IPostService
     Task<Result> RemovePostByIdAsync(Guid id);
     Task<bool> CanAccessVideoAsync(Guid blogId, Guid postId);
     Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId);
+    Task<Result<TextPostDetailResponse>> GetTextPostDetailAsync(Guid postId);
+    Task<bool> RegisterPostViewAsync(Guid postId);
     Task SetReactionToPost(ReactionCreateModel value);
     IEnumerable<SelectItem<PostVisibility>> GetPostVisibilityList();
     Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds);
