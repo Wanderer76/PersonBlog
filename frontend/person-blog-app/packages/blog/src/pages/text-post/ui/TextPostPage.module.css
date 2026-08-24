@@ -243,11 +243,55 @@
 
 .mediaFile:hover { background: var(--color-surface-subtle); }
 
-.tableWrapper { max-width: 100%; margin: 1.5em 0; overflow-x: auto; }
-.tableWrapper table { width: 100%; border-collapse: collapse; font-family: Inter, sans-serif; font-size: 14px; line-height: 1.5; }
-.tableWrapper th,
-.tableWrapper td { padding: 12px 14px; border-bottom: 1px solid var(--color-border); text-align: left; }
-.tableWrapper th { background: var(--color-surface-subtle); color: var(--color-text-primary); font-weight: 650; }
+.content [data-rich-text-table-wrapper] {
+  position: relative;
+  max-width: 100%;
+  margin: 1.6em 0;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(to right, var(--color-surface) 30%, transparent),
+    linear-gradient(to right, transparent, rgba(24, 24, 27, .12));
+  background-attachment: local, scroll;
+  background-position: left, right;
+  background-repeat: no-repeat;
+  background-size: 32px 100%, 14px 100%;
+  overscroll-behavior-inline: contain;
+}
+
+.content [data-rich-text-table-wrapper]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.content table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  background: var(--color-surface);
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.content th,
+.content td {
+  padding: 12px 14px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.content th:last-child,
+.content td:last-child { border-right: 0; }
+.content tbody tr:last-child td { border-bottom: 0; }
+.content th { background: var(--color-surface-subtle); color: var(--color-text-primary); font-weight: 700; }
+.content tbody tr:nth-child(even) { background: #fafafa; }
+.content tbody tr:hover { background: #fff7ed; }
+.content [data-align='center'] { text-align: center; }
+.content [data-align='right'] { text-align: right; }
 
 .articleFooter {
   display: flex;

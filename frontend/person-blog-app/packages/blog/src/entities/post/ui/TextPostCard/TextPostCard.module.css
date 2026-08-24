@@ -156,6 +156,34 @@
   font-size: 0.9em;
 }
 
+.content [data-rich-text-table-wrapper] {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+}
+
+.content table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.content th,
+.content td {
+  padding: 8px 10px;
+  border-right: 1px solid #e4e4e7;
+  border-bottom: 1px solid #e4e4e7;
+  text-align: left;
+  vertical-align: top;
+}
+
+.content th {
+  background: #f4f4f5;
+  font-weight: 650;
+}
+
 .footer {
   margin-top: 22px;
   padding-top: 14px;
