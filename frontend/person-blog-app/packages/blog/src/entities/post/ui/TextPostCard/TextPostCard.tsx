@@ -1,31 +1,9 @@
 import { memo, useMemo, useState } from 'react';
-import DOMPurify from 'dompurify';
 import { useNavigate } from 'react-router-dom';
+import { sanitizeTextPostHtml } from '../../lib/sanitizeTextPostHtml';
 import { UserPostInfoModel } from '@/shared/api/generated/models';
 import { Button } from '@/shared/ui/Button/Button';
 import styles from '@/entities/post/ui/TextPostCard/TextPostCard.module.css';
-
-const RICH_TEXT_TAGS = [
-  'p', 'br', 'strong', 'b', 'em', 'i', 's', 'strike', 'span',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li',
-  'blockquote', 'pre', 'code', 'hr'
-];
-
-const sanitizeTextPostHtml = (html: string) => {
-  const sanitizedHtml = DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: RICH_TEXT_TAGS,
-    ALLOWED_ATTR: ['style'],
-    ALLOW_DATA_ATTR: false
-  });
-  const template = document.createElement('template');
-  template.innerHTML = sanitizedHtml;
-  template.content.querySelectorAll<HTMLElement>('[style]').forEach(element => {
-    const color = element.style.color;
-    element.removeAttribute('style');
-    if (color) element.style.color = color;
-  });
-  return template.innerHTML;
-};
 
 interface TextPostCardProps {
   post: UserPostInfoModel;

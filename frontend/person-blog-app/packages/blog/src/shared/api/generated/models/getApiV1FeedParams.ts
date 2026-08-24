@@ -4,9 +4,11 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { RecommendationPostType } from './recommendationPostType';
 
 export type GetApiV1FeedParams = {
 limit?: number;
 cursor?: string;
 currentPostId?: string;
+postType?: RecommendationPostType;
 };

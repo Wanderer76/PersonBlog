@@ -8,6 +8,7 @@ import type {
   CreatePostModelViewModel,
   PostApiTextPostCreateTextPostBody,
   PostApiTextPostEditBody,
+  TextPostDetailResponse,
   TextPostEditViewModel,
   UserPostInfoModel
 } from '.././models';
@@ -19,7 +20,23 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
   export const getTextPost = () => {
-const getApiTextPostCreate = (
+const getApiTextPostPostId = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance<TextPostDetailResponse>>,) => {
+      return customInstance<TextPostDetailResponse>(
+      {url: `/api/TextPost/${postId}`, method: 'GET'
+    },
+      options);
+    }
+  const postApiTextPostPostIdView = (
+    postId: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/api/TextPost/${postId}/view`, method: 'POST'
+    },
+      options);
+    }
+  const getApiTextPostCreate = (
 
  options?: SecondParameter<typeof customInstance<CreatePostModelViewModel>>,) => {
       return customInstance<CreatePostModelViewModel>(
@@ -83,7 +100,9 @@ if(postApiTextPostEditBody.RemovedMediaIds !== undefined) {
     },
       options);
     }
-  return {getApiTextPostCreate,postApiTextPostCreateTextPost,getApiTextPostEditPostId,postApiTextPostEdit}};
+  return {getApiTextPostPostId,postApiTextPostPostIdView,getApiTextPostCreate,postApiTextPostCreateTextPost,getApiTextPostEditPostId,postApiTextPostEdit}};
+export type GetApiTextPostPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['getApiTextPostPostId']>>>
+export type PostApiTextPostPostIdViewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['postApiTextPostPostIdView']>>>
 export type GetApiTextPostCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['getApiTextPostCreate']>>>
 export type PostApiTextPostCreateTextPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['postApiTextPostCreateTextPost']>>>
 export type GetApiTextPostEditPostIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTextPost>['getApiTextPostEditPostId']>>>

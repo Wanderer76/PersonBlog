@@ -1,32 +1,227 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { sanitizeTextPostHtml } from '@/entities/post';
+import { JwtTokenService } from '@/shared/auth';
+import type { TextPostDetailResponse, TextPostMedia } from '@/shared/api/generated/models';
+import { getPost } from '@/shared/api/generated/post/post';
+import { getSubscriber } from '@/shared/api/generated/subscriber/subscriber';
+import { getTextPost } from '@/shared/api/generated/text-post/text-post';
 import defaultProfilePic from '@/shared/assets/defaultProfilePic.png';
 import { Button } from '@/shared/ui/Button/Button';
 import { PageShell } from '@/widgets/page-shell';
 import styles from './TextPostPage.module.css';
 
-type Reaction = 'like' | 'dislike' | null;
+type Reaction = true | false;
+
+const postApi = getPost();
+const subscriberApi = getSubscriber();
+const textPostApi = getTextPost();
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const numberFormatter = new Intl.NumberFormat('ru-RU');
+const compactNumberFormatter = new Intl.NumberFormat('ru-RU', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
 
 const TextPostPage = () => {
+  const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  const [reaction, setReaction] = useState<Reaction>(null);
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [post, setPost] = useState<TextPostDetailResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+  const [reactionPending, setReactionPending] = useState(false);
+  const [subscriptionPending, setSubscriptionPending] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const likes = 128 + (reaction === 'like' ? 1 : 0);
-  const dislikes = 4 + (reaction === 'dislike' ? 1 : 0);
+  useEffect(() => {
+    const controller = new AbortController();
+    let isActive = true;
+
+    setIsLoading(true);
+    setLoadError('');
+    setActionMessage('');
+    setPost(null);
+
+    if (!postId) {
+      setLoadError('Некорректный идентификатор публикации.');
+      setIsLoading(false);
+      return () => controller.abort();
+    }
+
+    const loadPost = async () => {
+      try {
+        const response = await textPostApi.getApiTextPostPostId(
+          postId,
+          { signal: controller.signal },
+        );
+        if (!isActive) return;
+
+        if (!response.data.id || !response.data.author?.blogId || !response.data.viewer) {
+          throw new Error('Gateway returned an incomplete text post response.');
+        }
+
+        setPost(response.data);
+        if (!response.data.viewer?.isViewed) {
+          void textPostApi.postApiTextPostPostIdView(
+            postId,
+            { signal: controller.signal },
+          )
+            .then(() => {
+              if (!isActive) return;
+              setPost((current) => current ? {
+                ...current,
+                viewCount: (current.viewCount ?? 0) + 1,
+                viewer: { ...current.viewer, isViewed: true },
+              } : current);
+            })
+            .catch((error: unknown) => {
+              if (!controller.signal.aborted) {
+                console.warn('Не удалось зарегистрировать просмотр текстового поста:', error);
+              }
+            });
+        }
+      } catch (error: unknown) {
+        if (!isActive || controller.signal.aborted) return;
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+        setLoadError(status === 404
+          ? 'Публикация не найдена или была удалена.'
+          : status === 403
+            ? 'У вас нет доступа к этой публикации.'
+            : 'Не удалось загрузить публикацию. Проверьте соединение и попробуйте ещё раз.');
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    };
+
+    void loadPost();
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [postId, reloadKey]);
+
+  const sanitizedHtml = useMemo(
+    () => sanitizeTextPostHtml(post?.text ?? ''),
+    [post?.text],
+  );
 
   const handleBack = () => {
     if (window.history.length > 1) {
       navigate(-1);
       return;
     }
-
     navigate('/');
   };
 
-  const toggleReaction = (nextReaction: Exclude<Reaction, null>) => {
-    setReaction(currentReaction => currentReaction === nextReaction ? null : nextReaction);
+  const handleReaction = async (reaction: Reaction) => {
+    if (!post?.id || reactionPending) return;
+    setReactionPending(true);
+    setActionMessage('');
+
+    try {
+      await postApi.postApiPostSetReactionPostId(post.id, { isLike: reaction });
+      setPost((current) => {
+        if (!current) return current;
+        const previousReaction = current.viewer?.isLike;
+        const nextReaction = previousReaction === reaction ? null : reaction;
+        return {
+          ...current,
+          likeCount: Math.max(0, (current.likeCount ?? 0)
+            - (previousReaction === true ? 1 : 0)
+            + (nextReaction === true ? 1 : 0)),
+          dislikeCount: Math.max(0, (current.dislikeCount ?? 0)
+            - (previousReaction === false ? 1 : 0)
+            + (nextReaction === false ? 1 : 0)),
+          viewer: { ...current.viewer, isLike: nextReaction },
+        };
+      });
+    } catch (error) {
+      console.error('Не удалось сохранить реакцию:', error);
+      setActionMessage('Не удалось сохранить реакцию. Попробуйте ещё раз.');
+    } finally {
+      setReactionPending(false);
+    }
   };
+
+  const handleSubscribe = async () => {
+    if (!post?.author?.blogId || subscriptionPending) return;
+    if (!JwtTokenService.isAuth()) {
+      await JwtTokenService.redirectToAuth(window.location.href);
+      return;
+    }
+
+    const wasSubscribed = post.viewer?.isSubscribed ?? false;
+    setSubscriptionPending(true);
+    setActionMessage('');
+    try {
+      if (wasSubscribed) {
+        await subscriberApi.postApiSubscriberUnsubscribeBlogId(post.author.blogId);
+      } else {
+        await subscriberApi.postApiSubscriberSubscribeBlogId(post.author.blogId);
+      }
+      setPost((current) => current ? {
+        ...current,
+        author: {
+          ...current.author,
+          subscribersCount: Math.max(0, (current.author?.subscribersCount ?? 0) + (wasSubscribed ? -1 : 1)),
+        },
+        viewer: { ...current.viewer, isSubscribed: !wasSubscribed },
+      } : current);
+    } catch (error) {
+      console.error('Не удалось изменить подписку:', error);
+      setActionMessage('Не удалось изменить подписку. Попробуйте ещё раз.');
+    } finally {
+      setSubscriptionPending(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!post) return;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: post.title ?? 'Публикация', url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setActionMessage('Ссылка скопирована в буфер обмена.');
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        setActionMessage('Не удалось поделиться ссылкой.');
+      }
+    }
+  };
+
+  if (isLoading) {
+    return <TextPostState>Загружаем публикацию…</TextPostState>;
+  }
+
+  if (loadError || !post) {
+    return (
+      <TextPostState title="Не удалось открыть публикацию">
+        <p>{loadError || 'Публикация недоступна.'}</p>
+        <div className={styles.stateActions}>
+          <Button type="button" onClick={() => setReloadKey((value) => value + 1)}>Повторить</Button>
+          <Button type="button" variant="secondary" onClick={handleBack}>Назад</Button>
+        </div>
+      </TextPostState>
+    );
+  }
+
+  const mediaItems = (post.media ?? []).filter((media) => Boolean(media.url));
+  const heroMedia = mediaItems.find((media) => media.contentType?.startsWith('image/'));
+  const remainingMedia = heroMedia
+    ? mediaItems.filter((media) => media.id !== heroMedia.id)
+    : mediaItems;
+  const categoryLabel = (post.categories ?? [])
+    .map((category) => category.title)
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <PageShell className={styles.shell} contentClassName={styles.page}>
@@ -38,164 +233,101 @@ const TextPostPage = () => {
               Назад
             </button>
 
-            <span className={styles.category}>Разработка</span>
-            <h1>Как создавать интерфейсы, которые остаются понятными</h1>
-            <p className={styles.lead}>
-              Практическое руководство о визуальной иерархии, типографике и деталях,
-              из которых складывается цельный продукт.
-            </p>
+            {categoryLabel && <span className={styles.category}>{categoryLabel}</span>}
+            <h1>{post.title || 'Без названия'}</h1>
+            {post.lead && <p className={styles.lead}>{post.lead}</p>}
             <div className={styles.meta}>
-              <time dateTime="2026-08-21">21 августа 2026</time>
+              {post.createdAt && (
+                <time dateTime={post.createdAt}>{dateFormatter.format(new Date(post.createdAt))}</time>
+              )}
               <span aria-hidden="true" />
-              <span>8 минут чтения</span>
+              <span>{Math.max(1, post.estimatedReadingTimeMinutes ?? 1)} мин чтения</span>
               <span aria-hidden="true" />
-              <span>1 284 просмотра</span>
+              <span>{numberFormatter.format(post.viewCount ?? 0)} просмотров</span>
             </div>
           </header>
 
-          <HeroIllustration />
-
-          <div className={styles.content}>
-            <p>
-              Хороший интерфейс не требует от человека угадывать, что произойдёт дальше.
-              Он <strong>показывает главное</strong>, объясняет второстепенное и спокойно
-              скрывает детали до того момента, когда они действительно понадобятся.
-            </p>
-            <p>
-              В этой статье собраны примеры основных возможностей форматирования:
-              <em> курсив для интонации</em>, <strong>жирное начертание для акцентов</strong>,{' '}
-              <u>подчёркивание</u>, <s>зачёркнутый текст</s>, <mark>мягкое выделение</mark>{' '}
-              и <a href="#principles">ссылки внутри материала</a>.
-            </p>
-
-            <h2 id="principles">Сначала — ясная иерархия</h2>
-            <p>
-              Пользователь сканирует страницу быстрее, чем читает её. Поэтому заголовок,
-              вводный абзац, изображение и основное действие должны складываться в понятный
-              маршрут взгляда.
-            </p>
-            <ul>
-              <li><strong>Один главный заголовок</strong> формулирует тему страницы.</li>
-              <li>Подзаголовки делят длинный материал на самостоятельные смысловые блоки.</li>
-              <li>Вторичный текст остаётся контрастным, но не спорит с основным.</li>
-            </ul>
-
-            <blockquote>
-              Если все элементы выглядят одинаково важными, пользователю приходится
-              самостоятельно восстанавливать структуру страницы.
-            </blockquote>
-
-            <h3>Ритм важнее количества украшений</h3>
-            <p>
-              Последовательные интервалы создают ощущение порядка. В проекте их удобно
-              хранить в токенах: например, <code>--space-4</code> для базового отступа и{' '}
-              <code>--radius-lg</code> для крупных поверхностей.
-            </p>
-
-            <figure>
-              <ContentIllustration />
-              <figcaption>
-                Один сильный акцент, спокойный контекст и предсказуемая группа действий.
-              </figcaption>
-            </figure>
-
-            <h2>Компоненты должны вести себя одинаково</h2>
-            <p>
-              Одинаковые действия заслуживают одинакового оформления. Если оранжевая
-              кнопка означает основное действие, не стоит использовать её для удаления
-              или нейтральной навигации.
-            </p>
-            <ol>
-              <li>Определите роль компонента.</li>
-              <li>Выберите устойчивое визуальное состояние.</li>
-              <li>Добавьте состояния наведения, фокуса, загрузки и ошибки.</li>
-              <li>Проверьте компонент на узком экране и с длинным текстом.</li>
-            </ol>
-
-            <div className={styles.tableWrapper}>
-              <table>
-                <thead>
-                  <tr><th>Элемент</th><th>Назначение</th><th>Акцент</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td>Основная кнопка</td><td>Продолжить сценарий</td><td>Высокий</td></tr>
-                  <tr><td>Вторичная кнопка</td><td>Дополнительное действие</td><td>Средний</td></tr>
-                  <tr><td>Текстовая ссылка</td><td>Переход к контексту</td><td>Низкий</td></tr>
-                </tbody>
-              </table>
+          {heroMedia && (
+            <div className={styles.hero}>
+              <img src={heroMedia.url!} alt={heroMedia.name ?? ''} />
             </div>
+          )}
 
-            <h3>Небольшой пример</h3>
-            <p>Даже короткий фрагмент стилей проще поддерживать, если он опирается на общие переменные:</p>
-            <pre><code>{`.primary-action {
-  background: var(--color-brand-500);
-  color: #fff;
-  border-radius: var(--radius-sm);
-}`}</code></pre>
+          {sanitizedHtml && (
+            <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+          )}
 
-            <hr />
-            <h2>Итог</h2>
-            <p>
-              Цельная страница получается не из одного эффектного решения, а из множества
-              небольших согласованных выборов. Начните с иерархии, закрепите правила в
-              компонентах и проверяйте, что контент остаётся удобным при любой длине и на
-              любом экране.
-            </p>
-          </div>
+          {remainingMedia.length > 0 && (
+            <section className={styles.mediaList} aria-label="Медиа публикации">
+              {remainingMedia.map((media, index) => (
+                <PostMedia key={media.id ?? media.url ?? index} media={media} />
+              ))}
+            </section>
+          )}
 
           <footer className={styles.articleFooter}>
             <div className={styles.reactions} aria-label="Оценка статьи">
               <button
-                className={`${styles.reactionButton} ${reaction === 'like' ? styles.reactionActive : ''}`}
+                className={`${styles.reactionButton} ${post.viewer?.isLike === true ? styles.reactionActive : ''}`}
                 type="button"
-                aria-pressed={reaction === 'like'}
-                onClick={() => toggleReaction('like')}
+                disabled={reactionPending}
+                aria-pressed={post.viewer?.isLike === true}
+                onClick={() => void handleReaction(true)}
               >
                 <LikeIcon />
                 <span>Нравится</span>
-                <strong>{likes}</strong>
+                <strong>{numberFormatter.format(post.likeCount ?? 0)}</strong>
               </button>
               <button
-                className={`${styles.reactionButton} ${styles.dislikeButton} ${reaction === 'dislike' ? styles.dislikeActive : ''}`}
+                className={`${styles.reactionButton} ${styles.dislikeButton} ${post.viewer?.isLike === false ? styles.dislikeActive : ''}`}
                 type="button"
-                aria-pressed={reaction === 'dislike'}
-                onClick={() => toggleReaction('dislike')}
+                disabled={reactionPending}
+                aria-pressed={post.viewer?.isLike === false}
+                onClick={() => void handleReaction(false)}
               >
                 <DislikeIcon />
                 <span>Не нравится</span>
-                <strong>{dislikes}</strong>
+                <strong>{numberFormatter.format(post.dislikeCount ?? 0)}</strong>
               </button>
             </div>
-            <button className={styles.shareButton} type="button">
+            <button className={styles.shareButton} type="button" onClick={() => void handleShare()}>
               <ShareIcon />
               Поделиться
             </button>
+            {actionMessage && <p className={styles.actionMessage} role="status">{actionMessage}</p>}
           </footer>
         </article>
 
         <aside className={styles.creator} aria-labelledby="creator-name">
           <p className={styles.creatorEyebrow}>Создатель публикации</p>
-          <div className={styles.creatorMain}>
-            <img src={defaultProfilePic} alt="" />
-            <div>
-              <span id="creator-name">PlayView Design</span>
-              <p>12,4 тыс. подписчиков</p>
-            </div>
-          </div>
-          <p className={styles.creatorDescription}>
-            Пишем о дизайне цифровых продуктов, разработке и понятных интерфейсах.
-          </p>
-          <Button
-            variant={isSubscribed ? 'secondary' : 'primary'}
-            fullWidth
-            aria-pressed={isSubscribed}
-            onClick={() => setIsSubscribed(value => !value)}
+          <button
+            className={styles.creatorLink}
+            type="button"
+            onClick={() => navigate(`/channel/${post.author?.blogId}`)}
           >
-            {isSubscribed ? 'Вы подписаны' : 'Подписаться'}
+            <span className={styles.creatorMain}>
+              <img src={post.author?.photoUrl || defaultProfilePic} alt="" />
+              <span>
+                <span id="creator-name">{post.author?.name || 'Автор'}</span>
+                <span>{compactNumberFormatter.format(post.author?.subscribersCount ?? 0)} подписчиков</span>
+              </span>
+            </span>
+          </button>
+          {post.author?.description && (
+            <p className={styles.creatorDescription}>{post.author.description}</p>
+          )}
+          <Button
+            variant={post.viewer?.isSubscribed ? 'secondary' : 'primary'}
+            fullWidth
+            loading={subscriptionPending}
+            aria-pressed={post.viewer?.isSubscribed}
+            onClick={() => void handleSubscribe()}
+          >
+            {post.viewer?.isSubscribed ? 'Вы подписаны' : 'Подписаться'}
           </Button>
           <div className={styles.creatorStats}>
-            <div><strong>48</strong><span>публикаций</span></div>
-            <div><strong>1,2 млн</strong><span>просмотров</span></div>
+            <div><strong>{numberFormatter.format(post.author?.postsCount ?? 0)}</strong><span>публикаций</span></div>
+            <div><strong>{compactNumberFormatter.format(post.author?.totalViewsCount ?? 0)}</strong><span>просмотров</span></div>
           </div>
         </aside>
       </div>
@@ -203,66 +335,28 @@ const TextPostPage = () => {
   );
 };
 
-const HeroIllustration = () => (
-  <div className={styles.hero} role="img" aria-label="Карточки интерфейса на оранжевом фоне">
-    <svg viewBox="0 0 1200 638" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <linearGradient id="article-hero-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop stopColor="#ff9a3d" /><stop offset="1" stopColor="#d95f00" />
-        </linearGradient>
-        <filter id="article-hero-shadow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="18" stdDeviation="18" floodColor="#7c2d12" floodOpacity=".26" />
-        </filter>
-      </defs>
-      <rect width="1200" height="638" fill="url(#article-hero-bg)" />
-      <circle cx="1030" cy="92" r="235" fill="#fff" opacity=".1" />
-      <circle cx="120" cy="590" r="250" fill="#7c2d12" opacity=".12" />
-      <g filter="url(#article-hero-shadow)" transform="translate(170 95) rotate(-4 270 205)">
-        <rect width="540" height="410" rx="28" fill="#fff" />
-        <rect x="34" y="34" width="180" height="18" rx="9" fill="#e4e4e7" />
-        <rect x="34" y="78" width="472" height="180" rx="18" fill="#27272a" />
-        <rect x="34" y="286" width="330" height="15" rx="7" fill="#d4d4d8" />
-        <rect x="34" y="320" width="440" height="12" rx="6" fill="#e4e4e7" />
-        <rect x="34" y="350" width="390" height="12" rx="6" fill="#e4e4e7" />
-      </g>
-      <g filter="url(#article-hero-shadow)" transform="translate(675 155) rotate(6 180 150)">
-        <rect width="360" height="300" rx="24" fill="#fff7ed" />
-        <circle cx="62" cy="64" r="28" fill="#ff7b00" />
-        <rect x="108" y="47" width="165" height="14" rx="7" fill="#a1a1aa" />
-        <rect x="108" y="75" width="112" height="11" rx="5" fill="#d4d4d8" />
-        <rect x="34" y="128" width="292" height="12" rx="6" fill="#d4d4d8" />
-        <rect x="34" y="158" width="250" height="12" rx="6" fill="#e4e4e7" />
-        <rect x="34" y="188" width="275" height="12" rx="6" fill="#e4e4e7" />
-        <rect x="34" y="234" width="120" height="36" rx="18" fill="#ff7b00" />
-      </g>
-    </svg>
-  </div>
+const TextPostState = ({ title, children }: { title?: string; children: ReactNode }) => (
+  <PageShell className={styles.shell} contentClassName={styles.page}>
+    <section className={styles.state} aria-live="polite">
+      {title && <h1>{title}</h1>}
+      {children}
+    </section>
+  </PageShell>
 );
 
-const ContentIllustration = () => (
-  <div className={styles.contentImage} role="img" aria-label="Схема визуальной иерархии из трёх уровней">
-    <svg viewBox="0 0 1000 563" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-      <defs>
-        <linearGradient id="article-content-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop stopColor="#fff7ed" /><stop offset="1" stopColor="#fed7aa" />
-        </linearGradient>
-      </defs>
-      <rect width="1000" height="563" fill="url(#article-content-bg)" />
-      <g transform="translate(110 88)">
-        <rect width="780" height="388" rx="28" fill="#fff" stroke="#dedee1" />
-        <circle cx="66" cy="67" r="25" fill="#ff7b00" />
-        <rect x="112" y="49" width="360" height="25" rx="12" fill="#18181b" />
-        <rect x="112" y="90" width="265" height="13" rx="6" fill="#a1a1aa" />
-        <rect x="50" y="155" width="680" height="92" rx="16" fill="#f5f5f6" />
-        <rect x="76" y="179" width="305" height="17" rx="8" fill="#52525b" />
-        <rect x="76" y="213" width="520" height="11" rx="5" fill="#d4d4d8" />
-        <rect x="50" y="280" width="208" height="58" rx="12" fill="#ff7b00" />
-        <rect x="282" y="280" width="208" height="58" rx="12" fill="#f5f5f6" />
-        <rect x="514" y="280" width="216" height="58" rx="12" fill="#f5f5f6" />
-      </g>
-    </svg>
-  </div>
-);
+const PostMedia = ({ media }: { media: TextPostMedia }) => {
+  if (!media.url) return null;
+  if (media.contentType?.startsWith('image/')) {
+    return <figure><img src={media.url} alt={media.name ?? ''} />{media.name && <figcaption>{media.name}</figcaption>}</figure>;
+  }
+  if (media.contentType?.startsWith('video/')) {
+    return <video controls preload="metadata" src={media.url}>Ваш браузер не поддерживает видео.</video>;
+  }
+  if (media.contentType?.startsWith('audio/')) {
+    return <audio controls preload="metadata" src={media.url}>Ваш браузер не поддерживает аудио.</audio>;
+  }
+  return <a className={styles.mediaFile} href={media.url} target="_blank" rel="noreferrer">Скачать {media.name || 'файл'}</a>;
+};
 
 const ArrowLeftIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

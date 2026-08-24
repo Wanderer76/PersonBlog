@@ -5,11 +5,13 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface PostCreatorModel {
-  userId?: string;
-  blogId?: string;
+export interface TextPostMedia {
+  id?: string;
   /** @nullable */
   name?: string | null;
   /** @nullable */
-  avatarUrl?: string | null;
+  url?: string | null;
+  /** @nullable */
+  contentType?: string | null;
+  length?: number;
 }
