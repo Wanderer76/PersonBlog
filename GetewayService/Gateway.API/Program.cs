@@ -60,6 +60,11 @@ builder.Services.AddHttpClient<BlogFeedApiClient>(x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
     x.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddHttpClient<TextPostDetailApiClient>(x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
+}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddScoped<RecommendationFeedGateway>();
 builder.Services.AddHttpClient("Reacting", x =>
 {
