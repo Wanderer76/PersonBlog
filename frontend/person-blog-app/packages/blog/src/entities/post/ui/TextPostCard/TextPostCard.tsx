@@ -1,5 +1,5 @@
 import { memo, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { sanitizeTextPostHtml } from '../../lib/sanitizeTextPostHtml';
 import { UserPostInfoModel } from '@/shared/api/generated/models';
 import { Button } from '@/shared/ui/Button/Button';
@@ -12,11 +12,22 @@ interface TextPostCardProps {
   onRemove: (id: string) => Promise<void>;
 }
 
+const getTextPreview = (html: string): string => {
+  const template = document.createElement('template');
+  template.innerHTML = sanitizeTextPostHtml(html);
+  template.content.querySelectorAll('img, table').forEach((element) => element.remove());
+  template.content
+    .querySelectorAll('br, p, li, blockquote, pre, h1, h2, h3, h4, h5, h6')
+    .forEach((element) => element.after(document.createTextNode(' ')));
+
+  return template.content.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+};
+
 export const TextPostCard = memo(({ post, isLast, observeRef, onRemove }: TextPostCardProps) => {
   const navigate = useNavigate();
   const [isRemoving, setIsRemoving] = useState(false);
-  const sanitizedHtml = useMemo(
-    () => sanitizeTextPostHtml(post.textInfo?.text ?? ''),
+  const previewText = useMemo(
+    () => getTextPreview(post.textInfo?.text ?? ''),
     [post.textInfo?.text]
   );
 
@@ -53,12 +64,13 @@ export const TextPostCard = memo(({ post, isLast, observeRef, onRemove }: TextPo
           </div>
         </details>
       </header>
-      <div className={styles.content} dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
-      {post.createdAt && (
-        <footer className={styles.footer}>
+      <p className={styles.content}>{previewText || 'В публикации пока нет текстового описания.'}</p>
+      <footer className={styles.footer}>
+        {post.createdAt ? (
           <time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
-        </footer>
-      )}
+        ) : <span />}
+        {post.id && <Link to={`/textPost/${post.id}`}>Открыть</Link>}
+      </footer>
     </article>
   );
 });
