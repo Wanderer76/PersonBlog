@@ -18,19 +18,22 @@ public sealed class VideoConversionService
     private readonly string _tempPath;
     private readonly HlsVideoPresets _videoPresets;
     private readonly IVideoProgressNotifier _progressNotifier;
+    private readonly ILogger<VideoConversionService> _logger;
 
     public VideoConversionService(
         IVideoConvertService ffmpegService,
         IFileStorage storage,
         IConfiguration configuration,
         HlsVideoPresets videoPresets,
-        IVideoProgressNotifier progressNotifier)
+        IVideoProgressNotifier progressNotifier,
+        ILogger<VideoConversionService> logger)
     {
         _ffmpegService = ffmpegService;
         _storage = storage;
         _tempPath = Path.GetFullPath(configuration["TempDir"]!);
         _videoPresets = videoPresets;
         _progressNotifier = progressNotifier;
+        _logger = logger;
     }
 
     public async Task<VideoConvertedResponse> ProcessConversionAsync(ConvertVideoCommand command, Guid postId, bool hasPreviewId)
@@ -115,7 +118,7 @@ public sealed class VideoConversionService
             }
             catch (IOException ioEx)
             {
-                Console.WriteLine($"Не удалось удалить временный файл превью: {ioEx.Message}");
+                _logger.LogWarning(ioEx, "Не удалось удалить временный файл превью {SnapshotFileName}", snapshotFileName);
             }
 
             // Перезапускаем с полным стеком трассировки
@@ -123,11 +126,7 @@ public sealed class VideoConversionService
         }
         catch (Exception exception)
         {
-            try
-            {
-                Console.WriteLine($"Ошибка при генерации превью: {exception.Message}");
-            }
-            catch { /* Ignore logging errors */ }
+            _logger.LogError(exception, "Ошибка при генерации превью");
 
             // Перезапускаем с полным стеком трассировки, сохраняя оригинальное исключение внутри
             throw new OperationCanceledException("Не удалось создать превью к видео", exception);
@@ -144,7 +143,7 @@ public sealed class VideoConversionService
                     {
                         File.Delete(snapshotFileName);
                         deleted = true;
-                        Console.WriteLine($"Preview temp file deleted successfully");
+                        _logger.LogDebug("Preview temp file {SnapshotFileName} deleted successfully", snapshotFileName);
                     }
                     catch (IOException) when (attempt < 2)
                     {
@@ -155,7 +154,7 @@ public sealed class VideoConversionService
 
                 if (!deleted)
                 {
-                    Console.WriteLine($"Не удалось удалить временный файл превью: {snapshotFileName}. Будет удалён при следующей попытке или перезапуске.");
+                    _logger.LogWarning("Не удалось удалить временный файл превью {SnapshotFileName}; он будет удалён при следующей попытке или перезапуске", snapshotFileName);
                 }
             }
         }
@@ -189,7 +188,7 @@ public sealed class VideoConversionService
                 var percent = videoStream.Duration <= 0
                     ? 0
                     : Math.Min(100, currentTime / videoStream.Duration * 100);
-                Console.WriteLine($"Percent : {percent}");
+                _logger.LogDebug("Video processing progress: {Percent}", percent);
                 await ReportProgressSafelyAsync(blogId, postId, percent, "processing");
             });
 
@@ -236,7 +235,7 @@ public sealed class VideoConversionService
                 catch (IOException)
                 {
                     // Если не удалилось сразу, очистится при следующей попытке
-                    Console.WriteLine($"Не удалось очистить директорию: {dir}");
+                    _logger.LogWarning("Не удалось очистить директорию {DirectoryPath}", dir);
                 }
             }
             throw;
@@ -276,7 +275,7 @@ public sealed class VideoConversionService
     /// <summary>
     /// Очищает временную директорию с повторными попытками при ошибках доступа
     /// </summary>
-    private static async Task CleanupDirectoryAsync(string directoryPath)
+    private async Task CleanupDirectoryAsync(string directoryPath)
     {
         if (string.IsNullOrWhiteSpace(directoryPath))
             return;
@@ -288,7 +287,7 @@ public sealed class VideoConversionService
             {
                 if (!Directory.Exists(directoryPath))
                 {
-                    Console.WriteLine($"Directory already cleaned: {directoryPath}");
+                    _logger.LogDebug("Directory {DirectoryPath} is already cleaned", directoryPath);
                     return;
                 }
 
@@ -302,7 +301,7 @@ public sealed class VideoConversionService
                     }
                     catch (IOException ioEx)
                     {
-                        Console.WriteLine($"Не удалось удалить файл: {file} - {ioEx.Message}");
+                        _logger.LogWarning(ioEx, "Не удалось удалить файл {FilePath}", file);
                     }
                 }
 
@@ -316,28 +315,28 @@ public sealed class VideoConversionService
                     }
                     catch (IOException ioEx)
                     {
-                        Console.WriteLine($"Не удалось удалить директорию: {subDir} - {ioEx.Message}");
+                        _logger.LogWarning(ioEx, "Не удалось удалить директорию {DirectoryPath}", subDir);
                     }
                 }
 
                 // Удаляем корневую директорию
                 Directory.Delete(directoryPath);
                 deleted = true;
-                Console.WriteLine($"Temp directory cleaned successfully: {directoryPath}");
+                _logger.LogDebug("Temp directory {DirectoryPath} cleaned successfully", directoryPath);
             }
             catch (IOException ioEx)
             {
                 if (attempt < 4)
                 {
                     await Task.Delay(200 * (attempt + 1));
-                    Console.WriteLine($"Ретрайт очистки директории (попытка {attempt + 1}/{5}): {ioEx.Message}");
+                    _logger.LogWarning(ioEx, "Повторная попытка очистки директории {DirectoryPath}: {Attempt}/{MaxAttempts}", directoryPath, attempt + 1, 5);
                 }
             }
         }
 
         if (!deleted && Directory.Exists(directoryPath))
         {
-            Console.WriteLine($"⚠️ Не удалось очистить временную директорию: {directoryPath}. Будет удалена при следующей попытке или перезапуске сервиса.");
+            _logger.LogWarning("Не удалось очистить временную директорию {DirectoryPath}; она будет удалена при следующей попытке или перезапуске сервиса", directoryPath);
         }
     }
 
@@ -355,7 +354,7 @@ public sealed class VideoConversionService
         catch (Exception exception)
         {
             // A disconnected UI must not fail or cancel the video conversion itself.
-            Console.Error.WriteLine($"Unable to publish video progress for post {postId}: {exception.Message}");
+            _logger.LogWarning(exception, "Unable to publish video progress for post {PostId}", postId);
         }
     }
 
@@ -366,12 +365,12 @@ public sealed class VideoConversionService
             using var fileStream = new FileStream(masterPlaylistPath, FileMode.Open, FileAccess.Read);
             var objectName = $"{postId}/master.m3u8";
 
-            Console.WriteLine($"Uploading master playlist: {objectName}...");
+            _logger.LogDebug("Uploading master playlist {ObjectName}", objectName);
             await _storage.PutFileAsync(blogId, objectName, fileStream);
         }
         catch (Exception ex) when (!(ex is TaskCanceledException))
         {
-            Console.WriteLine($"Ошибка при загрузке master.m3u8: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при загрузке master playlist для поста {PostId}", postId);
         }
     }
 
@@ -382,12 +381,12 @@ public sealed class VideoConversionService
             using var fileStream = new FileStream(playlistPath, FileMode.Open, FileAccess.Read);
             var objectName = $"{postId}/{segmentName}/playlist.m3u8";
 
-            Console.WriteLine($"Uploading playlist: {objectName}...");
+            _logger.LogDebug("Uploading playlist {ObjectName}", objectName);
             await _storage.PutFileAsync(blogId, objectName, fileStream);
         }
         catch (Exception ex) when (!(ex is TaskCanceledException))
         {
-            Console.WriteLine($"Ошибка при загрузке playlist.m3u8: {ex.Message}");
+            _logger.LogError(ex, "Ошибка при загрузке playlist {SegmentName} для поста {PostId}", segmentName, postId);
         }
     }
 
@@ -405,7 +404,7 @@ public sealed class VideoConversionService
                 var fileName = Path.GetFileName(file);
                 var objectName = $"{postId}/{fileName}";
 
-                Console.WriteLine($"Uploading: {objectName}...");
+                _logger.LogDebug("Uploading {ObjectName}", objectName);
                 await _storage.PutFileAsync(blogId, objectName, fileStream);
                 uploadedCount++;
 
@@ -416,12 +415,12 @@ public sealed class VideoConversionService
             catch (Exception ex) when (!(ex is TaskCanceledException))
             {
                 failedCount++;
-                Console.WriteLine($"Ошибка при загрузке файла {file}: {ex.Message}");
+                _logger.LogError(ex, "Ошибка при загрузке файла {FilePath}", file);
                 // Продолжаем с другими файлами, не выбрасывая исключение
             }
         }
 
-        Console.WriteLine($"Загрузка завершена: {uploadedCount} успешно, {failedCount} пропущено");
+        _logger.LogInformation("Загрузка завершена: {UploadedCount} успешно, {FailedCount} пропущено", uploadedCount, failedCount);
     }
 
 }

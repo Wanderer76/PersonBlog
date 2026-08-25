@@ -50,7 +50,8 @@ public class VideoConversionServiceTests : IDisposable
             _mockStorage.Object,
             _mockConfiguration.Object,
             _videoPresets,
-            _mockProgressNotifier.Object);
+            _mockProgressNotifier.Object,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<VideoConversionService>.Instance);
     }
 
     #region ProcessConversionAsync Tests

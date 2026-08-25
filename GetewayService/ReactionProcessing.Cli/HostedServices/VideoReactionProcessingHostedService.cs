@@ -1,4 +1,4 @@
-﻿using MessageBus;
+using MessageBus;
 using MessageBus.Shared.Configs;
 using RabbitMQ.Client;
 
@@ -7,11 +7,15 @@ namespace ReactionProcessing.Cli.HostedServices
     public class VideoReactionProcessingHostedService : BackgroundService
     {
         private readonly RabbitMqMessageBus _messageBus;
+        private readonly ILogger<VideoReactionProcessingHostedService> _logger;
         private IChannel channel;
 
-        public VideoReactionProcessingHostedService(RabbitMqMessageBus messageBus)
+        public VideoReactionProcessingHostedService(
+            RabbitMqMessageBus messageBus,
+            ILogger<VideoReactionProcessingHostedService> logger)
         {
             _messageBus = messageBus;
+            _logger = logger;
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -34,7 +38,7 @@ namespace ReactionProcessing.Cli.HostedServices
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                _logger.LogError(ex, "Failed to process video reaction events");
             }
         }
     }

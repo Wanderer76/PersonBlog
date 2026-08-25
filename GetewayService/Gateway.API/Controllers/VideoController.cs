@@ -114,7 +114,7 @@ public class VideoController : BaseApiController
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError(ex, "Failed to load video data for post {PostId}", postId);
             return BadRequest(ex);
         }
     }

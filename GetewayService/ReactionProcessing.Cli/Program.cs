@@ -1,7 +1,9 @@
+using Infrastructure.Extensions;
 using ReactionProcessing.Cli.HostedServices;
 using Video.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.AddSerilogLogger(builder.Configuration);
 
 // Add services to the container.
 //builder.Services.AddControllers();

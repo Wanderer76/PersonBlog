@@ -14,6 +14,7 @@ using MessageBus.Configs;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>

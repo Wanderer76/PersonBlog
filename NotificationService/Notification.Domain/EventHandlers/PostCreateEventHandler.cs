@@ -1,5 +1,6 @@
-﻿using Blog.Contracts.Events;
+using Blog.Contracts.Events;
 using MessageBus.EventHandler;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 
 namespace Notification.Domain.EventHandlers
@@ -7,10 +8,14 @@ namespace Notification.Domain.EventHandlers
     public class PostCreateEventHandler : IEventHandler<PostUpdateEvent>
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<PostCreateEventHandler> _logger;
 
-        public PostCreateEventHandler(IHttpClientFactory httpClientFactory)
+        public PostCreateEventHandler(
+            IHttpClientFactory httpClientFactory,
+            ILogger<PostCreateEventHandler> logger)
         {
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public async Task Handle(IMessageContext<PostUpdateEvent> @event)
@@ -32,7 +37,7 @@ namespace Notification.Domain.EventHandlers
 
                     foreach (var userId in subscribers)
                     {
-                        Console.WriteLine(userId);
+                        _logger.LogDebug("Post notification recipient: {UserId}", userId);
                     }
                     if (subscribers.Count != pageSize)
                         break;
@@ -40,7 +45,7 @@ namespace Notification.Domain.EventHandlers
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    _logger.LogError(e, "Failed to load subscribers for blog {BlogId}", post.BlogId);
                 }
             } while (true);
         }

@@ -1,4 +1,5 @@
 using Blog.Contracts.Events;
+using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Configs;
@@ -7,6 +8,7 @@ using Search.Service;
 using SearchService.Application.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.AddSerilogLogger(builder.Configuration);
 
 // Add services to the container.
 

@@ -1,9 +1,11 @@
 using Blog.Contracts.Events;
+using Infrastructure.Extensions;
 using MessageBus;
 using MessageBus.Configs;
 using Notification.Domain.EventHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.AddSerilogLogger(builder.Configuration);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

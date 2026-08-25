@@ -1,6 +1,7 @@
-﻿using FFmpeg.Service.Models;
+using FFmpeg.Service.Models;
 using FileStorage.Service;
 using FileStorage.Service.Models;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Shared.Utils;
 using System.Diagnostics;
@@ -12,9 +13,12 @@ namespace FFmpeg.Service.Internal
     internal sealed class FFMpegService : IVideoConvertService
     {
         private readonly FFMpegOptions fFMpegOptions;
-        public FFMpegService(FFMpegOptions configuration)
+        private readonly ILogger<FFMpegService> logger;
+
+        public FFMpegService(FFMpegOptions configuration, ILogger<FFMpegService> logger)
         {
             fFMpegOptions = configuration;
+            this.logger = logger;
         }
 
         public async Task GeneratePreviewAsync(string input, string outputFilePath)
@@ -232,13 +236,13 @@ namespace FFmpeg.Service.Internal
             }
         }
 
-        private static async Task<string> ReadStandardErrorAsync(StreamReader reader, AsyncProgress<double>? onProgressChange)
+        private async Task<string> ReadStandardErrorAsync(StreamReader reader, AsyncProgress<double>? onProgressChange)
         {
             var error = new StringBuilder();
             while (await reader.ReadLineAsync() is { } line)
             {
                 error.AppendLine(line);
-                Console.Error.WriteLine(line);
+                logger.LogDebug("FFmpeg: {Output}", line);
 
                 if (onProgressChange != null && line.StartsWith("frame=", StringComparison.Ordinal))
                 {

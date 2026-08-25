@@ -13,6 +13,7 @@ using VideoProcessing.Cli.Service;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddFFMpegVideoService(
     builder.Configuration.GetSection("FFMpegOptions:FFMpeg").Get<FFMpegOptions>()!,
