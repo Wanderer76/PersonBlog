@@ -15,8 +15,8 @@ export interface Post {
   description?: string;
   type: number;
   state: number;
-  viewCount: number;
-  createdAt: string;
+  viewCount?: number;
+  createdAt?: string;
   videoInfo: VideoInfo;
   errorMessage?: string;
 }

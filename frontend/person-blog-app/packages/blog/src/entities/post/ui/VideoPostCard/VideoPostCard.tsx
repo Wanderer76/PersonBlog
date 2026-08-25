@@ -18,6 +18,8 @@ const getStatusText = (post: Post) => {
 
 export const VideoPostCard = memo(({ post, observeRef }: VideoPostCardProps) => {
   const statusText = getStatusText(post);
+  const duration = post.videoInfo.videoMetadata?.duration;
+  const hasMetadata = post.viewCount !== undefined || Boolean(post.createdAt);
   const content = (
     <>
       <div className={styles.thumbnail}>
@@ -29,16 +31,22 @@ export const VideoPostCard = memo(({ post, observeRef }: VideoPostCardProps) => 
             <small>Превью недоступно</small>
           </div>
         )}
-        <time className={styles.duration}>{secondsToHumanReadable(post.videoInfo.videoMetadata?.duration ?? 0)}</time>
+        {duration !== undefined && (
+          <time className={styles.duration}>{secondsToHumanReadable(duration)}</time>
+        )}
         {statusText && <span className={styles.status}>{statusText}</span>}
       </div>
       <div className={styles.info}>
         <h3>{post.title || 'Без названия'}</h3>
-        <div className={styles.meta}>
-          <span>{post.viewCount} просмотров</span>
-          <span aria-hidden="true">•</span>
-          <time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
-        </div>
+        {hasMetadata && (
+          <div className={styles.meta}>
+            {post.viewCount !== undefined && <span>{post.viewCount} просмотров</span>}
+            {post.viewCount !== undefined && post.createdAt && <span aria-hidden="true">•</span>}
+            {post.createdAt && (
+              <time dateTime={post.createdAt}>{new Date(post.createdAt).toLocaleDateString()}</time>
+            )}
+          </div>
+        )}
         {post.description && <p>{post.description}</p>}
       </div>
     </>

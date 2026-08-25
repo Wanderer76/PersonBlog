@@ -24,6 +24,7 @@ interface ChannelPostResponse {
   title?: string | null;
   description?: string | null;
   previewId?: string | null;
+  previewUrl?: string | null;
   videoData?: VideoMetadataModel;
   viewCount?: number;
   createdAt?: string;
@@ -33,6 +34,7 @@ interface ChannelPostResponse {
 
 interface ChannelPostsResponse {
   posts?: ChannelPostResponse[];
+  items?: ChannelPostResponse[];
   totalPageCount?: number;
 }
 
@@ -60,13 +62,13 @@ const normalizePost = (post: ChannelPostResponse): Post => ({
   title: post.title || 'Без названия',
   description: post.description || undefined,
   type: 1,
-  state: post.state ?? 0,
-  viewCount: post.viewCount ?? 0,
-  createdAt: post.createdAt ?? '',
+  state: post.state ?? 1,
+  viewCount: post.viewCount,
+  createdAt: post.createdAt,
   videoInfo: {
-    previewUrl: post.previewId || undefined,
-    processState: post.state ?? 0,
-    state: post.state ?? 0,
+    previewUrl: post.previewUrl || post.previewId || undefined,
+    processState: post.state ?? 1,
+    state: post.state ?? 1,
     videoMetadata: post.videoData,
   },
   errorMessage: post.errorMessage || undefined,
@@ -131,7 +133,7 @@ export const useChannelPage = (channelId: string, activeTab: ChannelTab): Channe
           { signal: controller.signal },
         );
         const data = response.data as unknown as ChannelPostsResponse;
-        const nextVideos = (data.posts ?? []).map(normalizePost).filter(post => post.id);
+        const nextVideos = (data.items ?? data.posts ?? []).map(normalizePost).filter(post => post.id);
         setVideos(previous => {
           if (page === 1) return nextVideos;
           const ids = new Set(previous.map(post => post.id));
