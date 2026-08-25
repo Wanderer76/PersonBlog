@@ -11,9 +11,10 @@ interface TabsProps {
   onChange: (tabId: string) => void;
   items: TabItem[];
   rightAction?: ReactNode;
+  ariaLabel?: string;
 }
 
-export const Tabs = ({ activeTab, onChange, items, rightAction }: TabsProps) => {
+export const Tabs = ({ activeTab, onChange, items, rightAction, ariaLabel = 'Разделы профиля' }: TabsProps) => {
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentIndex: number) => {
@@ -33,7 +34,7 @@ export const Tabs = ({ activeTab, onChange, items, rightAction }: TabsProps) => 
 
   return (
     <div className="tabsContainer">
-      <div className="tabButtons" role="tablist" aria-label="Разделы профиля">
+      <div className="tabButtons" role="tablist" aria-label={ariaLabel}>
         {items.map((tab, index) => (
           <button
             key={tab.id}

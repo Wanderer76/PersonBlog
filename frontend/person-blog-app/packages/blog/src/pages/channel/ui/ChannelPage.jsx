@@ -6,6 +6,8 @@ import styles from './ChannelPage.module.css';
 import DefaultProfileIcon from '@/shared/assets/defaultProfilePic.png';
 import { getLocalDateTime } from "@/shared/lib/date";
 import { PageShell } from '@/widgets/page-shell';
+import { Tabs } from '@/shared/ui/Tabs/Tabs';
+import { Button } from '@/shared/ui/Button/Button';
 
 const channelApi = getChannel();
 const subscriberApi = getSubscriber();
@@ -29,6 +31,11 @@ const ChannelPage = () => {
     const [hasMore, setHasMore] = useState(true);
     const observer = useRef();
     const pageSize = 10;
+    const tabItems = [
+        { id: 'videos', label: 'Видео' },
+        { id: 'playlists', label: 'Плейлисты' },
+        { id: 'about', label: 'О канале' }
+    ];
 
     // Для бесконечной подгрузки
     const lastVideoRef = useCallback(node => {
@@ -224,49 +231,27 @@ const ChannelPage = () => {
                         </div>
                     </div>
 
-                    <button
-                        className={`${styles.btn} ${channel.isSubscribed ? styles.btnSecondary : styles.btnPrimary}`}
+                    <Button
+                        type="button"
+                        variant={channel.isSubscribed ? 'secondary' : 'primary'}
                         onClick={handleSubscribe}
                     >
                         {channel.isSubscribed ? 'Вы подписаны' : 'Подписаться'}
-                    </button>
-                </div>
-
-                {/* Табы */}
-                <div className={styles.postSectionHeader}>
-                    <div className={styles.tabButtons}>
-                        <button
-                            className={`${styles.tabButton} ${activeTab === 'videos' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('videos')}
-                        >
-                            Видео
-                        </button>
-                        <button
-                            className={`${styles.tabButton} ${activeTab === 'playlists' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('playlists')}
-                        >
-                            Плейлисты
-                        </button>
-                        <button
-                            className={`${styles.tabButton} ${activeTab === 'about' ? styles.active : ''}`}
-                            onClick={() => setActiveTab('about')}
-                        >
-                            О канале
-                        </button>
-                    </div>
+                    </Button>
                 </div>
 
                 {/* Контент */}
-                <div className={styles.postsSection}>
+                <section className={styles.postsSection}>
+                    <Tabs activeTab={activeTab} onChange={setActiveTab} items={tabItems} ariaLabel="Разделы канала" />
                     {activeTab === 'videos' && (
                         <div className={styles.postsGrid}>
-                            {videos.length > 0 ? renderVideos() : <p>Нет доступных видео</p>}
+                            {videos.length > 0 ? renderVideos() : <p className={styles.emptyState}>Нет доступных видео</p>}
                         </div>
                     )}
 
                     {activeTab === 'playlists' && (
                         <div className={styles.postsGrid}>
-                            {playlists.length > 0 ? renderPlaylists() : <p>Нет доступных плейлистов</p>}
+                            {playlists.length > 0 ? renderPlaylists() : <p className={styles.emptyState}>Нет доступных плейлистов</p>}
                         </div>
                     )}
 
@@ -287,7 +272,7 @@ const ChannelPage = () => {
                             </div>
                         </div>
                     )}
-                </div>
+                </section>
         </PageShell>
     );
 };

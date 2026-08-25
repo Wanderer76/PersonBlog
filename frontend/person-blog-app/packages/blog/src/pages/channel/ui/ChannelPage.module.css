@@ -1,39 +1,42 @@
-/* Основные стили из профиля */
 .channelContainer {
-    width: 95%;
-    max-width: 100%;
-    margin: 20px auto;
-    display: flex;
+    width: 100%;
 }
 
 .profileContainer {
-    padding: 40px 20px;
-    flex: 1;
+    width: min(100%, 1440px);
+    margin: 0 auto;
+    padding: 32px 24px 56px;
+    box-sizing: border-box;
 }
 
 .profileHeader {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 40px;
-    padding: 30px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding: 28px 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
 }
 
 .avatarSection {
     display: flex;
     align-items: center;
-    gap: 30px;
+    min-width: 0;
+    gap: 24px;
 }
 
 .avatarWrapper {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
+    width: 104px;
+    height: 104px;
+    flex: 0 0 104px;
     overflow: hidden;
+    border: 4px solid #fff4eb;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #ffd8bc;
 }
 
 .profileAvatar {
@@ -44,265 +47,240 @@
 
 .profileInfo {
     display: flex;
+    min-width: 0;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
 
 .blogTitle {
     margin: 0;
-    font-size: 28px;
-    color: #333;
+    color: var(--color-text-primary);
+    font-size: clamp(24px, 3vw, 32px);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
 }
 
 .profileMeta {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    color: #666;
-    font-size: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    color: var(--color-text-muted);
+    font-size: 13px;
 }
 
 .postDescription {
-    color: #666;
-    font-size: 14px;
-    margin: 0 0 15px 0;
-    line-height: 1.4;
+    max-width: 680px;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
 }
 
 .postsSection {
-    background: white;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
 }
 
 .postsGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    align-items: start;
+    gap: 24px 20px;
 }
 
-.postSectionHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 40px;
-    padding: 30px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+.emptyState {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 48px 20px;
+    color: var(--color-text-muted);
+    text-align: center;
 }
 
-/* Стили для карточек видео */
-.videoCard {
-    border: 1px solid #eee;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: 0.3s;
-    cursor: pointer;
-}
-
-.videoCard:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-}
-
-.thumbnail {
-    position: relative;
-    aspect-ratio: 16/9;
-    background: #222;
-}
-
-.thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.duration {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-.videoInfo {
-    padding: 15px;
-}
-
-.videoInfo h3 {
-    margin: 0 0 8px 0;
-    font-size: 16px;
-    color: #333;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.meta {
-    display: flex;
-    gap: 10px;
-    color: #888;
-    font-size: 12px;
-}
-
-/* Стили для плейлистов */
+.videoCard,
 .playlistCard {
-    border: 1px solid #eee;
-    border-radius: 8px;
     overflow: hidden;
-    transition: 0.3s;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
     cursor: pointer;
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
+.videoCard:hover,
 .playlistCard:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
+.thumbnail,
 .playlistThumbnail {
     position: relative;
-    aspect-ratio: 16/9;
+    aspect-ratio: 16 / 9;
     background: #222;
 }
 
+.thumbnail img,
 .playlistThumbnail img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
+.duration,
 .videoCount {
     position: absolute;
+    right: 10px;
     bottom: 10px;
-    left: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
     padding: 4px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
+    background: rgb(0 0 0 / 72%);
+    color: white;
     font-size: 12px;
 }
 
-.playlistInfo {
-    padding: 15px;
+.videoStatus {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgb(0 0 0 / 62%);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
 }
 
+.videoInfo,
+.playlistInfo {
+    padding: 16px;
+}
+
+.videoInfo h3,
 .playlistInfo h3 {
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
+    color: var(--color-text-primary);
     font-size: 16px;
-    color: #333;
+    overflow-wrap: anywhere;
+}
+
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+}
+
+.videoDescription {
+    display: -webkit-box;
+    margin: 12px 0 0;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .playlistInfo p {
-    color: #666;
-    font-size: 14px;
-    margin: 0;
-    line-height: 1.4;
     display: -webkit-box;
-    -webkit-box-orient: vertical;
+    margin: 0;
     overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
-/* Стили для раздела "О канале" */
 .aboutSection {
-    padding: 20px;
+    max-width: 760px;
+    padding: 8px 0 16px;
 }
 
 .aboutSection h2 {
+    margin: 0 0 16px;
+    color: var(--color-text-primary);
     font-size: 20px;
-    margin: 0 0 20px 0;
-    color: #333;
 }
 
 .aboutSection p {
-    color: #666;
-    line-height: 1.5;
-    margin-bottom: 20px;
+    margin: 0 0 24px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
 }
 
 .details {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
 }
 
 .detailItem {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-subtle);
 }
 
 .detailItem span:first-child {
-    color: #666;
-    font-size: 14px;
+    color: var(--color-text-muted);
+    font-size: 13px;
 }
 
 .detailItem span:last-child {
-    color: #333;
-    font-weight: 500;
+    color: var(--color-text-primary);
+    font-weight: 600;
 }
 
-/* Общие стили кнопок */
-.btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: 0.3s;
-    font-size: 14px;
+@media (max-width: 768px) {
+    .profileContainer {
+        padding: 20px 16px 40px;
+    }
+
+    .profileHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .profileHeader > button {
+        align-self: flex-start;
+    }
+
+    .postsSection {
+        padding: 18px;
+    }
 }
 
-.btnPrimary {
-    background: #ff7b00;
-    color: white;
-}
+@media (max-width: 480px) {
+    .profileHeader {
+        padding: 20px;
+    }
 
-.btnPrimary:hover {
-    background: #ff6a00;
-}
+    .avatarSection {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 
-.btnSecondary {
-    background: #eee;
-    color: #333;
-}
+    .avatarWrapper {
+        width: 88px;
+        height: 88px;
+        flex-basis: 88px;
+    }
 
-.btnSecondary:hover {
-    background: #ddd;
-}
-
-/* Стили табов */
-.tabButtons {
-    display: flex;
-    gap: 20px;
-}
-
-.tabButton {
-    background: none;
-    border: none;
-    padding: 8px 16px;
-    font-size: 18px;
-    color: #666;
-    cursor: pointer;
-    position: relative;
-    transition: 0.3s;
-}
-
-.tabButton.active {
-    color: #333;
-    font-weight: 500;
-}
-
-.tabButton.active::after {
-    content: '';
-    position: absolute;
-    bottom: -5px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #ff7b00;
+    .profileHeader > button {
+        width: 100%;
+    }
 }
