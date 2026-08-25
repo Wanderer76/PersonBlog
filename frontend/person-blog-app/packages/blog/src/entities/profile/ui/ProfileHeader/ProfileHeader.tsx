@@ -12,9 +12,10 @@ interface ProfileHeaderProps {
   hasBlog: boolean;
   onLogout: () => void;
   onCreateBlog: () => void;
+  onEditBlog: () => void;
 }
 
-export const ProfileHeader = memo(({ profile, hasBlog, onLogout, onCreateBlog }: ProfileHeaderProps) => (
+export const ProfileHeader = memo(({ profile, hasBlog, onLogout, onCreateBlog, onEditBlog }: ProfileHeaderProps) => (
   <header className="profileHeader">
     <div className="avatarSection">
       <div className="avatarWrapper">
@@ -48,6 +49,7 @@ export const ProfileHeader = memo(({ profile, hasBlog, onLogout, onCreateBlog }:
 
     <div className="profileHeaderActions">
       {!hasBlog && <Button onClick={onCreateBlog}>Создать блог</Button>}
+      {hasBlog && <Button onClick={onEditBlog}>Редактировать блог</Button>}
       <Button className="profileLogoutButton" variant="secondary" onClick={onLogout}>Выйти</Button>
     </div>
   </header>

@@ -15,6 +15,7 @@ const CreatePlaylistPage = lazy(() => import('@/pages/playlist-create'));
 const SubscriptionPage = lazy(() => import('@/pages/subscriptions'));
 const ChannelPage = lazy(() => import('@/pages/channel'));
 const CreateBlogPage = lazy(() => import('@/pages/blog-create'));
+const EditBlogPage = lazy(() => import('@/pages/blog-edit'));
 const LikedPage = lazy(() => import('@/pages/liked'));
 const OAuthCallbackPage = lazy(() => import('@/pages/callback'));
 const TextPostEditorPage = lazy(() => import('@/pages/text-post-editor'));
@@ -52,6 +53,7 @@ export const AppRouter = () => (
           <Route path="post/create" element={<CreatePostPage />} />
           <Route path="post/edit/:id" element={<EditPostPage />} />
           <Route path="blog/create" element={<CreateBlogPage />} />
+          <Route path="blog/edit" element={<EditBlogPage />} />
           <Route path="history" element={<HistoryPage />} />
           <Route path="playList/create" element={<CreatePlaylistPage />} />
           <Route path="textPost/create" element={<TextPostEditorPage />} />

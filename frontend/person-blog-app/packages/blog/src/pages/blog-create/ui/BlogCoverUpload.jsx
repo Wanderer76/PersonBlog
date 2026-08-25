@@ -59,7 +59,9 @@ const BlogCoverUpload = ({ file, imagePreview, disabled, onSelect }) => {
                     />
                     <div className={styles.fileDetails}>
                         <div>
-                            <strong title={file?.name}>{file?.name}</strong>
+                            <strong title={file?.name ?? 'Текущая обложка'}>
+                                {file?.name ?? 'Текущая обложка'}
+                            </strong>
                             <span>Обложка блога</span>
                         </div>
                         <button type="button" onClick={openFilePicker} disabled={disabled}>

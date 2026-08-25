@@ -271,6 +271,7 @@ export const ProfilePage = memo(() => {
                 hasBlog={blogId !== null}
                 onLogout={() => { JwtTokenService.cleanAuth(); navigate('/'); }}
                 onCreateBlog={() => navigate('blog/create')}
+                onEditBlog={() => navigate('blog/edit')}
             />
             <section className={styles.postsSection}>
                 <Tabs activeTab={activePanel} onChange={handleTabChange} items={tabItems} rightAction={rightAction} />
