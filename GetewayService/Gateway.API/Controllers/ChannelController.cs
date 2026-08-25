@@ -2,7 +2,6 @@ using Blog.Contracts.Models.Blog;
 using Blog.Contracts;
 using Blog.Contracts.Models;
 using Blog.Domain.Entities;
-using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using PlayListService.Services.Models;
 using Profile.Domain.Models;
@@ -62,8 +61,8 @@ namespace Gateway.API.Controllers
         [HttpGet("playLists/{channelId}")]
         public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
         {
-            using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListListItem>>($"api/PlayList/list?blogId={channelId}");
+            using var client = _httpClientFactory.CreateClient("PlayList");
+            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListListItem>>($"PlayList/list?blogId={channelId}");
             return Ok(blog);
         }
     }

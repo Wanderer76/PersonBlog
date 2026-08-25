@@ -86,6 +86,11 @@ builder.Services.AddHttpClient("Comments", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Comments"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddHttpClient("PlayList", x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:PlayList"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
+}).AddHttpMessageHandler<HeaderClientHandler>();
 
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
