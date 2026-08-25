@@ -14,10 +14,16 @@
 }
 
 .playlistCover {
+  display: block;
   position: relative;
   aspect-ratio: 16/9;
   background: #222;
   cursor: pointer;
+}
+
+.playlistCover:focus-visible {
+  outline: 3px solid var(--color-brand-500);
+  outline-offset: -3px;
 }
 
 .playlistCover img {

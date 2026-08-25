@@ -3,7 +3,7 @@ export interface VideoMetadata {
 }
 
 export interface VideoInfo {
-  previewUrl: string;
+  previewUrl?: string;
   processState: number; // 0: processing, 1: published, 2: uploading
   state: number;
   videoMetadata?: VideoMetadata;

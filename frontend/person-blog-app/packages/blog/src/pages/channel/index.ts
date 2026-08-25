@@ -1,1 +1,1 @@
-export { default } from './ui/ChannelPage';
+export { default } from './ui/ChannelPage.tsx';
