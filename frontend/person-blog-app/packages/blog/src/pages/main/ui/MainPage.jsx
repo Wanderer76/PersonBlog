@@ -15,6 +15,21 @@ const FEED_FILTERS = [
     { value: 'video', label: 'Видео' },
     { value: 'text', label: 'Статьи' },
 ];
+const RECOMMENDATION_REASON_LABELS = {
+    subscribed_blog: 'Из подписок',
+    preferred_blog: 'Интересный вам блог',
+    preferred_category: 'Любимая категория',
+    similar_category: 'Похожая тема',
+    trending_24h: 'Популярно сегодня',
+    trending_7d: 'Популярно за неделю',
+    fresh: 'Новая публикация',
+    exploration: 'Возможно, вам понравится',
+    recommended: 'Рекомендовано',
+};
+
+const getRecommendationReasonLabel = (reason) => (
+    reason ? RECOMMENDATION_REASON_LABELS[reason] ?? 'Рекомендовано' : null
+);
 
 const normalizeFeedItems = (items, kind) => (items ?? []).map((item) => ({ ...item, kind }));
 
@@ -294,6 +309,7 @@ const MainPage = function () {
 const TextFeedCard = ({ post }) => {
     const text = useMemo(() => getPlainText(post.description), [post.description]);
     const readingTime = Math.max(1, Math.ceil(text.split(/\s+/).filter(Boolean).length / 180));
+    const reasonLabel = getRecommendationReasonLabel(post.reason);
     const creator = post.creator;
     const creatorName = creator?.name || 'Неизвестный автор';
     const creatorAvatar = creator?.avatarUrl || defaultProfilePic;
@@ -327,7 +343,7 @@ const TextFeedCard = ({ post }) => {
             <p className="text-feed-excerpt">{text || 'Автор пока не добавил текст публикации.'}</p>
             <footer className="text-feed-footer">
                 <span>{readingTime} мин чтения</span>
-                {post.reason && <span className="text-feed-reason">{post.reason}</span>}
+                {reasonLabel && <span className="text-feed-reason">{reasonLabel}</span>}
                 <Link className="text-feed-open" to={`/textPost/${post.postId}`}>Читать статью</Link>
             </footer>
         </article>
