@@ -19,24 +19,27 @@ const BigVideoCard = React.forwardRef(function BigVideoCard({ videoCardModel }, 
             </Link>
 
             <div className={styles.videoInfo}>
+                <header className={styles.videoHeader}>
+                    {creator?.blogId ? (
+                        <Link className={styles.channelInfo} to={`/channel/${creator.blogId}`}>
+                            <img
+                                src={creator.avatarUrl || logo}
+                                className={styles.channelIcon}
+                                alt=""
+                            />
+                            <span className={styles.channelName}>{creator.name || 'Неизвестный автор'}</span>
+                        </Link>
+                    ) : (
+                        <div className={styles.channelInfo}>
+                            <img src={logo} className={styles.channelIcon} alt="" />
+                            <span className={styles.channelName}>Неизвестный автор</span>
+                        </div>
+                    )}
+                    <span className={styles.videoKind}>Видео</span>
+                </header>
                 <h2 className={styles.videoTitle}>
                     <Link to={videoUrl}>{videoCardModel.title}</Link>
                 </h2>
-                {creator?.blogId ? (
-                    <Link className={styles.channelInfo} to={`/channel/${creator.blogId}`}>
-                        <img
-                            src={creator.avatarUrl || logo}
-                            className={styles.channelIcon}
-                            alt=""
-                        />
-                        <span className={styles.channelName}>{creator.name || 'Неизвестный автор'}</span>
-                    </Link>
-                ) : (
-                    <div className={styles.channelInfo}>
-                        <img src={logo} className={styles.channelIcon} alt="" />
-                        <span className={styles.channelName}>Неизвестный автор</span>
-                    </div>
-                )}
                 {Number.isFinite(videoCardModel.viewCount) && (
                     <div className={styles.videoStats}>
                         Просмотров: {videoCardModel.viewCount}

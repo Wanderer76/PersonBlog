@@ -514,8 +514,11 @@
 .state p { margin: 0; }
 .stateActions { display: flex; justify-content: center; gap: 10px; margin-top: 24px; }
 
-@media (max-width: 1050px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1250px) {
+  .layout {
+    width: min(860px, 100%);
+    grid-template-columns: minmax(0, 1fr);
+  }
   .creator {
     position: static;
     display: grid;
