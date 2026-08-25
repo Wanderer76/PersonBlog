@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { PlaylistCard } from '@/entities/playlist';
-import { VideoPostCard } from '@/entities/post';
+import { BigVideoCard } from '@/entities/post';
 import { ChannelSubscribeButton } from '@/features/channel-subscription';
 import DefaultProfileIcon from '@/shared/assets/defaultProfilePic.png';
 import { useIntersectionObserver } from '@/shared/hooks/useIntersectionObserver';
@@ -90,10 +90,20 @@ const ChannelPageContent = ({ channelId }: ChannelPageContentProps) => {
             {activeTab === 'videos' && (
               <div className={styles.postsGrid}>
                 {videos.map((video, index) => (
-                  <VideoPostCard
+                  <BigVideoCard
                     key={video.id}
-                    post={video}
-                    observeRef={index === videos.length - 1 ? lastElementRef : undefined}
+                    ref={index === videos.length - 1 ? lastElementRef : undefined}
+                    videoCardModel={{
+                      postId: video.id,
+                      title: video.title || 'Без названия',
+                      previewUrl: video.videoInfo.previewUrl,
+                      viewCount: video.viewCount,
+                      creator: {
+                        blogId: channel.id,
+                        name: channel.name,
+                        avatarUrl: channel.photoUrl,
+                      },
+                    }}
                   />
                 ))}
                 {isVideosLoading && <p className={styles.loadingState}>Загрузка видео...</p>}
