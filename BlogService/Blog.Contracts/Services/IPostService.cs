@@ -28,6 +28,8 @@ public interface IPostService
     Task SetReactionToPost(ReactionCreateModel value);
     IEnumerable<SelectItem<PostVisibility>> GetPostVisibilityList();
     Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds);
-    Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludePostIds);
+    Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(
+        IEnumerable<Guid> excludePostIds,
+        PostType postType);
     Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostListAsync();
 }

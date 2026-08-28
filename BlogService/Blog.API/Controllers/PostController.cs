@@ -2,6 +2,7 @@
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
+using Blog.Domain.Entities;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
@@ -107,9 +108,11 @@ public class PostController : BaseApiController
     [HttpPost("commonWithExcludeIds")]
     [Produces(typeof(IReadOnlyList<PostCommonModel>))]
     [AuthFilter(Roles.Blogger)]
-    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModelByExcludeIds([FromBody] List<Guid> excludeIds)
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetPostCommonModelByExcludeIds(
+        [FromBody] List<Guid> excludeIds,
+        [FromQuery] PostType postType = PostType.Video)
     {
-        return Ok(await _postService.GetPostCommonModelWithExcludeIdsAsync(excludeIds));
+        return Ok(await _postService.GetPostCommonModelWithExcludeIdsAsync(excludeIds, postType));
     }
 
     [HttpGet("my/list")]

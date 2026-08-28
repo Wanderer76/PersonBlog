@@ -38,8 +38,8 @@ namespace PlayListService.Persistence.Migrations
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ThumbnailId")
-                        .HasColumnType("text");
+                    b.Property<Guid?>("ThumbnailId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -51,6 +51,45 @@ namespace PlayListService.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("PlayLists", "PlayList");
+                });
+
+            modelBuilder.Entity("PlayListService.Domain.Entities.PlayListFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("Length")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ObjectName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PlaylistId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaylistId")
+                        .IsUnique();
+
+                    b.ToTable("PlayListFile", "PlayList");
                 });
 
             modelBuilder.Entity("PlayListService.Domain.Entities.PlayListItem", b =>
@@ -78,6 +117,15 @@ namespace PlayListService.Persistence.Migrations
                     b.ToTable("PlayListItems", "PlayList");
                 });
 
+            modelBuilder.Entity("PlayListService.Domain.Entities.PlayListFile", b =>
+                {
+                    b.HasOne("PlayListService.Domain.Entities.PlayList", "PlayList")
+                        .WithOne("ThumbnailFile")
+                        .HasForeignKey("PlayListService.Domain.Entities.PlayListFile", "PlaylistId");
+
+                    b.Navigation("PlayList");
+                });
+
             modelBuilder.Entity("PlayListService.Domain.Entities.PlayListItem", b =>
                 {
                     b.HasOne("PlayListService.Domain.Entities.PlayList", null)
@@ -90,6 +138,8 @@ namespace PlayListService.Persistence.Migrations
             modelBuilder.Entity("PlayListService.Domain.Entities.PlayList", b =>
                 {
                     b.Navigation("PlayListItems");
+
+                    b.Navigation("ThumbnailFile");
                 });
 #pragma warning restore 612, 618
         }

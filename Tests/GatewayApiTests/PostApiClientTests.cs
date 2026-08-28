@@ -72,6 +72,20 @@ public sealed class PostApiClientTests
         Assert.Contains("address=", query);
     }
 
+    [Fact]
+    public async Task GetCurrentUserPostCommonModelWithExcludeIdsAsync_SendsPostTypeFilter()
+    {
+        var handler = new CapturingHandler(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(Array.Empty<PostCommonModel>())
+        });
+        var client = CreateClient(handler);
+
+        await client.GetCurrentUserPostCommonModelWithExcludeIdsAsync([], PostType.Video);
+
+        Assert.Equal("?postType=Video", handler.RequestUri!.Query);
+    }
+
     private static PostApiClient CreateClient(HttpMessageHandler handler) =>
         new(
             new HttpClient(handler)

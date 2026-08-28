@@ -17,8 +17,7 @@ public class HeaderClientHandler : DelegatingHandler
         var context = _httpContextAccessor.HttpContext;
         var authorization = context?.Request.Headers.Authorization.ToString();
 
-        if (context?.User.Identity?.IsAuthenticated == true &&
-            AuthenticationHeaderValue.TryParse(authorization, out var authenticationHeader))
+        if (AuthenticationHeaderValue.TryParse(authorization, out var authenticationHeader))
         {
             request.Headers.Authorization = authenticationHeader;
         }

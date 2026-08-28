@@ -107,8 +107,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(policy => policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseJwtMiddleware();
+app.UseAuthorization();
 app.MapControllers();
 app.MapDefaultEndpoints();
 

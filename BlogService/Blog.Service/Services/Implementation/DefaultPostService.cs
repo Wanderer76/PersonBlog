@@ -623,17 +623,22 @@ internal class DefaultPostService : IPostService
 
     }
 
-    public async Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludePostIds)
+    public async Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(
+        IEnumerable<Guid> excludePostIds,
+        PostType postType)
     {
         var user = await _userService.GetCurrentUserAsync();
         using var fileStorage = _fileStorageFactory.CreateFileStorage();
+        var excludedIds = excludePostIds.Distinct().ToArray();
 
         var posts = await _context.Get<Post>()
             .Where(x => x.BlogId == user.BlogId)
-            .Where(x => !excludePostIds.Contains(x.Id))
+            .Where(x => !excludedIds.Contains(x.Id))
+            .Where(x => x.Type == postType)
+            .Where(x => x.ProcessState == ProcessState.Complete)
+            .Where(x => x.IsDelete == false)
             .Include(x => x.Blog)
             .Include(x => x.VideoPostInfo)
-            .Where(x => x.IsDelete == false)
             .Include(x => x.VideoPostInfo.PreviewFile)
             .ToListAsync();
 

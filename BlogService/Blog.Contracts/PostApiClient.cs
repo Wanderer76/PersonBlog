@@ -38,9 +38,13 @@ public sealed class PostApiClient
             return [];
         }, 1);
     }
-    public async Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludeIds)
+    public async Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostCommonModelWithExcludeIdsAsync(
+        IEnumerable<Guid> excludeIds,
+        PostType postType)
     {
-        var result = await httpClient.PostAsJsonAsync($"Post/commonWithExcludeIds", excludeIds);
+        var result = await httpClient.PostAsJsonAsync(
+            $"Post/commonWithExcludeIds?postType={postType}",
+            excludeIds);
         if (result.IsSuccessStatusCode)
             return (await result.Content.ReadFromJsonAsync<List<PostCommonModel>>())!;
         return [];

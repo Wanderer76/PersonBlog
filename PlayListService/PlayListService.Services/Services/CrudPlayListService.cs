@@ -31,6 +31,14 @@ internal sealed class CrudPlayListService : IPlayListService
     public async Task<Result<PlayListListItem>> CreatePlayListAsync(CreatePlayListRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
+        var validationResult = await ValidateAvailableVideosAsync(
+            request.PostIds,
+            [],
+            nameof(request.PostIds));
+        if (validationResult.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(validationResult.Errors!);
+        }
 
         using var transaction = await _repository.BeginTransactionAsync();
         var playListId = GuidService.GetNewGuid();
@@ -129,11 +137,26 @@ internal sealed class CrudPlayListService : IPlayListService
         var playlist = await _repository.Get<PlayList>()
             .Where(x => x.Id == playListItems.PlayListId && x.IsDelete == false)
             .Include(x => x.PlayListItems)
-            .FirstAsync();
+            .FirstOrDefaultAsync();
+
+        if (playlist == null)
+        {
+            return Result<PlayListListItem>.Failure(
+                new Error(nameof(playListItems.PlayListId), "Не найден плейлист"));
+        }
 
         if (user.UserId != playlist.UserId)
         {
             return new Error("Нельзя добавить пост не в свой плейлист");
+        }
+
+        var validationResult = await ValidateAvailableVideosAsync(
+            playListItems.PostsToAdd,
+            playlist.PlayListItems.Select(x => x.PostId),
+            nameof(playListItems.PostsToAdd));
+        if (validationResult.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(validationResult.Errors!);
         }
 
         var now = DateTimeService.Now();
@@ -163,7 +186,7 @@ internal sealed class CrudPlayListService : IPlayListService
             .Where(x => x.IsDelete == false)
             .Where(x => x.Id == request.PlayListId)
             .Include(x => x.PlayListItems)
-            .FirstAsync();
+            .FirstOrDefaultAsync();
 
         if (playlist == null)
         {
@@ -177,7 +200,11 @@ internal sealed class CrudPlayListService : IPlayListService
             return Result<PlayListListItem>.Failure(new Error(""));
         }
         _repository.Attach(playlist);
-        playlist.RemoveVideo(request.PostId);
+        var removeResult = playlist.RemoveVideo(request.PostId);
+        if (removeResult.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(removeResult.Errors!);
+        }
         await _repository.SaveChangesAsync();
         return Result<PlayListListItem>.Success(new PlayListListItem
         {
@@ -191,9 +218,9 @@ internal sealed class CrudPlayListService : IPlayListService
     public async Task<Result<PlayListListItem>> ChangePostPositionAsync(ChangePostPositionRequest changePostPositionRequest)
     {
         var playlist = await _repository.Get<PlayList>()
-            .Where(x => x.Id == changePostPositionRequest.PlaylistId)
+            .Where(x => x.Id == changePostPositionRequest.PlaylistId && x.IsDelete == false)
             .Include(x => x.PlayListItems.OrderBy(x => x.Position))
-            .FirstAsync();
+            .FirstOrDefaultAsync();
         if (playlist == null)
         {
             return Result<PlayListListItem>.Failure(new Error(nameof(changePostPositionRequest.PlaylistId), "Не найден плейлист"));
@@ -225,11 +252,39 @@ internal sealed class CrudPlayListService : IPlayListService
         });
     }
 
+    private async Task<Result> ValidateAvailableVideosAsync(
+        IEnumerable<Guid> requestedPostIds,
+        IEnumerable<Guid> excludedPostIds,
+        string errorKey)
+    {
+        var requestedIds = requestedPostIds.Distinct().ToArray();
+        if (requestedIds.Length == 0)
+        {
+            return Result.Success();
+        }
+
+        var availableVideos = await postApiClient
+            .GetCurrentUserPostCommonModelWithExcludeIdsAsync(
+                excludedPostIds,
+                Blog.Domain.Entities.PostType.Video);
+        var availableVideoIds = availableVideos.Select(x => x.Id).ToHashSet();
+
+        return requestedIds.All(availableVideoIds.Contains)
+            ? Result.Success()
+            : Result.Failure(new Error(
+                errorKey,
+                "Плейлист может содержать только завершённые видео текущего блога"));
+    }
+
     public async Task<Result> RemovePlayListAsync(Guid id)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
         var playList = await _repository.Get<PlayList>()
-            .FirstAsync(x => x.Id == id);
+            .FirstOrDefaultAsync(x => x.Id == id && x.IsDelete == false);
+        if (playList == null)
+        {
+            return Result.Failure(new Error(nameof(id), "Не найден плейлист"));
+        }
         if (playList.UserId != user.UserId)
         {
             return Result.Failure(new Error("", "Нельзя удалить чужой плейлист"));
@@ -256,7 +311,14 @@ internal sealed class CrudPlayListService : IPlayListService
             .Take(pageSize)
             .ToListAsync();
 
-        var items = posts.Count == 0 ? [] : await postApiClient.GetPostCommonModelAsync(posts);
+        var unorderedItems = posts.Count == 0
+            ? []
+            : await postApiClient.GetPostCommonModelAsync(posts);
+        var itemsById = unorderedItems.ToDictionary(x => x.Id);
+        var items = posts
+            .Where(itemsById.ContainsKey)
+            .Select(postId => itemsById[postId])
+            .ToArray();
         return PagedListViewModel.Create(items, pageSize, totalPostCount);
     }
 

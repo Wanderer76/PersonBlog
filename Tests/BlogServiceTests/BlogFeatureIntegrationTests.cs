@@ -182,6 +182,67 @@ public sealed class BlogFeatureIntegrationTests
     }
 
     [Fact]
+    public async Task CommonWithExcludeIds_ReturnsOnlyCompletedVideosFromCurrentBlog()
+    {
+        await using var context = await CreateContextAsync();
+        var includedVideo = CreateVideoPost(PostVisibility.Public, ProcessState.Complete, Guid.NewGuid());
+        var excludedVideo = CreateVideoPost(PostVisibility.Public, ProcessState.Complete, Guid.NewGuid());
+        var draftVideo = CreateVideoPost(PostVisibility.Public, ProcessState.Draft, Guid.NewGuid());
+        var deletedVideo = CreateVideoPost(PostVisibility.Public, ProcessState.Complete, Guid.NewGuid());
+        deletedVideo.Delete();
+        var textPost = new Post(
+            Guid.NewGuid(),
+            BlogId,
+            PostType.Text,
+            description: null,
+            "text post",
+            paymentSubscriptionId: null,
+            PostVisibility.Public,
+            [],
+            "text");
+        var anotherBlogId = Guid.NewGuid();
+        var anotherBlog = PersonBlog.CreateBlog(
+            anotherBlogId,
+            DateTimeOffset.UtcNow,
+            "Another blog",
+            null,
+            null,
+            Guid.NewGuid()).Value;
+        var anotherBlogVideo = new Post(
+            Guid.NewGuid(),
+            anotherBlogId,
+            PostType.Video,
+            "description",
+            "another blog video",
+            paymentSubscriptionId: null,
+            PostVisibility.Public,
+            [],
+            text: null)
+        {
+            ProcessState = ProcessState.Complete
+        };
+        context.AddRange(
+            CreateBlog(),
+            anotherBlog,
+            includedVideo,
+            excludedVideo,
+            draftVideo,
+            deletedVideo,
+            textPost,
+            anotherBlogVideo);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var service = CreatePostService(context, OwnerUser(), new TrackingCacheService());
+
+        var result = await service.GetPostCommonModelWithExcludeIdsAsync(
+            [excludedVideo.Id],
+            PostType.Video);
+
+        var post = Assert.Single(result);
+        Assert.Equal(includedVideo.Id, post.Id);
+    }
+
+    [Fact]
     public async Task Video_upload_is_owner_only_and_completion_is_idempotent()
     {
         await using var context = await CreateContextAsync();

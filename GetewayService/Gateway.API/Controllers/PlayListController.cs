@@ -1,6 +1,7 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Contracts;
 using Blog.Contracts.Models;
+using Blog.Domain.Entities;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
@@ -56,11 +57,14 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("availableVideos")]
+    [AuthFilter(Roles.Blogger)]
     [Produces(typeof(IReadOnlyList<PostCommonModel>))]
     public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAvailablePostToPlayList(Guid playListId)
     {
         var posts = (await _playListService.GetPlayListPostPagedAsync(playListId, 1, int.MaxValue)).Items.Select(x => x.Id);
-        var result = await postApiClient.GetCurrentUserPostCommonModelWithExcludeIdsAsync(posts);
+        var result = await postApiClient.GetCurrentUserPostCommonModelWithExcludeIdsAsync(
+            posts,
+            PostType.Video);
 
         return Ok(result);
     }

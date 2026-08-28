@@ -41,6 +41,10 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
         {
             return new Error($"{nameof(title)}", "Title is empty");
         }
+        if (playListItems.Count != playListItems.Distinct().Count())
+        {
+            return new Error(nameof(playListItems), "Playlist cannot contain duplicate posts");
+        }
         var playList = new PlayList(id, createdAt, title, userId, thumbnailId, playListItems);
         return playList;
     }
@@ -105,6 +109,11 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
 
     public Result<bool> ChangeVideoPosition(Guid postId, int destination)
     {
+        if (destination < 1 || destination > PlayListItems.Count)
+        {
+            return new Error(nameof(destination), "Destination is outside the playlist");
+        }
+
         var item = PlayListItems.FirstOrDefault(x => x.PostId == postId);
         if (item == null) { return new Error("404", "Видео не найдено"); }
         var oldPosition = item.Position;
