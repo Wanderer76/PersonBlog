@@ -5,6 +5,7 @@ using MessageBus.Configs;
 using Notification.Domain.EventHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 builder.Host.AddSerilogLogger(builder.Configuration);
 
 // Add services to the container.
@@ -42,6 +43,8 @@ app.MapGet("/weatherforecast", () =>
 })
 .WithName("GetWeatherForecast")
 .WithOpenApi();
+
+app.MapDefaultEndpoints();
 
 app.Run();
 

@@ -4,7 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.Hosting;
@@ -45,18 +48,47 @@ public static class Extensions
 
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        var seqMetricsEndpoint = builder.Configuration["SEQ_OTLP_METRICS_ENDPOINT"]
+            ?? builder.Configuration["Seq:OtlpMetricsEndpoint"];
+        var useAspireOtlpExporter = !string.IsNullOrWhiteSpace(
+            builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
+
         builder.Logging.AddOpenTelemetry(logging =>
         {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
+
+            if (useAspireOtlpExporter)
+            {
+                logging.AddOtlpExporter("aspire", _ => { });
+            }
         });
 
         builder.Services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(builder.Environment.ApplicationName))
             .WithMetrics(metrics =>
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddMeter(HealthCheckMetricsPublisher.MeterName)
+                    .AddMeter(ProcessMetrics.MeterName);
+
+                if (useAspireOtlpExporter)
+                {
+                    metrics.AddOtlpExporter("aspire", (_, _) => { });
+                }
+
+                if (Uri.TryCreate(seqMetricsEndpoint, UriKind.Absolute, out var endpoint))
+                {
+                    metrics.AddOtlpExporter("seq", (exporter, reader) =>
+                    {
+                        exporter.Endpoint = endpoint;
+                        exporter.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        reader.TemporalityPreference = MetricReaderTemporalityPreference.Delta;
+                        reader.PeriodicExportingMetricReaderOptions.ExportIntervalMilliseconds = 30_000;
+                    });
+                }
             })
             .WithTracing(tracing =>
             {
@@ -70,28 +102,14 @@ public static class Extensions
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
+
+                if (useAspireOtlpExporter)
+                {
+                    tracing.AddOtlpExporter("aspire", _ => { });
+                }
             });
 
-        builder.AddOpenTelemetryExporters();
-
-        return builder;
-    }
-
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
-    {
-        var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
-
-        if (useOtlpExporter)
-        {
-            builder.Services.AddOpenTelemetry().UseOtlpExporter();
-        }
-
-        // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
-        //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
-        //{
-        //    builder.Services.AddOpenTelemetry()
-        //       .UseAzureMonitor();
-        //}
+        builder.Services.AddHostedService<ProcessMetrics>();
 
         return builder;
     }
@@ -101,6 +119,13 @@ public static class Extensions
         builder.Services.AddHealthChecks()
             // Add a default liveness check to ensure app is responsive
             .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"]);
+
+        builder.Services.Configure<HealthCheckPublisherOptions>(options =>
+        {
+            options.Delay = TimeSpan.FromSeconds(5);
+            options.Period = TimeSpan.FromSeconds(30);
+        });
+        builder.Services.AddSingleton<IHealthCheckPublisher, HealthCheckMetricsPublisher>();
 
         return builder;
     }

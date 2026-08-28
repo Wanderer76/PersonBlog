@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
+    <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Notification.Contract\Notification.Contract.csproj" />
     <ProjectReference Include="..\Notification.Domain\Notification.Domain.csproj" />
   </ItemGroup>

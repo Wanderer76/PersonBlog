@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.AddServiceDefaults();
 builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -60,5 +61,6 @@ app.UseJwtMiddleware();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 app.Run();

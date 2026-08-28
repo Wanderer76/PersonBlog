@@ -59,7 +59,7 @@ Blog.API
 - Docker с Docker Compose;
 - FFmpeg — для локального запуска `VideoProcessing.Cli`.
 
-Инфраструктурный Compose поднимает PostgreSQL 16.6, RabbitMQ Management, Redis, Redis Insight, MinIO и Nginx.
+Инфраструктурный Compose поднимает PostgreSQL 16.6, RabbitMQ Management, Redis, Redis Insight, MinIO, Nginx и Seq 2026.1.
 
 ## Локальный запуск
 
@@ -81,8 +81,42 @@ docker compose -f docker-compose-infrastructre.yml up -d
 | Redis | `localhost:6379` |
 | Redis Insight | `http://localhost:5540` |
 | MinIO API / Console | `http://localhost:9000` / `http://localhost:9001` |
+| Seq | `http://localhost:5341` |
 
 Локальные логины и пароли находятся в `docker-compose-infrastructre.yml` и предназначены только для разработки.
+
+### Мониторинг сервисов в Seq
+
+`AspireTest.ServiceDefaults` публикует метрики ASP.NET Core, исходящих HTTP-запросов, .NET Runtime и health-check напрямую в Seq через OTLP/HTTP. Локальный endpoint уже указан в `appsettings.Development.json` сервисов.
+
+Запустите инфраструктуру, а затем нужные сервисы обычным `dotnet run`, например:
+
+```bash
+dotnet run --project AuthService/AuthenticationApplication/AuthenticationApplication.csproj
+dotnet run --project BlogService/Blog.API/Blog.API.csproj
+```
+
+В разделе **Metrics** интерфейса Seq выберите `service.health` и сгруппируйте данные по `service.name`. Дополнительные атрибуты:
+
+- `health.check.name`: `overall`, `self` или имя добавленного прикладного health-check;
+- `health.status`: `healthy`, `degraded` или `unhealthy`;
+- значение метрики: `1`, `0.5` или `0` соответственно.
+
+Health-check выполняется через 5 секунд после запуска и далее каждые 30 секунд. Если сервис остановлен, новые точки от него перестают поступать; для этого сценария в Seq следует настроить оповещение об отсутствии данных.
+
+Для графиков потребления ресурсов используйте:
+
+- `process.cpu.utilization`: доля общей вычислительной мощности от `0` до `1`; для процентов умножьте значение на 100;
+- `process.memory.usage`: физическая память процесса (working set) в байтах.
+
+Обе метрики следует группировать по `@Resource.service.name`. Они отправляются в Seq каждые 30 секунд и одновременно остаются доступны Aspire Dashboard при запуске через AppHost.
+
+При необходимости локальный endpoint можно переопределить переменной окружения:
+
+```powershell
+$env:SEQ_OTLP_METRICS_ENDPOINT = "http://localhost:5341/ingest/otlp/v1/metrics"
+dotnet run --project AuthService/AuthenticationApplication/AuthenticationApplication.csproj
+```
 
 ### 2. Auth backend
 

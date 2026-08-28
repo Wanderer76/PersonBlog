@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
     <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\MusicRecommendation.Domain\MusicRecommendation.Domain.csproj" />
     <ProjectReference Include="..\MusicRecommendation.Persistence\MusicRecommendation.Persistence.csproj" />
   </ItemGroup>

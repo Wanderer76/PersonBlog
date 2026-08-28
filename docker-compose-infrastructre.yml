@@ -76,7 +76,7 @@ services:
     networks:
       - backend
   seq:
-    image: datalust/seq:latest
+    image: datalust/seq:2026.1
     container_name: seq
     environment:
       ACCEPT_EULA: "Y"

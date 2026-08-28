@@ -8,6 +8,7 @@ using Search.Service;
 using SearchService.Application.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 builder.Host.AddSerilogLogger(builder.Configuration);
 
 // Add services to the container.
@@ -52,5 +53,6 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 app.Run();
