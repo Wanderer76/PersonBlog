@@ -19,9 +19,11 @@
     <ProjectReference Include="..\..\..\MusicRecommendationService\MusicRecommendation.API\MusicRecommendation.API.csproj" />
     <ProjectReference Include="..\..\..\MusicService\Music.API\Music.API.csproj" />
     <ProjectReference Include="..\..\..\NotificationService\Notification.API\Notification.API.csproj" />
+    <ProjectReference Include="..\..\..\PlayListService\PlayListService.API\PlayListService.API.csproj" />
     <ProjectReference Include="..\..\..\ProfileService\Profile.API\Profile.API.csproj" />
     <ProjectReference Include="..\..\..\RecommendationService\Recommendation.Application\Recommendation.Application.csproj" />
     <ProjectReference Include="..\..\..\SearchService\SearchService.Application\SearchService.Application.csproj" />
+    <ProjectReference Include="..\..\AuthGateway.API\AuthGateway.API.csproj" />
     <ProjectReference Include="..\..\Gateway.API\Gateway.API.csproj" />
   </ItemGroup>
 

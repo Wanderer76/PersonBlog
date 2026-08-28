@@ -29,7 +29,11 @@ internal class Program
         builder.Services.AddCors();
 
         builder.Services.AddPlayListService();
-        builder.Services.AddUserSessionServices();
+        builder.Services.AddUserSessionServices(options =>
+        {
+            options.BaseUrl = builder.Configuration["AppUrls:Auth"]
+                ?? throw new InvalidOperationException("Auth service URL is not configured.");
+        });
         builder.Services.AddCustomJwtAuthentication();
         builder.Services.AddAuthorization();
 
