@@ -35,6 +35,8 @@ public sealed class PlaylistHttpApiClientTests
         Assert.True(result.IsSuccess);
         Assert.Equal("multipart/form-data", handler.ContentType);
         Assert.Equal("Road trip", handler.FormValues["Title"].Single());
+        Assert.Equal("0", handler.FormValues["ContentType"].Single());
+        Assert.Equal("0", handler.FormValues["Kind"].Single());
         Assert.Equal(thumbnailId.ToString(), handler.FormValues["ThumbnailId"].Single());
         Assert.Equal(postIds.Select(x => x.ToString()), handler.FormValues["PostIds"]);
     }

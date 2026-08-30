@@ -1,5 +1,6 @@
 using Blog.Contracts;
 using Blog.Contracts.Models;
+using Authentication.Contract.Constants;
 using Infrastructure.Extensions;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PlayListService.Domain.Entities;
 using PlayListService.Persistence;
 using PlayListService.Services;
+using PlayListService.Services.Models;
 using PlayListService.Services.Services;
 using Shared.Models;
 using Shared.Persistence;
@@ -127,6 +129,7 @@ public sealed class CrudPlayListServiceTests
         var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
         {
             Title = "My playlist",
+            Kind = PlayListKindModel.Collection,
             PostIds = [textPostId]
         });
 
@@ -147,6 +150,7 @@ public sealed class CrudPlayListServiceTests
         var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
         {
             Title = "My playlist",
+            Kind = PlayListKindModel.Collection,
             PostIds = [videoPostId]
         });
 
@@ -174,15 +178,111 @@ public sealed class CrudPlayListServiceTests
         Assert.Single(await fixture.Context.PlayListItems.ToListAsync());
     }
 
-    private static PostCommonModel CreatePost(Guid id) => new()
+    [Fact]
+    public async Task CreatePlayListAsync_CreatesTextCollection_WithForeignPost()
+    {
+        var postId = Guid.NewGuid();
+        var post = CreatePost(postId, PostTypeModel.Text);
+        var user = CreateUser(Roles.UserRoleId);
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { post })
+            }), user);
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "Saved articles",
+            Kind = PlayListKindModel.Collection,
+            ContentType = PlayListContentTypeModel.Text,
+            PostIds = [postId]
+        });
+
+        Assert.True(result.IsSuccess);
+        var playlist = await fixture.Context.PlayLists.SingleAsync();
+        Assert.Equal(PlayListKind.Collection, playlist.Kind);
+        Assert.Equal(PlayListContentType.Text, playlist.ContentType);
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_RejectsAuthoredPlaylist_ForUserWithoutBloggerRole()
+    {
+        var user = CreateUser(Roles.UserRoleId);
+        await using var fixture = CreateFixture(user: user);
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "Not allowed",
+            Kind = PlayListKindModel.Authored,
+            ContentType = PlayListContentTypeModel.Video
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayLists.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_RejectsForeignPost_InAuthoredPlaylist()
+    {
+        var user = CreateUser(Roles.BloggerRoleId);
+        var foreignPost = CreatePost(Guid.NewGuid(), PostTypeModel.Video, Guid.NewGuid());
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { foreignPost })
+            }), user);
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "My videos",
+            Kind = PlayListKindModel.Authored,
+            ContentType = PlayListContentTypeModel.Video,
+            PostIds = [foreignPost.Id]
+        });
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task AddVideoAsync_RejectsTextPost_ForVideoCollection()
+    {
+        var textPost = CreatePost(Guid.NewGuid(), PostTypeModel.Text);
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { textPost })
+            }));
+        var playlist = await fixture.SeedPlaylistAsync([], PlayListContentType.Video, PlayListKind.Collection);
+
+        var result = await fixture.Service.AddVideoAsync(new PlayListItemAddRequest
+        {
+            PlayListId = playlist.Id,
+            PostsToAdd = [textPost.Id]
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayListItems.ToListAsync());
+    }
+
+    private static PostCommonModel CreatePost(
+        Guid id,
+        PostTypeModel postType = PostTypeModel.Video,
+        Guid? ownerUserId = null) => new()
     {
         Id = id,
-        Title = id.ToString()
+        Title = id.ToString(),
+        PostType = postType,
+        Creator = new PostCreatorModel
+        {
+            UserId = ownerUserId ?? Guid.NewGuid(),
+            BlogId = Guid.NewGuid(),
+            Name = "Author"
+        }
     };
 
-    private static ServiceFixture CreateFixture(HttpMessageHandler? postHandler = null)
+    private static ServiceFixture CreateFixture(HttpMessageHandler? postHandler = null, UserModel? user = null)
     {
-        var user = new UserModel(Guid.NewGuid(), "playlist-owner", null, Guid.Empty, []);
+        user ??= CreateUser(Roles.UserRoleId, Roles.BloggerRoleId);
         var services = new ServiceCollection();
         services.AddDbContext<PlayListDbContext>(options =>
             options
@@ -213,6 +313,13 @@ public sealed class CrudPlayListServiceTests
         return new ServiceFixture(services.BuildServiceProvider(), user.UserId);
     }
 
+    private static UserModel CreateUser(params Guid[] roles) => new(
+        Guid.NewGuid(),
+        "playlist-owner",
+        null,
+        Guid.NewGuid(),
+        [.. roles]);
+
     private sealed class ServiceFixture : IAsyncDisposable
     {
         private readonly ServiceProvider provider;
@@ -231,15 +338,20 @@ public sealed class CrudPlayListServiceTests
         public IPlayListService Service { get; }
         public PlayListDbContext Context { get; }
 
-        public async Task<PlayList> SeedPlaylistAsync(List<Guid> postIds)
+        public async Task<PlayList> SeedPlaylistAsync(
+            List<Guid> postIds,
+            PlayListContentType contentType = PlayListContentType.Video,
+            PlayListKind kind = PlayListKind.Authored)
         {
             var playlist = PlayList.Create(
                 Guid.NewGuid(),
                 DateTimeOffset.UtcNow,
-                "My playlist",
-                userId,
-                thumbnailId: null,
-                postIds).Value;
+            "My playlist",
+            userId,
+            thumbnailId: null,
+                contentType,
+                kind,
+            postIds).Value;
             Context.Add(playlist);
             await Context.SaveChangesAsync();
             Context.ChangeTracker.Clear();

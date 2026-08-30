@@ -540,6 +540,8 @@ internal class DefaultPostService : IPostService
 
         var posts = await _context.Get<Post>()
             .Where(x => postIds.Contains(x.Id))
+            .Where(x => x.ProcessState == ProcessState.Complete)
+            .Where(x => x.IsDelete == false)
             .Include(x => x.Blog)
             .Include(x => x.VideoPostInfo)
             .Include(x => x.VideoPostInfo.PreviewFile)
@@ -567,6 +569,7 @@ internal class DefaultPostService : IPostService
                 Description = description,
                 Title = post.Title,
                 PreviewObjectName = previewObjectName,
+                PostType = (PostTypeModel)post.Type,
                 Creator = new PostCreatorModel
                 {
                     UserId = post.Blog.UserId,
@@ -590,6 +593,7 @@ internal class DefaultPostService : IPostService
             .Include(x => x.Blog)
             .Include(x => x.VideoPostInfo)
             .Include(x => x.VideoPostInfo.PreviewFile)
+            .Include(x => x.TextPostInfo)
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
 
@@ -604,11 +608,14 @@ internal class DefaultPostService : IPostService
             return new PostCommonModel
             {
                 Id = post.Id,
-                Description = post.VideoPostInfo.Description,
+                Description = post.Type == PostType.Video
+                    ? post.VideoPostInfo?.Description
+                    : post.TextPostInfo?.Text,
                 Title = post.Title,
-                PreviewObjectName = post.VideoPostInfo.PreviewId.HasValue
+                PreviewObjectName = post.Type == PostType.Video && post.VideoPostInfo?.PreviewId.HasValue == true
                     ? await storage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName)
                     : null,
+                PostType = (PostTypeModel)post.Type,
                 Creator = new PostCreatorModel
                 {
                     UserId = post.Blog.UserId,
@@ -640,6 +647,7 @@ internal class DefaultPostService : IPostService
             .Include(x => x.Blog)
             .Include(x => x.VideoPostInfo)
             .Include(x => x.VideoPostInfo.PreviewFile)
+            .Include(x => x.TextPostInfo)
             .ToListAsync();
 
         var result = posts.Select(async post =>
@@ -651,11 +659,14 @@ internal class DefaultPostService : IPostService
             return new PostCommonModel
             {
                 Id = post.Id,
-                Description = post.VideoPostInfo.Description,
+                Description = post.Type == PostType.Video
+                    ? post.VideoPostInfo?.Description
+                    : post.TextPostInfo?.Text,
                 Title = post.Title,
-                PreviewObjectName = post.VideoPostInfo.PreviewId.HasValue
+                PreviewObjectName = post.Type == PostType.Video && post.VideoPostInfo?.PreviewId.HasValue == true
                     ? await fileStorage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo.PreviewFile!.ObjectName)
                     : null,
+                PostType = (PostTypeModel)post.Type,
                 Creator = new PostCreatorModel
                 {
                     UserId = post.Blog.UserId,

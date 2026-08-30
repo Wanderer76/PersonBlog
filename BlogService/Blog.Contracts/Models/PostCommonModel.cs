@@ -7,6 +7,7 @@ public class PostCommonModel
     public string? Description { get; set; }
     public string Title { get; set; }
     public PostCreatorModel Creator { get; set; } = null!;
+    public PostTypeModel PostType { get; set; }
 }
 
 public sealed class PostCreatorModel

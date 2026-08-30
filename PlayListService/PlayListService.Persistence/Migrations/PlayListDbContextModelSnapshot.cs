@@ -32,11 +32,17 @@ namespace PlayListService.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("ContentType")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("DeleteDateTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDelete")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
 
                     b.Property<Guid?>("ThumbnailId")
                         .HasColumnType("uuid");

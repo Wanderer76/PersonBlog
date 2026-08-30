@@ -15,6 +15,8 @@ public sealed class PlayListDomainTests
             "My playlist",
             Guid.NewGuid(),
             thumbnailId: null,
+            PlayListContentType.Video,
+            PlayListKind.Authored,
             [postId, postId]);
 
         Assert.True(result.IsFailure);
@@ -75,6 +77,17 @@ public sealed class PlayListDomainTests
         Assert.Equal([1, 2], playlist.PlayListItems.OrderBy(x => x.Position).Select(x => x.Position));
     }
 
+    [Fact]
+    public void AddPost_RejectsPostWithDifferentContentType()
+    {
+        var playlist = CreatePlaylistWithThreePosts();
+
+        var result = playlist.AddPost(Guid.NewGuid(), PlayListContentType.Text, DateTimeOffset.UtcNow);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(3, playlist.PlayListItems.Count);
+    }
+
     private static PlayList CreatePlaylistWithThreePosts() =>
         PlayList.Create(
             Guid.NewGuid(),
@@ -82,5 +95,7 @@ public sealed class PlayListDomainTests
             "My playlist",
             Guid.NewGuid(),
             thumbnailId: null,
+            PlayListContentType.Video,
+            PlayListKind.Authored,
             [Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid()]).Value;
 }

@@ -1,5 +1,6 @@
 ﻿using Blog.Contracts;
 using Blog.Contracts.Models;
+using Authentication.Contract.Constants;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using PlayListService.Domain.Entities;
@@ -31,9 +32,23 @@ internal sealed class CrudPlayListService : IPlayListService
     public async Task<Result<PlayListListItem>> CreatePlayListAsync(CreatePlayListRequest request)
     {
         var user = await _currentUserService.GetCurrentUserAsync();
-        var validationResult = await ValidateAvailableVideosAsync(
+        if (!Enum.IsDefined(request.ContentType) || !Enum.IsDefined(request.Kind))
+        {
+            return Result<PlayListListItem>.Failure(new Error(nameof(request.Kind), "Неизвестная классификация плейлиста"));
+        }
+        var contentType = ToDomain(request.ContentType);
+        var kind = ToDomain(request.Kind);
+        var permissionResult = ValidateCreatePermission(kind, user);
+        if (permissionResult.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(permissionResult.Errors!);
+        }
+
+        var validationResult = await ValidatePostsAsync(
             request.PostIds,
-            [],
+            contentType,
+            kind,
+            user.UserId,
             nameof(request.PostIds));
         if (validationResult.IsFailure)
         {
@@ -51,6 +66,8 @@ internal sealed class CrudPlayListService : IPlayListService
             title: request.Title,
             userId: user.UserId,
             thumbnailId: thumbnailId,
+            contentType: contentType,
+            kind: kind,
             playListItems: request.PostIds
             );
 
@@ -67,6 +84,8 @@ internal sealed class CrudPlayListService : IPlayListService
             Id = newPlayList.Value.Id,
             PostCount = newPlayList.Value.PlayListItems.Count,
             Title = request.Title,
+            ContentType = ToModel(newPlayList.Value.ContentType),
+            Kind = ToModel(newPlayList.Value.Kind),
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(newPlayList.Value)
         };
     }
@@ -126,7 +145,9 @@ internal sealed class CrudPlayListService : IPlayListService
             PostCount = playlist.PlayListItems.Count,
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
             Title = playlist.Title,
-            CanEdit = playlist.UserId == user.UserId
+            CanEdit = playlist.UserId == user.UserId,
+            ContentType = ToModel(playlist.ContentType),
+            Kind = ToModel(playlist.Kind),
         });
     }
 
@@ -149,10 +170,17 @@ internal sealed class CrudPlayListService : IPlayListService
         {
             return new Error("Нельзя добавить пост не в свой плейлист");
         }
+        var permissionResult = ValidateCreatePermission(playlist.Kind, user);
+        if (permissionResult.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(permissionResult.Errors!);
+        }
 
-        var validationResult = await ValidateAvailableVideosAsync(
+        var validationResult = await ValidatePostsAsync(
             playListItems.PostsToAdd,
-            playlist.PlayListItems.Select(x => x.PostId),
+            playlist.ContentType,
+            playlist.Kind,
+            user.UserId,
             nameof(playListItems.PostsToAdd));
         if (validationResult.IsFailure)
         {
@@ -163,7 +191,7 @@ internal sealed class CrudPlayListService : IPlayListService
         _repository.Attach(playlist);
         foreach (var playListItem in playListItems.PostsToAdd)
         {
-            var isAdded = playlist.AddVideo(playListItem, now);
+            var isAdded = playlist.AddPost(playListItem, playlist.ContentType, now);
             if (isAdded.IsFailure)
             {
                 return Result<PlayListListItem>.Failure(isAdded.Errors!);
@@ -177,6 +205,8 @@ internal sealed class CrudPlayListService : IPlayListService
             PostCount = playlist.PlayListItems.Count,
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
             Title = playlist.Title,
+            ContentType = ToModel(playlist.ContentType),
+            Kind = ToModel(playlist.Kind),
         };
     }
 
@@ -212,6 +242,8 @@ internal sealed class CrudPlayListService : IPlayListService
             PostCount = playlist.PlayListItems.Count,
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
             Title = playlist.Title,
+            ContentType = ToModel(playlist.ContentType),
+            Kind = ToModel(playlist.Kind),
         });
     }
 
@@ -249,32 +281,95 @@ internal sealed class CrudPlayListService : IPlayListService
             PostCount = playlist.PlayListItems.Count,
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(playlist),
             Title = playlist.Title,
+            ContentType = ToModel(playlist.ContentType),
+            Kind = ToModel(playlist.Kind),
         });
     }
 
-    private async Task<Result> ValidateAvailableVideosAsync(
+    private async Task<Result> ValidatePostsAsync(
         IEnumerable<Guid> requestedPostIds,
-        IEnumerable<Guid> excludedPostIds,
+        PlayListContentType contentType,
+        PlayListKind kind,
+        Guid ownerUserId,
         string errorKey)
     {
-        var requestedIds = requestedPostIds.Distinct().ToArray();
+        var requestedPostIdArray = requestedPostIds.ToArray();
+        var requestedIds = requestedPostIdArray.Distinct().ToArray();
         if (requestedIds.Length == 0)
         {
             return Result.Success();
         }
+        if (requestedIds.Length != requestedPostIdArray.Length)
+        {
+            return Result.Failure(new Error(errorKey, "Плейлист не может содержать повторяющиеся посты"));
+        }
 
-        var availableVideos = await postApiClient
-            .GetCurrentUserPostCommonModelWithExcludeIdsAsync(
-                excludedPostIds,
-                Blog.Domain.Entities.PostType.Video);
-        var availableVideoIds = availableVideos.Select(x => x.Id).ToHashSet();
-
-        return requestedIds.All(availableVideoIds.Contains)
-            ? Result.Success()
-            : Result.Failure(new Error(
+        var posts = await postApiClient.GetPostCommonModelAsync(requestedIds);
+        if (posts.Count != requestedIds.Length)
+        {
+            return Result.Failure(new Error(
                 errorKey,
-                "Плейлист может содержать только завершённые видео текущего блога"));
+                "Один или несколько постов не найдены, удалены или не опубликованы"));
+        }
+
+        var expectedPostType = contentType switch
+        {
+            PlayListContentType.Video => PostTypeModel.Video,
+            PlayListContentType.Text => PostTypeModel.Text,
+            _ => throw new ArgumentOutOfRangeException(nameof(contentType), contentType, null)
+        };
+        if (posts.Any(x => x.PostType != expectedPostType))
+        {
+            return Result.Failure(new Error(errorKey, "Все посты плейлиста должны иметь один выбранный тип"));
+        }
+        if (kind == PlayListKind.Authored && posts.Any(x => x.Creator.UserId != ownerUserId))
+        {
+            return Result.Failure(new Error(errorKey, "Авторский плейлист может содержать только собственные посты"));
+        }
+
+        return Result.Success();
     }
+
+    private static Result ValidateCreatePermission(PlayListKind kind, UserModel user)
+    {
+        var roles = user.Roles.ToHashSet();
+        return kind switch
+        {
+            PlayListKind.Authored when roles.Contains(Roles.BloggerRoleId) => Result.Success(),
+            PlayListKind.Collection when roles.Contains(Roles.UserRoleId) || roles.Contains(Roles.BloggerRoleId) => Result.Success(),
+            PlayListKind.Authored => Result.Failure(new Error(nameof(kind), "Авторские плейлисты доступны только блогерам")),
+            PlayListKind.Collection => Result.Failure(new Error(nameof(kind), "Недостаточно прав для создания коллекции")),
+            _ => Result.Failure(new Error(nameof(kind), "Неизвестный тип плейлиста"))
+        };
+    }
+
+    private static PlayListContentType ToDomain(PlayListContentTypeModel contentType) => contentType switch
+    {
+        PlayListContentTypeModel.Video => PlayListContentType.Video,
+        PlayListContentTypeModel.Text => PlayListContentType.Text,
+        _ => throw new ArgumentOutOfRangeException(nameof(contentType), contentType, null)
+    };
+
+    private static PlayListKind ToDomain(PlayListKindModel kind) => kind switch
+    {
+        PlayListKindModel.Authored => PlayListKind.Authored,
+        PlayListKindModel.Collection => PlayListKind.Collection,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+    };
+
+    private static PlayListContentTypeModel ToModel(PlayListContentType contentType) => contentType switch
+    {
+        PlayListContentType.Video => PlayListContentTypeModel.Video,
+        PlayListContentType.Text => PlayListContentTypeModel.Text,
+        _ => throw new ArgumentOutOfRangeException(nameof(contentType), contentType, null)
+    };
+
+    private static PlayListKindModel ToModel(PlayListKind kind) => kind switch
+    {
+        PlayListKind.Authored => PlayListKindModel.Authored,
+        PlayListKind.Collection => PlayListKindModel.Collection,
+        _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+    };
 
     public async Task<Result> RemovePlayListAsync(Guid id)
     {
@@ -335,6 +430,8 @@ internal sealed class CrudPlayListService : IPlayListService
                 x.Title,
                 PlayListItemsCount = x.PlayListItems.Count(),
                 x.ThumbnailId,
+                x.ContentType,
+                x.Kind,
             })
             .ToListAsync();
 
@@ -343,6 +440,8 @@ internal sealed class CrudPlayListService : IPlayListService
             Id = x.Id,
             PostCount = x.PlayListItemsCount,
             Title = x.Title,
+            ContentType = ToModel(x.ContentType),
+            Kind = ToModel(x.Kind),
             ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(user.UserId, x.ThumbnailId.Value)
         });
 
@@ -360,6 +459,7 @@ internal sealed class CrudPlayListService : IPlayListService
         var playLists = await _repository.Get<PlayList>()
             .Where(x => x.UserId == blog.Value.UserId)
             .Where(x => x.IsDelete == false)
+            .Where(x => x.Kind == PlayListKind.Authored)
             .OrderByDescending(x => x.CreatedAt)
             .Select(x => new
             {
@@ -367,6 +467,8 @@ internal sealed class CrudPlayListService : IPlayListService
                 x.Title,
                 PlayListItemsCount = x.PlayListItems.Count,
                 x.ThumbnailId,
+                x.ContentType,
+                x.Kind,
             })
             .ToListAsync();
 
@@ -375,6 +477,8 @@ internal sealed class CrudPlayListService : IPlayListService
             Id = x.Id,
             PostCount = x.PlayListItemsCount,
             Title = x.Title,
+            ContentType = ToModel(x.ContentType),
+            Kind = ToModel(x.Kind),
             ThumbnailUrl = x.ThumbnailId == null ? null : await _playListFileService.GetThumbnailAsync(blog.Value.UserId, x.ThumbnailId.Value)
         });
         return await Task.WhenAll(result);

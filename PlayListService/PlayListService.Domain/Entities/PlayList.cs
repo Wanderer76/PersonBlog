@@ -13,6 +13,8 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
     //public string? ThumbnailId { get; private set; }
     public Guid? ThumbnailId { get; private set; }
     public Guid UserId { get; private set; }
+    public PlayListContentType ContentType { get; private set; }
+    public PlayListKind Kind { get; private set; }
 
     public PlayListFile? ThumbnailFile { get; private set; }
     public IReadOnlyList<PlayListItem> PlayListItems => playListItems;
@@ -24,18 +26,36 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
 
     }
 
-    private PlayList(Guid id, DateTimeOffset createdAt, string title, Guid userId, Guid? thumbnailId, List<Guid> playListItems)
+    private PlayList(
+        Guid id,
+        DateTimeOffset createdAt,
+        string title,
+        Guid userId,
+        Guid? thumbnailId,
+        PlayListContentType contentType,
+        PlayListKind kind,
+        List<Guid> playListItems)
     {
         Id = id;
         Title = title;
         UserId = userId;
         ThumbnailId = thumbnailId;
+        ContentType = contentType;
+        Kind = kind;
         CreatedAt = createdAt;
         IsDelete = false;
         this.playListItems = playListItems.Select((postId, index) => new PlayListItem(postId, Id, index + 1, createdAt)).ToList();
     }
 
-    public static Result<PlayList> Create(Guid id, DateTimeOffset createdAt, string title, Guid userId, Guid? thumbnailId, List<Guid> playListItems)
+    public static Result<PlayList> Create(
+        Guid id,
+        DateTimeOffset createdAt,
+        string title,
+        Guid userId,
+        Guid? thumbnailId,
+        PlayListContentType contentType,
+        PlayListKind kind,
+        List<Guid> playListItems)
     {
         if (string.IsNullOrEmpty(title))
         {
@@ -45,7 +65,15 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
         {
             return new Error(nameof(playListItems), "Playlist cannot contain duplicate posts");
         }
-        var playList = new PlayList(id, createdAt, title, userId, thumbnailId, playListItems);
+        if (!Enum.IsDefined(contentType))
+        {
+            return new Error(nameof(contentType), "Unknown playlist content type");
+        }
+        if (!Enum.IsDefined(kind))
+        {
+            return new Error(nameof(kind), "Unknown playlist kind");
+        }
+        var playList = new PlayList(id, createdAt, title, userId, thumbnailId, contentType, kind, playListItems);
         return playList;
     }
 
@@ -74,8 +102,12 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
         return true;
     }
 
-    public Result<bool> AddVideo(Guid postId, DateTimeOffset createdAt, int? position = null)
+    public Result<bool> AddPost(Guid postId, PlayListContentType contentType, DateTimeOffset createdAt, int? position = null)
     {
+        if (contentType != ContentType)
+        {
+            return new Error(nameof(contentType), "Post type does not match playlist content type");
+        }
         var destination = 0;
         if (position.HasValue)
         {
@@ -148,4 +180,16 @@ public sealed class PlayList : IPlayListEntity, ISoftDelete
     {
         IsDelete = false;
     }
+}
+
+public enum PlayListContentType
+{
+    Video,
+    Text,
+}
+
+public enum PlayListKind
+{
+    Authored,
+    Collection,
 }

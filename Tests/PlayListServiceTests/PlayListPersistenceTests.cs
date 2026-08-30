@@ -56,6 +56,20 @@ public sealed class PlayListPersistenceTests
         Assert.Contains("CREATE TABLE \"PlayList\".\"PlayListFile\"", script);
     }
 
+    [Fact]
+    public void PlaylistClassificationMigrationCanGenerateUpgradeScript()
+    {
+        using var context = CreateContext();
+        var migrator = context.GetService<IMigrator>();
+
+        var script = migrator.GenerateScript(
+            "20260828000000_AlignThumbnailModel",
+            "20260830000000_AddPlaylistClassification");
+
+        Assert.Contains("ADD \"ContentType\" integer", script);
+        Assert.Contains("ADD \"Kind\" integer", script);
+    }
+
     private static PlayListDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<PlayListDbContext>()

@@ -46,7 +46,9 @@ public class PlaylistHttpApiClient : IPlayListService
     {
         using var content = new MultipartFormDataContent
         {
-            { new StringContent(request.Title), nameof(request.Title) }
+            { new StringContent(request.Title), nameof(request.Title) },
+            { new StringContent(((int)request.ContentType).ToString()), nameof(request.ContentType) },
+            { new StringContent(((int)request.Kind).ToString()), nameof(request.Kind) }
         };
 
         if (request.ThumbnailId.HasValue)

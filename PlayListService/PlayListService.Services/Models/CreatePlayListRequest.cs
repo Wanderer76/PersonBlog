@@ -12,4 +12,6 @@ public class CreatePlayListRequest
     public Guid? ThumbnailId { get; set; }
     public IFormFile? Thumbnail { get; set; }
     public List<Guid> PostIds { get; set; } = [];
+    public PlayListContentTypeModel ContentType { get; set; } = PlayListContentTypeModel.Video;
+    public PlayListKindModel Kind { get; set; } = PlayListKindModel.Authored;
 }

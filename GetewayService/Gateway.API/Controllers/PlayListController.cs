@@ -57,14 +57,28 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("availableVideos")]
-    [AuthFilter(Roles.Blogger)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     [Produces(typeof(IReadOnlyList<PostCommonModel>))]
-    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAvailablePostToPlayList(Guid playListId)
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetAvailablePostToPlayList(
+        Guid? playListId,
+        PlayListContentTypeModel contentType = PlayListContentTypeModel.Video)
     {
-        var posts = (await _playListService.GetPlayListPostPagedAsync(playListId, 1, int.MaxValue)).Items.Select(x => x.Id);
+        IEnumerable<Guid> posts = [];
+        if (playListId.HasValue)
+        {
+            var playlist = await _playListService.GetPlayListAsync(playListId.Value);
+            if (playlist.IsFailure)
+            {
+                return BadRequest(playlist.Errors.ToValidationProblem());
+            }
+            contentType = playlist.Value.ContentType;
+            posts = (await _playListService.GetPlayListPostPagedAsync(playListId.Value, 1, int.MaxValue)).Items.Select(x => x.Id);
+        }
         var result = await postApiClient.GetCurrentUserPostCommonModelWithExcludeIdsAsync(
             posts,
-            PostType.Video);
+            contentType == PlayListContentTypeModel.Video
+                ? PostType.Video
+                : PostType.Text);
 
         return Ok(result);
     }
