@@ -1,285 +1,355 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import API from "@/shared/api/client";
-import { getPlayList } from "@/shared/api/generated/play-list/play-list";
-import styles from '@/pages/playlist-create/ui/CreatePlaylistForm.module.css';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { useNavigate } from 'react-router-dom';
+import { getPlayList } from '@/shared/api/generated/play-list/play-list';
+import { PlayListContentTypeModel, PlayListKindModel } from '@/shared/api/generated/models';
+import styles from './CreatePlaylistForm.module.css';
 
 const playListApi = getPlayList();
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+const CONTENT_TYPES = [
+    {
+        value: PlayListContentTypeModel.NUMBER_0,
+        title: 'Видео',
+        description: 'Соберите выпуски в последовательный просмотр',
+        icon: '▶',
+    },
+    {
+        value: PlayListContentTypeModel.NUMBER_1,
+        title: 'Статьи',
+        description: 'Объедините публикации в тематическую подборку',
+        icon: 'Aa',
+    },
+];
+
+const getContentLabel = (contentType) =>
+    contentType === PlayListContentTypeModel.NUMBER_1 ? 'статьи' : 'видео';
+
+const PostPreview = ({ post, contentType }) => {
+    if (contentType === PlayListContentTypeModel.NUMBER_0 && post.previewObjectName) {
+        return <img className={styles.postPreviewImage} src={post.previewObjectName} alt="" />;
+    }
+
+    return (
+        <div className={styles.postPreviewPlaceholder} aria-hidden="true">
+            {contentType === PlayListContentTypeModel.NUMBER_1 ? 'Aa' : '▶'}
+        </div>
+    );
+};
 
 const CreatePlaylistForm = () => {
-    const [playlistForm, setPlaylistForm] = useState({
-        title: "",
-        description: "",
-        thumbnailId: null,
-        thumbnailUrl: null,
-        isPublic: true
-
-    });
-    const [availableVideos, setAvailableVideos] = useState([]);
-    const [selectedVideos, setSelectedVideos] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
+    const [title, setTitle] = useState('');
+    const [contentType, setContentType] = useState(PlayListContentTypeModel.NUMBER_0);
+    const [thumbnail, setThumbnail] = useState(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState('');
+    const [availablePosts, setAvailablePosts] = useState([]);
+    const [selectedPosts, setSelectedPosts] = useState([]);
+    const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
+
+    const contentLabel = getContentLabel(contentType);
+    const selectedIds = useMemo(
+        () => new Set(selectedPosts.map((post) => post.id)),
+        [selectedPosts],
+    );
+
+    const fetchAvailablePosts = useCallback(async () => {
+        setIsLoadingPosts(true);
+        setError('');
+
+        try {
+            const { data } = await playListApi.getApiPlayListAvailableVideos({ contentType });
+            setAvailablePosts(data ?? []);
+        } catch {
+            setAvailablePosts([]);
+            setError(`Не удалось загрузить доступные ${contentLabel}. Попробуйте ещё раз.`);
+        } finally {
+            setIsLoadingPosts(false);
+        }
+    }, [contentLabel, contentType]);
 
     useEffect(() => {
-        fetchAvailableVideos();
-    }, []);
+        setSelectedPosts([]);
+        void fetchAvailablePosts();
+    }, [fetchAvailablePosts]);
 
-    const fetchAvailableVideos = async () => {
-        const response = await playListApi.getApiPlayListAvailableVideos();
-        if (response.status === 200) {
-            setAvailableVideos(response.data);
-        }
+    useEffect(() => () => {
+        if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+    }, [thumbnailPreview]);
+
+    const selectContentType = (nextContentType) => {
+        if (nextContentType !== contentType) setContentType(nextContentType);
     };
 
-    const handleFormChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setPlaylistForm(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
-    };
-
-    const handleCoverChange = async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const formData = new FormData();
-            formData.append('thumbnail', file);
-            var response = await API.post("profile/api/Playlist/loadThumbnail", formData, {
-                headers: {
-                    ['Content-Type']: 'multipart/form-data'
-                }
-            });
-            if (response.status === 200) {
-                const thumbnailId = response.data?.thumbnailId ?? response.data;
-                setPlaylistForm(prev => ({
-                    ...prev,
-                    thumbnailId,
-                    thumbnailUrl: URL.createObjectURL(file)
-                }));
-            }
-        }
-    };
-
-    const handleAddVideo = (video) => {
-        if (!selectedVideos.some(v => v.id === video.id)) {
-            setSelectedVideos(prev => [
-                ...prev,
-                { ...video, position: prev.length + 1 }
-            ]);
-        }
-    };
-
-    const handleRemoveVideo = (videoId) => {
-        setSelectedVideos(prev =>
-            prev.filter(v => v.id !== videoId)
-                .map((v, index) => ({ ...v, position: index + 1 }))
+    const addPost = (post) => {
+        setSelectedPosts((current) =>
+            current.some((item) => item.id === post.id) ? current : [...current, post],
         );
     };
 
-    const onDragEnd = (result) => {
-        if (!result.destination) return;
-
-        const items = Array.from(selectedVideos);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-
-        setSelectedVideos(items.map((v, index) => ({
-            ...v,
-            position: index + 1
-        })));
+    const removePost = (postId) => {
+        setSelectedPosts((current) => current.filter((post) => post.id !== postId));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
+    const selectThumbnail = (file) => {
+        if (!file) return;
+        if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
+            setError('Для обложки выберите изображение JPG, PNG или WebP.');
+            return;
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+            setError('Размер обложки не должен превышать 10 МБ.');
+            return;
+        }
+
+        setError('');
+        setThumbnail(file);
+        setThumbnailPreview(URL.createObjectURL(file));
+    };
+
+    const removeThumbnail = () => {
+        setThumbnail(null);
+        setThumbnailPreview('');
+    };
+
+    const onDragEnd = ({ source, destination }) => {
+        if (!destination || source.index === destination.index) return;
+
+        setSelectedPosts((current) => {
+            const reordered = [...current];
+            const [moved] = reordered.splice(source.index, 1);
+            reordered.splice(destination.index, 0, moved);
+            return reordered;
+        });
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const normalizedTitle = title.trim();
+        if (!normalizedTitle || isSubmitting) return;
+
+        setIsSubmitting(true);
+        setError('');
 
         try {
-            const request = {
-                title: playlistForm.title,
-                thumbnailId: playlistForm.thumbnailId,
-                postIds: selectedVideos.map(video => video.id)
-            };
-
-            const response = await playListApi.postApiPlayListCreate(request);
-
-            if (response.status === 200) {
-                const playlistId = response.data.playList?.id;
-                if (!playlistId) {
-                    throw new Error("Playlist API returned no playlist id");
-                }
-                navigate(`/playlist/${playlistId}`);
-            }
-        } catch (error) {
-            console.error("Error creating playlist:", error);
+            const { data } = await playListApi.postApiPlayListCreate({
+                Title: normalizedTitle,
+                Thumbnail: thumbnail ?? undefined,
+                PostIds: selectedPosts.map((post) => post.id),
+                ContentType: contentType,
+                Kind: PlayListKindModel.NUMBER_0,
+            });
+            const playlistId = data.playList?.id;
+            if (!playlistId) throw new Error('Playlist id is missing');
+            navigate(`/playlist/${playlistId}`);
+        } catch {
+            setError('Не удалось создать плейлист. Проверьте данные и повторите попытку.');
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
+    const remainingPosts = availablePosts.filter((post) => !selectedIds.has(post.id));
+
     return (
-        <div className={styles.modal}>
-            <div className={styles.createPlaylistForm}>
-                <h1>Создать новый плейлист</h1>
+        <main className={styles.page}>
+            <div className={styles.shell}>
+                <button className={styles.backButton} type="button" onClick={() => navigate('/profile')}>
+                    ← Вернуться в профиль
+                </button>
 
-                <form onSubmit={handleSubmit}>
-                    <div className={styles.formGroup}>
-                        <label>Название плейлиста</label>
-                        <input
-                            type="text"
-                            name="title"
-                            value={playlistForm.title}
-                            onChange={handleFormChange}
-                            placeholder="Введите название плейлиста"
-                            required
-                        />
-                    </div>
+                <header className={styles.hero}>
+                    <span className={styles.eyebrow}>Новый плейлист</span>
+                    <h1>Соберите публикации в одном месте</h1>
+                    <p>Выберите формат, добавьте свои материалы и расставьте их в нужном порядке.</p>
+                </header>
 
-                    <div className={styles.formGroup}>
-                        <label>Описание</label>
-                        <textarea
-                            name="description"
-                            value={playlistForm.description}
-                            onChange={handleFormChange}
-                            placeholder="Добавьте описание плейлиста"
-                            rows="4"
-                        />
-                    </div>
-
-                    <div className={styles.formGroup}>
-                        <label>Обложка плейлиста</label>
-                        <div className={styles.coverUpload}>
-                            <label className={styles.coverUploadBtn}>
-                                Выбрать обложку
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleCoverChange}
-                                    hidden
-                                />
-                            </label>
-                            {playlistForm.thumbnailUrl && (
-                                <div className={styles.coverPreview}>
-                                    <img
-                                        src={playlistForm.thumbnailUrl}
-                                        alt="Предпросмотр обложки"
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* <div className={styles.formGroup}>
-                        <label className={styles.privacyToggle}>
-                            <input
-                                type="checkbox"
-                                name="isPublic"
-                                checked={playlistForm.isPublic}
-                                onChange={handleFormChange}
-                            />
-                            <span className={styles.toggleSlider}></span>
-                            <span>{playlistForm.isPublic ? "Публичный" : "Приватный"}</span>
-                        </label>
-                    </div> */}
-
-                    <div className={styles.videoSelectionContainer}>
-                        <div className={styles.availableVideos}>
-                            <h3>Доступные видео</h3>
-                            <div className={styles.videoList}>
-                                {availableVideos
-                                    .filter(v => !selectedVideos.some(sv => sv.id === v.id))
-                                    .map(video => (
-                                        <div key={video.id} className={styles.videoItem}>
-                                            <img src={video.previewObjectName} alt={video.title} />
-                                            <div className={styles.videoInfo}>
-                                                <h4>{video.title}</h4>
-                                                <p>{video.viewCount} просмотров</p>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className={styles.addVideoBtn}
-                                                onClick={() => handleAddVideo(video)}
-                                            >
-                                                Добавить
-                                            </button>
-                                        </div>
-                                    ))}
+                <form className={styles.workspace} onSubmit={handleSubmit}>
+                    <section className={styles.settingsCard}>
+                        <div className={styles.sectionHeading}>
+                            <span>01</span>
+                            <div>
+                                <h2>Основные настройки</h2>
+                                <p>Название и формат плейлиста.</p>
                             </div>
                         </div>
 
-                        <div className={styles.selectedVideos}>
-                            <h3>Видео в плейлисте ({selectedVideos.length})</h3>
-                            {selectedVideos.length > 0 ? (
+                        <label className={styles.titleField}>
+                            <span>Название</span>
+                            <input
+                                value={title}
+                                onChange={(event) => setTitle(event.target.value)}
+                                maxLength={120}
+                                placeholder="Например, Разработка продукта с нуля"
+                                autoFocus
+                                required
+                            />
+                            <small>{title.length}/120</small>
+                        </label>
+
+                        <div className={styles.coverField}>
+                            <div className={styles.coverHeading}>
+                                <div>
+                                    <strong>Обложка</strong>
+                                    <span>Необязательно · JPG, PNG или WebP до 10 МБ</span>
+                                </div>
+                                {thumbnail && <button type="button" onClick={removeThumbnail}>Удалить</button>}
+                            </div>
+                            <label className={`${styles.coverUpload} ${thumbnailPreview ? styles.coverUploadFilled : ''}`}>
+                                {thumbnailPreview ? (
+                                    <>
+                                        <img src={thumbnailPreview} alt="Предпросмотр обложки плейлиста" />
+                                        <span className={styles.coverOverlay}>Заменить изображение</span>
+                                    </>
+                                ) : (
+                                    <span className={styles.coverPlaceholder}>
+                                        <i aria-hidden="true">＋</i>
+                                        <strong>Загрузить изображение</strong>
+                                        <small>Нажмите, чтобы выбрать файл</small>
+                                    </span>
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    onChange={(event) => {
+                                        selectThumbnail(event.currentTarget.files?.[0]);
+                                        event.currentTarget.value = '';
+                                    }}
+                                />
+                            </label>
+                        </div>
+
+                        <div className={styles.typeChooser} role="radiogroup" aria-label="Формат плейлиста">
+                            {CONTENT_TYPES.map((type) => (
+                                <button
+                                    key={type.value}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={contentType === type.value}
+                                    className={`${styles.typeCard} ${contentType === type.value ? styles.typeCardActive : ''}`}
+                                    onClick={() => selectContentType(type.value)}
+                                >
+                                    <span className={styles.typeIcon}>{type.icon}</span>
+                                    <span>
+                                        <strong>{type.title}</strong>
+                                        <small>{type.description}</small>
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section className={styles.postsCard}>
+                        <div className={styles.sectionHeading}>
+                            <span>02</span>
+                            <div>
+                                <h2>Содержимое</h2>
+                                <p>В плейлисте могут находиться только {contentLabel}.</p>
+                            </div>
+                        </div>
+
+                        {error && <div className={styles.errorBanner} role="alert">{error}</div>}
+
+                        <div className={styles.columns}>
+                            <div className={styles.postColumn}>
+                                <div className={styles.columnHeader}>
+                                    <div>
+                                        <h3>Доступно</h3>
+                                        <p>Ваши опубликованные {contentLabel}</p>
+                                    </div>
+                                    <span>{remainingPosts.length}</span>
+                                </div>
+
+                                <div className={styles.postList}>
+                                    {isLoadingPosts && <div className={styles.listState}>Загружаем публикации…</div>}
+                                    {!isLoadingPosts && remainingPosts.map((post) => (
+                                        <article className={styles.postRow} key={post.id}>
+                                            <PostPreview post={post} contentType={contentType} />
+                                            <div className={styles.postDetails}>
+                                                <strong>{post.title}</strong>
+                                                <span>{post.description || 'Без описания'}</span>
+                                            </div>
+                                            <button className={styles.addButton} type="button" onClick={() => addPost(post)} aria-label={`Добавить «${post.title}»`}>
+                                                +
+                                            </button>
+                                        </article>
+                                    ))}
+                                    {!isLoadingPosts && remainingPosts.length === 0 && (
+                                        <div className={styles.listState}>Нет публикаций для добавления</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className={styles.postColumn}>
+                                <div className={styles.columnHeader}>
+                                    <div>
+                                        <h3>В плейлисте</h3>
+                                        <p>Перетаскивайте, чтобы изменить порядок</p>
+                                    </div>
+                                    <span>{selectedPosts.length}</span>
+                                </div>
+
                                 <DragDropContext onDragEnd={onDragEnd}>
-                                    <Droppable droppableId="selectedVideos">
+                                    <Droppable droppableId="selected-playlist-posts">
                                         {(provided) => (
-                                            <div
-                                                {...provided.droppableProps}
-                                                ref={provided.innerRef}
-                                                className={styles.videoList}
-                                            >
-                                                {selectedVideos.map((video, index) => (
-                                                    <Draggable
-                                                        key={video.id}
-                                                        draggableId={video.id.toString()}
-                                                        index={index}
-                                                    >
-                                                        {(provided) => (
-                                                            <div
-                                                                ref={provided.innerRef}
-                                                                {...provided.draggableProps}
-                                                                {...provided.dragHandleProps}
-                                                                className={`${styles.videoItem} ${styles.selected}`}
+                                            <div className={styles.postList} ref={provided.innerRef} {...provided.droppableProps}>
+                                                {selectedPosts.map((post, index) => (
+                                                    <Draggable key={post.id} draggableId={post.id} index={index}>
+                                                        {(dragProvided, snapshot) => (
+                                                            <article
+                                                                ref={dragProvided.innerRef}
+                                                                {...dragProvided.draggableProps}
+                                                                {...dragProvided.dragHandleProps}
+                                                                className={`${styles.postRow} ${styles.selectedPost} ${snapshot.isDragging ? styles.dragging : ''}`}
                                                             >
-                                                                <span className={styles.positionBadge}>{video.position}</span>
-                                                                <img src={video.previewObjectName} alt={video.title} />
-                                                                <div className={styles.videoInfo}>
-                                                                    <h4>{video.title}</h4>
-                                                                    <p>{video.viewCount} просмотров</p>
+                                                                <span className={styles.position}>{index + 1}</span>
+                                                                <PostPreview post={post} contentType={contentType} />
+                                                                <div className={styles.postDetails}>
+                                                                    <strong>{post.title}</strong>
+                                                                    <span>Зажмите и переместите</span>
                                                                 </div>
-                                                                <button
-                                                                    type="button"
-                                                                    className={styles.removeVideoBtn}
-                                                                    onClick={() => handleRemoveVideo(video.id)}
-                                                                >
+                                                                <button className={styles.removeButton} type="button" onClick={() => removePost(post.id)} aria-label={`Убрать «${post.title}»`}>
                                                                     ×
                                                                 </button>
-                                                            </div>
+                                                            </article>
                                                         )}
                                                     </Draggable>
                                                 ))}
                                                 {provided.placeholder}
+                                                {selectedPosts.length === 0 && (
+                                                    <div className={styles.emptySelection}>
+                                                        <span>＋</span>
+                                                        <strong>Плейлист пока пуст</strong>
+                                                        <p>Можно создать его сейчас и добавить публикации позже.</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </Droppable>
                                 </DragDropContext>
-                            ) : (
-                                <div className={styles.emptySelection}>
-                                    <p>Добавьте видео из списка доступных</p>
-                                </div>
-                            )}
+                            </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div className={styles.actionButtons}>
-                        <button
-                            type="button"
-                            className={`${styles.btn} ${styles.btnSecondary}`}
-                            onClick={() => navigate('/profile')}
-                        >
+                    <footer className={styles.actions}>
+                        <div>
+                            <strong>{selectedPosts.length}</strong>
+                            <span>{contentLabel} выбрано</span>
+                        </div>
+                        <button type="button" className={styles.cancelButton} onClick={() => navigate('/profile')}>
                             Отмена
                         </button>
-                        <button
-                            type="submit"
-                            className={`${styles.btn} ${styles.btnPrimary}`}
-                            disabled={isLoading || !playlistForm.title || selectedVideos.length === 0}
-                        >
-                            {isLoading ? "Создание..." : "Создать плейлист"}
+                        <button type="submit" className={styles.submitButton} disabled={!title.trim() || isSubmitting}>
+                            {isSubmitting ? 'Создаём…' : 'Создать плейлист'}
                         </button>
-                    </div>
+                    </footer>
                 </form>
             </div>
-        </div>
+        </main>
     );
 };
 

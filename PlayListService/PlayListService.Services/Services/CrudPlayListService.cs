@@ -2,6 +2,7 @@
 using Blog.Contracts.Models;
 using Authentication.Contract.Constants;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using PlayListService.Domain.Entities;
 using PlayListService.Services.Models;
@@ -14,6 +15,14 @@ namespace PlayListService.Services.Services;
 
 internal sealed class CrudPlayListService : IPlayListService
 {
+    private const long MaxThumbnailLength = 10 * 1024 * 1024;
+    private static readonly HashSet<string> AllowedThumbnailContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    };
+
     private readonly IReadWriteRepository<IPlayListEntity> _repository;
     private readonly ICurrentUserService _currentUserService;
     private readonly PlayListFileService _playListFileService;
@@ -44,6 +53,12 @@ internal sealed class CrudPlayListService : IPlayListService
             return Result<PlayListListItem>.Failure(permissionResult.Errors!);
         }
 
+        var thumbnailValidationResult = ValidateThumbnail(request.Thumbnail);
+        if (thumbnailValidationResult.IsFailure)
+        {
+            return Result<PlayListListItem>.Failure(thumbnailValidationResult.Errors!);
+        }
+
         var validationResult = await ValidatePostsAsync(
             request.PostIds,
             contentType,
@@ -57,8 +72,7 @@ internal sealed class CrudPlayListService : IPlayListService
 
         using var transaction = await _repository.BeginTransactionAsync();
         var playListId = GuidService.GetNewGuid();
-
-        var thumbnailId = await GetThumbnailFileId(request, user, playListId);
+        var thumbnailId = request.ThumbnailId ?? (request.Thumbnail is null ? null : GuidService.GetNewGuid());
 
         var newPlayList = PlayList.Create(
             id: playListId,
@@ -77,6 +91,29 @@ internal sealed class CrudPlayListService : IPlayListService
         }
 
         _repository.Add(newPlayList.Value);
+        if (request.Thumbnail is not null)
+        {
+            await _playListFileService.UploadThumbnailAsync(
+                playListId,
+                user.UserId,
+                new BaseFileMetadataEntity
+                {
+                    Id = thumbnailId!.Value,
+                    ContentType = request.Thumbnail.ContentType,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = Path.GetExtension(request.Thumbnail.FileName),
+                    Length = request.Thumbnail.Length,
+                    Name = request.Thumbnail.FileName,
+                },
+                request.Thumbnail.OpenReadStream());
+        }
+        else if (thumbnailId.HasValue)
+        {
+            var thumbnailFile = await _repository.Get<PlayListFile>()
+                .FirstAsync(x => x.Id == thumbnailId.Value && x.PlaylistId == null);
+            _repository.Attach(thumbnailFile);
+            thumbnailFile.PlaylistId = playListId;
+        }
         await _repository.SaveChangesAsync();
         await transaction.CommitAsync();
         return new PlayListListItem
@@ -88,42 +125,6 @@ internal sealed class CrudPlayListService : IPlayListService
             Kind = ToModel(newPlayList.Value.Kind),
             ThumbnailUrl = await _playListFileService.GetThumbnailAsync(newPlayList.Value)
         };
-    }
-
-    private async Task<Guid?> GetThumbnailFileId(CreatePlayListRequest request, UserModel user, Guid playListId)
-    {
-        if (request.ThumbnailId.HasValue)
-        {
-            var existFile = await _repository.Get<PlayListFile>()
-                .FirstAsync(x => x.Id == request.ThumbnailId.Value);
-
-            _repository.Attach(existFile);
-            existFile.PlaylistId = playListId;
-            return request.ThumbnailId.Value;
-        }
-        else
-        {
-            if (request.Thumbnail != null)
-            {
-                return (await _playListFileService.UploadThumbnailAsync(
-                    playListId,
-                    user.UserId,
-                    new BaseFileMetadataEntity
-                    {
-                        Id = GuidService.GetNewGuid(),
-                        ContentType = request.Thumbnail.ContentType,
-                        CreatedAt = DateTimeService.Now(),
-                        FileExtension = Path.GetExtension(request.Thumbnail.FileName),
-                        Length = request.Thumbnail.Length,
-                        Name = request.Thumbnail.Name,
-                    },
-                    request.Thumbnail.OpenReadStream())).Id;
-            }
-            else
-            {
-                return null;
-            }
-        }
     }
 
     public async Task<Result<PlayListListItem>> GetPlayListAsync(Guid id)
@@ -327,6 +328,27 @@ internal sealed class CrudPlayListService : IPlayListService
             return Result.Failure(new Error(errorKey, "Авторский плейлист может содержать только собственные посты"));
         }
 
+        return Result.Success();
+    }
+
+    private static Result ValidateThumbnail(IFormFile? thumbnail)
+    {
+        if (thumbnail is null)
+        {
+            return Result.Success();
+        }
+        if (thumbnail.Length <= 0)
+        {
+            return Result.Failure(new Error(nameof(CreatePlayListRequest.Thumbnail), "Файл обложки пуст"));
+        }
+        if (thumbnail.Length > MaxThumbnailLength)
+        {
+            return Result.Failure(new Error(nameof(CreatePlayListRequest.Thumbnail), "Размер обложки не должен превышать 10 МБ"));
+        }
+        if (!AllowedThumbnailContentTypes.Contains(thumbnail.ContentType))
+        {
+            return Result.Failure(new Error(nameof(CreatePlayListRequest.Thumbnail), "Поддерживаются изображения JPG, PNG и WebP"));
+        }
         return Result.Success();
     }
 

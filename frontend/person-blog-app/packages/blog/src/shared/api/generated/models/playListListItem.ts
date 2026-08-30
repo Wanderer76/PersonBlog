@@ -4,6 +4,8 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { PlayListContentTypeModel } from './playListContentTypeModel';
+import type { PlayListKindModel } from './playListKindModel';
 
 export interface PlayListListItem {
   id?: string;
@@ -13,4 +15,6 @@ export interface PlayListListItem {
   thumbnailUrl?: string | null;
   postCount?: number;
   canEdit?: boolean;
+  contentType?: PlayListContentTypeModel;
+  kind?: PlayListKindModel;
 }

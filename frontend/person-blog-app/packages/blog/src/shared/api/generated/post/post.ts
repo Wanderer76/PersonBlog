@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 import type {
+  PostApiPostCommonWithExcludeIdsParams,
   PostApiPostSetReactionPostIdParams,
   PostCommonModel,
   PostDetailViewModel,
@@ -73,16 +74,18 @@ const getApiPostDetailPostId = (
     }
   const postApiPostCommonWithExcludeIds = (
     postApiPostCommonWithExcludeIdsBody: string[],
+    params?: PostApiPostCommonWithExcludeIdsParams,
  options?: SecondParameter<typeof customInstance<PostCommonModel[]>>,) => {
       return customInstance<PostCommonModel[]>(
       {url: `/api/Post/commonWithExcludeIds`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: postApiPostCommonWithExcludeIdsBody
+      data: postApiPostCommonWithExcludeIdsBody,
+        params
     },
       options);
     }
   const getApiPostMyList = (
-
+    
  options?: SecondParameter<typeof customInstance<PostCommonModel[]>>,) => {
       return customInstance<PostCommonModel[]>(
       {url: `/api/Post/my/list`, method: 'GET'

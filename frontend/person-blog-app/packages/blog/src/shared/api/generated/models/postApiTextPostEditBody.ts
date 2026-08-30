@@ -13,7 +13,7 @@ export type PostApiTextPostEditBody = {
   Text?: string;
   Visibility?: PostVisibility;
   Media?: Blob[];
-  RemovedMediaIds?: string[];
   InlineMedia?: Blob[];
   InlineMediaIds?: string[];
+  RemovedMediaIds?: string[];
 };

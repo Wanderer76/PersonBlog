@@ -13,7 +13,7 @@ export type PostApiProfilePostV2TextEditBody = {
   Text?: string;
   Visibility?: PostVisibility;
   Media?: Blob[];
-  RemovedMediaIds?: string[];
   InlineMedia?: Blob[];
   InlineMediaIds?: string[];
+  RemovedMediaIds?: string[];
 };

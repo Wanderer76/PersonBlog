@@ -1,372 +1,293 @@
-import { useState, useEffect, useCallback, memo } from "react";
-import API from "@/shared/api/client";
-import { useNavigate, useParams } from "react-router-dom";
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getPlayList } from '@/shared/api/generated/play-list/play-list';
+import { PlayListContentTypeModel } from '@/shared/api/generated/models';
 import { PageShell } from '@/widgets/page-shell';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import './PlaylistPage.css';
-import { secondsToHumanReadable } from "@/shared/lib/date";
-import { getPlayList } from "@/shared/api/generated/play-list/play-list";
 
 const playListApi = getPlayList();
 
-// Вынесенные компоненты
-const AddVideoModal = memo(({
-    show,
-    onClose,
-    availableVideos,
-    selectedVideos,
-    onToggleSelection,
-    onAddVideos
-}) => {
-    if (!show) return null;
+const PostArtwork = memo(({ post, isText, className = '' }) => {
+    if (!isText && post.previewObjectName) {
+        return <img className={className} src={post.previewObjectName} alt="" />;
+    }
 
-    return (
-        <div className="modal-overlay">
-            <div className="add-video-modal">
-                <div className="modal-header">
-                    <h2>Добавить видео в плейлист</h2>
-                    <button className="close-modal" onClick={onClose}>×</button>
-                </div>
-                <div className="modal-content">
-                    <div className="available-videos">
-                        {availableVideos.map(video => (
-                            <VideoOption
-                                key={video.id}
-                                item={video}
-                                isSelected={selectedVideos.some(v => v.id === video.id)}
-                                onToggle={onToggleSelection}
-                            />
-                        ))}
-                    </div>
-                </div>
-                <div className="modal-footer">
-                    <div className="selected-count">Выбрано: {selectedVideos.length}</div>
-                    <div className="modal-actions">
-                        <button className="btn btnSecondary" onClick={onClose}>Отмена</button>
-                        <button
-                            className="btn btnPrimary"
-                            onClick={onAddVideos}
-                            disabled={selectedVideos.length === 0}
-                        >
-                            Добавить выбранные
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+    return <span className={`playlistArtworkPlaceholder ${className}`} aria-hidden="true">{isText ? 'Aa' : '▶'}</span>;
 });
 
-const VideoOption = memo(({ item, isSelected, onToggle }) => (
-    <div
-        className={`video-option ${isSelected ? 'selected' : ''}`}
-        onClick={() => onToggle(item)}
-    >
-        <img src={item.previewObjectName} alt="Превью" />
-        <div className="video-info">
-            <h4>{item.title}</h4>
-            <p>{item.viewCount} просмотров</p>
-        </div>
-        <div className="selection-checkbox">
-            {isSelected ? '✓' : ''}
-        </div>
-    </div>
+const PlaylistPost = memo(({ post, index, isText, canEdit, onOpen, onRemove }) => (
+    <Draggable draggableId={post.id} index={index} isDragDisabled={!canEdit}>
+        {(provided, snapshot) => (
+            <article
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                className={`playlistPost ${snapshot.isDragging ? 'playlistPostDragging' : ''}`}
+            >
+                <button
+                    type="button"
+                    className="playlistDragHandle"
+                    aria-label={canEdit ? 'Перетащить публикацию' : `Позиция ${index + 1}`}
+                    {...provided.dragHandleProps}
+                >
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    {canEdit && <small>⋮⋮</small>}
+                </button>
+                <button type="button" className="playlistPostMain" onClick={() => onOpen(post.id)}>
+                    <PostArtwork post={post} isText={isText} className="playlistPostArtwork" />
+                    <span className="playlistPostCopy">
+                        <strong>{post.title || 'Без названия'}</strong>
+                        <span>{post.description || (isText ? 'Статья' : 'Видео')}</span>
+                        {post.creator?.name && <small>Автор: {post.creator.name}</small>}
+                    </span>
+                </button>
+                {canEdit && (
+                    <button type="button" className="playlistRemoveButton" onClick={() => onRemove(post.id)}>
+                        Удалить
+                    </button>
+                )}
+            </article>
+        )}
+    </Draggable>
 ));
 
-const PlaylistItem = memo(({ video, onRemove, index, isDragDisabled }) => {
-    const navigate = useNavigate();
+const AddPostsModal = memo(({ isOpen, isText, posts, selectedIds, isLoading, isSaving, error, onToggle, onClose, onSave }) => {
+    if (!isOpen) return null;
+    const label = isText ? 'статьи' : 'видео';
 
     return (
-        <Draggable draggableId={video.id.toString()} index={index} isDragDisabled={isDragDisabled}>
-            {(provided, snapshot) => (
-                <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className={`playlist-item ${snapshot.isDragging ? 'dragging' : ''}`}
-                >
-                    <span className="position-badge">{video.position}</span>
-                    <img
-                        src={video.previewObjectName}
-                        alt="Превью"
-                        className="thumbnail"
-                        onClick={() => navigate(`/videoPage/${video.id}`)}
-                    />
-                    <div
-                        className="details"
-                        onClick={() => navigate(`/videoPage/${video.id}`)}
-                    >
-                        <h3 className="title">{video.title}</h3>
-                        <div className="meta">
-                            <div className="stats">
-                                <span>{video.viewCount} просмотров</span>
-                                <span>•</span>
-                                <span>{secondsToHumanReadable(video?.videoData?.duration)}</span>
-                            </div>
-                        </div>
+        <div className="playlistModalOverlay" role="presentation" onMouseDown={onClose}>
+            <section className="playlistModal" role="dialog" aria-modal="true" aria-labelledby="add-posts-title" onMouseDown={(event) => event.stopPropagation()}>
+                <header className="playlistModalHeader">
+                    <div>
+                        <span>Пополнить плейлист</span>
+                        <h2 id="add-posts-title">Добавить {label}</h2>
                     </div>
-                    <div className="postActions">
-                        {!isDragDisabled && <button
-                            className="btn btnSecondary"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onRemove(video.id);
-                            }}
-                        >
-                            Удалить
-                        </button>
-                        }
-                    </div>
+                    <button type="button" onClick={onClose} aria-label="Закрыть">×</button>
+                </header>
+                <div className="playlistModalBody">
+                    {error && <div className="playlistError" role="alert">{error}</div>}
+                    {isLoading && <div className="playlistModalState">Загружаем публикации…</div>}
+                    {!isLoading && posts.length === 0 && <div className="playlistModalState">Все доступные публикации уже добавлены</div>}
+                    {!isLoading && posts.map((post) => {
+                        const isSelected = selectedIds.has(post.id);
+                        return (
+                            <button
+                                type="button"
+                                key={post.id}
+                                className={`playlistOption ${isSelected ? 'playlistOptionSelected' : ''}`}
+                                onClick={() => onToggle(post.id)}
+                            >
+                                <PostArtwork post={post} isText={isText} className="playlistOptionArtwork" />
+                                <span>
+                                    <strong>{post.title || 'Без названия'}</strong>
+                                    <small>{post.creator?.name || post.description || (isText ? 'Статья' : 'Видео')}</small>
+                                </span>
+                                <i aria-hidden="true">{isSelected ? '✓' : '+'}</i>
+                            </button>
+                        );
+                    })}
                 </div>
-            )}
-        </Draggable>
+                <footer className="playlistModalFooter">
+                    <span>Выбрано: <strong>{selectedIds.size}</strong></span>
+                    <div>
+                        <button type="button" className="playlistButtonSecondary" onClick={onClose}>Отмена</button>
+                        <button type="button" className="playlistButtonPrimary" disabled={!selectedIds.size || isSaving} onClick={onSave}>
+                            {isSaving ? 'Добавляем…' : 'Добавить'}
+                        </button>
+                    </div>
+                </footer>
+            </section>
+        </div>
     );
 });
 
 const PlaylistPage = () => {
-    const [playlist, setPlaylist] = useState({
-        title: '',
-        thumbnailUrl: '',
-        canEdit: true,
-        posts: []
-    });
+    const navigate = useNavigate();
     const { playlistId } = useParams();
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [showAddVideoModal, setShowAddVideoModal] = useState(false);
-    const [availableVideos, setAvailableVideos] = useState([]);
-    const [selectedVideos, setSelectedVideos] = useState([]);
-    const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+    const [playlist, setPlaylist] = useState(null);
+    const [posts, setPosts] = useState([]);
+    const [availablePosts, setAvailablePosts] = useState([]);
+    const [selectedIds, setSelectedIds] = useState(new Set());
+    const [isLoading, setIsLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalLoading, setIsModalLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isReordering, setIsReordering] = useState(false);
+    const [error, setError] = useState('');
+    const [modalError, setModalError] = useState('');
 
-    const fetchPlaylistData = useCallback(async () => {
-        const { data } = await playListApi.getApiPlayListItemId(playlistId);
-        const videosWithPositions = (data.postPage?.items ?? []).map((video, index) => ({
-            ...video,
-            position: index + 1
-        }));
-        setPlaylist({ ...data.playList, posts: videosWithPositions });
+    const isText = playlist?.contentType === PlayListContentTypeModel.NUMBER_1;
+    const contentLabel = isText ? 'статей' : 'видео';
+
+    const fetchPlaylist = useCallback(async () => {
+        if (!playlistId) return;
+        setIsLoading(true);
+        setError('');
+        try {
+            const { data } = await playListApi.getApiPlayListItemId(playlistId);
+            setPlaylist(data.playList ?? null);
+            setPosts(data.postPage?.items ?? []);
+        } catch {
+            setError('Не удалось загрузить плейлист. Попробуйте обновить страницу.');
+        } finally {
+            setIsLoading(false);
+        }
     }, [playlistId]);
 
-    const fetchAvailableVideos = useCallback(async () => {
-        const { data } = await playListApi.getApiPlayListAvailableVideos({ playListId: playlistId });
-        setAvailableVideos(data ?? []);
-        setSelectedVideos([]);
+    useEffect(() => { void fetchPlaylist(); }, [fetchPlaylist]);
+
+    const openPost = useCallback((postId) => {
+        navigate(isText ? `/textPost/${postId}` : `/videoPage/${postId}`);
+    }, [isText, navigate]);
+
+    const openModal = useCallback(async () => {
+        setIsModalOpen(true);
+        setIsModalLoading(true);
+        setModalError('');
+        setSelectedIds(new Set());
+        try {
+            const { data } = await playListApi.getApiPlayListAvailableVideos({ playListId: playlistId });
+            setAvailablePosts(data ?? []);
+        } catch {
+            setAvailablePosts([]);
+            setModalError('Не удалось загрузить доступные публикации.');
+        } finally {
+            setIsModalLoading(false);
+        }
     }, [playlistId]);
 
-    useEffect(() => {
-        fetchPlaylistData();
-
-    }, [playlistId, fetchPlaylistData]);
-
-    const handleTitleChange = useCallback((e) => {
-        setPlaylist(prev => ({ ...prev, title: e.target.value }));
+    const togglePost = useCallback((postId) => {
+        setSelectedIds((current) => {
+            const next = new Set(current);
+            if (next.has(postId)) next.delete(postId);
+            else next.add(postId);
+            return next;
+        });
     }, []);
 
-    const handleCoverChange = useCallback(async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append('thumbnail', file);
-
-        const uploadResponse = await API.post("/profile/api/Playlist/loadThumbnail", formData);
-        if (uploadResponse.status === 200) {
-            const thumbnailId = uploadResponse.data?.thumbnailId ?? uploadResponse.data;
-            await API.post("/profile/api/Playlist/update", { playListId: playlistId, thumbnailId });
-            setIsEditingTitle(false);
-            await fetchPlaylistData();
+    const addPosts = useCallback(async () => {
+        if (!selectedIds.size || isSaving) return;
+        setIsSaving(true);
+        setModalError('');
+        try {
+            await playListApi.postApiPlayListAddVideo({ playListId: playlistId, postsToAdd: [...selectedIds] });
+            await fetchPlaylist();
+            setIsModalOpen(false);
+        } catch {
+            setModalError(`Не удалось добавить ${contentLabel}. Проверьте выбранные публикации.`);
+        } finally {
+            setIsSaving(false);
         }
-    }, [fetchPlaylistData, playlistId]);
+    }, [contentLabel, fetchPlaylist, isSaving, playlistId, selectedIds]);
 
-
-    const saveTitleChanges = useCallback(async () => {
-        await API.post("/profile/api/Playlist/update", { playListId: playlistId, title: playlist.title });
-        setIsEditingTitle(false);
-        await fetchPlaylistData();
-    }, [fetchPlaylistData, playlist.title, playlistId]);
-
-
-    const removeVideo = useCallback(async (videoId) => {
-        await playListApi.postApiPlayListRemoveVideo({
-            playListId: playlistId,
-            postId: videoId
-        });
-        setPlaylist(prev => ({
-            ...prev,
-            posts: prev.posts.filter(v => v.id !== videoId)
-                .map((video, index) => ({ ...video, position: index + 1 }))
-        }));
-    }, [playlistId]);
-
-    const toggleVideoSelection = useCallback((video) => {
-        setSelectedVideos(prev =>
-            prev.some(v => v.id === video.id)
-                ? prev.filter(v => v.id !== video.id)
-                : [...prev, { ...video, position: playlist.posts.length + prev.length + 1 }]
-        );
-    }, [playlist.posts.length]);
-
-    const addVideos = useCallback(async () => {
-        if (selectedVideos.length === 0) return;
- 
-        const response = await playListApi.postApiPlayListAddVideo({
-            playListId: playlistId,
-            postsToAdd: selectedVideos.map(x => x.id)
-        });
-
-        if (response.status === 200) {
-            await fetchPlaylistData();
-            setShowAddVideoModal(false);
+    const removePost = useCallback(async (postId) => {
+        const previous = posts;
+        setPosts((current) => current.filter((post) => post.id !== postId));
+        setError('');
+        try {
+            await playListApi.postApiPlayListRemoveVideo({ playListId: playlistId, postId });
+        } catch {
+            setPosts(previous);
+            setError('Не удалось удалить публикацию из плейлиста.');
         }
-    }, [fetchPlaylistData, playlistId, selectedVideos]);
+    }, [playlistId, posts]);
 
-    const onDragEnd = useCallback(async (result) => {
-        if (!result.destination) return;
-
-        const items = Array.from(playlist.posts);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-
-        const updatedVideos = items.map((item, index) => ({
-            ...item,
-            position: index + 1
-        }));
-
-        setPlaylist(prev => ({ ...prev, posts: updatedVideos }));
-
-        setIsUpdatingOrder(true);
+    const reorderPosts = useCallback(async ({ source, destination }) => {
+        if (!destination || destination.index === source.index || isReordering) return;
+        const previous = posts;
+        const reordered = [...posts];
+        const [moved] = reordered.splice(source.index, 1);
+        reordered.splice(destination.index, 0, moved);
+        setPosts(reordered);
+        setIsReordering(true);
+        setError('');
         try {
             await playListApi.postApiPlayListUpdatePositions({
-                playlistId: playlistId,
-                postId: reorderedItem.id,
-                destination: result.destination.index + 1
+                playlistId,
+                postId: moved.id,
+                destination: destination.index + 1,
             });
-        } catch (error) {
-            console.error("Error updating video positions:", error);
-            fetchPlaylistData();
+        } catch {
+            setPosts(previous);
+            setError('Не удалось сохранить новый порядок публикаций.');
         } finally {
-            setIsUpdatingOrder(false);
+            setIsReordering(false);
         }
-    }, [playlist.posts, playlistId, fetchPlaylistData]);
+    }, [isReordering, playlistId, posts]);
 
-    const handleOpenModal = useCallback(async () => {
-        await fetchAvailableVideos();
-        setShowAddVideoModal(true);
-    }, [fetchAvailableVideos]);
+    const heroArtworkUrl = useMemo(
+        () => playlist?.thumbnailUrl || (!isText ? posts.find((post) => post.previewObjectName)?.previewObjectName : ''),
+        [isText, playlist?.thumbnailUrl, posts],
+    );
+
+    if (isLoading) {
+        return <PageShell className="playlistPage" contentClassName="playlistShell"><div className="playlistPageState">Загружаем плейлист…</div></PageShell>;
+    }
+
+    if (!playlist) {
+        return <PageShell className="playlistPage" contentClassName="playlistShell"><div className="playlistPageState playlistPageError">{error || 'Плейлист не найден'}</div></PageShell>;
+    }
 
     return (
-        <PageShell className="page-container" contentClassName="content-container">
-                <div className="playlist-header">
-                    <div className="cover-container">
-                        <img
-                            src={playlist.thumbnailUrl || 'default-cover.jpg'}
-                            alt="Обложка плейлиста"
-                            className="playlist-cover"
-                        />
-                        {playlist.canEdit &&
-                            <label className="edit-cover-btn" >
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleCoverChange}
-                                    hidden
-                                />
-                                ✏️
-                            </label>}
-                    </div>
-                    <div className="playlist-info">
-                        {isEditingTitle ? (
-                            <div className="title-edit">
-                                <input
-                                    type="text"
-                                    value={playlist.title}
-                                    onChange={handleTitleChange}
-                                    className="title-input"
-                                />
-                                <div className="edit-actions">
-                                    <button
-                                        className="btn btnPrimary"
-                                        onClick={saveTitleChanges}
-                                    >
-                                        Сохранить
-                                    </button>
-                                    <button
-                                        className="btn btnSecondary"
-                                        onClick={() => setIsEditingTitle(false)}
-                                    >
-                                        Отмена
-                                    </button>
+        <PageShell className="playlistPage" contentClassName="playlistShell">
+            <button type="button" className="playlistBack" onClick={() => navigate(-1)}>← Назад</button>
+            <header className="playlistHero">
+                <div className="playlistHeroArtwork">
+                    {heroArtworkUrl
+                        ? <img src={heroArtworkUrl} alt="Обложка плейлиста" />
+                        : <span aria-hidden="true">{isText ? 'Aa' : '▶'}</span>}
+                    <i>{posts.length}</i>
+                </div>
+                <div className="playlistHeroCopy">
+                    <span className="playlistEyebrow">Плейлист · {isText ? 'Статьи' : 'Видео'}</span>
+                    <h1>{playlist.title || 'Без названия'}</h1>
+                    <p>{posts.length} {contentLabel} в подборке</p>
+                    {playlist.canEdit && <button type="button" className="playlistButtonPrimary" onClick={openModal}>＋ Добавить публикации</button>}
+                </div>
+            </header>
+
+            <section className="playlistContent">
+                <div className="playlistSectionHeader">
+                    <div><span>Содержимое</span><h2>Публикации</h2></div>
+                    {playlist.canEdit && <small>{isReordering ? 'Сохраняем порядок…' : 'Перетаскивайте карточки для сортировки'}</small>}
+                </div>
+                {error && <div className="playlistError" role="alert">{error}</div>}
+                {posts.length > 0 ? (
+                    <DragDropContext onDragEnd={reorderPosts}>
+                        <Droppable droppableId="playlist-posts">
+                            {(provided) => (
+                                <div className="playlistPosts" ref={provided.innerRef} {...provided.droppableProps}>
+                                    {posts.map((post, index) => (
+                                        <PlaylistPost key={post.id} post={post} index={index} isText={isText} canEdit={Boolean(playlist.canEdit) && !isReordering} onOpen={openPost} onRemove={removePost} />
+                                    ))}
+                                    {provided.placeholder}
                                 </div>
-                            </div>
-                        ) : (
-                            <div className="title-display">
-                                <h1>{playlist.title}</h1>
-                                {playlist.canEdit &&
-                                    <button
-                                        className="btn btnPrimary"
-                                        onClick={() => setIsEditingTitle(true)}
-                                    >
-                                        Редактировать
-                                    </button>
-                                }
-                            </div>
-                        )}
-                        {playlist.canEdit &&
-                            <button
-                                className="btn btnPrimary add-video-btn"
-                                onClick={handleOpenModal}
-                            >
-                                Добавить видео
-                            </button>
-                        }
+                            )}
+                        </Droppable>
+                    </DragDropContext>
+                ) : (
+                    <div className="playlistEmpty">
+                        <span aria-hidden="true">{isText ? 'Aa' : '▶'}</span>
+                        <h3>Плейлист пока пуст</h3>
+                        <p>{playlist.canEdit ? 'Добавьте первые публикации — формат плейлиста уже зафиксирован.' : 'Автор пока не добавил публикации.'}</p>
+                        {playlist.canEdit && <button type="button" className="playlistButtonPrimary" onClick={openModal}>Добавить публикации</button>}
                     </div>
-                </div>
+                )}
+            </section>
 
-                <div className="playlist-content">
-                    {isUpdatingOrder && <div className="updating-order">Обновление порядка...</div>}
-                    {playlist.posts.length > 0 ? (
-                        <DragDropContext onDragEnd={onDragEnd} >
-                            <Droppable droppableId="playlist-videos" >
-                                {(provided) => (
-                                    <div
-                                        {...provided.droppableProps}
-                                        ref={provided.innerRef}
-                                        className="videos-list"
-                                    >
-                                        {playlist.posts.map((video, index) => (
-                                            <PlaylistItem
-                                                key={video.id}
-                                                video={video}
-                                                index={index}
-                                                onRemove={removeVideo}
-                                                isDragDisabled={!playlist.canEdit}
-                                            />
-                                        ))}
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </DragDropContext>
-                    ) : (
-                        <div className="empty-playlist">
-                            <p>В плейлисте пока нет видео</p>
-                            <button
-                                className="btn btnPrimary"
-                                onClick={handleOpenModal}
-                            >
-                                Добавить видео
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                <AddVideoModal
-                    show={showAddVideoModal}
-                    onClose={() => setShowAddVideoModal(false)}
-                    availableVideos={availableVideos}
-                    selectedVideos={selectedVideos}
-                    onToggleSelection={toggleVideoSelection}
-                    onAddVideos={addVideos}
-                />
+            <AddPostsModal
+                isOpen={isModalOpen}
+                isText={isText}
+                posts={availablePosts}
+                selectedIds={selectedIds}
+                isLoading={isModalLoading}
+                isSaving={isSaving}
+                error={modalError}
+                onToggle={togglePost}
+                onClose={() => setIsModalOpen(false)}
+                onSave={addPosts}
+            />
         </PageShell>
     );
 };

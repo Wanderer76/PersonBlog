@@ -37,7 +37,7 @@ const getApiTextPostPostId = (
       options);
     }
   const getApiTextPostCreate = (
-
+    
  options?: SecondParameter<typeof customInstance<CreatePostModelViewModel>>,) => {
       return customInstance<CreatePostModelViewModel>(
       {url: `/api/TextPost/create`, method: 'GET'
@@ -95,14 +95,14 @@ if(postApiTextPostEditBody.Visibility !== undefined) {
 if(postApiTextPostEditBody.Media !== undefined) {
  postApiTextPostEditBody.Media.forEach(value => formData.append(`Media`, value));
  }
-if(postApiTextPostEditBody.RemovedMediaIds !== undefined) {
- postApiTextPostEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
- }
 if(postApiTextPostEditBody.InlineMedia !== undefined) {
  postApiTextPostEditBody.InlineMedia.forEach(value => formData.append(`InlineMedia`, value));
  }
 if(postApiTextPostEditBody.InlineMediaIds !== undefined) {
  postApiTextPostEditBody.InlineMediaIds.forEach(value => formData.append(`InlineMediaIds`, value));
+ }
+if(postApiTextPostEditBody.RemovedMediaIds !== undefined) {
+ postApiTextPostEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
  }
 
       return customInstance<void>(

@@ -4,6 +4,8 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { PlayListContentTypeModel } from './playListContentTypeModel';
+import type { PlayListKindModel } from './playListKindModel';
 
 export interface CreatePlayListRequest {
   /** @nullable */
@@ -14,4 +16,6 @@ export interface CreatePlayListRequest {
   thumbnail?: Blob | null;
   /** @nullable */
   postIds?: string[] | null;
+  contentType?: PlayListContentTypeModel;
+  kind?: PlayListKindModel;
 }

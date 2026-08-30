@@ -46,7 +46,7 @@ const getApiProfilePostV2My = (
       options);
     }
   const getApiProfilePostV2Create = (
-
+    
  options?: SecondParameter<typeof customInstance<CreatePostModelViewModel>>,) => {
       return customInstance<CreatePostModelViewModel>(
       {url: `/api/ProfilePostV2/create`, method: 'GET'
@@ -175,14 +175,14 @@ if(postApiProfilePostV2TextEditBody.Visibility !== undefined) {
 if(postApiProfilePostV2TextEditBody.Media !== undefined) {
  postApiProfilePostV2TextEditBody.Media.forEach(value => formData.append(`Media`, value));
  }
-if(postApiProfilePostV2TextEditBody.RemovedMediaIds !== undefined) {
- postApiProfilePostV2TextEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
- }
 if(postApiProfilePostV2TextEditBody.InlineMedia !== undefined) {
  postApiProfilePostV2TextEditBody.InlineMedia.forEach(value => formData.append(`InlineMedia`, value));
  }
 if(postApiProfilePostV2TextEditBody.InlineMediaIds !== undefined) {
  postApiProfilePostV2TextEditBody.InlineMediaIds.forEach(value => formData.append(`InlineMediaIds`, value));
+ }
+if(postApiProfilePostV2TextEditBody.RemovedMediaIds !== undefined) {
+ postApiProfilePostV2TextEditBody.RemovedMediaIds.forEach(value => formData.append(`RemovedMediaIds`, value));
  }
 
       return customInstance<void>(

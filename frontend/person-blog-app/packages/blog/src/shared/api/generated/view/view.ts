@@ -12,7 +12,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
   export const getView = () => {
 const getApiViewHistory = (
-
+    
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/View/history`, method: 'GET'
@@ -20,7 +20,7 @@ const getApiViewHistory = (
       options);
     }
   const getApiViewLiked = (
-
+    
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/api/View/liked`, method: 'GET'

@@ -4,6 +4,7 @@ using Authentication.Contract.Constants;
 using Infrastructure.Extensions;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using PlayListService.Domain.Entities;
 using PlayListService.Persistence;
@@ -156,6 +157,51 @@ public sealed class CrudPlayListServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal(videoPostId, (await fixture.Context.PlayListItems.SingleAsync()).PostId);
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_RejectsUnsupportedThumbnailType()
+    {
+        await using var fixture = CreateFixture();
+        await using var stream = new MemoryStream([1, 2, 3]);
+        var thumbnail = new FormFile(stream, 0, stream.Length, "Thumbnail", "cover.svg")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/svg+xml"
+        };
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "Unsafe cover",
+            Thumbnail = thumbnail
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayLists.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_SavesOptionalThumbnailAndLinksItToPlaylist()
+    {
+        await using var fixture = CreateFixture();
+        await using var stream = new MemoryStream([1, 2, 3]);
+        var thumbnail = new FormFile(stream, 0, stream.Length, "Thumbnail", "cover.webp")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/webp"
+        };
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "With cover",
+            Thumbnail = thumbnail
+        });
+
+        Assert.True(result.IsSuccess);
+        var file = await fixture.Context.Set<PlayListFile>().SingleAsync();
+        Assert.Equal(result.Value.Id, file.PlaylistId);
+        Assert.Equal(file.Id, (await fixture.Context.PlayLists.SingleAsync()).ThumbnailId);
+        Assert.Equal(file.ObjectName, result.Value.ThumbnailUrl);
     }
 
     [Fact]

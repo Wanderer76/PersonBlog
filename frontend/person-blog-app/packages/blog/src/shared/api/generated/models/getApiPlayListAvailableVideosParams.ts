@@ -4,7 +4,9 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type { PlayListContentTypeModel } from './playListContentTypeModel';
 
 export type GetApiPlayListAvailableVideosParams = {
 playListId?: string;
+contentType?: PlayListContentTypeModel;
 };

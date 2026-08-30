@@ -32,7 +32,7 @@ const getApiBlogHasBlogUserId = (
       options);
     }
   const getApiBlogHasUserBlog = (
-
+    
  options?: SecondParameter<typeof customInstance<HasBlogResponse>>,) => {
       return customInstance<HasBlogResponse>(
       {url: `/api/Blog/hasUserBlog`, method: 'GET'
@@ -40,7 +40,7 @@ const getApiBlogHasBlogUserId = (
       options);
     }
   const getApiBlogDetail = (
-
+    
  options?: SecondParameter<typeof customInstance<BlogModel>>,) => {
       return customInstance<BlogModel>(
       {url: `/api/Blog/detail`, method: 'GET'
@@ -48,7 +48,7 @@ const getApiBlogHasBlogUserId = (
       options);
     }
   const getApiBlogSubscriptionLevelCreate = (
-
+    
  options?: SecondParameter<typeof customInstance<unknown>>,) => {
       return customInstance<unknown>(
       {url: `/api/Blog/subscriptionLevelCreate`, method: 'GET'
@@ -66,7 +66,7 @@ const getApiBlogHasBlogUserId = (
       options);
     }
   const getApiBlogSubscriptionLevels = (
-
+    
  options?: SecondParameter<typeof customInstance<unknown>>,) => {
       return customInstance<unknown>(
       {url: `/api/Blog/subscription-levels`, method: 'GET'

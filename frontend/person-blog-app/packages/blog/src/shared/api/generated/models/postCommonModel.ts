@@ -5,6 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { PostCreatorModel } from './postCreatorModel';
+import type { PostTypeModel } from './postTypeModel';
 
 export interface PostCommonModel {
   id?: string;
@@ -15,4 +16,5 @@ export interface PostCommonModel {
   /** @nullable */
   title?: string | null;
   creator?: PostCreatorModel;
+  postType?: PostTypeModel;
 }

@@ -1,4 +1,5 @@
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Http;
 using PlayListService.Contract;
 using PlayListService.Services.Models;
 using PlayListService.Services.Services;
@@ -39,6 +40,31 @@ public sealed class PlaylistHttpApiClientTests
         Assert.Equal("0", handler.FormValues["Kind"].Single());
         Assert.Equal(thumbnailId.ToString(), handler.FormValues["ThumbnailId"].Single());
         Assert.Equal(postIds.Select(x => x.ToString()), handler.FormValues["PostIds"]);
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_SendsOptionalThumbnailFile()
+    {
+        var handler = new CapturingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = JsonContent.Create(new PlayListListItem { Id = Guid.NewGuid(), Title = "With cover" })
+        });
+        var client = CreateClient(handler);
+        await using var stream = new MemoryStream([1, 2, 3]);
+        var thumbnail = new FormFile(stream, 0, stream.Length, "Thumbnail", "cover.png")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/png"
+        };
+
+        var result = await client.CreatePlayListAsync(new CreatePlayListRequest
+        {
+            Title = "With cover",
+            Thumbnail = thumbnail
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("cover.png", handler.FileNames["Thumbnail"]);
     }
 
     [Fact]
@@ -107,6 +133,7 @@ public sealed class PlaylistHttpApiClientTests
     {
         public string? ContentType { get; private set; }
         public Dictionary<string, string[]> FormValues { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, string> FileNames { get; } = new(StringComparer.Ordinal);
 
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
@@ -119,8 +146,15 @@ public sealed class PlaylistHttpApiClientTests
                 foreach (var part in multipart)
                 {
                     var name = part.Headers.ContentDisposition?.Name?.Trim('"');
-                    if (name is null || part.Headers.ContentDisposition?.FileName is not null)
+                    if (name is null)
                         continue;
+
+                    var fileName = part.Headers.ContentDisposition?.FileName?.Trim('"');
+                    if (fileName is not null)
+                    {
+                        FileNames[name] = fileName;
+                        continue;
+                    }
 
                     var value = await part.ReadAsStringAsync(cancellationToken);
                     FormValues[name] = FormValues.TryGetValue(name, out var current)

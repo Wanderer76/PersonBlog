@@ -5,7 +5,8 @@
  * OpenAPI spec version: 1.0
  */
 import type {
-  GetApiChannelPostsChannelIdParams
+  GetApiChannelPostsChannelIdParams,
+  PostCommonModelV2PagedListViewModel
 } from '.././models';
 
 import { customInstance } from '../../mutator';
@@ -26,8 +27,8 @@ const getApiChannelChannelId = (
   const getApiChannelPostsChannelId = (
     channelId: string,
     params?: GetApiChannelPostsChannelIdParams,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
+ options?: SecondParameter<typeof customInstance<PostCommonModelV2PagedListViewModel>>,) => {
+      return customInstance<PostCommonModelV2PagedListViewModel>(
       {url: `/api/Channel/posts/${channelId}`, method: 'GET',
         params
     },

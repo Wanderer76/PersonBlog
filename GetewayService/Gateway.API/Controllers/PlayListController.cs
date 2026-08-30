@@ -85,7 +85,7 @@ public class PlayListController : BaseApiController
 
     [HttpPost("create")]
     [AuthFilter(Roles.User, Roles.Blogger)]
-    public async Task<ActionResult<PlayListWithPostsViewModel>> CreatePlayList([FromBody] CreatePlayListRequest form)
+    public async Task<ActionResult<PlayListWithPostsViewModel>> CreatePlayList([FromForm] CreatePlayListRequest form)
     {
         var result = await _playListService.CreatePlayListAsync(form);
         if (result.IsFailure)

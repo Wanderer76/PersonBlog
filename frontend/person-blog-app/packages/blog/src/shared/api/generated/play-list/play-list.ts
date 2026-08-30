@@ -6,13 +6,13 @@
  */
 import type {
   ChangePostPositionRequest,
-  CreatePlayListRequest,
   GetApiPlayListAvailableVideosParams,
   GetApiPlayListListParams,
   PlayListItemAddRequest,
   PlayListItemRemoveRequest,
   PlayListListItem,
   PlayListWithPostsViewModel,
+  PostApiPlayListCreateBody,
   PostCommonModel
 } from '.././models';
 
@@ -50,12 +50,29 @@ const getApiPlayListItemId = (
       options);
     }
   const postApiPlayListCreate = (
-    createPlayListRequest: CreatePlayListRequest,
- options?: SecondParameter<typeof customInstance<PlayListWithPostsViewModel>>,) => {
+    postApiPlayListCreateBody: PostApiPlayListCreateBody,
+ options?: SecondParameter<typeof customInstance<PlayListWithPostsViewModel>>,) => {const formData = new FormData();
+formData.append(`Title`, postApiPlayListCreateBody.Title);
+if(postApiPlayListCreateBody.ThumbnailId !== undefined) {
+ formData.append(`ThumbnailId`, postApiPlayListCreateBody.ThumbnailId);
+ }
+if(postApiPlayListCreateBody.Thumbnail !== undefined) {
+ formData.append(`Thumbnail`, postApiPlayListCreateBody.Thumbnail);
+ }
+if(postApiPlayListCreateBody.PostIds !== undefined) {
+ postApiPlayListCreateBody.PostIds.forEach(value => formData.append(`PostIds`, value));
+ }
+if(postApiPlayListCreateBody.ContentType !== undefined) {
+ formData.append(`ContentType`, postApiPlayListCreateBody.ContentType.toString())
+ }
+if(postApiPlayListCreateBody.Kind !== undefined) {
+ formData.append(`Kind`, postApiPlayListCreateBody.Kind.toString())
+ }
+
       return customInstance<PlayListWithPostsViewModel>(
       {url: `/api/PlayList/create`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: createPlayListRequest
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
     },
       options);
     }
@@ -98,7 +115,7 @@ const getApiPlayListItemId = (
       options);
     }
   const getApiPlayListMyList = (
-
+    
  options?: SecondParameter<typeof customInstance<PlayListListItem[]>>,) => {
       return customInstance<PlayListListItem[]>(
       {url: `/api/PlayList/my/list`, method: 'GET'
