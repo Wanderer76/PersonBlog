@@ -4,6 +4,7 @@ import VideoPlayer from '@/features/video-player';
 import './VideoPage.css';
 import { JwtTokenService } from '@/shared/auth/tokenStorage';
 import { SmallVideoCard } from '@/entities/post';
+import { loadPlaylist } from '@/entities/playlist';
 import CommentsList from '@/features/comments';
 import { getVideo } from '@/shared/api/generated/video/video';
 import { getBlog } from '@/shared/api/generated/blog/blog';
@@ -76,9 +77,38 @@ const VideoPage = function () {
     const [reactionPending, setReactionPending] = useState(false);
     const [subscriptionPending, setSubscriptionPending] = useState(false);
     const [conferencePending, setConferencePending] = useState(false);
+    const [playlistPosts, setPlaylistPosts] = useState([]);
     const watchedTimeRef = useRef(0);
     const nextThresholdRef = useRef(30);
     const lastCallTimeRef = useRef(0);
+    const searchParams = new URLSearchParams(location.search);
+    const playlistId = searchParams.get('playlistId');
+    const shouldAutoplay = Boolean(playlistId) && searchParams.get('autoplay') === '1';
+    const playlistIndex = playlistPosts.findIndex((playlistPost) => playlistPost.id === postId);
+    const nextPlaylistPostId = playlistIndex >= 0
+        ? playlistPosts[playlistIndex + 1]?.id
+        : null;
+
+    useEffect(() => {
+        if (!playlistId) {
+            setPlaylistPosts([]);
+            return undefined;
+        }
+
+        const controller = new AbortController();
+        setPlaylistPosts([]);
+
+        loadPlaylist(playlistId, controller.signal)
+            .then((data) => setPlaylistPosts(data.postPage?.items ?? []))
+            .catch((error) => {
+                if (!controller.signal.aborted) {
+                    console.warn('Не удалось загрузить очередь плейлиста:', error);
+                    setPlaylistPosts([]);
+                }
+            });
+
+        return () => controller.abort();
+    }, [playlistId]);
 
     useEffect(() => {
         let isActive = true;
@@ -270,6 +300,18 @@ const VideoPage = function () {
         }
     };
 
+    const handleVideoEnded = (player) => {
+        void setViewEnd(player);
+
+        if (!nextPlaylistPostId || !playlistId) return;
+
+        const nextSearchParams = new URLSearchParams({
+            playlistId,
+            autoplay: '1',
+        });
+        navigate(`/videoPage/${nextPlaylistPostId}?${nextSearchParams.toString()}`, { replace: true });
+    };
+
     const onPaused = async (player) => {
         if (!JwtTokenService.isAuth()) return;
 
@@ -383,12 +425,12 @@ const VideoPage = function () {
                                 path={{
                                     postId: post.id,
                                     blogId: blog.id,
-                                    autoplay: false,
+                                    autoplay: shouldAutoplay,
                                     objectName: post.videoData.objectName,
                                 }}
                                 currentTime={time}
                                 onTimeupdate={setView}
-                                onEnded={setViewEnd}
+                                onEnded={handleVideoEnded}
                                 onPause={onPaused}
                             />
                         </VideoPlayerFrame>

@@ -3,6 +3,7 @@ import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getPlayList } from '@/shared/api/generated/play-list/play-list';
 import { PlayListContentTypeModel } from '@/shared/api/generated/models';
+import { loadPlaylist } from '@/entities/playlist';
 import { PageShell } from '@/widgets/page-shell';
 import './PlaylistPage.css';
 
@@ -125,7 +126,7 @@ const PlaylistPage = () => {
         setIsLoading(true);
         setError('');
         try {
-            const { data } = await playListApi.getApiPlayListItemId(playlistId);
+            const data = await loadPlaylist(playlistId);
             setPlaylist(data.playList ?? null);
             setPosts(data.postPage?.items ?? []);
         } catch {
@@ -138,8 +139,10 @@ const PlaylistPage = () => {
     useEffect(() => { void fetchPlaylist(); }, [fetchPlaylist]);
 
     const openPost = useCallback((postId) => {
-        navigate(isText ? `/textPost/${postId}` : `/videoPage/${postId}`);
-    }, [isText, navigate]);
+        navigate(isText
+            ? `/textPost/${postId}`
+            : `/videoPage/${postId}?playlistId=${encodeURIComponent(playlistId)}`);
+    }, [isText, navigate, playlistId]);
 
     const openModal = useCallback(async () => {
         setIsModalOpen(true);

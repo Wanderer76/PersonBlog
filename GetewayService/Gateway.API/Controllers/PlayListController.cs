@@ -27,10 +27,13 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("item/{id:guid}")]
-    public async Task<ActionResult<PlayListWithPostsViewModel>> GetPlayListViewModel(Guid id)
+    public async Task<ActionResult<PlayListWithPostsViewModel>> GetPlayListViewModel(
+        Guid id,
+        [Range(1, int.MaxValue)] int page = 1,
+        [Range(1, 100)] int pageSize = 20)
     {
         var playListTask = _playListService.GetPlayListAsync(id);
-        var postsPageTask = _playListService.GetPlayListPostPagedAsync(id, 1, 20);
+        var postsPageTask = _playListService.GetPlayListPostPagedAsync(id, page, pageSize);
         await Task.WhenAll([playListTask, postsPageTask]);
 
         var playList = await playListTask;
