@@ -57,10 +57,101 @@ const emptyUserView = {
     hasSubscription: false,
 };
 
+const PlaylistQueue = ({ playlist, posts, currentPostId, currentIndex, isLoading, error, onOpen, onSelect }) => {
+    const listRef = useRef(null);
+    const currentItemRef = useRef(null);
+    const currentPosition = currentIndex >= 0 ? currentIndex + 1 : 0;
+    const progress = posts.length > 0 ? (currentPosition / posts.length) * 100 : 0;
+
+    useEffect(() => {
+        const list = listRef.current;
+        const currentItem = currentItemRef.current;
+        if (!list || !currentItem) return;
+
+        const listRect = list.getBoundingClientRect();
+        const itemRect = currentItem.getBoundingClientRect();
+
+        if (itemRect.top < listRect.top) {
+            list.scrollTop -= listRect.top - itemRect.top;
+        } else if (itemRect.bottom > listRect.bottom) {
+            list.scrollTop += itemRect.bottom - listRect.bottom;
+        }
+    }, [currentPostId, posts.length]);
+
+    return (
+        <section className="playlist-queue" aria-labelledby="playlist-queue-title">
+            <header className="playlist-queue-header">
+                <div className="playlist-queue-heading">
+                    <span className="playlist-queue-eyebrow">Сейчас воспроизводится плейлист</span>
+                    {playlist
+                        ? <button type="button" id="playlist-queue-title" className="playlist-queue-title" onClick={onOpen}>{playlist.title || 'Без названия'}</button>
+                        : <h2 id="playlist-queue-title" className="playlist-queue-title">Плейлист</h2>}
+                    {!isLoading && !error && (
+                        <span className="playlist-queue-position">{currentPosition} из {posts.length}</span>
+                    )}
+                </div>
+                {!isLoading && !error && (
+                    <span className={`playlist-autoplay-status ${currentPosition === posts.length ? 'is-complete' : ''}`}>
+                        <i aria-hidden="true" />
+                        {currentPosition === posts.length ? 'Последнее видео' : 'Автопереход включён'}
+                    </span>
+                )}
+            </header>
+
+            {!isLoading && !error && (
+                <div className="playlist-queue-progress" aria-hidden="true">
+                    <span style={{ width: `${progress}%` }} />
+                </div>
+            )}
+
+            {isLoading && <div className="playlist-queue-state">Загружаем очередь…</div>}
+            {error && <div className="playlist-queue-state playlist-queue-error">{error}</div>}
+
+            {!isLoading && !error && (
+                <ol
+                    ref={listRef}
+                    className={`playlist-queue-list ${posts.length > 5 ? 'is-scrollable' : ''}`}
+                >
+                    {posts.map((playlistPost, index) => {
+                        const isCurrent = playlistPost.id === currentPostId;
+
+                        return (
+                            <li key={playlistPost.id} ref={isCurrent ? currentItemRef : null}>
+                                <button
+                                    type="button"
+                                    className={`playlist-queue-item ${isCurrent ? 'is-current' : ''}`}
+                                    aria-current={isCurrent ? 'true' : undefined}
+                                    onClick={() => onSelect(playlistPost.id)}
+                                    disabled={isCurrent}
+                                >
+                                    <span className="playlist-queue-index" aria-hidden="true">
+                                        {isCurrent ? <i className="playlist-playing-icon">▶</i> : index + 1}
+                                    </span>
+                                    <span className="playlist-queue-thumbnail">
+                                        {playlistPost.previewObjectName
+                                            ? <img src={playlistPost.previewObjectName} alt="" loading="lazy" />
+                                            : <i aria-hidden="true">▶</i>}
+                                    </span>
+                                    <span className="playlist-queue-copy">
+                                        <strong>{playlistPost.title || 'Без названия'}</strong>
+                                        <small>{playlistPost.creator?.name || 'Видео'}</small>
+                                    </span>
+                                </button>
+                            </li>
+                        );
+                    })}
+                </ol>
+            )}
+        </section>
+    );
+};
+
 const VideoPage = function () {
     const { postId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
+    const searchParams = new URLSearchParams(location.search);
+    const playlistId = searchParams.get('playlistId');
     const [post, setPostData] = useState(emptyPost);
     const [blog, setBlog] = useState({});
     const [userView, setUserView] = useState(emptyUserView);
@@ -77,12 +168,13 @@ const VideoPage = function () {
     const [reactionPending, setReactionPending] = useState(false);
     const [subscriptionPending, setSubscriptionPending] = useState(false);
     const [conferencePending, setConferencePending] = useState(false);
+    const [playlist, setPlaylist] = useState(null);
     const [playlistPosts, setPlaylistPosts] = useState([]);
+    const [isPlaylistLoading, setIsPlaylistLoading] = useState(Boolean(playlistId));
+    const [playlistError, setPlaylistError] = useState('');
     const watchedTimeRef = useRef(0);
     const nextThresholdRef = useRef(30);
     const lastCallTimeRef = useRef(0);
-    const searchParams = new URLSearchParams(location.search);
-    const playlistId = searchParams.get('playlistId');
     const shouldAutoplay = Boolean(playlistId) && searchParams.get('autoplay') === '1';
     const playlistIndex = playlistPosts.findIndex((playlistPost) => playlistPost.id === postId);
     const nextPlaylistPostId = playlistIndex >= 0
@@ -91,20 +183,34 @@ const VideoPage = function () {
 
     useEffect(() => {
         if (!playlistId) {
+            setPlaylist(null);
             setPlaylistPosts([]);
+            setIsPlaylistLoading(false);
+            setPlaylistError('');
             return undefined;
         }
 
         const controller = new AbortController();
+        setPlaylist(null);
         setPlaylistPosts([]);
+        setIsPlaylistLoading(true);
+        setPlaylistError('');
 
         loadPlaylist(playlistId, controller.signal)
-            .then((data) => setPlaylistPosts(data.postPage?.items ?? []))
+            .then((data) => {
+                setPlaylist(data.playList ?? null);
+                setPlaylistPosts(data.postPage?.items ?? []);
+            })
             .catch((error) => {
                 if (!controller.signal.aborted) {
                     console.warn('Не удалось загрузить очередь плейлиста:', error);
+                    setPlaylist(null);
                     setPlaylistPosts([]);
+                    setPlaylistError('Не удалось загрузить очередь плейлиста.');
                 }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setIsPlaylistLoading(false);
             });
 
         return () => controller.abort();
@@ -312,6 +418,16 @@ const VideoPage = function () {
         navigate(`/videoPage/${nextPlaylistPostId}?${nextSearchParams.toString()}`, { replace: true });
     };
 
+    const openPlaylistPost = (targetPostId) => {
+        if (!targetPostId || targetPostId === postId || !playlistId) return;
+
+        const nextSearchParams = new URLSearchParams({
+            playlistId,
+            autoplay: '1',
+        });
+        navigate(`/videoPage/${targetPostId}?${nextSearchParams.toString()}`);
+    };
+
     const onPaused = async (player) => {
         if (!JwtTokenService.isAuth()) return;
 
@@ -416,6 +532,7 @@ const VideoPage = function () {
     return (
         <VideoWatchLayout>
                 <div className="video-container">
+                    <div className="video-primary-column">
                     <article className="main-content">
                         <VideoPlayerFrame>
                             <VideoPlayer
@@ -481,7 +598,9 @@ const VideoPage = function () {
 
                         <VideoDescription description={post.description} />
 
-                        <section className="comments-section">
+                    </article>
+
+                    <section className="comments-section">
                             <h2>{commentCount} комментариев</h2>
                             {JwtTokenService.isAuth() && (
                                 <div className="add-comment">
@@ -512,16 +631,30 @@ const VideoPage = function () {
                             {commentsError
                                 ? <div className="comments-unavailable" role="status">Комментарии временно недоступны.</div>
                                 : <CommentsList comments={comments} postId={postId} />}
-                        </section>
-                    </article>
+                    </section>
+                    </div>
 
-                    <aside className="recommendation-sidebar" aria-label="Рекомендованные видео">
-                        <h2>Следующее</h2>
-                        <div className="recommendation-list">
-                            {recommendations.map((video) => (
-                                <SmallVideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
-                            ))}
-                        </div>
+                    <aside className="recommendation-sidebar" aria-label={playlistId ? 'Очередь плейлиста и рекомендованные видео' : 'Рекомендованные видео'}>
+                        {playlistId && (
+                            <PlaylistQueue
+                                playlist={playlist}
+                                posts={playlistPosts}
+                                currentPostId={postId}
+                                currentIndex={playlistIndex}
+                                isLoading={isPlaylistLoading}
+                                error={playlistError}
+                                onOpen={() => navigate(`/playlist/${playlistId}`)}
+                                onSelect={openPlaylistPost}
+                            />
+                        )}
+                        <section className={`recommendation-section ${playlistId ? 'has-playlist' : ''}`}>
+                            <h2>{playlistId ? 'Другие видео' : 'Следующее'}</h2>
+                            <div className="recommendation-list">
+                                {recommendations.map((video) => (
+                                    <SmallVideoCard videoCardModel={video} navigate={navigate} key={video.postId} />
+                                ))}
+                            </div>
+                        </section>
                     </aside>
                 </div>
         </VideoWatchLayout>
