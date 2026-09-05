@@ -220,7 +220,8 @@ internal class S3MultipartFileUploadService : IMultipartFileUpload
 
             var listResponse = await _client.ListPartsAsync(listRequest);
 
-            foreach (var part in listResponse.Parts)
+            // AWS SDK v4 returns null when the upload has no parts yet.
+            foreach (var part in listResponse.Parts ?? [])
             {
                 parts.Add(new MultipartUploadPart
                 {
@@ -231,7 +232,7 @@ internal class S3MultipartFileUploadService : IMultipartFileUpload
                 });
             }
 
-            isTruncated = listResponse.IsTruncated!.Value;
+            isTruncated = listResponse.IsTruncated == true;
             nextPartNumberMarker = listResponse.NextPartNumberMarker?.ToString();
         }
 

@@ -2,6 +2,8 @@ import { KeyboardEvent, memo, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPostInfoModel } from '@/shared/api/generated/models';
 import { useServiceWorkerMessage } from '@/shared/hooks/useServiceWorkerMessage';
+import { getBackgroundUpload, retryBackgroundUpload } from '@/shared/lib/upload/backgroundUpload';
+import type { BackgroundUpload } from '@/shared/lib/service-worker/messages';
 import { secondsToHumanReadable } from '@/shared/lib/date';
 import { VideoProcessingProgress } from '@/entities/profile/types';
 import '@/entities/post/ui/PostCard/PostCard.css';
@@ -16,15 +18,26 @@ interface PostCardProps {
 
 export const PostCard = memo(({ post, isLast, onRemove, observeRef, processingProgress }: PostCardProps) => {
   const navigate = useNavigate();
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [upload, setUpload] = useState<BackgroundUpload | null>(null);
+  const [retryError, setRetryError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useServiceWorkerMessage((message) => {
-    if (message.type === 'CHUNK_UPLOADED' && message.payload.postId === post.id) {
-      const { chunkNumber, totalChunks } = message.payload;
-      setUploadProgress(Math.round((chunkNumber / totalChunks) * 100));
+    if (message.type === 'UPLOAD_STATUS' && message.payload.postId === post.id) {
+      setUpload(message.payload);
+      setRetryError(null);
     }
+  }, [post.id]);
+
+  useEffect(() => {
+    let disposed = false;
+    if (post.id && 'serviceWorker' in navigator) {
+      void getBackgroundUpload(post.id).then(value => {
+        if (!disposed) setUpload(previous => previous ?? value);
+      }).catch(() => undefined);
+    }
+    return () => { disposed = true; };
   }, [post.id]);
 
   useEffect(() => {
@@ -46,21 +59,21 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef, processingPr
   }, [isMenuOpen]);
 
   const processState = post.videoInfo?.processState;
-  const displayedProgress = Math.round(processingProgress?.percent ?? uploadProgress);
+  const displayedProgress = Math.round(processingProgress?.percent ?? upload?.progress ?? 0);
   const isClickable = processState === 1 && Boolean(post.id);
-  const statusText = processingProgress?.status === 'failed'
-    ? 'Ошибка обработки'
-    : processingProgress?.status === 'completed'
-      ? 'Обработка завершена'
-      : processingProgress?.status === 'processing'
-        ? `Обработка ${displayedProgress}%`
-        : processState === 1
-          ? 'Опубликовано'
-          : processState === 2
-            ? `Загрузка ${displayedProgress}%`
-            : processState === 3
-              ? 'Ошибка обработки'
-              : 'Черновик';
+  const getStatusText = () => {
+    if (processingProgress?.status === 'failed' || processState === 3) return 'Ошибка обработки';
+    if (processingProgress?.status === 'completed') return 'Обработка завершена';
+    if (processingProgress?.status === 'processing') return `Обработка ${displayedProgress}%`;
+    if (processState === 1) return 'Опубликовано';
+    if (upload?.status === 'failed') return 'Ошибка загрузки';
+    if (upload?.status === 'completing') return 'Завершение загрузки';
+    if (upload?.status === 'completed') return 'Ожидает обработки';
+    if (upload?.status === 'queued') return 'В очереди на загрузку';
+    if (upload?.status === 'uploading' || processState === 2) return `Загрузка ${displayedProgress}%`;
+    return 'Черновик';
+  };
+  const statusText = getStatusText();
 
   const openPost = () => {
     if (isClickable) navigate(`/videoPage/${post.id}`);
@@ -92,7 +105,7 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef, processingPr
           {secondsToHumanReadable(post.videoInfo?.videoMetadata?.duration ?? 0)}
         </time>
         <span className={`postStatus status-${processState}`}>{statusText}</span>
-        {processState === 2 && (
+        {(processState === 2 || upload?.status === 'uploading' || upload?.status === 'completing') && (
           <div className="videoProcessingProgress" aria-label={`Прогресс обработки видео: ${displayedProgress}%`}>
             <div style={{ width: `${displayedProgress}%` }} />
           </div>
@@ -100,6 +113,14 @@ export const PostCard = memo(({ post, isLast, onRemove, observeRef, processingPr
       </div>
 
       <div className="postContent">
+        {upload?.status === 'failed' && (
+          <div role="status">
+            <p>{retryError || upload.error || 'Не удалось загрузить видео'}</p>
+            <button type="button" onClick={() => {
+              if (post.id) void retryBackgroundUpload(post.id).catch(error => setRetryError(error.message));
+            }}>Повторить загрузку</button>
+          </div>
+        )}
         <div className="postTitleRow">
           <h3 className="postTitle" onClick={openPost} onKeyDown={handleKeyDown}
             role={isClickable ? 'button' : undefined} tabIndex={isClickable ? 0 : -1}>

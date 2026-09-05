@@ -16,6 +16,7 @@ import { getAccessToken, JwtTokenService } from '@/shared/auth/tokenStorage';
 import { ProfileHeader, VideoProcessingProgress } from '@/entities/profile';
 import { getBlog } from '@/shared/api/generated/blog/blog';
 import { BlogModel, UserPostInfoModel } from '@/shared/api/generated/models';
+import { cancelBackgroundUpload } from '@/shared/lib/upload/backgroundUpload';
 
 const PAGE_SIZE = 10;
 const POST_TYPE = { text: 0, video: 1 } as const;
@@ -214,6 +215,7 @@ export const ProfilePage = memo(() => {
     const handleRemovePost = useCallback(async (id: string) => {
         setErrorMessage(null);
         try {
+            await cancelBackgroundUpload(id);
             await profilePostApi.postApiProfilePostV2RemovePostId(id);
             setPosts([]);
             setPage(1);

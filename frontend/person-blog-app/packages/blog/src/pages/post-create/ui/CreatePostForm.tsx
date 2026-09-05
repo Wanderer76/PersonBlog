@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '@/pages/post-create/ui/CreatePostForm.module.css';
-import { DirectFileUploader } from '@/shared/lib/upload';
+import { cancelBackgroundUpload, enqueueVideo } from '@/shared/lib/upload/backgroundUpload';
 import { getProfilePostV2 } from '@/shared/api/generated/profile-post-v2/profile-post-v2';
 import type { CategoryModel, CreatePostModelViewModel, PostVisibility } from '@/shared/api/generated/models';
 import {
@@ -54,7 +54,7 @@ const CreatePostForm = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const uploaderRef = useRef<DirectFileUploader | null>(null);
+  const submittingRef = useRef(false);
   const createdPostIdRef = useRef<string | null>(null);
 
   const [postForm, setPostForm] = useState<PostForm>({
@@ -65,7 +65,6 @@ const CreatePostForm = () => {
   });
   const [createModel, setCreateModel] = useState<CreatePostModelViewModel>(emptyCreateModel);
   const [videoDuration, setVideoDuration] = useState(0);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -86,6 +85,7 @@ const CreatePostForm = () => {
   }, []);
 
   const updateForm = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (submittingRef.current) return;
     const target = event.currentTarget;
     const file = target instanceof HTMLInputElement ? target.files?.[0] : undefined;
 
@@ -99,7 +99,6 @@ const CreatePostForm = () => {
         return;
       }
       setVideoDuration(0);
-      setUploadProgress(0);
       setPostForm(previous => ({ ...previous, video: file }));
       return;
     }
@@ -131,20 +130,8 @@ const CreatePostForm = () => {
     return data.id;
   };
 
-  const uploadVideo = async (postId: string, file: File) => {
-    const uploader = uploaderRef.current ?? new DirectFileUploader();
-    uploaderRef.current ??= uploader;
-    uploader.setProgressCallback(setUploadProgress);
-    if (uploader.canResume()) {
-      await uploader.resumeUpload(file);
-    } else {
-      await uploader.initiateUpload(postId, videoDuration, file);
-      await uploader.uploadFile(file);
-    }
-  };
-
   const sendForm = async () => {
-    if (isSubmitting) return;
+    if (submittingRef.current) return;
     setErrorMessage(null);
 
     if (!postForm.title.trim()) return setErrorMessage('Введите заголовок видео');
@@ -153,26 +140,37 @@ const CreatePostForm = () => {
       return setErrorMessage('Не удалось определить длительность видео');
     }
 
+    submittingRef.current = true;
     setIsSubmitting(true);
     try {
       const postId = createdPostIdRef.current ?? await createPost();
-      await uploadVideo(postId, postForm.video);
+      // Wait only for durable local storage, not for the network upload.
+      await enqueueVideo(postId, postForm.video, videoDuration);
       navigate('/profile');
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Не удалось создать публикацию');
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = async () => {
-    const isUploading = isSubmitting && uploadProgress < 100;
-    if (isUploading && !window.confirm('Загрузка не завершена. Отменить её?')) return;
-    if (uploaderRef.current) await uploaderRef.current.abortUpload().catch(() => undefined);
-    if (createdPostIdRef.current) {
-      await profilePostApi.postApiProfilePostV2RemovePostId(createdPostIdRef.current).catch(() => undefined);
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    try {
+      if (createdPostIdRef.current) {
+        await cancelBackgroundUpload(createdPostIdRef.current);
+        await profilePostApi.postApiProfilePostV2RemovePostId(createdPostIdRef.current);
+      }
+      navigate('/profile');
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Не удалось отменить создание');
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
-    navigate('/profile');
   };
 
   const openFilePicker = () => fileInputRef.current?.click();
@@ -186,7 +184,7 @@ const CreatePostForm = () => {
             <h1 id="create-video-title">Создание видео</h1>
             <p>Добавьте файл и заполните информацию, которую увидят зрители.</p>
           </div>
-          <button className={styles.closeButton} type="button" onClick={() => void handleCancel()}
+          <button className={styles.closeButton} type="button" disabled={isSubmitting} onClick={() => void handleCancel()}
             aria-label="Закрыть форму">×</button>
         </header>
 
@@ -221,14 +219,6 @@ const CreatePostForm = () => {
             )}
             <input ref={fileInputRef} name="video" type="file" className={styles.fileInput}
               accept="video/*" hidden onChange={updateForm} />
-
-            {uploadProgress > 0 && (
-              <div className={styles.uploadStatus} aria-live="polite">
-                <div className={styles.progressMeta}><span>Загрузка видео</span><strong>{uploadProgress}%</strong></div>
-                <div className={styles.progressBar}><div className={styles.progressFill}
-                  style={{ width: `${uploadProgress}%` }} /></div>
-              </div>
-            )}
           </section>
 
           <section className={styles.detailsColumn} aria-label="Информация о публикации">
@@ -253,13 +243,13 @@ const CreatePostForm = () => {
         </div>
 
         <footer className={styles.actionBar}>
-          <p>{postForm.video ? 'После загрузки видео отправится на обработку.' : 'Сначала выберите видеофайл.'}</p>
+          <p>{postForm.video ? 'Видео загрузится в фоне. Прогресс будет доступен в профиле.' : 'Сначала выберите видеофайл.'}</p>
           <div className={styles.actionButtons}>
             <button className={`${styles.btn} ${styles.btnSecondary}`} type="button"
-              onClick={() => void handleCancel()}>Отмена</button>
+              onClick={() => void handleCancel()} disabled={isSubmitting}>Отмена</button>
             <button className={`${styles.btn} ${styles.btnPrimary}`} type="button"
               onClick={() => void sendForm()} disabled={isSubmitting || !postForm.video}>
-              {isSubmitting ? 'Загружаем…' : createdPostIdRef.current ? 'Повторить загрузку' : 'Создать видео'}
+              {isSubmitting ? 'Подготавливаем…' : createdPostIdRef.current ? 'Повторить отправку' : 'Создать видео'}
             </button>
           </div>
         </footer>

@@ -1,1 +1,1 @@
-export * from './directFileUploader';
+export * from './backgroundUpload';
