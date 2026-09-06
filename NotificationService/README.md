@@ -5,7 +5,7 @@
 ## Проекты
 
 - `Notification.Domain`: существующая модель уведомления, без ссылок на Shared, MessageBus, EF и другие сервисы. Идентификатор и время создания в UTC передаются в `UserNotification.Create(...)`; `MarkAsViewed(changedAt)` идемпотентен и обновляет ChangedAt при первом прочтении.
-- `Notification.Application`: сценарии и порты; зависит только от Domain. Каталоги Abstractions, Notifications, Fanout и Preferences подготовлены для следующих этапов.
+- `Notification.Application`: сценарии и порты; использует Domain, общий тип `Result` из Shared и существующий `ICurrentUserService` из Infrastructure. Каталоги Abstractions, Notifications, Fanout и Preferences подготовлены для следующих этапов.
 - `Notification.Infrastructure`: адаптеры внешних систем — PostCreateEventHandler и SystemDateTimeManager.
 - `Notification.Persistence`: отдельная сборка хранения — NotificationDbContext, Fluent-конфигурации, NotificationDbInitializer и NotificationPersistenceExtensions. Зависит от Application/Domain и общих библиотек; Infrastructure не ссылается на Persistence.
 - `Notification.API`: composition root и будущие HTTP/SignalR endpoints. Зависит от Application, Infrastructure, Persistence и Contract.
