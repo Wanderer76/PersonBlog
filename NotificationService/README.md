@@ -16,6 +16,7 @@
 ## Регистрация
 
 `AddNotificationInfrastructure()` регистрирует существующий `Shared.Services.IDateTimeManager` через `SystemDateTimeManager` и заменяемый `TimeProvider`. Текущее время получается вызовом экземпляра `UtcNow()`, поэтому реализацию можно подменить в DI. Domain продолжает получать время явно через конструктор.
+Также регистрируются SignalR и InApp-адаптер `INotificationDelivery`; hub доступен по `/hubs/notifications` и отправляет `NotificationCreated` пользователю из claim `userId`. Push-адаптер подключается вызовом `AddNotificationPushDelivery<TSender>()`, где `TSender` реализует провайдерный `IPushNotificationSender`. В вызов провайдера передаются стабильный DeliveryJobId как idempotency key и DestinationKey устройства.
 `AddLegacyPostNotifications(configuration)` сохраняет существующую RabbitMQ-подписку и HTTP-клиент Blog.
 
 Старый обработчик по-прежнему только логирует получателей; неизвестный Blog endpoint и бесконечный цикл повторов при ошибке остаются ограничениями legacy-заготовки, описанными в предложении. Надёжный Inbox, новый Profile API и рабочая рассылка в этом этапе не реализованы.

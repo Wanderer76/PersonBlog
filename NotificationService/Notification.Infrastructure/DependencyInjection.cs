@@ -5,6 +5,9 @@ using MessageBus.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.SignalR;
+using Notification.Application.Abstractions;
+using Notification.Infrastructure.Delivery;
 using Shared.Services;
 using Notification.Infrastructure.Messaging;
 using Notification.Infrastructure.Services;
@@ -17,6 +20,19 @@ public static class DependencyInjection
     {
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
         services.TryAddSingleton<IDateTimeManager, SystemDateTimeManager>();
+        services.AddSignalR();
+        services.TryAddSingleton<IUserIdProvider, NotificationUserIdProvider>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Scoped<INotificationDelivery, InAppNotificationDelivery>());
+        return services;
+    }
+
+    public static IServiceCollection AddNotificationPushDelivery<TSender>(this IServiceCollection services)
+        where TSender : class, IPushNotificationSender
+    {
+        services.TryAddScoped<IPushNotificationSender, TSender>();
+        services.TryAddEnumerable(
+            ServiceDescriptor.Scoped<INotificationDelivery, PushNotificationDelivery>());
         return services;
     }
 
