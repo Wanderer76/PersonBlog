@@ -3,7 +3,7 @@ using MessageBus.EventHandler;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 
-namespace Notification.Domain.EventHandlers
+namespace Notification.Infrastructure.Messaging
 {
     public class PostCreateEventHandler : IEventHandler<PostUpdateEvent>
     {

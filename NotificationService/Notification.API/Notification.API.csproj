@@ -12,10 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\MessageBus\MessageBus.csproj" />
+
     <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Notification.Contract\Notification.Contract.csproj" />
-    <ProjectReference Include="..\Notification.Domain\Notification.Domain.csproj" />
+    <ProjectReference Include="../Notification.Application/Notification.Application.csproj" />
+    <ProjectReference Include="../Notification.Infrastructure/Notification.Infrastructure.csproj" />
+    <ProjectReference Include="../Notification.Persistence/Notification.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

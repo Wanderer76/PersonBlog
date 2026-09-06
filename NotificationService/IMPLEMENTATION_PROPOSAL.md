@@ -78,12 +78,12 @@ NotificationService/
     ValueObjects/              NotificationKind, NotificationTarget
   Notification.Application/
     Abstractions/              INotificationStore, IRecipientDirectory,
-                               INotificationDelivery, ICurrentUser, IClock
+                               INotificationDelivery, ICurrentUser
     Notifications/             Create, List, MarkRead, CountUnread
     Fanout/                    StartCampaign, ProcessRecipientBatch
     Preferences/               Get, Update
+  Notification.Persistence/    NotificationDbContext, Fluent mappings, migrations, initializer
   Notification.Infrastructure/
-    Persistence/               NotificationDbContext, Fluent mappings, migrations
     Messaging/                 RabbitMQ consumers и преобразование контрактов
     Clients/                   ProfileRecipientDirectory
     Delivery/                  SignalR adapter; позже Email и WebPush
@@ -96,11 +96,11 @@ Tests/
   NotificationIntegrationTests/
 ```
 
-Зависимости компиляции: `Application → Domain`; `Infrastructure → Application, Domain, внешние Contracts`; `API → Application, Infrastructure, Notification.Contract`. API ссылается на инфраструктуру для сборки зависимостей в `Program.cs`. Domain не зависит от остальных проектов; Application не знает RabbitMQ, SignalR, EF Core и домены соседних сервисов. Hub находится в API; адаптер отправки в Infrastructure может использовать собственный пустой тип Hub либо абстракцию, связанную в API, чтобы не создать цикл `Infrastructure → API`.
+Зависимости компиляции: `Application → Domain`; `Infrastructure → Application, Domain, внешние Contracts`; `Persistence → Application, Domain, общие библиотеки`; `API → Application, Infrastructure, Persistence, Notification.Contract`. API ссылается на инфраструктуру для сборки зависимостей в `Program.cs`. Domain не зависит от остальных проектов; Application не знает RabbitMQ, SignalR, EF Core и домены соседних сервисов. Hub находится в API; адаптер отправки в Infrastructure может использовать собственный пустой тип Hub либо абстракцию, связанную в API, чтобы не создать цикл `Infrastructure → API`.
 
-Перенести `PostCreateEventHandler` из Domain во внешний messaging-адаптер. Адаптер переводит интеграционное событие в прикладную команду; правила получателей, исключение self-notification и выбор каналов находятся в Application/Domain. EF-конфигурации вынести во Fluent API. Время передавать через `IClock`/`TimeProvider`, идентификаторы — явно, чтобы тесты не зависели от статических сервисов.
+Перенести `PostCreateEventHandler` из Domain во внешний messaging-адаптер. Адаптер переводит интеграционное событие в прикладную команду; правила получателей, исключение self-notification и выбор каналов находятся в Application/Domain. EF-конфигурации вынести во Fluent API. По принятому уточнению использовать существующий `Shared.Services.IDateTimeManager` с методом экземпляра `UtcNow()` и реализацией через `TimeProvider`; время и идентификаторы передавать в Domain явно. В текущем каркасе менеджер зарегистрирован в Infrastructure. Если он потребуется непосредственно в Application, учитывать, что нынешний Shared также содержит зависимости EF/ASP.NET: для сохранения чистого Core общую абстракцию следует выделить из этого пакета, а не добавлять весь Shared в Application.
 
-Названия `Application` и `Infrastructure` предпочтительны для нового сервиса; существующие `*.Service`/`*.Persistence` в монорепозитории не нужно массово переименовывать. Если Persistence выделять отдельно, он также зависит от Application/Domain. Интерфейсы должны описывать операции (`SaveNotification`, `GetRecipientsPage`), а не экспортировать `DbContext` или `IQueryable` в домен. CQRS достаточно реализовать отдельными классами команд и запросов; MediatR и event sourcing для этого не обязательны.
+Названия `Application` и `Infrastructure` предпочтительны для нового сервиса; существующие `*.Service`/`*.Persistence` в монорепозитории не нужно массово переименовывать. Persistence выделен в отдельную сборку и зависит от Application/Domain; Infrastructure не зависит от Persistence. Интерфейсы должны описывать операции (`SaveNotification`, `GetRecipientsPage`), а не экспортировать `DbContext` или `IQueryable` в домен. CQRS достаточно реализовать отдельными классами команд и запросов; MediatR и event sourcing для этого не обязательны.
 
 Такое направление зависимостей соответствует описанию Application Core и Infrastructure в [руководстве Microsoft по Clean Architecture](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures). Конкретные имена проектов и степень разделения — решение этого проекта, а не требование фреймворка.
 

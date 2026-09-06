@@ -1,8 +1,6 @@
-using Blog.Contracts.Events;
 using Infrastructure.Extensions;
-using MessageBus;
-using MessageBus.Configs;
-using Notification.Domain.EventHandlers;
+
+using Notification.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -12,21 +10,8 @@ builder.Host.AddSerilogLogger(builder.Configuration);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient("Blog", x =>
-{
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
-    x.Timeout = TimeSpan.FromSeconds(1);
-});
-builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
-    .AddSubscription<PostUpdateEvent, PostCreateEventHandler>(cfg =>
-    {
-        cfg.QueueName = "post-create-notifications";
-        cfg.Exchange = new MessageBus.Models.ExchangeParam
-        {
-            Name = "post-update",
-            ExchangeType = "fanout"
-        };
-    });
+builder.Services.AddNotificationInfrastructure();
+builder.Services.AddLegacyPostNotifications(builder.Configuration);
 
 var app = builder.Build();
 
@@ -36,7 +21,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 app.MapGet("/weatherforecast", () =>
 {
