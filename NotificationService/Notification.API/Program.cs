@@ -1,7 +1,9 @@
+using Authentication.Contract;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Notification.Infrastructure;
 using Notification.Infrastructure.Delivery;
+using Notification.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
@@ -12,6 +14,10 @@ builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddNotificationInfrastructure();
+builder.Services.AddUserSessionServices(options => options.BaseUrl = builder.Configuration["AppUrls:Auth"]!);
+builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddNotificationPersistence(builder.Configuration);
+builder.Services.AddNotificationWorkers(options => builder.Configuration.GetSection("Notification:Worker").Bind(options));
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
@@ -29,7 +35,8 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
         return Task.CompletedTask;
     };
 });
-builder.Services.AddLegacyPostNotifications(builder.Configuration);
+// The legacy PostUpdateEvent lacks the business identifiers required by durable intake.
+// Producers/consumers enqueue validated NotificationIngress through INotificationWorkStore.
 
 var app = builder.Build();
 

@@ -7,7 +7,8 @@ namespace Notification.Persistence;
 public sealed class NotificationDbContext(DbContextOptions<NotificationDbContext> options) : BaseDbContext(options)
 {
     public DbSet<UserNotification> Notifications => Set<UserNotification>();
-    public DbSet<NotificationType> NotificationTypes => Set<NotificationType>();
+    public DbSet<UserNotificationPreference> Preferences => Set<UserNotificationPreference>();
+    public DbSet<NotificationWork> Work => Set<NotificationWork>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

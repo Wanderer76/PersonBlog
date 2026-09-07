@@ -43,9 +43,11 @@ namespace Notification.Infrastructure.Messaging
                         break;
                     page++;
                 }
-                catch (Exception e)
+                catch (HttpRequestException e)
                 {
                     _logger.LogError(e, "Failed to load subscribers for blog {BlogId}", post.BlogId);
+                    // The bus must observe failure. Never retry indefinitely inside a consumer.
+                    throw;
                 }
             } while (true);
         }

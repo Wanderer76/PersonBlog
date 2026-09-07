@@ -11,6 +11,9 @@ using Notification.Infrastructure.Delivery;
 using Shared.Services;
 using Notification.Infrastructure.Messaging;
 using Notification.Infrastructure.Services;
+using Notification.Infrastructure.Clients;
+using Notification.Infrastructure.BackgroundJobs;
+using Notification.Application;
 
 namespace Notification.Infrastructure;
 
@@ -18,12 +21,35 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddNotificationInfrastructure(this IServiceCollection services)
     {
+        services.AddNotificationApplication();
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
         services.TryAddSingleton<IDateTimeManager, SystemDateTimeManager>();
+        services.AddHttpClient<IRecipientDirectory, ProfileRecipientDirectory>((provider, client) =>
+        {
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            client.BaseAddress = new Uri(configuration["AppUrls:NotificationProfile"]
+                ?? throw new InvalidOperationException("AppUrls:NotificationProfile is required."));
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
         services.AddSignalR();
         services.TryAddSingleton<IUserIdProvider, NotificationUserIdProvider>();
         services.TryAddEnumerable(
             ServiceDescriptor.Scoped<INotificationDelivery, InAppNotificationDelivery>());
+        return services;
+    }
+
+    /// <summary>Enable only after applying Notification.Persistence migrations.</summary>
+    public static IServiceCollection AddNotificationWorkers(this IServiceCollection services,
+        Action<NotificationWorkerOptions>? configure = null)
+    {
+        var options = services.AddOptions<NotificationWorkerOptions>();
+        if (configure is not null) options.Configure(configure);
+        options.Validate(x => x.PollInterval > TimeSpan.Zero && x.LeaseDuration > TimeSpan.Zero &&
+            x.LeaseDuration <= TimeSpan.FromHours(1) && x.RetryDelay >= TimeSpan.Zero &&
+            x.RetryDelay <= TimeSpan.FromDays(1) && x.MaxAttempts > 0 && x.FanoutPageSize is >= 1 and <= 500,
+            "Invalid notification worker settings.").ValidateOnStart();
+        services.AddScoped<NotificationWorkProcessor>();
+        services.AddHostedService<NotificationWorker>();
         return services;
     }
 

@@ -1,3 +1,4 @@
+using Notification.Domain.Entities;
 using Notification.Application.Notifications;
 
 namespace Notification.Infrastructure.Delivery;

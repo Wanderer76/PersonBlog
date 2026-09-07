@@ -13,6 +13,11 @@ public sealed class ProcessRecipientBatch(IFanoutStore store, IRecipientDirector
     {
         if (claim is null)
             return Result.Failure(nameof(claim), "Claimed campaign is required.");
+        if (claim.Campaign is null || claim.Campaign.Id == Guid.Empty || claim.Campaign.BlogId == Guid.Empty ||
+            claim.LeaseToken == Guid.Empty)
+            return Result.Failure(nameof(claim), "Campaign, blog and lease identifiers are required.");
+        var contentValidation = Validation.Content(claim.Campaign.Content);
+        if (contentValidation.IsFailure) return contentValidation;
         if (limit is < 1 or > 500)
             return Result.Failure(nameof(limit), "Limit must be between 1 and 500.");
 
@@ -20,13 +25,14 @@ public sealed class ProcessRecipientBatch(IFanoutStore store, IRecipientDirector
 
         if (campaign.Content.ExpiresAt <= now)
         {
-            await store.CommitBatchAsync(claim, [], claim.Cursor, true, cancellationToken);
-            return Result.Success();
+            return await store.CommitBatchAsync(claim, [], claim.Cursor, true, cancellationToken);
         }
 
         // One bounded page per invocation. The worker owns retries/backoff and lease renewal.
-        var page = await directory.GetRecipientsPageAsync(campaign.BlogId, claim.Cursor, limit,
+        var pageResult = await directory.GetRecipientsPageAsync(campaign.BlogId, claim.Cursor, limit,
             campaign.AudienceCutoff, cancellationToken);
+        if (pageResult.IsFailure) return Result.Failure(pageResult.Errors);
+        var page = pageResult.Value;
         if (page.UserIds.Count > limit || page.UserIds.Any(x => x == Guid.Empty) ||
             (page.HasMore && (string.IsNullOrWhiteSpace(page.NextCursor) || page.NextCursor == claim.Cursor)))
             return Result.Failure(nameof(page),
@@ -38,12 +44,12 @@ public sealed class ProcessRecipientBatch(IFanoutStore store, IRecipientDirector
             cancellationToken.ThrowIfCancellationRequested();
             if (NotificationPolicy.IsSuppressed(campaign.Content, userId, now)) continue;
             var settings = await preferences.GetAsync(userId, cancellationToken);
-            if (!NotificationPreferenceResolver.IsEnabled(campaign.Content.Kind, DeliveryType.InApp, settings)) continue;
+            if (settings.IsFailure) return Result.Failure(settings.Errors);
+            if (!NotificationPreferenceResolver.IsEnabled(campaign.Content.Kind, DeliveryType.InApp, settings.Value)) continue;
             drafts.Add(new NotificationDraft(Guid.NewGuid(), userId, campaign.Source,
                 campaign.Content, now, [DeliveryType.InApp]));
         }
 
-        await store.CommitBatchAsync(claim, drafts, page.NextCursor, !page.HasMore, cancellationToken);
-        return Result.Success();
+        return await store.CommitBatchAsync(claim, drafts, page.NextCursor, !page.HasMore, cancellationToken);
     }
 }

@@ -29,7 +29,8 @@ public sealed class CreateNotification(INotificationStore store, INotificationPr
         if (!suppressed)
         {
             var settings = await preferences.GetAsync(command.RecipientUserId, cancellationToken);
-            suppressed = !NotificationPreferenceResolver.IsEnabled(content.Kind, DeliveryType.InApp, settings);
+            if (settings.IsFailure) return Result<CreationResult>.Failure(settings.Errors);
+            suppressed = !NotificationPreferenceResolver.IsEnabled(content.Kind, DeliveryType.InApp, settings.Value);
         }
 
         var draft = suppressed ? null : new NotificationDraft(Guid.NewGuid(), command.RecipientUserId,

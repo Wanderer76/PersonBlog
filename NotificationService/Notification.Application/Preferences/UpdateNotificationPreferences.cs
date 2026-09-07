@@ -23,7 +23,6 @@ public sealed class UpdateNotificationPreferences(
         if (entries.Select(x => (x.Kind, x.Channel)).Distinct().Count() != entries.Length)
             return Result.Failure(nameof(preferences), "Duplicate preference keys.");
 
-        await store.UpdateAsync(user.Value, entries, now, cancellationToken);
-        return Result.Success();
+        return await store.UpdateAsync(user.Value, entries, now, cancellationToken);
     }
 }

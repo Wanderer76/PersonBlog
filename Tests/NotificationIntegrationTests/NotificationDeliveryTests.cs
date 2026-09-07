@@ -8,6 +8,37 @@ namespace NotificationIntegrationTests;
 public sealed class NotificationDeliveryTests
 {
     [Fact]
+    public async Task DeliveryPreservesProviderFailureAndCallerCancellation()
+    {
+        var failure = Result.Failure("Push.Rejected", "Device is unavailable.");
+        var delivery = new PushNotificationDelivery(new FailingSender(failure));
+        Assert.Same(failure, await delivery.DeliverAsync(Guid.NewGuid(), "device", CreateNotification()));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            delivery.DeliverAsync(Guid.NewGuid(), "device", CreateNotification(), cancellation.Token));
+    }
+
+    [Fact]
+    public async Task DeliveryMapsTransportFailureToResult()
+    {
+        var delivery = new PushNotificationDelivery(new ThrowingSender());
+        var result = await delivery.DeliverAsync(Guid.NewGuid(), "device", CreateNotification());
+        Assert.Equal("Delivery.Unavailable", Assert.Single(result.Errors).Key);
+    }
+
+    private sealed class FailingSender(Result failure) : IPushNotificationSender
+    {
+        public Task<Result> SendAsync(Guid idempotencyKey, string destinationKey, NotificationDeliveryMessage notification,
+            CancellationToken cancellationToken = default) => Task.FromResult(failure);
+    }
+
+    private sealed class ThrowingSender : IPushNotificationSender
+    {
+        public Task<Result> SendAsync(Guid idempotencyKey, string destinationKey, NotificationDeliveryMessage notification,
+            CancellationToken cancellationToken = default) => throw new HttpRequestException("provider secret");
+    }
+    [Fact]
     public async Task InAppDeliverySendsNotificationToRequestedSignalRUser()
     {
         var clients = new HubClientsStub();
@@ -58,13 +89,13 @@ public sealed class NotificationDeliveryTests
         public string? DestinationKey { get; private set; }
         public NotificationDeliveryMessage? Message { get; private set; }
 
-        public Task SendAsync(Guid idempotencyKey, string destinationKey,
+        public Task<Result> SendAsync(Guid idempotencyKey, string destinationKey,
             NotificationDeliveryMessage notification, CancellationToken cancellationToken = default)
         {
             IdempotencyKey = idempotencyKey;
             DestinationKey = destinationKey;
             Message = notification;
-            return Task.CompletedTask;
+            return Task.FromResult(Result.Success());
         }
     }
 
@@ -75,7 +106,7 @@ public sealed class NotificationDeliveryTests
         public Task NotificationCreated(NotificationDeliveryMessage notification)
         {
             Message = notification;
-            return Task.CompletedTask;
+            return Task.FromResult(Result.Success());
         }
     }
 

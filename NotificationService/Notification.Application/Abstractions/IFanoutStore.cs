@@ -9,7 +9,7 @@ public interface IFanoutStore
     /// Complete the claimed inbox and insert the campaign in one transaction, checking its lease.
     /// Enforce uniqueness by PublicationId and purpose. A null campaign completes a suppressed event.
     /// </summary>
-    Task<CampaignStartResult> CompleteStartAsync(InboxCheckpoint checkpoint, Campaign? campaign,
+    Task<Result<CampaignStartResult>> CompleteStartAsync(InboxCheckpoint checkpoint, Campaign? campaign,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -18,6 +18,6 @@ public interface IFanoutStore
     /// Enforce notification business-key uniqueness; duplicates must not create new delivery jobs.
     /// Release the claim after commit. HTTP calls must not occur inside this transaction.
     /// </summary>
-    Task CommitBatchAsync(ClaimedCampaign claim, IReadOnlyList<NotificationDraft> notifications,
+    Task<Result> CommitBatchAsync(ClaimedCampaign claim, IReadOnlyList<NotificationDraft> notifications,
         string? nextCursor, bool completed, CancellationToken cancellationToken = default);
 }

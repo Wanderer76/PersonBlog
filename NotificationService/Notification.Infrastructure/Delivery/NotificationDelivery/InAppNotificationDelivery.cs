@@ -10,8 +10,12 @@ public sealed class InAppNotificationDelivery(
 {
     public DeliveryType Channel => DeliveryType.InApp;
 
-    public Task DeliverAsync(Guid deliveryJobId, string destinationKey, NotificationItem notification,
+    public Task<Result> DeliverAsync(Guid deliveryJobId, string destinationKey, NotificationItem notification,
         CancellationToken cancellationToken = default) =>
-        hubContext.Clients.User(destinationKey).NotificationCreated(
-            NotificationDeliveryMessage.From(notification));
+        DeliveryAttempt.Run(deliveryJobId, destinationKey, async () =>
+        {
+            await hubContext.Clients.User(destinationKey).NotificationCreated(
+                NotificationDeliveryMessage.From(notification)).WaitAsync(cancellationToken);
+            return Result.Success();
+        }, cancellationToken);
 }

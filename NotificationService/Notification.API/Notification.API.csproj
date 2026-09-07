@@ -18,6 +18,7 @@
     <ProjectReference Include="../Notification.Application/Notification.Application.csproj" />
     <ProjectReference Include="../Notification.Infrastructure/Notification.Infrastructure.csproj" />
     <ProjectReference Include="../Notification.Persistence/Notification.Persistence.csproj" />
+    <ProjectReference Include="../../AuthService/Authentication.Contract/Authentication.Contract.csproj" />
   </ItemGroup>
 
 </Project>

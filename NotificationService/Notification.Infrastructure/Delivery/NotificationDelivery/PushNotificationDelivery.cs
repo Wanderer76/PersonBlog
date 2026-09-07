@@ -8,8 +8,9 @@ public sealed class PushNotificationDelivery(IPushNotificationSender sender) : I
 {
     public DeliveryType Channel => DeliveryType.Push;
 
-    public Task DeliverAsync(Guid deliveryJobId, string destinationKey, NotificationItem notification,
+    public Task<Result> DeliverAsync(Guid deliveryJobId, string destinationKey, NotificationItem notification,
         CancellationToken cancellationToken = default) =>
-        sender.SendAsync(deliveryJobId, destinationKey, NotificationDeliveryMessage.From(notification),
-            cancellationToken);
+        DeliveryAttempt.Run(deliveryJobId, destinationKey,
+            () => sender.SendAsync(deliveryJobId, destinationKey, NotificationDeliveryMessage.From(notification),
+                cancellationToken), cancellationToken);
 }

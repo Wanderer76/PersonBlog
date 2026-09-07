@@ -57,40 +57,40 @@ public sealed class ValidationResultTests
 
     private sealed class PreferenceStoreStub : INotificationPreferenceStore
     {
-        public Task<IReadOnlyList<NotificationPreference>> GetAsync(Guid userId,
+        public Task<Result<IReadOnlyList<NotificationPreference>>> GetAsync(Guid userId,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<NotificationPreference>>([]);
+            Task.FromResult(Result<IReadOnlyList<NotificationPreference>>.Success([]));
 
-        public Task UpdateAsync(Guid userId, IReadOnlyList<NotificationPreference> preferences,
+        public Task<Result> UpdateAsync(Guid userId, IReadOnlyList<NotificationPreference> preferences,
             DateTimeOffset updatedAt, CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
+            Task.FromResult(Result.Success());
     }
 
     private sealed class NotificationStoreStub : INotificationStore
     {
         public bool WasCalled { get; private set; }
 
-        public Task<CreationResult> CompleteCreationAsync(InboxCheckpoint checkpoint,
+        public Task<Result<CreationResult>> CompleteCreationAsync(InboxCheckpoint checkpoint,
             NotificationDraft? draft, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
-            return Task.FromResult(new CreationResult(CreationStatus.Created, draft?.Id));
+            return Task.FromResult(Result<CreationResult>.Success(new CreationResult(CreationStatus.Created, draft?.Id)));
         }
 
-        public Task<NotificationPage> ListAsync(Guid userId, NotificationCursor? cursor, int limit,
+        public Task<Result<NotificationPage>> ListAsync(Guid userId, NotificationCursor? cursor, int limit,
             bool unreadOnly, DateTimeOffset snapshotAt, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
-            return Task.FromResult(new NotificationPage([], null, snapshotAt));
+            return Task.FromResult(Result<NotificationPage>.Success(new NotificationPage([], null, snapshotAt)));
         }
 
-        public Task<long> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default) =>
-            Task.FromResult(0L);
+        public Task<Result<long>> CountUnreadAsync(Guid userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(Result<long>.Success(0L));
 
-        public Task<bool> MarkReadAsync(Guid userId, Guid notificationId, DateTimeOffset readAt,
-            CancellationToken cancellationToken = default) => Task.FromResult(false);
+        public Task<Result<bool>> MarkReadAsync(Guid userId, Guid notificationId, DateTimeOffset readAt,
+            CancellationToken cancellationToken = default) => Task.FromResult(Result<bool>.Success(false));
 
-        public Task<int> MarkAllReadAsync(Guid userId, DateTimeOffset snapshotAt, DateTimeOffset readAt,
-            CancellationToken cancellationToken = default) => Task.FromResult(0);
+        public Task<Result<int>> MarkAllReadAsync(Guid userId, DateTimeOffset snapshotAt, DateTimeOffset readAt,
+            CancellationToken cancellationToken = default) => Task.FromResult(Result<int>.Success(0));
     }
 }

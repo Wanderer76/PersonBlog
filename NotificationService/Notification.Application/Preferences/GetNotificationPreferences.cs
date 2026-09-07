@@ -17,8 +17,9 @@ public sealed class GetNotificationPreferences(
             return Result<IReadOnlyList<NotificationPreference>>.Failure(user.Errors);
 
         var settings = await store.GetAsync(user.Value, cancellationToken);
+        if (settings.IsFailure) return Result<IReadOnlyList<NotificationPreference>>.Failure(settings.Errors);
         return Enum.GetValues<NotificationKind>()
             .Select(kind => new NotificationPreference(kind, DeliveryType.InApp,
-                NotificationPreferenceResolver.IsEnabled(kind, DeliveryType.InApp, settings))).ToArray();
+                NotificationPreferenceResolver.IsEnabled(kind, DeliveryType.InApp, settings.Value))).ToArray();
     }
 }

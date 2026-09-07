@@ -9,6 +9,6 @@ public interface INotificationDelivery
     DeliveryType Channel { get; }
 
     /// <summary>Use the stable job id as the provider idempotency key. Success does not imply ReadAt.</summary>
-    Task DeliverAsync(Guid deliveryJobId, string destinationKey, NotificationItem notification,
+    Task<Result> DeliverAsync(Guid deliveryJobId, string destinationKey, NotificationItem notification,
         CancellationToken cancellationToken = default);
 }

@@ -1,3 +1,4 @@
+using Notification.Domain.Entities;
 using Infrastructure.Services;
 using Notification.Application.Notifications;
 using Shared.Utils;
