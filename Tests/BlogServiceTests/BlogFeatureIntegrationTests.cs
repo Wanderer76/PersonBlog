@@ -83,6 +83,10 @@ public sealed class BlogFeatureIntegrationTests
         Assert.Equal("Updated title", updatedPost.Title);
         Assert.Equal("Updated text", updatedPost.TextPostInfo.Text);
         Assert.Equal(PostVisibility.Public, updatedPost.Visibility);
+        Assert.NotNull(updatedPost.PublicationId);
+        Assert.NotNull(updatedPost.PublishedAt);
+        Assert.Single(await context.ProfileEventMessages
+            .Where(message => message.EventType == nameof(PostPublishedV1)).ToListAsync());
         Assert.Empty(await context.PostFiles.ToListAsync());
         context.ChangeTracker.Clear();
 
@@ -327,6 +331,47 @@ public sealed class BlogFeatureIntegrationTests
 
         Assert.NotNull((await context.Subscribers.SingleAsync()).SubscriptionEndDate);
         Assert.Equal(0, (await context.Blogs.SingleAsync()).SubscriptionsCount);
+    }
+
+    [Fact]
+    public async Task Subscriber_directory_uses_historical_cutoff_and_keyset_cursor()
+    {
+        await using var context = await CreateContextAsync();
+        var blog = CreateBlog();
+        var cutoff = DateTimeOffset.UtcNow;
+        var firstUser = Guid.Parse("10000000-0000-0000-0000-000000000001");
+        var secondUser = Guid.Parse("10000000-0000-0000-0000-000000000002");
+        var excludedUser = Guid.Parse("10000000-0000-0000-0000-000000000003");
+        context.AddRange(
+            blog,
+            new Subscriber
+            {
+                Id = Guid.NewGuid(), UserId = firstUser, BlogId = BlogId, Blog = blog,
+                SubscriptionStartDate = cutoff.AddMinutes(-3), SubscriptionEndDate = cutoff.AddMinutes(1)
+            },
+            new Subscriber
+            {
+                Id = Guid.NewGuid(), UserId = secondUser, BlogId = BlogId, Blog = blog,
+                SubscriptionStartDate = cutoff.AddMinutes(-2)
+            },
+            new Subscriber
+            {
+                Id = Guid.NewGuid(), UserId = excludedUser, BlogId = BlogId, Blog = blog,
+                SubscriptionStartDate = cutoff.AddMinutes(-4), SubscriptionEndDate = cutoff.AddMinutes(-1)
+            });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+        var service = new DefaultSubscriberDirectoryService(CreateRepository(context));
+
+        var firstPage = await service.GetPageAsync(BlogId, null, 1, cutoff);
+        Assert.True(firstPage.IsSuccess);
+        Assert.True(firstPage.Value.HasMore);
+        Assert.Equal(firstUser, Assert.Single(firstPage.Value.UserIds));
+
+        var secondPage = await service.GetPageAsync(BlogId, firstPage.Value.NextCursor, 1, cutoff);
+        Assert.True(secondPage.IsSuccess);
+        Assert.False(secondPage.Value.HasMore);
+        Assert.Equal(secondUser, Assert.Single(secondPage.Value.UserIds));
     }
 
     [Fact]

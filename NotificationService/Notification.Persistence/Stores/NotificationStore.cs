@@ -63,8 +63,8 @@ internal sealed class NotificationStore(StoreOperation operation, IDateTimeManag
     public Task<Result<bool>> MarkReadAsync(Guid userId, Guid notificationId, DateTimeOffset readAt,
         CancellationToken cancellationToken = default) => Operation.Run<bool>(async db =>
         {
-            var notification = await db.Set<UserNotification>().SingleOrDefaultAsync(item =>
-                item.Id == notificationId && item.UserId == userId, cancellationToken);
+            var notification = await db.Set<UserNotification>()
+            .SingleOrDefaultAsync(item => item.Id == notificationId && item.UserId == userId, cancellationToken);
             if (notification is null)
                 return false;
             notification.MarkRead(readAt);

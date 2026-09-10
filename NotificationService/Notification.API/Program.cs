@@ -1,6 +1,8 @@
 using Authentication.Contract;
 using Infrastructure.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using MessageBus;
+using MessageBus.Configs;
 using Notification.Infrastructure;
 using Notification.Infrastructure.Delivery;
 using Notification.Persistence;
@@ -9,10 +11,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.Host.AddSerilogLogger(builder.Configuration);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<Notification.API.Services.NotificationCursorProtector>();
 builder.Services.AddNotificationInfrastructure();
 builder.Services.AddUserSessionServices(options => options.BaseUrl = builder.Configuration["AppUrls:Auth"]!);
 builder.Services.AddRedisCache(builder.Configuration);
@@ -20,6 +23,10 @@ builder.Services.AddNotificationPersistence(builder.Configuration);
 builder.Services.AddNotificationWorkers(options => builder.Configuration.GetSection("Notification:Worker").Bind(options));
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddRabbitMqMessageBus(
+        builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()
+        ?? throw new InvalidOperationException("RabbitMQ:Connection is required."))
+    .AddPostPublishedNotifications();
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.Events ??= new JwtBearerEvents();
@@ -40,27 +47,16 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.MapGet("/weatherforecast", () =>
-{
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.MapDefaultEndpoints();
 
 app.Run();
-
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

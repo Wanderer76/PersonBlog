@@ -76,6 +76,11 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
     {
         x.Exchange = RecommendationExchange.Name;
         x.RoutingKey = RecommendationExchange.PostCatalogChangedV2RoutingKey;
+    })
+    .AddMessage<PostPublishedV1>(x =>
+    {
+        x.Exchange = BlogIntegrationEvents.Exchange;
+        x.RoutingKey = BlogIntegrationEvents.PostPublishedV1RoutingKey;
     });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>

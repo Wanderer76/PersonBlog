@@ -26,13 +26,17 @@ public sealed class VideoProcessingSagaTests
         context.ChangeTracker.Clear();
         await HandleAsync(context, response);
 
-        Assert.Equal(2, await context.ProfileEventMessages.CountAsync());
+        Assert.Equal(3, await context.ProfileEventMessages.CountAsync());
+        Assert.Single(await context.ProfileEventMessages
+            .Where(message => message.EventType == nameof(PostPublishedV1)).ToListAsync());
         Assert.Single(await context.PostFiles.ToListAsync());
 
         var post = await context.Posts.Include(x => x.VideoPostInfo).SingleAsync();
         Assert.Equal(ProcessState.Complete, post.ProcessState);
         Assert.Equal(response.VideoMetadataId, post.VideoPostInfo.VideoFileId);
         Assert.Equal(2, post.RecommendationVersion);
+        Assert.NotNull(post.PublicationId);
+        Assert.NotNull(post.PublishedAt);
     }
 
     [Fact]
@@ -129,7 +133,9 @@ public sealed class VideoProcessingSagaTests
         await context.Database.EnsureCreatedAsync();
 
         var post = CreatePost();
-        context.Add(post);
+        var blog = PersonBlog.CreateBlog(TestIds.BlogId, DateTimeOffset.UtcNow,
+            "Test blog", null, null, TestIds.AuthorUserId).Value;
+        context.AddRange(blog, post);
 
         if (includeVideo)
         {
@@ -194,6 +200,7 @@ public sealed class VideoProcessingSagaTests
         public static readonly Guid PostId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         public static readonly Guid VideoMetadataId = Guid.Parse("33333333-3333-3333-3333-333333333333");
         public static readonly Guid PreviewId = Guid.Parse("44444444-4444-4444-4444-444444444444");
+        public static readonly Guid AuthorUserId = Guid.Parse("55555555-5555-5555-5555-555555555555");
     }
 
     private sealed class NoOpCacheService : ICacheService

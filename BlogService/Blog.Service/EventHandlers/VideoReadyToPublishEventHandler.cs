@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Events;
+using Blog.Contracts.Events;
 using Blog.Contracts.Models.Post;
 using Blog.Domain.Entities;
 using Blog.Service.Events;
@@ -93,6 +93,19 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
 
                 _repository.Add(VideoProcessEvent.Create(postUpdateEvent));
                 _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+                if (post.CanNotifyAudience)
+                {
+                    var authorUserId = await _repository.Get<PersonBlog>()
+                        .Where(blog => blog.Id == post.BlogId)
+                        .Select(blog => (Guid?)blog.UserId)
+                        .SingleOrDefaultAsync();
+                    if (authorUserId.HasValue)
+                    {
+                        var publication = PostPublishedV1Factory.TryCreate(post, authorUserId.Value);
+                        if (publication is not null)
+                            _repository.Add(VideoProcessEvent.Create(publication));
+                    }
+                }
             }
         }
 

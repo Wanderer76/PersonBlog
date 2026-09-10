@@ -9,8 +9,7 @@ public sealed class GetNotifications(INotificationStore store, ICurrentUserServi
         NotificationCursor? cursor = null, int limit = 50, bool unreadOnly = false,
         CancellationToken cancellationToken = default)
     {
-        var user = await Validation.User(currentUser, cancellationToken);
-        if (user.IsFailure) return Result<NotificationPage>.Failure(user.Errors);
+        var user = await currentUser.GetCurrentUserAsync();
         if (limit is < 1 or > 100)
             return Result<NotificationPage>.Failure(
                 new Shared.Utils.Error(nameof(limit), "Limit must be between 1 and 100."));
@@ -18,6 +17,6 @@ public sealed class GetNotifications(INotificationStore store, ICurrentUserServi
             return Result<NotificationPage>.Failure(
                 new Shared.Utils.Error(nameof(cursor), "Cursor is outside snapshot."));
 
-        return await store.ListAsync(user.Value, cursor, limit, unreadOnly, snapshotAt, cancellationToken);
+        return await store.ListAsync(user.UserId, cursor, limit, unreadOnly, snapshotAt, cancellationToken);
     }
 }

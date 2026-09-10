@@ -5,7 +5,7 @@ using Notification.Infrastructure.Clients;
 
 namespace NotificationIntegrationTests;
 
-public sealed class ProfileRecipientDirectoryTests
+public sealed class BlogRecipientDirectoryTests
 {
     [Fact]
     public async Task SendsEncodedOpaqueCursorAndUtcCutoff()
@@ -16,7 +16,7 @@ public sealed class ProfileRecipientDirectoryTests
             Content = new StringContent($"{{\"userIds\":[\"{userId}\"],\"nextCursor\":\"next\",\"hasMore\":true}}", Encoding.UTF8, "application/json")
         }));
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://profile.example/") };
-        var directory = new ProfileRecipientDirectory(client);
+        var directory = new BlogRecipientDirectory(client);
         var cutoff = new DateTimeOffset(2026, 9, 7, 12, 0, 0, TimeSpan.FromHours(5));
         var result = await directory.GetRecipientsPageAsync(Guid.NewGuid(), "a+/=& b", 5, cutoff);
         Assert.True(result.IsSuccess);
@@ -37,7 +37,7 @@ public sealed class ProfileRecipientDirectoryTests
     {
         using var client = new HttpClient(new Handler((request, ct) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         { Content = new StringContent(json, Encoding.UTF8, "application/json") }))) { BaseAddress = new Uri("https://profile.example/") };
-        var result = await new ProfileRecipientDirectory(client).GetRecipientsPageAsync(Guid.NewGuid(), "same", 10, DateTimeOffset.UtcNow);
+        var result = await new BlogRecipientDirectory(client).GetRecipientsPageAsync(Guid.NewGuid(), "same", 10, DateTimeOffset.UtcNow);
         Assert.Equal("Recipients.InvalidResponse", Assert.Single(result.Errors).Key);
     }
 
@@ -46,7 +46,7 @@ public sealed class ProfileRecipientDirectoryTests
     {
         using var client = new HttpClient(new Handler((request, ct) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
         { Content = new StringContent("provider secret") }))) { BaseAddress = new Uri("https://profile.example/") };
-        var result = await new ProfileRecipientDirectory(client).GetRecipientsPageAsync(Guid.NewGuid(), null, 10, DateTimeOffset.UtcNow);
+        var result = await new BlogRecipientDirectory(client).GetRecipientsPageAsync(Guid.NewGuid(), null, 10, DateTimeOffset.UtcNow);
         Assert.Equal("Recipients.Http503", Assert.Single(result.Errors).Key);
         Assert.DoesNotContain("secret", result.Errors[0].Message);
     }
@@ -56,7 +56,7 @@ public sealed class ProfileRecipientDirectoryTests
     {
         using var client = new HttpClient(new Handler((request, ct) => throw new TaskCanceledException()))
         { BaseAddress = new Uri("https://profile.example/") };
-        var directory = new ProfileRecipientDirectory(client);
+        var directory = new BlogRecipientDirectory(client);
         var result = await directory.GetRecipientsPageAsync(Guid.NewGuid(), null, 10, DateTimeOffset.UtcNow);
         Assert.Equal("Recipients.Timeout", Assert.Single(result.Errors).Key);
         using var cancellation = new CancellationTokenSource();

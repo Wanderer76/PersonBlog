@@ -7,8 +7,8 @@ using Shared.Utils;
 
 namespace Notification.Infrastructure.Clients;
 
-/// <summary>Reads the Profile internal subscriber API; authentication is configured on the HTTP client.</summary>
-public sealed class ProfileRecipientDirectory(HttpClient client) : IRecipientDirectory
+/// <summary>Reads the Blog subscriber projection through its protected internal API.</summary>
+public sealed class BlogRecipientDirectory(HttpClient client) : IRecipientDirectory
 {
     public async Task<Result<RecipientPage>> GetRecipientsPageAsync(Guid blogId, string? cursor, int limit,
         DateTimeOffset cutoff, CancellationToken cancellationToken = default)
@@ -27,24 +27,24 @@ public sealed class ProfileRecipientDirectory(HttpClient client) : IRecipientDir
         {
             using var response = await client.GetAsync(uri, cancellationToken);
             if (!response.IsSuccessStatusCode)
-                return Failure($"Recipients.Http{(int)response.StatusCode}", "Profile could not return recipients.");
+                return Failure($"Recipients.Http{(int)response.StatusCode}", "Blog could not return recipients.");
             var page = await response.Content.ReadFromJsonAsync<RecipientPage>(cancellationToken);
             if (page?.UserIds is null || page.UserIds.Count > limit || page.UserIds.Any(x => x == Guid.Empty) ||
                 (page.HasMore && (string.IsNullOrWhiteSpace(page.NextCursor) || page.NextCursor == cursor)))
-                return Failure("Recipients.InvalidResponse", "Profile returned an invalid recipient page.");
+                return Failure("Recipients.InvalidResponse", "Blog returned an invalid recipient page.");
             return page;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return Failure("Recipients.Timeout", "Profile request timed out.");
+            return Failure("Recipients.Timeout", "Blog request timed out.");
         }
         catch (HttpRequestException)
         {
-            return Failure("Recipients.Unavailable", "Profile is unavailable.");
+            return Failure("Recipients.Unavailable", "Blog is unavailable.");
         }
         catch (JsonException)
         {
-            return Failure("Recipients.InvalidResponse", "Profile returned invalid JSON.");
+            return Failure("Recipients.InvalidResponse", "Blog returned invalid JSON.");
         }
     }
 

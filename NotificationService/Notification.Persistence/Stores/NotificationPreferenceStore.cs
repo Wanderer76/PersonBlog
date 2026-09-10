@@ -10,8 +10,7 @@ namespace Notification.Persistence.Stores;
 internal sealed class NotificationPreferenceStore(StoreOperation operation, IDateTimeManager dateTimeManager)
     : NotificationStoreBase(operation, dateTimeManager), INotificationPreferenceStore
 {
-    public Task<Result<IReadOnlyList<NotificationPreference>>> GetAsync(Guid userId,
-        CancellationToken cancellationToken = default) =>
+    public Task<Result<IReadOnlyList<NotificationPreference>>> GetAsync(Guid userId, CancellationToken cancellationToken = default) =>
         Operation.Run<IReadOnlyList<NotificationPreference>>(async db =>
             await db.Set<UserNotificationPreference>().AsNoTracking()
                 .Where(preference => preference.UserId == userId)
@@ -19,8 +18,8 @@ internal sealed class NotificationPreferenceStore(StoreOperation operation, IDat
                     preference.Kind, preference.Channel, preference.Enabled))
                 .ToArrayAsync(cancellationToken), false, cancellationToken);
 
-    public Task<Result> UpdateAsync(Guid userId, IReadOnlyList<NotificationPreference> preferences,
-        DateTimeOffset updatedAt, CancellationToken cancellationToken = default) => Operation.Run(async db =>
+    public Task<Result> UpdateAsync(Guid userId, IReadOnlyList<NotificationPreference> preferences, DateTimeOffset updatedAt, CancellationToken cancellationToken = default)
+        => Operation.Run(async db =>
         {
             if (preferences.Any(preference => preference is null || !Enum.IsDefined(preference.Kind) ||
                     !Enum.IsDefined(preference.Channel)) ||

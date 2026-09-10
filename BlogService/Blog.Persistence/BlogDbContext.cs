@@ -1,4 +1,4 @@
-﻿using Blog.Domain.Entities;
+using Blog.Domain.Entities;
 using Blog.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -49,9 +49,11 @@ public class BlogDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<Subscriber>();
                 entity.HasIndex(x => new { x.UserId, x.BlogId });
+                entity.HasIndex(x => new { x.BlogId, x.SubscriptionStartDate, x.UserId });
             }
             {
                 var entity = modelBuilder.Entity<Post>();
+                entity.HasIndex(x => x.PublicationId).IsUnique();
                 entity.HasOne(x => x.BanMessage)
                     .WithOne(x => x.Post)
                     .HasForeignKey<BanMessage>(x => x.PostId);

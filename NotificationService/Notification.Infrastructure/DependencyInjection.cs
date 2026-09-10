@@ -24,11 +24,11 @@ public static class DependencyInjection
         services.AddNotificationApplication();
         services.TryAddSingleton<TimeProvider>(TimeProvider.System);
         services.TryAddSingleton<IDateTimeManager, SystemDateTimeManager>();
-        services.AddHttpClient<IRecipientDirectory, ProfileRecipientDirectory>((provider, client) =>
+        services.AddHttpClient<IRecipientDirectory, BlogRecipientDirectory>((provider, client) =>
         {
             var configuration = provider.GetRequiredService<IConfiguration>();
-            client.BaseAddress = new Uri(configuration["AppUrls:NotificationProfile"]
-                ?? throw new InvalidOperationException("AppUrls:NotificationProfile is required."));
+            client.BaseAddress = new Uri(configuration["AppUrls:NotificationBlog"]
+                ?? throw new InvalidOperationException("AppUrls:NotificationBlog is required."));
             client.Timeout = TimeSpan.FromSeconds(15);
         });
         services.AddSignalR();
@@ -60,6 +60,21 @@ public static class DependencyInjection
         services.TryAddEnumerable(
             ServiceDescriptor.Scoped<INotificationDelivery, PushNotificationDelivery>());
         return services;
+    }
+
+    public static IMessageBusBuilder AddPostPublishedNotifications(this IMessageBusBuilder builder)
+    {
+        return builder.AddSubscription<PostPublishedV1, PostPublishedV1Handler>(options =>
+        {
+            options.QueueName = PostPublishedV1Handler.ConsumerName;
+            options.PrefetchCount = 10;
+            options.Exchange = new ExchangeParam
+            {
+                Name = BlogIntegrationEvents.Exchange,
+                RoutingKey = BlogIntegrationEvents.PostPublishedV1RoutingKey,
+                ExchangeType = "direct"
+            };
+        });
     }
 
     // Transitional adapter, not a complete notification delivery pipeline.

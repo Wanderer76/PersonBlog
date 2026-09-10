@@ -16,6 +16,7 @@ namespace Blog.Service.Extensions
             //services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
             services.AddScoped<ISubscriptionLevelService, DefaultSubscriptionLevelService>();
             services.AddScoped<ICategoryService, DefaultCategoryService>();
+            services.AddScoped<ISubscriberDirectoryService, DefaultSubscriberDirectoryService>();
             services.AddScoped<OutboxPublisher>();
             services.AddScoped<PostFileCleanupService>();
         }

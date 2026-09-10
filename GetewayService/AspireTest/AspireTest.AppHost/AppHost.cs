@@ -66,6 +66,15 @@ var playListService = builder.AddProject<Projects.PlayListService_API>("playlist
     .WaitFor(authService, WaitBehavior.WaitOnResourceUnavailable)
     .WaitFor(blogService, WaitBehavior.WaitOnResourceUnavailable);
 
+var notificationService = builder.AddProject<Projects.Notification_API>("notificationapi")
+    .WithHttpHealthCheck("/health")
+    .WithEnvironment("AppUrls__Auth", ReferenceExpression.Create($"{authService.GetEndpoint("http")}/api/"))
+    .WithEnvironment("AppUrls__NotificationBlog", ReferenceExpression.Create($"{blogService.GetEndpoint("http")}/"))
+    .WithReference(authService)
+    .WithReference(blogService)
+    .WaitFor(authService, WaitBehavior.WaitOnResourceUnavailable)
+    .WaitFor(blogService, WaitBehavior.WaitOnResourceUnavailable);
+
 builder.AddProject<Projects.Gateway_API>("gateway")
     .WithExternalHttpEndpoints()
     .WithHttpHealthCheck("/health")
@@ -78,6 +87,7 @@ builder.AddProject<Projects.Gateway_API>("gateway")
     .WithEnvironment("AppUrls__Conference", ReferenceExpression.Create($"{conferenceService.GetEndpoint("http")}/api/"))
     .WithEnvironment("AppUrls__Comments", ReferenceExpression.Create($"{commentsService.GetEndpoint("http")}/api/"))
     .WithEnvironment("AppUrls__PlayList", ReferenceExpression.Create($"{playListService.GetEndpoint("http")}/api/"))
+    .WithEnvironment("AppUrls__Notification", ReferenceExpression.Create($"{notificationService.GetEndpoint("http")}/"))
     .WithReference(authService)
     .WithReference(blogService)
     .WithReference(profileService)
@@ -86,6 +96,7 @@ builder.AddProject<Projects.Gateway_API>("gateway")
     .WithReference(conferenceService)
     .WithReference(commentsService)
     .WithReference(playListService)
+    .WithReference(notificationService)
     .WaitFor(authService, WaitBehavior.WaitOnResourceUnavailable)
     .WaitFor(profileService, WaitBehavior.WaitOnResourceUnavailable)
     .WaitFor(recommendationService, WaitBehavior.WaitOnResourceUnavailable)
@@ -93,6 +104,7 @@ builder.AddProject<Projects.Gateway_API>("gateway")
     .WaitFor(searchService, WaitBehavior.WaitOnResourceUnavailable)
     .WaitFor(conferenceService, WaitBehavior.WaitOnResourceUnavailable)
     .WaitFor(playListService, WaitBehavior.WaitOnResourceUnavailable)
+    .WaitFor(notificationService, WaitBehavior.WaitOnResourceUnavailable)
     .WaitFor(blogService, WaitBehavior.WaitOnResourceUnavailable);
 
 builder.Build().Run();

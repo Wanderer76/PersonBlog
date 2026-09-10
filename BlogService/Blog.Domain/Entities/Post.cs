@@ -1,4 +1,4 @@
-﻿using Infrastructure.Interface;
+using Infrastructure.Interface;
 using Shared.Services;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,6 +19,8 @@ public sealed class Post : IBlogEntity, ISoftDelete
     public int LikeCount { get; set; } = 0;
     public int DislikeCount { get; set; } = 0;
     public long RecommendationVersion { get; private set; } = 1;
+    public Guid? PublicationId { get; private set; }
+    public DateTimeOffset? PublishedAt { get; private set; }
     public PostVisibility Visibility { get; set; }
     [ConcurrencyCheck]
     public ProcessState ProcessState { get; set; }
@@ -90,6 +92,22 @@ public sealed class Post : IBlogEntity, ISoftDelete
     }
 
     public void MarkRecommendationChanged() => RecommendationVersion++;
+
+    public bool CanNotifyAudience =>
+        ProcessState == ProcessState.Complete &&
+        Visibility == PostVisibility.Public &&
+        !IsDelete &&
+        !BanMessageId.HasValue;
+
+    public bool TryMarkPublished(Guid publicationId, DateTimeOffset publishedAt)
+    {
+        if (PublicationId.HasValue || !CanNotifyAudience) return false;
+        if (publicationId == Guid.Empty)
+            throw new ArgumentException("Publication identifier must not be empty.", nameof(publicationId));
+        PublicationId = publicationId;
+        PublishedAt = publishedAt.ToUniversalTime();
+        return true;
+    }
 }
 
 public enum PostType

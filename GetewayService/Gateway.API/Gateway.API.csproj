@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -27,6 +27,7 @@
 		<ProjectReference Include="..\..\PlayListService\PlayListService.Services\PlayListService.Services.csproj" />
 		<ProjectReference Include="..\..\ProfileService\Profile.Service\Profile.Service.csproj" />
 		<ProjectReference Include="..\..\ProfileService\Profile.Domain\Profile.Domain.csproj" />
+		<ProjectReference Include="..\..\NotificationService\Notification.Contract\Notification.Contract.csproj" />
 		<ProjectReference Include="..\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
 	</ItemGroup>
 

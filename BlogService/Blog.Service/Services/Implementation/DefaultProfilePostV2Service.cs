@@ -80,6 +80,8 @@ internal sealed class DefaultProfilePostV2Service(
         if (post.Type == PostType.Text)
         {
             repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+            var publication = PostPublishedV1Factory.TryCreate(post, user.UserId);
+            if (publication is not null) repository.Add(VideoProcessEvent.Create(publication));
         }
         await repository.SaveChangesAsync();
 
@@ -524,6 +526,8 @@ internal sealed class DefaultProfilePostV2Service(
             ViewCount = post.ViewCount
         }));
         repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+        var publication = PostPublishedV1Factory.TryCreate(post, user.UserId);
+        if (publication is not null) repository.Add(VideoProcessEvent.Create(publication));
         try
         {
             await repository.SaveChangesAsync();
@@ -663,6 +667,8 @@ internal sealed class DefaultProfilePostV2Service(
             ViewCount = post.ViewCount
         }));
         repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+        var publication = PostPublishedV1Factory.TryCreate(post, user.UserId);
+        if (publication is not null) repository.Add(VideoProcessEvent.Create(publication));
 
         await repository.SaveChangesAsync();
 

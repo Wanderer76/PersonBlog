@@ -6,7 +6,7 @@
 
 `Notification.Infrastructure` реализует:
 
-- `IRecipientDirectory`: HTTP-клиент `ProfileRecipientDirectory`, одна страница за вызов, UTC cutoff, экранирование непрозрачного cursor, проверка ответа, безопасные ошибки HTTP/JSON/timeout.
+- `IRecipientDirectory`: HTTP-клиент `BlogRecipientDirectory`, одна страница за вызов, UTC cutoff, экранирование непрозрачного cursor, проверка ответа, безопасные ошибки HTTP/JSON/timeout.
 - `INotificationDelivery`: SignalR InApp и подключаемый Push через `IPushNotificationSender`. Push sender возвращает `Result`; конкретный провайдер подключается приложением.
 - `IDateTimeManager`: заменяемый `TimeProvider`.
 - `NotificationWorkProcessor` / `NotificationWorker`: durable inbox → прикладной сценарий → fanout → доставка, ограниченные пачки, задержка повторов и карантин после лимита попыток. Перед доставкой повторно проверяются настройки и срок действия. Отправка не отмечает уведомление прочитанным.
@@ -24,7 +24,8 @@ Claims выбираются PostgreSQL `FOR UPDATE SKIP LOCKED`; истёкши�
 API регистрирует оба слоя и фонового обработчика. До запуска нужно задать:
 
 - `ConnectionStrings:NotificationDbContext` — PostgreSQL connection string, пароль через окружение/secret store.
-- `AppUrls:NotificationProfile` — корневой URL Profile, например `http://profile:8080/`, без `/api/`.
+- `AppUrls:NotificationBlog` — корневой URL Blog, например `http://blog:8080/`, без `/api/`.
+- `InternalApi:Key` — общий секрет для защищённого внутреннего API аудитории Blog.
 - `AppUrls:Auth` — URL API сервера авторизации с завершающим `/api/`.
 - `Redis:ConnectionString` и `Redis:InstanceName` — подключение и префикс Redis для общего кэша пользовательских сессий.
 - Настройки JWT, необходимые существующему `AddCustomJwtAuthentication`.
@@ -57,18 +58,18 @@ dotnet ef database update --project NotificationService/Notification.Persistence
 
 Точка durable intake — `INotificationWorkStore.EnqueueAsync(NotificationIngress, cancellationToken)`. Consumer подтверждает сообщение только после успешного результата enqueue. Source.EventId должен быть стабильным при повторной доставке; CorrelationId его не заменяет. Для прямого уведомления передаётся RecipientUserId, для публикации — PublicationId, BlogId, AudienceCutoff и IsPublic. Данные проверяются до сохранения.
 
-Mapping новых событий Blog/Comments/Conference и изменения их producers в эту реализацию слоёв не входят. Старый `PostUpdateEvent` не содержит необходимых данных для надёжного mapping; legacy-подписка больше не включается API. Метод `AddLegacyPostNotifications` остаётся отдельным диагностическим адаптером, который лишь логирует получателей. Его бесконечный retry удалён; ошибки передаются шине, а не маскируются успешным завершением.
+`PostPublishedV1` создаётся Blog в той же транзакции, в которой фиксируется первая публичная публикация текста или успешно обработанного видео. Notification consumer сохраняет его в durable inbox и запускает fanout. Mapping событий Comments/Conference пока не реализован. Старый `PostUpdateEvent` не содержит необходимых данных для надёжного mapping; legacy-подписка больше не включается API. Метод `AddLegacyPostNotifications` остаётся отдельным диагностическим адаптером, который лишь логирует получателей. Его бесконечный retry удалён; ошибки передаются шине, а не маскируются успешным завершением.
 
-`ProfileRecipientDirectory` ожидает защищённый сервисной аутентификацией endpoint:
+`BlogRecipientDirectory` вызывает защищённый внутренним API key endpoint Blog:
 
 ```text
 GET /api/internal/blogs/{blogId}/subscribers?cursor=...&limit=500&cutoff=...
 { "userIds": ["guid"], "nextCursor": "opaque", "hasMore": true }
 ```
 
-В текущем ProfileService этого endpoint **ещё нет**. Адаптер реализован и протестирован с HTTP stub; для рабочей рассылки публикаций нужно реализовать endpoint в Profile и настроить сервисную аутентификацию HTTP-клиента. Его контракт: активные подписки на момент чтения страницы, созданные не позднее cutoff. Авторизация настраивается стандартным typed HTTP client / DelegatingHandler для `IRecipientDirectory, ProfileRecipientDirectory`; пользовательский JWT автоматически не пересылается.
+Endpoint читает историческую проекцию `Blog.Subscribers`: подписка должна начаться не позже cutoff и не завершиться до него. Используется keyset pagination по `(SubscriptionStartDate, UserId)`. Пользовательский JWT не пересылается; Notification передаёт `X-Internal-Api-Key`.
 
-InApp доступен по `/hubs/notifications`, hub защищён `[Authorize]`. Клиент должен объединять события по NotificationId: crash после отправки до commit допускает повторную доставку. Успешный SignalR send не гарантирует получение офлайн-клиентом; история остаётся в БД. REST-контроллеры истории и frontend в эту задачу не входят.
+InApp доступен по `/hubs/notifications`, hub защищён `AuthFilter`. REST API предоставляет историю, unread count, read/read-all и настройки. Cursor и граница snapshot защищены ASP.NET Core Data Protection. Gateway проксирует те же операции под `/api/notifications` и `/api/notification-preferences`. Frontend пока не реализован.
 
 ## Проверка
 

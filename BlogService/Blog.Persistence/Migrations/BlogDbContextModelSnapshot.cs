@@ -281,6 +281,12 @@ namespace Blog.Persistence.Migrations
                     b.Property<Guid?>("PaymentSubscriptionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("PublicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<long>("RecommendationVersion")
                         .HasColumnType("bigint");
 
@@ -443,6 +449,11 @@ namespace Blog.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BlogId");
+
+                    b.HasIndex("PublicationId")
+                        .IsUnique();
+
+                    b.HasIndex("BlogId", "SubscriptionStartDate", "UserId");
 
                     b.HasIndex("UserId", "BlogId");
 

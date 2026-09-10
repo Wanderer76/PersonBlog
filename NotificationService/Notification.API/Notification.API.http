@@ -1,6 +1,18 @@
-@Notification.API_HostAddress = http://localhost:5250
+@Notification.API_HostAddress = http://localhost:5260
+@AccessToken = replace-with-access-token
 
-GET {{Notification.API_HostAddress}}/weatherforecast/
+GET {{Notification.API_HostAddress}}/api/notifications?limit=20&unreadOnly=false
 Accept: application/json
+Authorization: Bearer {{AccessToken}}
 
 ###
+
+GET {{Notification.API_HostAddress}}/api/notifications/unread-count
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
+
+###
+
+GET {{Notification.API_HostAddress}}/api/notification-preferences
+Accept: application/json
+Authorization: Bearer {{AccessToken}}
