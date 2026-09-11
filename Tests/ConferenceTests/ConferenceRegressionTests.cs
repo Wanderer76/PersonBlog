@@ -30,6 +30,8 @@ public sealed class ConferenceRegressionTests
 
         var room = context.Model.FindEntityType(typeof(ConferenceRoom));
         var participant = context.Model.FindEntityType(typeof(ConferenceParticipant));
+        var invitation = context.Model.FindEntityType(typeof(ConferenceInvitation));
+        var outbox = context.Model.FindEntityType(typeof(ConferenceOutboxMessage));
 
         Assert.Equal("Conference", context.Model.GetDefaultSchema());
         Assert.NotNull(room?.FindProperty(nameof(ConferenceRoom.PostId)));
@@ -37,6 +39,10 @@ public sealed class ConferenceRegressionTests
             index.IsUnique &&
             index.Properties.Select(property => property.Name)
                 .SequenceEqual([nameof(ConferenceParticipant.ConferenceRoomId), nameof(ConferenceParticipant.UserId)]));
+        Assert.Contains(invitation!.GetIndexes(), index => index.IsUnique &&
+            index.Properties.Select(property => property.Name)
+                .SequenceEqual([nameof(ConferenceInvitation.ConferenceId), nameof(ConferenceInvitation.RecipientUserId)]));
+        Assert.NotNull(outbox);
     }
 
     [Theory]

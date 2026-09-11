@@ -1,4 +1,4 @@
-﻿using Conference.Domain.Services;
+using Conference.Domain.Services;
 using Conference.Service.Implementation;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -15,6 +15,7 @@ namespace Conference.Service.Extensions
         {
             services.AddScoped<IConferenceRoomService, DefaultConferenceService>();
             services.AddScoped<IConferenceChatService, DefaultConferenceChatService>();
+            services.AddScoped<ConferenceOutboxPublisher>();
             services.AddSingleton<IConferenceStateStore, RedisConferenceStateStore>();
         }
     }

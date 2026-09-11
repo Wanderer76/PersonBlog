@@ -1,4 +1,5 @@
 using Conference.Domain.Entities;
+using Conference.Contracts.Events;
 using Conference.Domain.Models;
 using Conference.Domain.Services;
 using Conference.Service.Extensions;
@@ -6,6 +7,7 @@ using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
+using Shared.Models;
 
 namespace Conference.Service.Implementation;
 
@@ -71,6 +73,56 @@ public sealed class DefaultConferenceService(
         await cacheService.UpdateConferenceRoomCacheAsync(conference);
 
         return new ConferenceViewModel(conference.Id, conference.PostId);
+    }
+
+    public async Task<Result<ConferenceInvitationViewModel>> CreateInvitationAsync(Guid conferenceId,
+        CreateConferenceInvitationRequest request, CancellationToken cancellationToken = default)
+    {
+        var actor = await currentUserService.GetCurrentUserAsync();
+        if (actor.IsAnonymous || actor.UserId == Guid.Empty)
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error("User", "An authenticated user is required."));
+        if (request.RecipientUserId == Guid.Empty)
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error(nameof(request.RecipientUserId), "Recipient is required."));
+        if (request.RecipientUserId == actor.UserId)
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error(nameof(request.RecipientUserId), "You cannot invite yourself."));
+
+        var room = await repository.Get<ConferenceRoom>()
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == conferenceId, cancellationToken);
+        if (room is null || !room.IsActive)
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error("NotFound", "Conference does not exist or is closed."));
+        if (room.Participants.All(x => x.UserId != actor.UserId))
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error("Forbidden", "Only a conference participant can invite users."));
+
+        var now = DateTimeService.Now().ToUniversalTime();
+        var expiresAt = (request.ExpiresAt ?? now.AddHours(24)).ToUniversalTime();
+        if (expiresAt <= now || expiresAt > now.AddDays(7))
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error(nameof(request.ExpiresAt),
+                "Expiration must be in the future and no more than seven days away."));
+        if (await repository.Get<ConferenceInvitation>().AnyAsync(
+            x => x.ConferenceId == conferenceId && x.RecipientUserId == request.RecipientUserId,
+            cancellationToken))
+            return Result<ConferenceInvitationViewModel>.Failure(new Shared.Utils.Error("Invitation", "An invitation already exists."));
+
+        var invitationId = GuidService.GetNewGuid();
+        var eventId = GuidService.GetNewGuid();
+        var invitation = new ConferenceInvitation(invitationId, conferenceId, actor.UserId,
+            request.RecipientUserId, expiresAt);
+        repository.Add(invitation);
+        repository.Add(ConferenceOutboxMessage.Create(new ConferenceInvitationCreatedV1
+        {
+            EventId = eventId,
+            OccurredAt = invitation.CreatedAt,
+            InvitationId = invitation.Id,
+            ConferenceId = invitation.ConferenceId,
+            ActorUserId = invitation.ActorUserId,
+            RecipientUserId = invitation.RecipientUserId,
+            ExpiresAt = invitation.ExpiresAt
+        }, eventId));
+        await repository.SaveChangesAsync();
+
+        return new ConferenceInvitationViewModel(invitation.Id, invitation.ConferenceId,
+            invitation.RecipientUserId, invitation.ExpiresAt);
     }
 
     public async Task<ConferenceViewModel> GetConferenceRoomByIdAsync(Guid id)

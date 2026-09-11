@@ -16,6 +16,8 @@
   <ItemGroup>
     <ProjectReference Include="../../NotificationService/Notification.Infrastructure/Notification.Infrastructure.csproj" />
     <ProjectReference Include="../../NotificationService/Notification.Persistence/Notification.Persistence.csproj" />
+    <ProjectReference Include="../../CommentService/Comments.Persistence/Comments.Persistence.csproj" />
+    <ProjectReference Include="../../ConferenceService/Conference.Persistence/Conference.Persistence.csproj" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

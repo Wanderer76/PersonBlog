@@ -1,5 +1,7 @@
 using Authentication.Contract;
 using Authentication.Contract.Events;
+using Comments.API.HostedServices;
+using Comments.Contracts.Events;
 using Comments.Domain.Services;
 using Comments.Persistence.Extensions;
 using Comments.Service.Extensions;
@@ -28,7 +30,13 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
     .AddSubscription<ProfileRegisterEvent, UserCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "comment-userprofile-create";
+    })
+    .AddMessage<CommentReplyCreatedV1>(cfg =>
+    {
+        cfg.Exchange = CommentIntegrationEvents.Exchange;
+        cfg.RoutingKey = CommentIntegrationEvents.CommentReplyCreatedV1RoutingKey;
     });
+builder.Services.AddHostedService<CommentOutboxPublisherService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

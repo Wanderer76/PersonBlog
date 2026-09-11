@@ -6,6 +6,7 @@ using Infrastructure.Services;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
+using Shared.Services;
 
 namespace Blog.Service.EventHandlers;
 
@@ -61,11 +62,30 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
         {
             _repository.Attach(fileMetadata);
             _repository.Attach(post);
+            var recipientUserId = await _repository.Get<PersonBlog>()
+                .Where(blog => blog.Id == post.BlogId)
+                .Select(blog => (Guid?)blog.UserId)
+                .SingleOrDefaultAsync();
+            var occurredAt = DateTimeService.Now().ToUniversalTime();
 
             if (@event.Error != null)
             {
                 fileMetadata.ErrorMessage = @event.Error;
                 post.ProcessState = ProcessState.Error;
+                if (recipientUserId.HasValue)
+                {
+                    _repository.Add(VideoProcessEvent.Create(new VideoProcessingFailedV1
+                    {
+                        EventId = GuidService.GetNewGuid(),
+                        OccurredAt = occurredAt,
+                        PostId = post.Id,
+                        BlogId = post.BlogId,
+                        RecipientUserId = recipientUserId.Value,
+                        VideoMetadataId = fileMetadata.Id,
+                        ProcessingAttemptId = fileMetadata.Id,
+                        ErrorCode = "video_processing_failed"
+                    }));
+                }
             }
             else
             {
@@ -93,15 +113,21 @@ public sealed class VideoReadyToPublishEventHandler : IEventHandler<VideoReadyTo
 
                 _repository.Add(VideoProcessEvent.Create(postUpdateEvent));
                 _repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
-                if (post.CanNotifyAudience)
+                if (recipientUserId.HasValue)
                 {
-                    var authorUserId = await _repository.Get<PersonBlog>()
-                        .Where(blog => blog.Id == post.BlogId)
-                        .Select(blog => (Guid?)blog.UserId)
-                        .SingleOrDefaultAsync();
-                    if (authorUserId.HasValue)
+                    _repository.Add(VideoProcessEvent.Create(new VideoProcessingCompletedV1
                     {
-                        var publication = PostPublishedV1Factory.TryCreate(post, authorUserId.Value);
+                        EventId = GuidService.GetNewGuid(),
+                        OccurredAt = occurredAt,
+                        PostId = post.Id,
+                        BlogId = post.BlogId,
+                        RecipientUserId = recipientUserId.Value,
+                        VideoMetadataId = fileMetadata.Id,
+                        ProcessingAttemptId = fileMetadata.Id
+                    }));
+                    if (post.CanNotifyAudience)
+                    {
+                        var publication = PostPublishedV1Factory.TryCreate(post, recipientUserId.Value, occurredAt);
                         if (publication is not null)
                             _repository.Add(VideoProcessEvent.Create(publication));
                     }

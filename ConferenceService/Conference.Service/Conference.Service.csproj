@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="StackExchange.Redis" Version="2.7.27" />
     <ProjectReference Include="..\..\Common\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\Conference.Contracts\Conference.Contracts.csproj" />
     <ProjectReference Include="..\Conference.Domain\Conference.Domain.csproj" />
   </ItemGroup>
 

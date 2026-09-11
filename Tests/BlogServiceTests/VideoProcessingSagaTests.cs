@@ -26,9 +26,11 @@ public sealed class VideoProcessingSagaTests
         context.ChangeTracker.Clear();
         await HandleAsync(context, response);
 
-        Assert.Equal(3, await context.ProfileEventMessages.CountAsync());
+        Assert.Equal(4, await context.ProfileEventMessages.CountAsync());
         Assert.Single(await context.ProfileEventMessages
             .Where(message => message.EventType == nameof(PostPublishedV1)).ToListAsync());
+        Assert.Single(await context.ProfileEventMessages
+            .Where(message => message.EventType == nameof(VideoProcessingCompletedV1)).ToListAsync());
         Assert.Single(await context.PostFiles.ToListAsync());
 
         var post = await context.Posts.Include(x => x.VideoPostInfo).SingleAsync();
@@ -51,7 +53,8 @@ public sealed class VideoProcessingSagaTests
 
         await HandleAsync(context, response);
 
-        Assert.Empty(await context.ProfileEventMessages.ToListAsync());
+        Assert.Single(await context.ProfileEventMessages
+            .Where(message => message.EventType == nameof(VideoProcessingFailedV1)).ToListAsync());
         Assert.Equal(ProcessState.Error, (await context.Posts.SingleAsync()).ProcessState);
         Assert.Equal("conversion failed", (await context.VideoMetadata.SingleAsync()).ErrorMessage);
     }

@@ -1,4 +1,6 @@
 using Authentication.Contract;
+using Conference.API.HostedServices;
+using Conference.Contracts.Events;
 using Conference.Persistence.Extensions;
 using Conference.Service.Extensions;
 using Conference.Service.Hubs;
@@ -6,6 +8,8 @@ using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using MessageBus;
+using MessageBus.Configs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +50,15 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors();
 builder.Services.AddSignalR();
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddRabbitMqMessageBus(
+        builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()
+        ?? throw new InvalidOperationException("RabbitMQ:Connection is required."))
+    .AddMessage<ConferenceInvitationCreatedV1>(cfg =>
+    {
+        cfg.Exchange = ConferenceIntegrationEvents.Exchange;
+        cfg.RoutingKey = ConferenceIntegrationEvents.ConferenceInvitationCreatedV1RoutingKey;
+    });
+builder.Services.AddHostedService<ConferenceOutboxPublisherService>();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

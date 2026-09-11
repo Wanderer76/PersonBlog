@@ -11,6 +11,8 @@
     <ProjectReference Include="../Notification.Application/Notification.Application.csproj" />
     <ProjectReference Include="../Notification.Domain/Notification.Domain.csproj" />
     <ProjectReference Include="../../BlogService/Blog.Contracts/Blog.Contracts.csproj" />
+    <ProjectReference Include="../../CommentService/Comments.Contracts/Comments.Contracts.csproj" />
+    <ProjectReference Include="../../ConferenceService/Conference.Contracts/Conference.Contracts.csproj" />
     <ProjectReference Include="../../Common/MessageBus/MessageBus.csproj" />
     <ProjectReference Include="../../Common/Shared/Shared.csproj" />
   </ItemGroup>

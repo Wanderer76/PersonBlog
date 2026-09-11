@@ -4,6 +4,7 @@ using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Infrastructure.Middleware;
 
 namespace Conference.API.Controllers
 {
@@ -26,6 +27,16 @@ namespace Conference.API.Controllers
             var user = await _currentUserService.GetCurrentUserAsync();
             var result = await _conferenceRoomService.CreateConferenceRoomAsync(user.UserId, postId);
             return Ok(result);
+        }
+
+        [HttpPost("{roomId:guid}/invitations")]
+        [AuthFilter]
+        [Produces<ConferenceInvitationViewModel>]
+        public async Task<ActionResult<ConferenceInvitationViewModel>> CreateInvitation(Guid roomId,
+            CreateConferenceInvitationRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _conferenceRoomService.CreateInvitationAsync(roomId, request, cancellationToken);
+            return ToActionResult(result);
         }
 
         [HttpGet("joinLink")]

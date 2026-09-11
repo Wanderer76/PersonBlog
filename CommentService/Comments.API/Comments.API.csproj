@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\Common\Shared\Shared.csproj" />
     <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Comments.Domain\Comments.Domain.csproj" />
+    <ProjectReference Include="..\Comments.Contracts\Comments.Contracts.csproj" />
     <ProjectReference Include="..\Comments.Persistence\Comments.Persistence.csproj" />
     <ProjectReference Include="..\Comments.Service\Comments.Service.csproj" />
   </ItemGroup>

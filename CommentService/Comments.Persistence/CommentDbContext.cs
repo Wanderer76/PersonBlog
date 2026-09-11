@@ -1,4 +1,4 @@
-﻿using Comments.Domain.Entities;
+using Comments.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
@@ -9,6 +9,7 @@ namespace Comments.Persistence
 
         public DbSet<Comment> Comments { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<CommentOutboxMessage> OutboxMessages { get; set; }
 
         public CommentDbContext(DbContextOptions<CommentDbContext> options) : base(options)
         {

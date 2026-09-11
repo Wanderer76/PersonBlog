@@ -58,7 +58,7 @@ dotnet ef database update --project NotificationService/Notification.Persistence
 
 Точка durable intake — `INotificationWorkStore.EnqueueAsync(NotificationIngress, cancellationToken)`. Consumer подтверждает сообщение только после успешного результата enqueue. Source.EventId должен быть стабильным при повторной доставке; CorrelationId его не заменяет. Для прямого уведомления передаётся RecipientUserId, для публикации — PublicationId, BlogId, AudienceCutoff и IsPublic. Данные проверяются до сохранения.
 
-`PostPublishedV1` создаётся Blog в той же транзакции, в которой фиксируется первая публичная публикация текста или успешно обработанного видео. Notification consumer сохраняет его в durable inbox и запускает fanout. Mapping событий Comments/Conference пока не реализован. Старый `PostUpdateEvent` не содержит необходимых данных для надёжного mapping; legacy-подписка больше не включается API. Метод `AddLegacyPostNotifications` остаётся отдельным диагностическим адаптером, который лишь логирует получателей. Его бесконечный retry удалён; ошибки передаются шине, а не маскируются успешным завершением.
+`PostPublishedV1` создаётся Blog в той же транзакции, в которой фиксируется первая публичная публикация текста или успешно обработанного видео. Notification consumer сохраняет его в durable inbox и запускает fanout. Результаты обработки видео публикуются как `VideoProcessingCompletedV1`/`VideoProcessingFailedV1`, ответы на комментарии — как `CommentReplyCreatedV1`, а приглашения — как `ConferenceInvitationCreatedV1`. Все producers записывают событие в outbox вместе с бизнес-изменением; Notification consumers сохраняют прямые уведомления в durable inbox. Старый `PostUpdateEvent` не содержит необходимых данных для надёжного mapping; legacy-подписка больше не включается API.
 
 `BlogRecipientDirectory` вызывает защищённый внутренним API key endpoint Blog:
 
@@ -67,7 +67,7 @@ GET /api/internal/blogs/{blogId}/subscribers?cursor=...&limit=500&cutoff=...
 { "userIds": ["guid"], "nextCursor": "opaque", "hasMore": true }
 ```
 
-Endpoint читает историческую проекцию `Blog.Subscribers`: подписка должна начаться не позже cutoff и не завершиться до него. Используется keyset pagination по `(SubscriptionStartDate, UserId)`. Пользовательский JWT не пересылается; Notification передаёт `X-Internal-Api-Key`.
+Endpoint читает историческую проекцию `Blog.Subscribers`: подписка должна начаться не позже cutoff и не завершиться до него. Используется keyset pagination по `(SubscriptionStartDate, UserId)`. Пользовательский JWT не пересылается. Доступ к endpoint должен ограничиваться сетевой политикой окружения, пока отдельная сервисная аутентификация не настроена.
 
 InApp доступен по `/hubs/notifications`, hub защищён `AuthFilter`. REST API предоставляет историю, unread count, read/read-all и настройки. Cursor и граница snapshot защищены ASP.NET Core Data Protection. Gateway проксирует те же операции под `/api/notifications` и `/api/notification-preferences`. Frontend пока не реализован.
 

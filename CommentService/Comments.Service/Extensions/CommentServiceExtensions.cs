@@ -1,4 +1,4 @@
-﻿using Comments.Domain.Services;
+using Comments.Domain.Services;
 using Comments.Service.Implementation;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -14,6 +14,7 @@ namespace Comments.Service.Extensions
         public static void AddCommentService(this IServiceCollection services)
         {
             services.AddScoped<ICommentService, DefaultCommentService>();
+            services.AddScoped<CommentOutboxPublisher>();
         }
     }
 }

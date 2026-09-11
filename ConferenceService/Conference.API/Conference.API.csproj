@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\AuthService\Authentication.Contract\Authentication.Contract.csproj" />
     <ProjectReference Include="..\..\GetewayService\AspireTest\AspireTest.ServiceDefaults\AspireTest.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Conference.Domain\Conference.Domain.csproj" />
+    <ProjectReference Include="..\Conference.Contracts\Conference.Contracts.csproj" />
     <ProjectReference Include="..\Conference.Persistence\Conference.Persistence.csproj" />
     <ProjectReference Include="..\Conference.Service\Conference.Service.csproj" />
   </ItemGroup>

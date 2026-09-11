@@ -81,6 +81,16 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
     {
         x.Exchange = BlogIntegrationEvents.Exchange;
         x.RoutingKey = BlogIntegrationEvents.PostPublishedV1RoutingKey;
+    })
+    .AddMessage<VideoProcessingCompletedV1>(x =>
+    {
+        x.Exchange = BlogIntegrationEvents.Exchange;
+        x.RoutingKey = VideoProcessingIntegrationEvents.CompletedV1RoutingKey;
+    })
+    .AddMessage<VideoProcessingFailedV1>(x =>
+    {
+        x.Exchange = BlogIntegrationEvents.Exchange;
+        x.RoutingKey = VideoProcessingIntegrationEvents.FailedV1RoutingKey;
     });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>

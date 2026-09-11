@@ -1,4 +1,4 @@
-﻿using Conference.Domain.Entities;
+using Conference.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
@@ -10,6 +10,8 @@ namespace Conference.Persistence
 
         public DbSet<Message> Messages { get; set; }
         public DbSet<ConferenceParticipant> ConferenceParticipants { get; set; }
+        public DbSet<ConferenceInvitation> ConferenceInvitations { get; set; }
+        public DbSet<ConferenceOutboxMessage> OutboxMessages { get; set; }
 
         public ConferenceDbContext(DbContextOptions<ConferenceDbContext> options) : base(options)
         {
@@ -30,6 +32,15 @@ namespace Conference.Persistence
                 entity.HasKey(x => new { x.Id });
                 entity.Property(x => x.Id).ValueGeneratedNever();
                 entity.Property(x => x.PostId);
+            }
+            {
+                var entity = modelBuilder.Entity<ConferenceInvitation>();
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => new { x.ConferenceId, x.RecipientUserId }).IsUnique();
+                entity.HasOne<ConferenceRoom>()
+                    .WithMany()
+                    .HasForeignKey(x => x.ConferenceId)
+                    .OnDelete(DeleteBehavior.Cascade);
             }
             {
                 var entity = modelBuilder.Entity<Message>();

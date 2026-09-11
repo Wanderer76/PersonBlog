@@ -1,4 +1,6 @@
 using Blog.Contracts.Events;
+using Comments.Contracts.Events;
+using Conference.Contracts.Events;
 using MessageBus;
 using MessageBus.Configs;
 using MessageBus.Models;
@@ -62,19 +64,46 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IMessageBusBuilder AddPostPublishedNotifications(this IMessageBusBuilder builder)
+    public static IMessageBusBuilder AddNotificationIntegrationEvents(this IMessageBusBuilder builder)
     {
-        return builder.AddSubscription<PostPublishedV1, PostPublishedV1Handler>(options =>
-        {
-            options.QueueName = PostPublishedV1Handler.ConsumerName;
-            options.PrefetchCount = 10;
-            options.Exchange = new ExchangeParam
+        return builder
+            .AddSubscription<PostPublishedV1, PostPublishedV1Handler>(options =>
             {
-                Name = BlogIntegrationEvents.Exchange,
-                RoutingKey = BlogIntegrationEvents.PostPublishedV1RoutingKey,
-                ExchangeType = "direct"
-            };
-        });
+                options.QueueName = PostPublishedV1Handler.ConsumerName;
+                options.Exchange = Exchange(BlogIntegrationEvents.Exchange,
+                    BlogIntegrationEvents.PostPublishedV1RoutingKey);
+            })
+            .AddSubscription<VideoProcessingCompletedV1, VideoProcessingCompletedV1Handler>(options =>
+            {
+                options.QueueName = VideoProcessingCompletedV1Handler.ConsumerName;
+                options.Exchange = Exchange(BlogIntegrationEvents.Exchange,
+                    VideoProcessingIntegrationEvents.CompletedV1RoutingKey);
+            })
+            .AddSubscription<VideoProcessingFailedV1, VideoProcessingFailedV1Handler>(options =>
+            {
+                options.QueueName = VideoProcessingFailedV1Handler.ConsumerName;
+                options.Exchange = Exchange(BlogIntegrationEvents.Exchange,
+                    VideoProcessingIntegrationEvents.FailedV1RoutingKey);
+            })
+            .AddSubscription<CommentReplyCreatedV1, CommentReplyCreatedV1Handler>(options =>
+            {
+                options.QueueName = CommentReplyCreatedV1Handler.ConsumerName;
+                options.Exchange = Exchange(CommentIntegrationEvents.Exchange,
+                    CommentIntegrationEvents.CommentReplyCreatedV1RoutingKey);
+            })
+            .AddSubscription<ConferenceInvitationCreatedV1, ConferenceInvitationCreatedV1Handler>(options =>
+            {
+                options.QueueName = ConferenceInvitationCreatedV1Handler.ConsumerName;
+                options.Exchange = Exchange(ConferenceIntegrationEvents.Exchange,
+                    ConferenceIntegrationEvents.ConferenceInvitationCreatedV1RoutingKey);
+            });
+
+        static ExchangeParam Exchange(string name, string routingKey) => new()
+        {
+            Name = name,
+            RoutingKey = routingKey,
+            ExchangeType = "direct"
+        };
     }
 
     // Transitional adapter, not a complete notification delivery pipeline.

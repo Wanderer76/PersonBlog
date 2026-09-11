@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ProfileService\Profile.Service\Profile.Service.csproj" />
+    <ProjectReference Include="..\Comments.Contracts\Comments.Contracts.csproj" />
     <ProjectReference Include="..\Comments.Domain\Comments.Domain.csproj" />
   </ItemGroup>
 

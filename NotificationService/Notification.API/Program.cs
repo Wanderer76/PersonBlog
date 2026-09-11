@@ -26,7 +26,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddRabbitMqMessageBus(
         builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()
         ?? throw new InvalidOperationException("RabbitMQ:Connection is required."))
-    .AddPostPublishedNotifications();
+    .AddNotificationIntegrationEvents();
 builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     options.Events ??= new JwtBearerEvents();
