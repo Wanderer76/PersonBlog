@@ -34,7 +34,7 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(15);
         });
         services.AddSignalR();
-        services.TryAddSingleton<IUserIdProvider, NotificationUserIdProvider>();
+        services.Replace(ServiceDescriptor.Singleton<IUserIdProvider, NotificationUserIdProvider>());
         services.TryAddEnumerable(
             ServiceDescriptor.Scoped<INotificationDelivery, InAppNotificationDelivery>());
         return services;

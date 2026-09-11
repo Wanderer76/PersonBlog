@@ -31,8 +31,9 @@ export const NotificationProvider = ({ children }: PropsWithChildren) => {
     const refreshTimer = window.setTimeout(() => void refreshUnreadCount(), 0);
     if (!JwtTokenService.isAuth()) return undefined;
 
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
     const hubUrl = import.meta.env.VITE_NOTIFICATION_HUB_URL
-      || 'http://localhost:5260/hubs/notifications';
+      || `${apiBaseUrl.replace(/\/$/, '')}/hubs/notifications`;
     const connection = new HubConnectionBuilder()
       .withUrl(hubUrl, { accessTokenFactory: () => getAccessToken() || '' })
       .withAutomaticReconnect()

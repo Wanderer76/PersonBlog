@@ -9,7 +9,9 @@ using Shared.Persistence;
 using Notification.Application.Abstractions;
 using Notification.Domain.Entities;
 using Notification.Infrastructure;
+using Notification.Infrastructure.Delivery;
 using Notification.Persistence;
+using Microsoft.AspNetCore.SignalR;
 
 namespace NotificationIntegrationTests;
 
@@ -80,6 +82,16 @@ public sealed class InfrastructureTests
         using var provider = services.BuildServiceProvider();
 
         Assert.Equal(expected, provider.GetRequiredService<IDateTimeManager>().UtcNow());
+    }
+
+    [Fact]
+    public void InfrastructureReplacesTheDefaultSignalRUserIdProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddNotificationInfrastructure();
+        using var provider = services.BuildServiceProvider();
+
+        Assert.IsType<NotificationUserIdProvider>(provider.GetRequiredService<IUserIdProvider>());
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
