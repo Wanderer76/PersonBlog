@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { JwtTokenService, subscribeToAuthState } from '@/shared/auth/tokenStorage';
 import SideBar from '@/widgets/sidebar';
+import { useNotifications } from '@/app/providers/notificationContext';
 import './Header.css';
 
 const Header = function () {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(() => JwtTokenService.isAuth());
+    const { unreadCount } = useNotifications();
 
     useEffect(() => subscribeToAuthState(() => {
         setIsAuthenticated(JwtTokenService.isAuth());
@@ -66,9 +68,20 @@ const Header = function () {
                             Войти
                         </button>
                     ) : (
-                        <Link to="/profile" className="profile-button" aria-label="Открыть профиль">
-                            <span className="avatar" aria-hidden="true">F</span>
-                        </Link>
+                        <>
+                            <Link to="/notifications" className="notification-button"
+                                aria-label={unreadCount > 0 ? `Уведомления: ${unreadCount} непрочитанных` : 'Уведомления'}>
+                                <BellIcon />
+                                {unreadCount > 0 && (
+                                    <span className="notification-badge" aria-hidden="true">
+                                        {unreadCount > 99 ? '99+' : unreadCount}
+                                    </span>
+                                )}
+                            </Link>
+                            <Link to="/profile" className="profile-button" aria-label="Открыть профиль">
+                                <span className="avatar" aria-hidden="true">F</span>
+                            </Link>
+                        </>
                     )}
                 </div>
             )}
@@ -92,5 +105,11 @@ const Header = function () {
         </header>
     );
 };
+
+const BellIcon = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Zm-8 11a2 2 0 0 0 4 0h-4Z" />
+    </svg>
+);
 
 export default Header;

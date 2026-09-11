@@ -20,6 +20,7 @@ const LikedPage = lazy(() => import('@/pages/liked'));
 const OAuthCallbackPage = lazy(() => import('@/pages/callback'));
 const TextPostEditorPage = lazy(() => import('@/pages/text-post-editor'));
 const TextPostPage = lazy(() => import('@/pages/text-post'));
+const NotificationsPage = lazy(() => import('@/pages/notifications'));
 
 const PrivateRoute = () => {
   const isAuthenticated = JwtTokenService.isAuth();
@@ -48,6 +49,7 @@ export const AppRouter = () => (
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/subscriptions" element={<SubscriptionPage />} />
         <Route path="/liked" element={<LikedPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/profile">
           <Route index element={<ProfilePage />} />
           <Route path="post/create" element={<CreatePostPage />} />

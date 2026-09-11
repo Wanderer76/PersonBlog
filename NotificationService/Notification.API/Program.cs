@@ -1,5 +1,6 @@
 using Authentication.Contract;
 using Infrastructure.Extensions;
+using Infrastructure.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using MessageBus;
 using MessageBus.Configs;
@@ -15,6 +16,14 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDataProtection();
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:3000", "http://127.0.0.1:3000"];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
 builder.Services.AddSingleton<Notification.API.Services.NotificationCursorProtector>();
 builder.Services.AddNotificationInfrastructure();
 builder.Services.AddUserSessionServices(options => options.BaseUrl = builder.Configuration["AppUrls:Auth"]!);
@@ -47,12 +56,22 @@ builder.Services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.Authenticatio
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    foreach (var initializer in scope.ServiceProvider.GetServices<IDbInitializer>())
+    {
+        initializer.Initialize();
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
