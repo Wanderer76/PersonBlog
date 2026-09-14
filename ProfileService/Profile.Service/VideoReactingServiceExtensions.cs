@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Profile.Domain.Services;
+using Profile.Application.Services;
 using Profile.Service.HttpClients;
 using Profile.Service.Implementation;
 
@@ -15,6 +15,7 @@ namespace Profile.Service
             services.AddScoped<ISubscribeService, DefaultSubscriptionService>();
             services.AddScoped<IProfileService, DefaultProfileService>();
             services.AddScoped<IBanService, DefaultPostBanService>();
+            services.AddScoped<IProfilePictureStore, ProfilePictureStore>();
         }
         public static void AddProfileHttpClient(this IServiceCollection services, IConfiguration configuration)
         {

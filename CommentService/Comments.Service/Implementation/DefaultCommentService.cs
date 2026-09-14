@@ -83,7 +83,6 @@ internal class DefaultCommentService : ICommentService
             .Where(x => x.PostId == postId)
             .CountAsync();
 
-
         var userIds = (await Task.WhenAll(comments.Select(x => x.UserId)
             .Distinct()
             .Select(x => _profileHttpClient.GetProfileByUserIdAsync(x))))
@@ -97,8 +96,6 @@ internal class DefaultCommentService : ICommentService
         //    .Distinct()
         //    .ToDictionaryAsync(x => x.UserId))!;
 
-
-
         var result = comments.ToTree(c => c.Id, c => c.ParentId)
             .Select(x => MapToCommentListItem(x, (userId) => userIds.TryGetValue(userId, out var user) ? user.Name : null))
             .OrderByDescending(x => x.CreatedAt)
@@ -106,7 +103,6 @@ internal class DefaultCommentService : ICommentService
 
         return new CommentsListViewModel(commentsCount, result);
     }
-
 
     public async Task<Result> RemoveCommentAsync(Guid commentId)
     {

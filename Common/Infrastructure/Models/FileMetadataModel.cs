@@ -2,14 +2,16 @@
 
 namespace Infrastructure.Models;
 
-public sealed class FileMetadataModel
+public sealed class FileMetadataModel : IDisposable
 {
     public required string Name { get; init; } = null!;
     public required string FileName { get; init; } = null!;
     public required string FileExtension { get; init; } = null!;
     public required long Length { get; init; }
     public required string ContentType { get; init; } = null!;
-    public required Stream ContentStream {  get; init; } = null!;
+    public required Stream ContentStream { get; init; } = null!;
+
+    public void Dispose() => ContentStream?.Dispose();
 }
 
 public static class FileMetadataModelExtensions

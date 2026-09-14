@@ -1,13 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Profile.Domain.Models.Profile;
+namespace Profile.API.Dtos;
 
-public class ProfileCreateModel
+public class ProfileUpdateDto
 {
-    public string? Name { get; set; }
+    public long Id { get; set; }
+    public string Name { get; set; }
     public DateTimeOffset? Birthdate { get; set; }
     [Required]
     public Guid UserId { get; set; }
     public string Email { get; set; }
-    public string? PhotoUrl { get; set; }
+    public IFormFile? ProfilePicture { get; set; }
 }

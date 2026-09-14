@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.7.11903.348
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37628.2 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{46B45E6F-2994-42A8-9FEB-69C8D854785E}"
 	ProjectSection(SolutionItems) = preProject
@@ -195,6 +195,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationIntegrationTests", "Tests\NotificationIntegrationTests\NotificationIntegrationTests.csproj", "{5BDCDF42-BD98-4A99-A7B6-0F359147ECC0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Persistence", "NotificationService\Notification.Persistence\Notification.Persistence.csproj", "{0AD088E6-F568-4A6D-9669-5EB0151C9D6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Application", "ProfileService\Profile.Application\Profile.Application.csproj", "{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -522,6 +524,10 @@ Global
 		{0AD088E6-F568-4A6D-9669-5EB0151C9D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0AD088E6-F568-4A6D-9669-5EB0151C9D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0AD088E6-F568-4A6D-9669-5EB0151C9D6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -607,6 +613,7 @@ Global
 		{7A5346BF-1380-456E-A308-0106F7B65A4C} = {F73ED5B6-7823-44EA-84D9-3AFCB788A9C7}
 		{5BDCDF42-BD98-4A99-A7B6-0F359147ECC0} = {F73ED5B6-7823-44EA-84D9-3AFCB788A9C7}
 		{0AD088E6-F568-4A6D-9669-5EB0151C9D6F} = {8BEEA585-07D3-424B-8747-7218BA325627}
+		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

@@ -6,7 +6,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 using Shared.Services;
 using System.Net;
 

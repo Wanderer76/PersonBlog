@@ -2,13 +2,12 @@
 using MessageBus;
 using MessageBus.EventHandler;
 using MessageBus.Models;
-using Profile.Domain.Services;
 using Shared.Services;
 using Profile.Domain.Entities;
 using Blog.Contracts.Events;
+using Profile.Application.Services;
 
-namespace Profile.Domain.Events;
-
+namespace Profile.Service;
 
 public struct QueueConstants
 {

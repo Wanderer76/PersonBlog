@@ -1,7 +1,6 @@
-﻿using Profile.Domain.Models;
-using Shared.Utils;
+﻿using Profile.Application.Models;
 
-namespace Profile.Domain.Services;
+namespace Profile.Application.Services;
 
 public interface IBanService
 {

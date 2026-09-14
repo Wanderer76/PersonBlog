@@ -1,8 +1,9 @@
-﻿using Infrastructure.Models;
+﻿using Infrastructure.Middleware;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
-using Profile.Domain.Services;
+using Profile.Application.Models;
+using Profile.Application.Services;
 using Shared.Models;
 using Shared.Services;
 
@@ -20,7 +21,7 @@ namespace Profile.API.Controllers
         }
 
         [HttpPost("subscribe/{blogId:guid}")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> SubscribeToBlog(Guid blogId)
         {
             try
@@ -36,7 +37,7 @@ namespace Profile.API.Controllers
         }
 
         [HttpPost("unsubscribe/{blogId:guid}")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> UnSubscribeToBlog(Guid blogId)
         {
             try
@@ -52,7 +53,7 @@ namespace Profile.API.Controllers
         }
 
         [HttpGet("subscriptions")]
-        [Authorize]
+        [AuthFilter]
         [Produces<PagedListViewModel<SubscribeViewModel>>]
         public async Task<IActionResult> GetUserSubscriptionList(int page, int size)
         {

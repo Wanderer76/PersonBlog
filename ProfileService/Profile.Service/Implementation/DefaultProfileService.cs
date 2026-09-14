@@ -1,9 +1,9 @@
 ﻿using Authentication.Contract.Events;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Profile.Application.Models.Profile;
+using Profile.Application.Services;
 using Profile.Domain.Entities;
-using Profile.Domain.Models.Profile;
-using Profile.Domain.Services;
 using Shared.Persistence;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Profile.Test")]
@@ -14,10 +14,12 @@ internal class DefaultProfileService : IProfileService
 {
     private readonly IReadWriteRepository<IUserEntity> _context;
     private readonly ICacheService _cacheService;
-    public DefaultProfileService(IReadWriteRepository<IUserEntity> profileRepository, ICacheService cacheService)
+    private readonly IProfilePictureStore _profilePictureStore;
+    public DefaultProfileService(IReadWriteRepository<IUserEntity> profileRepository, ICacheService cacheService, IProfilePictureStore profilePictureStore)
     {
         _context = profileRepository;
         _cacheService = cacheService;
+        _profilePictureStore = profilePictureStore;
     }
 
     public async Task<ProfileModel> CreateProfileAsync(ProfileRegisterEvent profileCreateModel)
@@ -35,7 +37,14 @@ internal class DefaultProfileService : IProfileService
         );
         _context.Add(profile);
         await _context.SaveChangesAsync();
-        return profile.ToProfileModel();
+        return new ProfileModel
+        {
+            Id = profile.Id,
+            UserId = profile.UserId,
+            Name = profile.Name,
+            PhotoUrl = await _profilePictureStore.GetPictureUrlAsync(profile.Id),
+            ProfileState = profile.ProfileState,
+        };
     }
 
     public async Task DeleteProfileByUserIdAsync(Guid userId)
@@ -55,7 +64,14 @@ internal class DefaultProfileService : IProfileService
         {
             var profile = await _context.Get<AppProfile>()
             .FirstAsync(x => x.UserId == userId);
-            return profile.ToProfileModel();
+            return new ProfileModel
+            {
+                Id = profile.Id,
+                UserId = profile.UserId,
+                Name = profile.Name,
+                PhotoUrl = await _profilePictureStore.GetPictureUrlAsync(profile.Id),
+                ProfileState = profile.ProfileState,
+            };
         });
     }
 
@@ -71,14 +87,26 @@ internal class DefaultProfileService : IProfileService
     }
     public async Task<ProfileModel> UpdateProfileAsync(ProfileUpdateModel profileEditModel)
     {
+        await using var transaction = await _context.BeginTransactionAsync();
         var profile = await _context.Get<AppProfile>()
             .FirstAsync(x => x.Id == profileEditModel.Id);
-
         _context.Attach(profile);
         profile.Name = profileEditModel.Name;
-        profile.PhotoUrl = profileEditModel.PhotoUrl;
+        if (profileEditModel.ProfilePicture != null)
+        {
+            await _profilePictureStore.UpdatePictureAsync(profile.Id, profileEditModel.ProfilePicture);
+        }
+
         await _cacheService.RemoveCachedDataAsync(new AppProfileCacheKey(profile.UserId));
         await _context.SaveChangesAsync();
-        return profile.ToProfileModel();
+        await transaction.CommitAsync();
+        return new ProfileModel
+        {
+            Id = profile.Id,
+            UserId = profile.UserId,
+            Name = profile.Name,
+            PhotoUrl = await _profilePictureStore.GetPictureUrlAsync(profile.Id),
+            ProfileState = profile.ProfileState,
+        };
     }
 }

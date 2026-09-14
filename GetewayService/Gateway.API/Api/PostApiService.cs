@@ -2,7 +2,7 @@
 using Blog.Contracts.Models.Blog;
 using Blog.Contracts.Models.File;
 using Infrastructure.Extensions;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 using Shared.Utils;
 using System.Net;
 

@@ -1,16 +1,17 @@
 using Authentication.Contract;
 using Authentication.Contract.Events;
 using Blog.Contracts.Events;
+using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Configs;
 using Profile.API.HostedService;
-using Profile.Domain.Events;
 using Profile.Persistence;
 using Profile.Service;
 using Recommendation.Contracts;
 using Recommendation.Contracts.Events;
+using Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,13 +24,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddViewReactingPersistence(builder.Configuration);
 builder.Services.AddVideoReactingService();
-builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; }); 
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; });
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCors();
+builder.Services.AddScoped<IDateTimeManager, DateTimeService>();
+builder.Services.AddScoped<IGuidManager, GuidService>();
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
-    .AddSubscription<Profile.Domain.Events.VideoViewEvent, VideoViewEventHandler>(x =>
+    .AddSubscription<Profile.Service.VideoViewEvent, VideoViewEventHandler>(x =>
     {
         x.QueueName = QueueConstants.QueueName;
         x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };

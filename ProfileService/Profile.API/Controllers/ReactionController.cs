@@ -1,10 +1,11 @@
-﻿using Infrastructure.Models;
+﻿using Infrastructure.Middleware;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
-using Shared.Services;
+using Profile.Application.Models;
 using Profile.Domain.Events;
 using Profile.Service;
+using Shared.Services;
 
 namespace Profile.API.Controllers
 {
@@ -19,7 +20,7 @@ namespace Profile.API.Controllers
         }
 
         [HttpPost("setView")]
-        [Authorize]
+        [AuthFilter]
         public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
         {
             HttpContext.TryGetUserFromContext(out var userId);
@@ -33,7 +34,6 @@ namespace Profile.API.Controllers
             });
             return Ok();
         }
-
 
         [HttpPost("setReaction/{postId:guid}")]
         public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)

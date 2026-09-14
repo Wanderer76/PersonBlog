@@ -1,8 +1,8 @@
-﻿using Profile.Domain.Entities;
-using Profile.Domain.Models;
+﻿using Profile.Application.Models;
+using Profile.Domain.Entities;
 using Shared.Utils;
 
-namespace Profile.Domain.Services;
+namespace Profile.Application.Services;
 
 public interface IViewHistoryService
 {

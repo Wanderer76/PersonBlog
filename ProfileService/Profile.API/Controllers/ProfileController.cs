@@ -1,11 +1,14 @@
-﻿using Infrastructure.Services;
+﻿using Authentication.Contract.Constants;
+using Infrastructure.Middleware;
+using Infrastructure.Models;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models.Profile;
-using Profile.Domain.Services;
+using Profile.API.Dtos;
+using Profile.Application.Models.Profile;
+using Profile.Application.Services;
 
 namespace Profile.API.Controllers;
-
 
 [ApiController]
 [Route("api/[controller]")]
@@ -21,15 +24,24 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost("edit")]
-    [Authorize]
-    public async Task<ActionResult<ProfileModel>> UpdateProfile([FromBody] ProfileUpdateModel profileUpdateModel)
+    [AuthFilter(Roles.User)]
+    public async Task<ActionResult<ProfileModel>> UpdateProfile([FromForm] ProfileUpdateDto profileUpdateModel)
     {
-        var result = await _profileService.UpdateProfileAsync(profileUpdateModel);
+        using var picture = profileUpdateModel.ProfilePicture?.ConvertToFileMetadata();
+        var result = await _profileService.UpdateProfileAsync(new ProfileUpdateModel
+        {
+            Id = profileUpdateModel.Id,
+            Birthdate = profileUpdateModel.Birthdate,
+            Email = profileUpdateModel.Email,
+            Name = profileUpdateModel.Name,
+            UserId = profileUpdateModel.UserId,
+            ProfilePicture = picture
+        });
         return Ok(result);
     }
 
     [HttpGet("profile/my")]
-    [Authorize]
+    [AuthFilter]
     public async Task<ActionResult<ProfileModel>> GetProfile()
     {
         var user = await _currentUserService.GetCurrentUserAsync();
@@ -69,5 +81,4 @@ public class ProfileController : ControllerBase
     /// <returns></returns>
     [HttpGet("create")]
     public async Task<IActionResult> GetProfileCreateModel() { return Ok("success"); }
-
 }

@@ -1,7 +1,6 @@
 ﻿using Blog.Contracts.Events;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
-using Profile.Domain.Events;
 using Recommendation.Contracts.Events;
 using Shared.Persistence;
 using Shared.Services;
@@ -81,7 +80,7 @@ namespace Profile.Service.Implementation
             await _context.SaveChangesAsync();
         }
 
-        public async Task SetViewToPost(Domain.Events.VideoViewEvent videoView)
+        public async Task SetViewToPost(VideoViewEvent videoView)
         {
             var videoEvent = ReactingEvent.Create(videoView, GuidService.GetNewGuid());
             _context.Add(videoEvent);

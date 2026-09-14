@@ -2,12 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Entities;
 using Profile.Domain.Events;
-using Profile.Domain.Models;
-using Profile.Domain.Services;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Recommendation.Contracts.Events;
+using Profile.Application.Services;
+using Profile.Application.Models;
 
 namespace Profile.Service.Implementation
 {

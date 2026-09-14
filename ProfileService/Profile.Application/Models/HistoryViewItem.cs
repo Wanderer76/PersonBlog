@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.Models;
+﻿namespace Profile.Application.Models;
 
 public class HistoryViewItem
 {
@@ -15,7 +15,7 @@ public class LikedViewItem
     public DateTime CreatedAt { get; set; }
 }
 
-    public class ReactionHistoryViewItem
+public class ReactionHistoryViewItem
 {
     public DateTime? LastWatched { get; set; }
     public Guid PostId { get; set; }
@@ -23,5 +23,3 @@ public class LikedViewItem
     public bool HasSubscription { get; set; }
     public double? WatchedTime { get; set; }
 }
-
-

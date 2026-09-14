@@ -5,7 +5,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 
 namespace Gateway.API.Controllers;
 

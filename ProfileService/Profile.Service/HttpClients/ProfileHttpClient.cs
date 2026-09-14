@@ -1,7 +1,7 @@
 ﻿using Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
+using Profile.Application.Models.Profile;
 using Profile.Domain.Entities;
-using Profile.Domain.Models.Profile;
 using Shared.Utils;
 using System.Net.Http.Json;
 using System.Text.Json;

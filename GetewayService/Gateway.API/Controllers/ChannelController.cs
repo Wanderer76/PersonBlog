@@ -4,8 +4,8 @@ using Blog.Contracts.Models;
 using Blog.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using PlayListService.Services.Models;
-using Profile.Domain.Models;
 using Shared.Models;
+using Profile.Application.Models;
 
 namespace Gateway.API.Controllers
 {

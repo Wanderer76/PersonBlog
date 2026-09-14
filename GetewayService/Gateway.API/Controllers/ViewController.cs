@@ -4,7 +4,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 using Shared.Services;
 
 namespace Gateway.API.Controllers;
@@ -20,7 +20,6 @@ public class ViewController : BaseApiController
         _httpClientFactory = httpClientFactory;
         _cache = cache;
     }
-
 
     [HttpGet("history")]
     [AuthFilter]

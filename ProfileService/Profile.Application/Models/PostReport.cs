@@ -1,4 +1,4 @@
-﻿namespace Profile.Domain.Models;
+﻿namespace Profile.Application.Models;
 
 public class PostReport
 {

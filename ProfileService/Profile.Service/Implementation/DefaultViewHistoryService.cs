@@ -1,8 +1,8 @@
 ﻿using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Profile.Application.Models;
+using Profile.Application.Services;
 using Profile.Domain.Entities;
-using Profile.Domain.Models;
-using Profile.Domain.Services;
 using Recommendation.Contracts.Events;
 using Shared.Persistence;
 using Shared.Services;
@@ -100,7 +100,6 @@ namespace Profile.Service.Implementation
             var reaction = await _repository.Get<PostReaction>()
                           .Where(x => x.PostId == postId && x.UserId == userId)
                           .FirstOrDefaultAsync();
-
 
             var subscription = blogId.HasValue
                 ? await _repository.Get<SubscribedChanel>()
