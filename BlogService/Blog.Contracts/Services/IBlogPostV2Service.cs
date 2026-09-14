@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Models;
+using Blog.Contracts.Models;
 using Blog.Contracts.Models.Category;
 using Blog.Contracts.Models.Post;
 using Blog.Domain.Entities;
@@ -9,7 +9,7 @@ using Shared.Utils;
 using System.ComponentModel.DataAnnotations;
 
 namespace Blog.Contracts.Services;
-public interface IProfilePostV2Service
+public interface IBlogPostV2Service
 {
     Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(Guid blogId, int page, int pageSize, PostType postType);
     Task<CreatePostModelViewModel> GetPostCreateModelAsync();

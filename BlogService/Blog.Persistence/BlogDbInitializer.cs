@@ -1,13 +1,13 @@
-﻿using Infrastructure.Interface;
+using Infrastructure.Interface;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blog.Persistence
 {
-    internal class ProfileDbInitializer : IDbInitializer
+    internal class BlogDbInitializer : IDbInitializer
     {
         private readonly BlogDbContext _context;
 
-        public ProfileDbInitializer(BlogDbContext context)
+        public BlogDbInitializer(BlogDbContext context)
         {
             _context = context;
         }

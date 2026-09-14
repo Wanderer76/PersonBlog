@@ -6,10 +6,11 @@
  */
 import type { PostVisibility } from './postVisibility';
 
-export type PostApiProfilePostV2CreateBody = {
-  Title?: string;
+export type PostApiBlogPostV2CreateTextPostBody = {
+  Title: string;
+  Text?: string;
   Visibility?: PostVisibility;
-  'VideoPostData.Thumbnail'?: Blob;
-  'VideoPostData.Description'?: string;
-  'VideoPostData.Categories'?: number[];
+  Media?: Blob[];
+  InlineMedia?: Blob[];
+  InlineMediaIds?: string[];
 };

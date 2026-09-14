@@ -11,9 +11,9 @@ public class BlogDbContext : BaseDbContext
     public DbSet<PersonBlog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<VideoFile> VideoMetadata { get; set; }
-    public DbSet<VideoProcessEvent> ProfileEventMessages { get; set; }
+    public DbSet<VideoProcessEvent> OutboxMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
-    public DbSet<PaymentSubscriber> ProfileSubscriptions { get; set; }
+    public DbSet<PaymentSubscriber> PaymentSubscribers { get; set; }
     public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
     public DbSet<VideoProcessingSagaState> VideoProcessingSagaStates { get; set; }
     public DbSet<PostRemoveEvent> PostRemoveEvents { get; set; }

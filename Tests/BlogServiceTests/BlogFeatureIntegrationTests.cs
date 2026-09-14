@@ -33,7 +33,7 @@ public sealed class BlogFeatureIntegrationTests
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
         var storage = new TrackingFileStorage();
-        var service = CreateProfileService(context, OwnerUser(), storage);
+        var service = CreateBlogPostService(context, OwnerUser(), storage);
         await using var content = new MemoryStream("attachment"u8.ToArray());
 
         var createResult = await service.CreatePostAsync(new PostCreateCommand(
@@ -85,7 +85,7 @@ public sealed class BlogFeatureIntegrationTests
         Assert.Equal(PostVisibility.Public, updatedPost.Visibility);
         Assert.NotNull(updatedPost.PublicationId);
         Assert.NotNull(updatedPost.PublishedAt);
-        Assert.Single(await context.ProfileEventMessages
+        Assert.Single(await context.OutboxMessages
             .Where(message => message.EventType == nameof(PostPublishedV1)).ToListAsync());
         Assert.Empty(await context.PostFiles.ToListAsync());
         context.ChangeTracker.Clear();
@@ -96,7 +96,7 @@ public sealed class BlogFeatureIntegrationTests
         context.ChangeTracker.Clear();
         Assert.True((await context.Posts.SingleAsync()).IsDelete);
         Assert.Single(await context.PostRemoveEvents.ToListAsync());
-        Assert.True(await context.ProfileEventMessages.CountAsync() >= 3);
+        Assert.True(await context.OutboxMessages.CountAsync() >= 3);
     }
 
     [Fact]
@@ -285,7 +285,7 @@ public sealed class BlogFeatureIntegrationTests
         context.ChangeTracker.Clear();
 
         Assert.Equal(ProcessState.Draft, (await context.Posts.SingleAsync()).ProcessState);
-        var conversionEvents = await context.ProfileEventMessages
+        var conversionEvents = await context.OutboxMessages
             .Where(message => message.EventType == nameof(ConvertVideoCommand))
             .ToListAsync();
         Assert.Single(conversionEvents);
@@ -389,7 +389,7 @@ public sealed class BlogFeatureIntegrationTests
         Assert.Equal(1, count);
         Assert.Single(messageBus.PublishedMessages);
         context.ChangeTracker.Clear();
-        Assert.Equal(EventState.Processed, (await context.ProfileEventMessages.SingleAsync()).State);
+        Assert.Equal(EventState.Processed, (await context.OutboxMessages.SingleAsync()).State);
     }
 
     [Fact]
@@ -411,7 +411,7 @@ public sealed class BlogFeatureIntegrationTests
         }
 
         await using var verificationContext = new BlogDbContext(options);
-        var message = await verificationContext.ProfileEventMessages.SingleAsync();
+        var message = await verificationContext.OutboxMessages.SingleAsync();
         Assert.Equal(EventState.Error, message.State);
         Assert.Equal(VideoProcessEvent.MaxPublishAttempts, message.RetryCount);
         verificationContext.ChangeTracker.Clear();
@@ -486,7 +486,7 @@ public sealed class BlogFeatureIntegrationTests
         Assert.Empty(await context.PostRemoveEvents.ToListAsync());
     }
 
-    private static DefaultProfilePostV2Service CreateProfileService(
+    private static DefaultBlogPostV2Service CreateBlogPostService(
         BlogDbContext context,
         UserModel user,
         TrackingFileStorage storage) =>

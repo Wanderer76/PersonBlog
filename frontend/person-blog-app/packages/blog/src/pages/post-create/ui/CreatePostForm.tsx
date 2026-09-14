@@ -3,7 +3,7 @@ import type { ChangeEvent, ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '@/pages/post-create/ui/CreatePostForm.module.css';
 import { cancelBackgroundUpload, enqueueVideo } from '@/shared/lib/upload/backgroundUpload';
-import { getProfilePostV2 } from '@/shared/api/generated/profile-post-v2/profile-post-v2';
+import { getBlogPostV2 } from '@/shared/api/generated/blog-post-v2/blog-post-v2';
 import type { CategoryModel, CreatePostModelViewModel, PostVisibility } from '@/shared/api/generated/models';
 import {
   CategoryMultiSelect,
@@ -19,7 +19,7 @@ const TypedCategoryMultiSelect = CategoryMultiSelect as ComponentType<{
   onChange: (event: { target: { value: number[] } }) => void;
 }>;
 
-const profilePostApi = getProfilePostV2();
+const blogPostApi = getBlogPostV2();
 
 interface PostForm {
   title: string;
@@ -78,7 +78,7 @@ const CreatePostForm = () => {
 
   useEffect(() => {
     let isActive = true;
-    profilePostApi.getApiProfilePostV2Create()
+    blogPostApi.getApiBlogPostV2Create()
       .then(({ data }) => { if (isActive) setCreateModel(data); })
       .catch(() => { if (isActive) setErrorMessage('Не удалось загрузить параметры формы'); });
     return () => { isActive = false; };
@@ -118,7 +118,7 @@ const CreatePostForm = () => {
   };
 
   const createPost = async () => {
-    const { data } = await profilePostApi.postApiProfilePostV2Create({
+    const { data } = await blogPostApi.postApiBlogPostV2Create({
       Title: postForm.title.trim(),
       Visibility: postForm.visibility,
       'VideoPostData.Description': postForm.videoPostData.description.trim(),
@@ -162,7 +162,7 @@ const CreatePostForm = () => {
     try {
       if (createdPostIdRef.current) {
         await cancelBackgroundUpload(createdPostIdRef.current);
-        await profilePostApi.postApiProfilePostV2RemovePostId(createdPostIdRef.current);
+        await blogPostApi.postApiBlogPostV2RemovePostId(createdPostIdRef.current);
       }
       navigate('/profile');
     } catch (error: unknown) {

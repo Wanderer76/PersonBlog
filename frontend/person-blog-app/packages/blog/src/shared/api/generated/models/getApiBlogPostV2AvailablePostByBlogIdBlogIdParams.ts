@@ -6,7 +6,7 @@
  */
 import type { PostType } from './postType';
 
-export type GetApiProfilePostV2MyParams = {
+export type GetApiBlogPostV2AvailablePostByBlogIdBlogIdParams = {
 page?: number;
 pageSize?: number;
 postType?: PostType;

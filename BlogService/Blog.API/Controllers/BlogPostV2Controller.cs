@@ -1,4 +1,4 @@
-﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Constants;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
 using Blog.Contracts.Services;
@@ -11,9 +11,9 @@ using Shared.Models;
 
 namespace Blog.API.Controllers;
 
-public class ProfilePostV2Controller(
+public class BlogPostV2Controller(
     ILogger<BaseApiController> logger,
-    IProfilePostV2Service profilePostService,
+    IBlogPostV2Service blogPostService,
     ICurrentUserService currentUserService)
     : BaseApiController(logger)
 {
@@ -22,7 +22,7 @@ public class ProfilePostV2Controller(
     public async Task<ActionResult<PagedListViewModel<UserPostInfoModel>>> GetCurrentUserPostPaged(int page, int pageSize, PostType postType = PostType.Video)
     {
         var user = await currentUserService.GetCurrentUserAsync();
-        var result = await profilePostService.GetCurrentUserPostsAsync(user.BlogId, page, pageSize, postType);
+        var result = await blogPostService.GetCurrentUserPostsAsync(user.BlogId, page, pageSize, postType);
         return Ok(result);
     }
 
@@ -30,7 +30,7 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<ActionResult<CreatePostModelViewModel>> GetPostCreateModel()
     {
-        var model = await profilePostService.GetPostCreateModelAsync();
+        var model = await blogPostService.GetPostCreateModelAsync();
         return Ok(model);
     }
 
@@ -40,7 +40,7 @@ public class ProfilePostV2Controller(
     {
 
         var command = MapToCommand(request);
-        var result = await profilePostService.CreatePostAsync(command);
+        var result = await blogPostService.CreatePostAsync(command);
 
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
     }
@@ -48,7 +48,7 @@ public class ProfilePostV2Controller(
     [HttpGet("availablePostByBlogId/{blogId:guid}")]
     public async Task<ActionResult<PagedListViewModel<PostCommonModelV2>>> GetAvailablePostPagedByBlogId(Guid blogId, int page, int pageSize, PostType postType = PostType.Video)
     {
-        var result = await profilePostService.GetAvailablePostsByBlogIdAsync(blogId, page, pageSize, postType);
+        var result = await blogPostService.GetAvailablePostsByBlogIdAsync(blogId, page, pageSize, postType);
         return Ok(result);
     }
 
@@ -56,7 +56,7 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<IActionResult> RemovePost(Guid postId)
     {
-        var result = await profilePostService.RemovePostAsync(postId);
+        var result = await blogPostService.RemovePostAsync(postId);
         if (result.IsSuccess)
         {
             return Ok();
@@ -71,7 +71,7 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<ActionResult<PostEditViewModel>> EditPostViewModel(Guid postId)
     {
-        var result = await profilePostService.GetPostEditViewModelAsync(postId);
+        var result = await blogPostService.GetPostEditViewModelAsync(postId);
         if (result.IsSuccess)
         {
             return Ok(result.Value);
@@ -86,7 +86,7 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<ActionResult> EditPost(PostEditDto postEditDto)
     {
-        var result = await profilePostService.UpdatePostAsync(new PostUpdateRequest(
+        var result = await blogPostService.UpdatePostAsync(new PostUpdateRequest(
             postEditDto.Id,
             postEditDto.Description,
             postEditDto.Title,
@@ -116,7 +116,7 @@ public class ProfilePostV2Controller(
                 textPostCreateForm.InlineMediaIds[index],
                 file.ConvertToFileMetadata()))
             .ToList();
-        var postCreateResult = await profilePostService.CreatePostAsync(new PostCreateCommand(
+        var postCreateResult = await blogPostService.CreatePostAsync(new PostCreateCommand(
             PostType.Text,
             textPostCreateForm.Title,
             textPostCreateForm.Visibility,
@@ -136,7 +136,7 @@ public class ProfilePostV2Controller(
     [AuthFilter(Roles.Blogger)]
     public async Task<ActionResult<TextPostEditViewModel>> GetTextPostEditModel(Guid postId)
     {
-        var result = await profilePostService.GetTextPostEditViewModelAsync(postId);
+        var result = await blogPostService.GetTextPostEditViewModelAsync(postId);
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors);
     }
 
@@ -147,7 +147,7 @@ public class ProfilePostV2Controller(
         if ((request.InlineMedia?.Count ?? 0) != request.InlineMediaIds.Count)
             return BadRequest("Количество встроенных изображений не совпадает с количеством их идентификаторов.");
 
-        var result = await profilePostService.UpdateTextPostAsync(request);
+        var result = await blogPostService.UpdateTextPostAsync(request);
         return result.IsSuccess ? Ok() : BadRequest(result.Errors);
     }
 

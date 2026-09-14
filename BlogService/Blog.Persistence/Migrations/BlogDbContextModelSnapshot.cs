@@ -174,7 +174,7 @@ namespace Blog.Persistence.Migrations
 
                     b.HasIndex("SubscriptionLevelId");
 
-                    b.ToTable("ProfileSubscriptions", "Blog");
+                    b.ToTable("PaymentSubscribers", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.PaymentSubscription", b =>
@@ -576,7 +576,7 @@ namespace Blog.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProfileEventMessages", "Blog");
+                    b.ToTable("OutboxMessages", "Blog");
                 });
 
             modelBuilder.Entity("Blog.Domain.Entities.VideoProcessingSagaState", b =>

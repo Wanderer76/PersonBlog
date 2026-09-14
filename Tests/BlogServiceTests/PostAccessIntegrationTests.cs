@@ -261,7 +261,7 @@ public sealed class PostAccessIntegrationTests
         context.AddRange(blog, publicPost, privatePost, byUrlPost, bannedPost, deletedPost, incompletePost);
         await context.SaveChangesAsync();
 
-        var service = CreateProfileService(context, UserModel.AnonymousUser());
+        var service = CreateBlogPostService(context, UserModel.AnonymousUser());
 
         var result = await service.GetAvailablePostsByBlogIdAsync(BlogId, 1, 20, PostType.Video);
 
@@ -287,7 +287,7 @@ public sealed class PostAccessIntegrationTests
         context.AddRange(posts);
         await context.SaveChangesAsync();
 
-        var service = CreateProfileService(context, OwnerUser());
+        var service = CreateBlogPostService(context, OwnerUser());
 
         var result = await service.GetAvailablePostsByBlogIdAsync(BlogId, 1, 20, PostType.Video);
 
@@ -295,7 +295,7 @@ public sealed class PostAccessIntegrationTests
         Assert.Equal(posts.Select(x => x.Id).Order(), result.Items.Select(x => x.Id).Order());
     }
 
-    private static DefaultProfilePostV2Service CreateProfileService(BlogDbContext context, UserModel user) =>
+    private static DefaultBlogPostV2Service CreateBlogPostService(BlogDbContext context, UserModel user) =>
         new(
             CreateRepository(context),
             new StubFileStorageFactory(),

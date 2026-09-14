@@ -11,7 +11,7 @@ using Shared.Models;
 
 namespace Gateway.API.Controllers;
 
-public sealed class ProfilePostV2Controller(
+public sealed class BlogPostV2Controller(
     ILogger<BaseApiController> logger,
     PostApiClient postApiClient) : BaseApiController(logger)
 {

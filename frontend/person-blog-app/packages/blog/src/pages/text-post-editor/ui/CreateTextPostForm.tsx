@@ -7,12 +7,12 @@ import type { InlineImageUpload } from '@/features/post-editor';
 import { getTextPostInlineMediaIds } from '@/entities/post';
 import { PostVisibility } from '@/shared/api/generated/models';
 import type { PostVisibilitySelectItem, TextPostMediaViewModel } from '@/shared/api/generated/models';
-import { getProfilePostV2 } from '@/shared/api/generated/profile-post-v2/profile-post-v2';
+import { getBlogPostV2 } from '@/shared/api/generated/blog-post-v2/blog-post-v2';
 import { hasErrors, validateForm } from '@/pages/text-post-editor/ui/CreateTextPostForm.validation';
 import type { FormErrors, TextPostFormData } from '@/pages/text-post-editor/ui/CreateTextPostForm.validation';
 import '@/pages/text-post-editor/ui/CreateTextPostForm.css';
 
-const profilePostApi = getProfilePostV2();
+const blogPostApi = getBlogPostV2();
 
 const CreateTextPostForm = () => {
     const navigate = useNavigate();
@@ -58,7 +58,7 @@ const CreateTextPostForm = () => {
         setIsSubmitting(true);
         try {
             const result = isEditing && postId
-                ? await profilePostApi.postApiProfilePostV2TextEdit({
+                ? await blogPostApi.postApiBlogPostV2TextEdit({
                     Id: postId,
                     Title: formData.Title,
                     Text: formData.Text,
@@ -68,7 +68,7 @@ const CreateTextPostForm = () => {
                     InlineMediaIds: inlineImages.map((image) => image.referenceId),
                     RemovedMediaIds: removedMediaIds
                 })
-                : await profilePostApi.postApiProfilePostV2CreateTextPost({
+                : await blogPostApi.postApiBlogPostV2CreateTextPost({
                     ...formData,
                     InlineMedia: inlineImages.map((image) => image.file),
                     InlineMediaIds: inlineImages.map((image) => image.referenceId),
@@ -92,9 +92,9 @@ const CreateTextPostForm = () => {
         const loadCreateModel = async () => {
             try {
                 const [createResponse, editResponse] = await Promise.all([
-                    profilePostApi.getApiProfilePostV2Create(),
+                    blogPostApi.getApiBlogPostV2Create(),
                     postId
-                        ? profilePostApi.getApiProfilePostV2TextEditPostId(postId, { signal: controller.signal })
+                        ? blogPostApi.getApiBlogPostV2TextEditPostId(postId, { signal: controller.signal })
                         : Promise.resolve(null)
                 ]);
                 if (!isActive) return;

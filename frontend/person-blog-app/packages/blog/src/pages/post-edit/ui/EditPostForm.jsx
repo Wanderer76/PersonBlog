@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getProfilePostV2 } from '@/shared/api/generated/profile-post-v2/profile-post-v2';
+import { getBlogPostV2 } from '@/shared/api/generated/blog-post-v2/blog-post-v2';
 import {
   DescriptionTextarea,
   PrivacySelect,
@@ -10,7 +10,7 @@ import {
 import styles from '@/pages/post-create/ui/CreatePostForm.module.css';
 
 const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
-const profilePostApi = getProfilePostV2();
+const blogPostApi = getBlogPostV2();
 
 const EditPostForm = () => {
   const { id } = useParams();
@@ -39,8 +39,8 @@ const EditPostForm = () => {
 
       try {
         const [formConfig, postData] = await Promise.all([
-          profilePostApi.getApiProfilePostV2Create(),
-          profilePostApi.getApiProfilePostV2EditPostId(id)
+          blogPostApi.getApiBlogPostV2Create(),
+          blogPostApi.getApiBlogPostV2EditPostId(id)
         ]);
 
         if (controller.signal.aborted) return;
@@ -110,7 +110,7 @@ const EditPostForm = () => {
     setIsSubmitting(true);
 
     try {
-      await profilePostApi.postApiProfilePostV2Edit({
+      await blogPostApi.postApiBlogPostV2Edit({
         Id: id,
         Title: formData.title.trim(),
         Description: formData.description,

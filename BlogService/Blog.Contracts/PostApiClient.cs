@@ -1,4 +1,4 @@
-﻿using Amazon.Runtime.Internal;
+using Amazon.Runtime.Internal;
 using Authentication.Contract.Constants;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
@@ -99,14 +99,14 @@ public sealed class PostApiClient
     [HttpGet("create")]
     public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()
     {
-        var model = await httpClient.GetFromJsonAsync<CreatePostModelViewModel>("ProfilePostV2/create");
+        var model = await httpClient.GetFromJsonAsync<CreatePostModelViewModel>("BlogPostV2/create");
         return model!;
     }
 
     public async Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(int page, int pageSize, PostType postType)
     {
         return (await httpClient.GetFromJsonAsync<PagedListViewModel<UserPostInfoModel>>(
-            $"ProfilePostV2/my?page={page}&pageSize={pageSize}&postType={(int)postType}"))!;
+            $"BlogPostV2/my?page={page}&pageSize={pageSize}&postType={(int)postType}"))!;
     }
 
     public async Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(
@@ -116,7 +116,7 @@ public sealed class PostApiClient
         PostType postType)
     {
         return (await httpClient.GetFromJsonAsync<PagedListViewModel<PostCommonModelV2>>(
-            $"ProfilePostV2/availablePostByBlogId/{blogId}?page={page}&pageSize={pageSize}&postType={(int)postType}"))!;
+            $"BlogPostV2/availablePostByBlogId/{blogId}?page={page}&pageSize={pageSize}&postType={(int)postType}"))!;
     }
 
     public async Task<Result<UserPostInfoModel>> CreatePostAsync(VideoPostCreateRequest request)
@@ -134,21 +134,21 @@ public sealed class PostApiClient
         if (request.VideoPostData.Thumbnail is not null)
             AddFile(formData, request.VideoPostData.Thumbnail, "VideoPostData.Thumbnail");
 
-        var response = await httpClient.PostAsync("ProfilePostV2/create", formData);
+        var response = await httpClient.PostAsync("BlogPostV2/create", formData);
         return await ToResultAsync<UserPostInfoModel>(response);
     }
 
     public async Task<Result> RemovePostAsync(Guid postId)
     {
-        var response = await httpClient.PostAsync($"ProfilePostV2/remove/{postId}", null);
+        var response = await httpClient.PostAsync($"BlogPostV2/remove/{postId}", null);
         return response.IsSuccessStatusCode
             ? Result.Success()
-            : Result.Failure(new Error("ProfilePost", await response.Content.ReadAsStringAsync()));
+            : Result.Failure(new Error("BlogPost", await response.Content.ReadAsStringAsync()));
     }
 
     public async Task<Result<PostEditViewModel>> GetPostEditModelAsync(Guid postId)
     {
-        var response = await httpClient.GetAsync($"ProfilePostV2/edit/{postId}");
+        var response = await httpClient.GetAsync($"BlogPostV2/edit/{postId}");
         return await ToResultAsync<PostEditViewModel>(response);
     }
 
@@ -168,10 +168,10 @@ public sealed class PostApiClient
         if (request.Preview is not null)
             AddFile(formData, request.Preview, "Preview");
 
-        var response = await httpClient.PostAsync("ProfilePostV2/edit", formData);
+        var response = await httpClient.PostAsync("BlogPostV2/edit", formData);
         return response.IsSuccessStatusCode
             ? Result.Success()
-            : Result.Failure(new Error("ProfilePost", await response.Content.ReadAsStringAsync()));
+            : Result.Failure(new Error("BlogPost", await response.Content.ReadAsStringAsync()));
     }
 
     [HttpPost("createTextPost")]
@@ -203,13 +203,13 @@ public sealed class PostApiClient
             foreach (var file in request.InlineMedia)
                 AddFile(formData, file, "InlineMedia");
         }
-        var response = await httpClient.PostAsync($"ProfilePostV2/createTextPost", formData);
+        var response = await httpClient.PostAsync($"BlogPostV2/createTextPost", formData);
         return await ToResultAsync<UserPostInfoModel>(response);
     }
 
     public async Task<Result<TextPostEditViewModel>> GetTextPostEditModelAsync(Guid postId)
     {
-        var response = await httpClient.GetAsync($"ProfilePostV2/textEdit/{postId}");
+        var response = await httpClient.GetAsync($"BlogPostV2/textEdit/{postId}");
         return await ToResultAsync<TextPostEditViewModel>(response);
     }
 
@@ -242,7 +242,7 @@ public sealed class PostApiClient
                 AddFile(formData, file, "InlineMedia");
         }
 
-        var response = await httpClient.PostAsync("ProfilePostV2/textEdit", formData);
+        var response = await httpClient.PostAsync("BlogPostV2/textEdit", formData);
         return response.IsSuccessStatusCode
             ? Result.Success()
             : Result.Failure(new Error("TextPost", await response.Content.ReadAsStringAsync()));

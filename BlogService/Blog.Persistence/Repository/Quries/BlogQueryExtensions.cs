@@ -1,11 +1,11 @@
-﻿using Blog.Domain.Entities;
+using Blog.Domain.Entities;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using ReadContext = Shared.Persistence.IReadRepository<Blog.Domain.Entities.IBlogEntity>;
 
 namespace Blog.Persistence.Repository.Quries
 {
-    public static class ProfileQueryExtensions
+    public static class BlogQueryExtensions
     {
         public static async Task<(int TotalPagesCount, int TotalPosts, IEnumerable<Post> Posts)> GetPostByBlogIdPagedAsync(this ReadContext context, Guid blogId, ICurrentUserService userSession, int page, int limit)
         {
@@ -51,9 +51,9 @@ namespace Blog.Persistence.Repository.Quries
 
         public static async Task<IEnumerable<VideoProcessEvent>> GetForUpdate(this BlogDbContext context)
         {
-            return await context.ProfileEventMessages
+            return await context.OutboxMessages
                 .FromSqlRaw(
-                    @"SELECT * FROM ""Profile"".""ProfileEventMessages""
+                    @"SELECT * FROM ""Blog"".""OutboxMessages""
                         WHERE ""State"" = 0 
                         ORDER BY ""CreatedAt"" 
                         FOR UPDATE SKIP LOCKED 

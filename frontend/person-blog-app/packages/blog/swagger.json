@@ -2401,10 +2401,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/my": {
+    "/api/BlogPostV2/my": {
       "get": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "parameters": [
           {
@@ -2455,10 +2455,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/availablePostByBlogId/{blogId}": {
+    "/api/BlogPostV2/availablePostByBlogId/{blogId}": {
       "get": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "parameters": [
           {
@@ -2518,10 +2518,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/create": {
+    "/api/BlogPostV2/create": {
       "get": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "responses": {
           "200": {
@@ -2548,7 +2548,7 @@
       },
       "post": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "requestBody": {
           "content": {
@@ -2622,10 +2622,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/remove/{postId}": {
+    "/api/BlogPostV2/remove/{postId}": {
       "post": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "parameters": [
           {
@@ -2645,10 +2645,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/edit/{postId}": {
+    "/api/BlogPostV2/edit/{postId}": {
       "get": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "parameters": [
           {
@@ -2685,10 +2685,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/edit": {
+    "/api/BlogPostV2/edit": {
       "post": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "requestBody": {
           "content": {
@@ -2753,10 +2753,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/createTextPost": {
+    "/api/BlogPostV2/createTextPost": {
       "post": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "requestBody": {
           "content": {
@@ -2846,10 +2846,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/textEdit/{postId}": {
+    "/api/BlogPostV2/textEdit/{postId}": {
       "get": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "parameters": [
           {
@@ -2886,10 +2886,10 @@
         }
       }
     },
-    "/api/ProfilePostV2/textEdit": {
+    "/api/BlogPostV2/textEdit": {
       "post": {
         "tags": [
-          "ProfilePostV2"
+          "BlogPostV2"
         ],
         "requestBody": {
           "content": {

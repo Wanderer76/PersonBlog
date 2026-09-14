@@ -11,7 +11,7 @@ import DefaultProfileIcon from '@/shared/assets/defaultProfilePic.png';
 import styles from '@/pages/profile/ui/ProfilePage.module.css';
 import { BaseApUrl } from '@/shared/api/client';
 import { getPlayList } from '@/shared/api/generated/play-list/play-list';
-import { getProfilePostV2 } from '@/shared/api/generated/profile-post-v2/profile-post-v2';
+import { getBlogPostV2 } from '@/shared/api/generated/blog-post-v2/blog-post-v2';
 import { getAccessToken, JwtTokenService } from '@/shared/auth/tokenStorage';
 import { ProfileHeader, VideoProcessingProgress } from '@/entities/profile';
 import { getBlog } from '@/shared/api/generated/blog/blog';
@@ -24,7 +24,7 @@ const POST_TYPE = { text: 0, video: 1 } as const;
 type ActivePanel = 'posts' | 'playlists' | 'text';
 type ProfileViewModel = BlogModel & { totalPostsCount: number };
 
-const profilePostApi = getProfilePostV2();
+const blogPostApi = getBlogPostV2();
 
 const initialProfile: ProfileViewModel = {
     id: '',
@@ -123,11 +123,11 @@ export const ProfilePage = memo(() => {
                 setBlogId(data.id ?? null);
 
                 const [videoPosts, textPosts] = await Promise.all([
-                    profilePostApi.getApiProfilePostV2My(
+                    blogPostApi.getApiBlogPostV2My(
                         { page: 1, pageSize: 1, postType: POST_TYPE.video },
                         { signal: controller.signal }
                     ),
-                    profilePostApi.getApiProfilePostV2My(
+                    blogPostApi.getApiBlogPostV2My(
                         { page: 1, pageSize: 1, postType: POST_TYPE.text },
                         { signal: controller.signal }
                     )
@@ -160,7 +160,7 @@ export const ProfilePage = memo(() => {
             setIsLoading(true);
             setErrorMessage(null);
             try {
-                const { data } = await profilePostApi.getApiProfilePostV2My(
+                const { data } = await blogPostApi.getApiBlogPostV2My(
                     { page, pageSize: PAGE_SIZE, postType },
                     { signal: controller.signal }
                 );
@@ -216,7 +216,7 @@ export const ProfilePage = memo(() => {
         setErrorMessage(null);
         try {
             await cancelBackgroundUpload(id);
-            await profilePostApi.postApiProfilePostV2RemovePostId(id);
+            await blogPostApi.postApiBlogPostV2RemovePostId(id);
             setPosts([]);
             setPage(1);
             setHasMore(true);

@@ -16,14 +16,14 @@ using System.Text.RegularExpressions;
 
 namespace Blog.Service.Services.Implementation;
 
-internal sealed class DefaultProfilePostV2Service(
+internal sealed class DefaultBlogPostV2Service(
     IReadWriteRepository<IBlogEntity> repository,
     IFileStorageFactory fileStorageFactory,
     ICurrentUserService currentUserService,
     ISubscriptionLevelService subscriptionLevelService,
     ICategoryService categoryService,
     IImageConvertService imageConvertService)
-    : IProfilePostV2Service
+    : IBlogPostV2Service
 {
     public async Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(
             Guid blogId, int page, int pageSize, PostType postType)

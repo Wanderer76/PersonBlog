@@ -6,7 +6,7 @@
  */
 import type { PostVisibility } from './postVisibility';
 
-export type PostApiProfilePostV2EditBody = {
+export type PostApiBlogPostV2EditBody = {
   Id?: string;
   Description?: string;
   /** @minLength 3 */
