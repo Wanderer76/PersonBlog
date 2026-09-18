@@ -1,4 +1,4 @@
-﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Constants;
 using Blog.Contracts;
 using Blog.Contracts.Models.Blog;
 using Infrastructure.Extensions;
@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using PlayListService.Contract;
 using PlayListService.Services.Services;
 using Profile.Service.HttpClients;
+using Profile.Application.Models.Profile;
+using System.ComponentModel.DataAnnotations;
 
 namespace Gateway.API.Controllers;
 
@@ -32,6 +34,34 @@ public class ProfileController(ILogger<BaseApiController> logger,
         {
             return Forbid();
         }
+    }
+
+    [HttpPost("edit")]
+    [AuthFilter(Roles.User)]
+    [ProducesResponseType(typeof(ProfileModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ProfileModel>> UpdateMyProfileAsync(
+        [FromForm] UpdateMyProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var currentProfile = await profileHttpClient.GetMyProfileAsync(cancellationToken);
+        if (currentProfile.IsFailure)
+            return ToActionResult(currentProfile);
+
+        if (currentProfile.Value.UserId != user.UserId)
+            return Forbid();
+
+        var result = await profileHttpClient.UpdateProfileAsync(
+            currentProfile.Value.Id,
+            user.UserId,
+            request.Name.Trim(),
+            request.ProfilePicture,
+            cancellationToken);
+
+        return ToActionResult(result);
     }
 
     [HttpGet("playLists")]
@@ -68,6 +98,16 @@ public class ProfileController(ILogger<BaseApiController> logger,
 
         return Ok(result);
     }
+
+}
+
+public sealed class UpdateMyProfileRequest
+{
+    [Required]
+    [StringLength(100, MinimumLength = 1)]
+    public string Name { get; init; } = string.Empty;
+
+    public IFormFile? ProfilePicture { get; init; }
 }
 
 public record UserContext(BlogInfo Blog, Features Features, UserPermissions Permissions);

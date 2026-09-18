@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+using Infrastructure.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace Profile.Application.Models.Profile;
@@ -10,6 +10,6 @@ public class ProfileUpdateModel
     public DateTimeOffset? Birthdate { get; set; }
     [Required]
     public Guid UserId { get; set; }
-    public string Email { get; set; }
+    public string? Email { get; set; }
     public FileMetadataModel? ProfilePicture { get; set; }
 }

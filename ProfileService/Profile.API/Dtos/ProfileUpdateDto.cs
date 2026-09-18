@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Profile.API.Dtos;
 
@@ -9,6 +9,6 @@ public class ProfileUpdateDto
     public DateTimeOffset? Birthdate { get; set; }
     [Required]
     public Guid UserId { get; set; }
-    public string Email { get; set; }
+    public string? Email { get; set; }
     public IFormFile? ProfilePicture { get; set; }
 }

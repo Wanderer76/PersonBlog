@@ -1,10 +1,11 @@
-﻿using Infrastructure.Services;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Profile.Application.Models.Profile;
 using Profile.Domain.Entities;
 using Shared.Utils;
+using System.Globalization;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace Profile.Service.HttpClients
 {
@@ -43,21 +44,59 @@ namespace Profile.Service.HttpClients
             }
         }
 
-        public async Task<Result<ProfileModel>> GetMyProfileAsync()
+        public async Task<Result<ProfileModel>> GetMyProfileAsync(CancellationToken cancellationToken = default)
         {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "Profile/profile/my");
+            using var response = await _httpClient.SendAsync(request, cancellationToken);
+            return await ReadProfileResponseAsync(response, cancellationToken);
+        }
 
-            var request = new HttpRequestMessage(HttpMethod.Get, "Profile/profile/my");
-
-            var response = await _httpClient.SendAsync(request);
-
-            if (response.IsSuccessStatusCode)
+        public async Task<Result<ProfileModel>> UpdateProfileAsync(
+            long profileId,
+            Guid userId,
+            string name,
+            IFormFile? profilePicture,
+            CancellationToken cancellationToken = default)
+        {
+            using var content = new MultipartFormDataContent
             {
-                return await response.Content.ReadFromJsonAsync<ProfileModel>();
-            }
-            else
+                { new StringContent(profileId.ToString(CultureInfo.InvariantCulture)), "Id" },
+                { new StringContent(name), "Name" },
+                { new StringContent(userId.ToString()), "UserId" }
+            };
+
+            if (profilePicture is not null)
             {
-                return Result<ProfileModel>.Failure(new Error("Not found"));
+                var fileContent = new StreamContent(profilePicture.OpenReadStream());
+                if (MediaTypeHeaderValue.TryParse(profilePicture.ContentType, out var contentType))
+                {
+                    fileContent.Headers.ContentType = contentType;
+                }
+
+                content.Add(fileContent, "ProfilePicture", profilePicture.FileName);
             }
+
+            using var response = await _httpClient.PostAsync("Profile/edit", content, cancellationToken);
+            return await ReadProfileResponseAsync(response, cancellationToken);
+        }
+
+        private static async Task<Result<ProfileModel>> ReadProfileResponseAsync(
+            HttpResponseMessage response,
+            CancellationToken cancellationToken)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                return Result<ProfileModel>.Failure(new Error(
+                    response.StatusCode.ToString(),
+                    $"Сервис профилей вернул ошибку {(int)response.StatusCode} ({response.ReasonPhrase})"));
+            }
+
+            var profile = await response.Content.ReadFromJsonAsync<ProfileModel>(cancellationToken);
+            return profile is null
+                ? Result<ProfileModel>.Failure(new Error(
+                    "InvalidResponse",
+                    "Сервис профилей вернул пустой ответ"))
+                : Result<ProfileModel>.Success(profile);
         }
     }
 }
