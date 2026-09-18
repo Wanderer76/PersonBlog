@@ -1,10 +1,14 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { ProfilePreviewProvider } from '@/entities/profile/model/ProfilePreviewProvider';
+import { profilePreviewFeatures } from '@/entities/profile/model/profilePreview';
 import { JwtTokenService } from '@/shared/auth';
 import { AppHeader } from '@/widgets/header';
 
 const MainPage = lazy(() => import('@/pages/main'));
 const ProfilePage = lazy(() => import('@/pages/profile'));
+const EditProfilePage = lazy(() => import('@/pages/profile/ui/EditProfilePage'));
+const StudioPage = lazy(() => import('@/pages/studio/ui/StudioPage'));
 const VideoPage = lazy(() => import('@/pages/video'));
 const ConferencePage = lazy(() => import('@/pages/conference'));
 const CreatePostPage = lazy(() => import('@/pages/post-create'));
@@ -35,6 +39,7 @@ const PrivateRoute = () => {
 };
 
 export const AppRouter = () => (
+  <ProfilePreviewProvider>
   <Suspense fallback={<div className="app-loader">Загрузка...</div>}>
     <AppHeader />
     <Routes>
@@ -50,8 +55,12 @@ export const AppRouter = () => (
         <Route path="/subscriptions" element={<SubscriptionPage />} />
         <Route path="/liked" element={<LikedPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/studio" element={<StudioPage />} />
+        <Route path="/friends" element={profilePreviewFeatures.friendsEnabled ? <FutureSection title="Друзья" /> : <Navigate to="/profile" replace />} />
+        <Route path="/messages" element={profilePreviewFeatures.messagesEnabled ? <FutureSection title="Сообщения" /> : <Navigate to="/profile" replace />} />
         <Route path="/profile">
           <Route index element={<ProfilePage />} />
+          <Route path="edit" element={<EditProfilePage />} />
           <Route path="post/create" element={<CreatePostPage />} />
           <Route path="post/edit/:id" element={<EditPostPage />} />
           <Route path="blog/create" element={<CreateBlogPage />} />
@@ -64,4 +73,9 @@ export const AppRouter = () => (
       </Route>
     </Routes>
   </Suspense>
+  </ProfilePreviewProvider>
 );
+
+function FutureSection({ title }: { title: string }) {
+  return <main style={{ maxWidth: 1200, margin: '32px auto', padding: 24 }}><h1>{title}</h1><p>Раздел появится позже.</p></main>;
+}

@@ -158,7 +158,7 @@ const CreatePlaylistForm = () => {
     return (
         <main className={styles.page}>
             <div className={styles.shell}>
-                <button className={styles.backButton} type="button" onClick={() => navigate('/profile')}>
+                <button className={styles.backButton} type="button" onClick={() => navigate('/studio')}>
                     ← Вернуться в профиль
                 </button>
 
@@ -340,7 +340,7 @@ const CreatePlaylistForm = () => {
                             <strong>{selectedPosts.length}</strong>
                             <span>{contentLabel} выбрано</span>
                         </div>
-                        <button type="button" className={styles.cancelButton} onClick={() => navigate('/profile')}>
+                        <button type="button" className={styles.cancelButton} onClick={() => navigate('/studio')}>
                             Отмена
                         </button>
                         <button type="submit" className={styles.submitButton} disabled={!title.trim() || isSubmitting}>

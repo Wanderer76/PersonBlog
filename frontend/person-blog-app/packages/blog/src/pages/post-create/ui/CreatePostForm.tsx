@@ -146,7 +146,7 @@ const CreatePostForm = () => {
       const postId = createdPostIdRef.current ?? await createPost();
       // Wait only for durable local storage, not for the network upload.
       await enqueueVideo(postId, postForm.video, videoDuration);
-      navigate('/profile');
+      navigate('/studio');
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Не удалось создать публикацию');
     } finally {
@@ -164,7 +164,7 @@ const CreatePostForm = () => {
         await cancelBackgroundUpload(createdPostIdRef.current);
         await blogPostApi.postApiBlogPostV2RemovePostId(createdPostIdRef.current);
       }
-      navigate('/profile');
+      navigate('/studio');
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Не удалось отменить создание');
     } finally {

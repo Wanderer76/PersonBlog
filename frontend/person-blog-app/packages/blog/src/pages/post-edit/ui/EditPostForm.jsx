@@ -117,7 +117,7 @@ const EditPostForm = () => {
         Visibility: Number(formData.visibility),
         Preview: formData.thumbnailFile ?? undefined
       });
-      navigate('/profile');
+      navigate('/studio');
     } catch (requestError) {
       console.error('Ошибка обновления:', requestError);
       setError('Не удалось сохранить изменения. Попробуйте ещё раз.');
@@ -143,7 +143,7 @@ const EditPostForm = () => {
         <section className={`${styles.formCard} ${styles.formState}`} role="alert">
           <h1>Не удалось открыть публикацию</h1>
           <p>{error}</p>
-          <button className={`${styles.btn} ${styles.btnPrimary}`} type="button" onClick={() => navigate('/profile')}>
+          <button className={`${styles.btn} ${styles.btnPrimary}`} type="button" onClick={() => navigate('/studio')}>
             Вернуться в профиль
           </button>
         </section>
@@ -160,7 +160,7 @@ const EditPostForm = () => {
             <h1 id="edit-video-title">Редактирование видео</h1>
             <p>Обновите информацию, обложку и параметры доступа.</p>
           </div>
-          <button className={styles.closeButton} type="button" onClick={() => navigate('/profile')}
+          <button className={styles.closeButton} type="button" onClick={() => navigate('/studio')}
             aria-label="Закрыть форму">×</button>
         </header>
 
@@ -196,7 +196,7 @@ const EditPostForm = () => {
           <p>Изменения будут видны зрителям после сохранения.</p>
           <div className={styles.actionButtons}>
             <button className={`${styles.btn} ${styles.btnSecondary}`} type="button"
-              onClick={() => navigate('/profile')} disabled={isSubmitting}>Отмена</button>
+              onClick={() => navigate('/studio')} disabled={isSubmitting}>Отмена</button>
             <button className={`${styles.btn} ${styles.btnPrimary}`} type="button"
               onClick={() => void handleUpdatePost()} disabled={isSubmitting}>
               {isSubmitting ? 'Сохраняем…' : 'Сохранить изменения'}

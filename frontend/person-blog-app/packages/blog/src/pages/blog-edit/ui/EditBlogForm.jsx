@@ -94,7 +94,7 @@ const EditBlogForm = () => {
                 Description: blogForm.description.trim(),
                 PhotoUrl: blogForm.photoUrl ?? undefined
             });
-            navigate('/profile');
+            navigate('/studio');
         } catch (error) {
             console.error('Error updating blog:', error);
             setErrorMessage('Не удалось сохранить изменения. Попробуйте ещё раз.');
@@ -115,7 +115,7 @@ const EditBlogForm = () => {
                     <button
                         className={styles.closeButton}
                         type="button"
-                        onClick={() => navigate('/profile')}
+                        onClick={() => navigate('/studio')}
                         aria-label="Закрыть форму"
                     >
                         ×
@@ -150,7 +150,7 @@ const EditBlogForm = () => {
                         <button
                             className={`${styles.btn} ${styles.btnSecondary}`}
                             type="button"
-                            onClick={() => navigate('/profile')}
+                            onClick={() => navigate('/studio')}
                         >
                             Отмена
                         </button>

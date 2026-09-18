@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useProfilePreview } from '@/entities/profile/model/profilePreview';
 import { JwtTokenService, subscribeToAuthState } from '@/shared/auth/tokenStorage';
 import SideBar from '@/widgets/sidebar';
 import { useNotifications } from '@/app/providers/notificationContext';
@@ -7,8 +8,26 @@ import './Header.css';
 
 const Header = function () {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isAccountOpen, setIsAccountOpen] = useState(false);
+    const accountRef = useRef(null);
+    const triggerRef = useRef(null);
+    const { person, features, blog, status, reloadBlog } = useProfilePreview();
+    const { pathname } = useLocation();
+    const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(() => JwtTokenService.isAuth());
     const { unreadCount } = useNotifications();
+
+    useEffect(() => { setIsAccountOpen(false); }, [pathname, isAuthenticated]);
+    useEffect(() => {
+        if (!isAccountOpen) return;
+        const onPointerDown = event => { if (!accountRef.current?.contains(event.target)) setIsAccountOpen(false); };
+        const onKeyDown = event => {
+            if (event.key === 'Escape') { setIsAccountOpen(false); triggerRef.current?.focus(); }
+        };
+        document.addEventListener('pointerdown', onPointerDown);
+        document.addEventListener('keydown', onKeyDown);
+        return () => { document.removeEventListener('pointerdown', onPointerDown); document.removeEventListener('keydown', onKeyDown); };
+    }, [isAccountOpen]);
 
     useEffect(() => subscribeToAuthState(() => {
         setIsAuthenticated(JwtTokenService.isAuth());
@@ -69,6 +88,7 @@ const Header = function () {
                         </button>
                     ) : (
                         <>
+                            {features.messagesEnabled && <Link to="/messages" className="notification-button" aria-label="Сообщения"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v14H8l-4 4V3Zm3 4v2h10V7H7Zm0 4v2h7v-2H7Z" /></svg></Link>}
                             <Link to="/notifications" className="notification-button"
                                 aria-label={unreadCount > 0 ? `Уведомления: ${unreadCount} непрочитанных` : 'Уведомления'}>
                                 <BellIcon />
@@ -78,9 +98,19 @@ const Header = function () {
                                     </span>
                                 )}
                             </Link>
-                            <Link to="/profile" className="profile-button" aria-label="Открыть профиль">
-                                <span className="avatar" aria-hidden="true">F</span>
-                            </Link>
+                            <div className="account-dropdown" ref={accountRef} onBlur={event => {
+                                if (!event.currentTarget.contains(event.relatedTarget)) setIsAccountOpen(false);
+                            }}>
+                                <button ref={triggerRef} type="button" className="account-trigger" aria-label="Меню аккаунта" aria-expanded={isAccountOpen} aria-controls="account-navigation" onClick={() => { setIsMenuOpen(false); setIsAccountOpen(value => !value); }}>
+                                    <span className="account-avatar">{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.slice(0, 1)}</span><span aria-hidden="true">⌄</span>
+                                </button>
+                                {isAccountOpen && <nav className="account-panel" id="account-navigation" aria-label="Меню аккаунта">
+                                    <div className="account-person"><span className="account-avatar">{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.slice(0, 1)}</span><div><strong>{person.name}</strong><small>@{person.username}</small></div></div>
+                                    <Link to="/profile" aria-current={pathname === '/profile' ? 'page' : undefined} onClick={() => setIsAccountOpen(false)}>Личный профиль</Link>
+                                    {status === 'ready' ? <Link to={blog ? '/studio' : '/profile/blog/create'} aria-current={pathname === '/studio' ? 'page' : undefined} onClick={() => setIsAccountOpen(false)}>{blog ? 'Управление блогом' : 'Создать блог'}</Link> : status === 'error' ? <button type="button" onClick={reloadBlog}>Повторить загрузку блога</button> : <span className="account-loading">Загрузка блога…</span>}
+                                    <button type="button" className="account-logout" onClick={() => { setIsAccountOpen(false); JwtTokenService.cleanAuth(); navigate('/'); }}>Выйти</button>
+                                </nav>}
+                            </div>
                         </>
                     )}
                 </div>

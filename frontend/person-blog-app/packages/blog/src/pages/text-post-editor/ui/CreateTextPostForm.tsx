@@ -73,7 +73,7 @@ const CreateTextPostForm = () => {
                     InlineMedia: inlineImages.map((image) => image.file),
                     InlineMediaIds: inlineImages.map((image) => image.referenceId),
                 });
-            if (result.status === 200) navigate('/profile');
+            if (result.status === 200) navigate('/studio');
         } catch {
             setErrors(previous => ({
                 ...previous,
