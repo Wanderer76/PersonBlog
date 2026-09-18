@@ -1,11 +1,21 @@
 import { createContext, useContext } from 'react';
 import type { BlogModel } from '@/shared/api/generated/models';
 
-export const initialPerson = { name: 'Артём Иванов', username: 'admin', photoUrl: '', createdAt: '2026-08-14', interests: [] as string[] };
+export const initialPerson = { name: '', username: null as string | null, photoUrl: '', createdAt: null as string | null, interests: [] as string[] };
 export const profilePreviewFeatures = { friendsEnabled: false, messagesEnabled: false };
+export const initialPermissions = { publishVideo: { isAllowed: false }, publishText: { isAllowed: false } };
 export type Person = typeof initialPerson;
-export type BlogState = { status: 'loading' | 'ready' | 'error'; blog: BlogModel | null };
-type ProfilePreview = BlogState & { person: Person; updatePerson: (person: Person) => void; reloadBlog: () => void; features: typeof profilePreviewFeatures };
+export type LoadStatus = 'loading' | 'ready' | 'error';
+export type BlogState = { status: LoadStatus; blog: BlogModel | null };
+type ProfilePreview = BlogState & {
+    person: Person;
+    profileStatus: LoadStatus;
+    updatePerson: (person: Person) => void;
+    reloadProfile: () => void;
+    reloadBlog: () => void;
+    features: typeof profilePreviewFeatures;
+    permissions: typeof initialPermissions;
+};
 export const ProfilePreviewContext = createContext<ProfilePreview | null>(null);
 
 export function useProfilePreview() {

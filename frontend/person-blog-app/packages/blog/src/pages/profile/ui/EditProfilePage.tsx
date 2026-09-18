@@ -36,7 +36,7 @@ export default function EditProfilePage() {
                         reader.readAsDataURL(file);
                     }} /></label><p className={styles.muted}>JPG, PNG или WebP · до 5 МБ</p>
                 </div>
-                <div><label className={styles.field}>Имя<input value={name} onChange={event => setName(event.target.value)} maxLength={100} required /></label><label className={styles.field}>Логин<input value={`@${person.username}`} readOnly /></label><p className={styles.muted}>Редактирование интересов появится позже.</p></div>
+                <div><label className={styles.field}>Имя<input value={name} onChange={event => setName(event.target.value)} maxLength={100} required /></label>{person.username && <label className={styles.field}>Логин<input value={`@${person.username}`} readOnly /></label>}<p className={styles.muted}>Редактирование интересов появится позже.</p></div>
             </div>
             {error && <p role="alert">{error}</p>}
             <p className={styles.previewNote}>Макет: имя и фотография изменятся только в текущем предпросмотре. На сервер данные не отправляются.</p>

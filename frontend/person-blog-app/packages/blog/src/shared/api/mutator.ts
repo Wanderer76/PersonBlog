@@ -1,6 +1,6 @@
 // src/lib/api/mutator.ts
 import axios, { AxiosResponse, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
-import { JwtTokenService } from '@/shared/auth/tokenStorage';
+import { beginForbiddenReauth, completeForbiddenReauth, JwtTokenService } from '@/shared/auth/tokenStorage';
 
 declare global {
   interface ImportMetaEnv {
@@ -48,13 +48,18 @@ instance.interceptors.request.use((config) => {
 
 // ✅ Интерсептор response — обрабатываем 401
 instance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    completeForbiddenReauth(response.config.url);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status === 403) {
-      JwtTokenService.cleanAuth();
-      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+      if (beginForbiddenReauth(originalRequest.url)) {
+        JwtTokenService.cleanAuth();
+        void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+      }
       return Promise.reject(error);
     }
 

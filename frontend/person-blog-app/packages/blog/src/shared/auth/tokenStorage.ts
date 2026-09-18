@@ -8,11 +8,25 @@ export const REFRESH_TOKEN_KEY = 'REFRESH_TOKEN_KEY';
 export const OAUTH_STATE_KEY = 'OAUTH_STATE_KEY';
 export const OAUTH_RETURN_URL_KEY = 'OAUTH_RETURN_URL_KEY';
 export const AUTH_STATE_CHANGED_EVENT = 'auth-state-changed';
+const FORBIDDEN_REAUTH_REQUEST_KEY = 'FORBIDDEN_REAUTH_REQUEST_KEY';
 const AUTH_REDIRECT_URI = `${window.location.origin}/callback`;
 const authGatewayClient = getAuth();
 
 function notifyAuthStateChanged(): void {
     window.dispatchEvent(new Event(AUTH_STATE_CHANGED_EVENT));
+}
+
+export function beginForbiddenReauth(requestUrl?: string): boolean {
+    if (sessionStorage.getItem(FORBIDDEN_REAUTH_REQUEST_KEY)) return false;
+    sessionStorage.setItem(FORBIDDEN_REAUTH_REQUEST_KEY, requestUrl || '*');
+    return true;
+}
+
+export function completeForbiddenReauth(requestUrl?: string): void {
+    const pendingRequest = sessionStorage.getItem(FORBIDDEN_REAUTH_REQUEST_KEY);
+    if (pendingRequest && (pendingRequest === '*' || pendingRequest === requestUrl)) {
+        sessionStorage.removeItem(FORBIDDEN_REAUTH_REQUEST_KEY);
+    }
 }
 
 export function subscribeToAuthState(listener: () => void): () => void {

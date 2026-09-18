@@ -1,6 +1,6 @@
 // src/lib/api/client.ts
 import axios from 'axios';
-import { JwtTokenService } from '@/shared/auth/tokenStorage';
+import { beginForbiddenReauth, completeForbiddenReauth, JwtTokenService } from '@/shared/auth/tokenStorage';
 
 export const BaseApUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -17,13 +17,18 @@ API.interceptors.request.use(config => {
 });
 
 API.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    completeForbiddenReauth(response.config.url);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
     if (error.response?.status === 403) {
-      JwtTokenService.cleanAuth();
-      void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+      if (beginForbiddenReauth(originalRequest.url)) {
+        JwtTokenService.cleanAuth();
+        void JwtTokenService.redirectToAuth(window.location.href).catch(() => undefined);
+      }
       return Promise.reject(error);
     }
 

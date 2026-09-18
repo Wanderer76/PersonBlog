@@ -4,11 +4,13 @@ import styles from '@/pages/post-create/ui/CreatePostForm.module.css';
 import { getBlog } from '@/shared/api/generated/blog/blog';
 import BlogCoverUpload from '@/pages/blog-create/ui/BlogCoverUpload';
 import BlogDetailsFields from '@/pages/blog-create/ui/BlogDetailsFields';
+import { useProfilePreview } from '@/entities/profile/model/profilePreview';
 
 const blogApi = getBlog();
 
 const CreateBlogForm = () => {
     const navigate = useNavigate();
+    const { reloadBlog } = useProfilePreview();
     const [blogForm, setBlogForm] = useState({
         title: '',
         description: '',
@@ -58,6 +60,7 @@ const CreateBlogForm = () => {
                 Description: blogForm.description.trim(),
                 PhotoUrl: blogForm.photoUrl ?? undefined
             });
+            reloadBlog();
             navigate('/profile');
         } catch (error) {
             console.error('Error creating blog:', error);

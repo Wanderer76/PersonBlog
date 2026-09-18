@@ -71,11 +71,6 @@ builder.Services.AddHttpClient<NotificationApiClient>(x =>
     x.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddScoped<RecommendationFeedGateway>();
-builder.Services.AddHttpClient("Profile", x =>
-{
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
-    x.Timeout = TimeSpan.FromSeconds(2);
-}).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Search", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Search"]);
@@ -100,7 +95,8 @@ builder.Services.AddHttpClient("PlayList", x =>
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
-builder.Services.AddProfileHttpClient(builder.Configuration);
+builder.Services.AddProfileHttpClient(builder.Configuration)
+    .AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddBlogContract(builder.Configuration);
 
 var app = builder.Build();

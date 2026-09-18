@@ -45,7 +45,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 export const StudioPage = memo(() => {
     const navigate = useNavigate();
-    const { blog, status: blogStatus, reloadBlog } = useProfilePreview();
+    const { blog, status: blogStatus, permissions, reloadBlog } = useProfilePreview();
     const loadingRef = useRef(false);
     const videoHubRef = useRef<HubConnection | null>(null);
     const [profile, setProfile] = useState<ProfileViewModel>(initialProfile);
@@ -259,10 +259,14 @@ export const StudioPage = memo(() => {
     const rightAction = !blogId
         ? null
         : activePanel === 'posts'
-        ? <Button onClick={() => navigate('/profile/post/create')}>Создать видео</Button>
+        ? permissions.publishVideo.isAllowed
+            ? <Button onClick={() => navigate('/profile/post/create')}>Создать видео</Button>
+            : null
         : activePanel === 'playlists'
             ? <Button onClick={() => navigate('/profile/playList/create')}>Создать плейлист</Button>
-            : <Button onClick={() => navigate('/profile/textPost/create')}>Создать пост</Button>;
+            : permissions.publishText.isAllowed
+                ? <Button onClick={() => navigate('/profile/textPost/create')}>Создать пост</Button>
+                : null;
 
     if (blogStatus !== 'ready' || !blog) return <main className={personalStyles.page}>
         <p className={personalStyles.breadcrumb}><Link to="/profile">Личный профиль</Link><span>/</span>Управление блогом</p>

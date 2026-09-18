@@ -1,40 +1,93 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { getMyProfile, getProfileContext } from '@/entities/profile/api/profileApi';
 import { getBlog } from '@/shared/api/generated/blog/blog';
-import { initialPerson, profilePreviewFeatures, ProfilePreviewContext, type BlogState } from './profilePreview';
+import { initialPermissions, initialPerson, profilePreviewFeatures, ProfilePreviewContext, type BlogState, type LoadStatus } from './profilePreview';
 import { JwtTokenService, subscribeToAuthState } from '@/shared/auth/tokenStorage';
 
-// Temporary personal-profile source, to be replaced by /Profile/my and /context.
-// Existing blog APIs remain live; demo edits are never sent to the server.
+type ProfileState = { status: LoadStatus; requestKey: string };
+type ContextState = BlogState & {
+    requestKey: string;
+    features: typeof profilePreviewFeatures;
+    permissions: typeof initialPermissions;
+};
 
 export function ProfilePreviewProvider({ children }: { children: ReactNode }) {
     const [person, setPerson] = useState(initialPerson);
-    const [state, setState] = useState<BlogState & { requestKey: string }>({ status: 'loading', blog: null, requestKey: '' });
-    const [revision, setRevision] = useState(0);
-    const { pathname } = useLocation();
-    const requestKey = `${pathname}:${revision}`;
+    const [profileState, setProfileState] = useState<ProfileState>({ status: 'loading', requestKey: '' });
+    const [contextState, setContextState] = useState<ContextState>({
+        status: 'loading', blog: null, requestKey: '', features: profilePreviewFeatures, permissions: initialPermissions
+    });
+    const [profileRevision, setProfileRevision] = useState(0);
+    const [contextRevision, setContextRevision] = useState(0);
+    const profileRequestKey = String(profileRevision);
+    const contextRequestKey = String(contextRevision);
     useEffect(() => subscribeToAuthState(() => {
         setPerson(initialPerson);
-        setState({ status: 'loading', blog: null, requestKey: '' });
-        setRevision(value => value + 1);
+        setProfileState({ status: 'loading', requestKey: '' });
+        setContextState({ status: 'loading', blog: null, requestKey: '', features: profilePreviewFeatures, permissions: initialPermissions });
+        setProfileRevision(value => value + 1);
+        setContextRevision(value => value + 1);
     }), []);
     useEffect(() => {
-        let active = true;
         if (!JwtTokenService.isAuth()) return;
+        const controller = new AbortController();
         async function load() {
             try {
-                const api = getBlog();
-                const { data } = await api.getApiBlogHasUserBlog();
-                if (!active) return;
-                const blog = data.hasBlog ? (await api.getApiBlogDetail()).data : null;
-                if (active) setState({ status: 'ready', blog, requestKey });
-            } catch {
-                if (active) setState({ status: 'error', blog: null, requestKey });
+                const { data } = await getMyProfile(controller.signal);
+                setPerson({
+                    name: data.name,
+                    username: null,
+                    photoUrl: data.photoUrl ?? '',
+                    createdAt: data.createdAt,
+                    interests: data.interests ?? []
+                });
+                setProfileState({ status: 'ready', requestKey: profileRequestKey });
+            } catch (error: unknown) {
+                if (!axios.isCancel(error)) setProfileState({ status: 'error', requestKey: profileRequestKey });
             }
         }
         void load();
-        return () => { active = false; };
-    }, [requestKey]);
-    const currentState: BlogState = state.requestKey === requestKey ? state : { status: 'loading', blog: null };
-    return <ProfilePreviewContext.Provider value={{ ...currentState, person, updatePerson: setPerson, features: profilePreviewFeatures, reloadBlog: () => setRevision(value => value + 1) }}>{children}</ProfilePreviewContext.Provider>;
+        return () => controller.abort();
+    }, [profileRequestKey]);
+    useEffect(() => {
+        if (!JwtTokenService.isAuth()) return;
+        const controller = new AbortController();
+        async function load() {
+            try {
+                const { data: context } = await getProfileContext(controller.signal);
+                const blog = context.blog.hasBlog && context.blog.id
+                    ? (await getBlog().getApiBlogBlogBlogId(context.blog.id, { signal: controller.signal })).data
+                    : null;
+                setContextState({
+                    status: 'ready', blog, requestKey: contextRequestKey,
+                    features: context.features, permissions: context.permissions
+                });
+            } catch (error: unknown) {
+                if (!axios.isCancel(error)) {
+                    setContextState({
+                        status: 'error', blog: null, requestKey: contextRequestKey,
+                        features: profilePreviewFeatures, permissions: initialPermissions
+                    });
+                }
+            }
+        }
+        void load();
+        return () => controller.abort();
+    }, [contextRequestKey]);
+    const currentProfileStatus = profileState.requestKey === profileRequestKey ? profileState.status : 'loading';
+    const currentContext: ContextState = contextState.requestKey === contextRequestKey
+        ? contextState
+        : { status: 'loading', blog: null, requestKey: '', features: profilePreviewFeatures, permissions: initialPermissions };
+    return <ProfilePreviewContext.Provider value={{
+        status: currentContext.status,
+        blog: currentContext.blog,
+        features: currentContext.features,
+        permissions: currentContext.permissions,
+        person,
+        profileStatus: currentProfileStatus,
+        updatePerson: setPerson,
+        reloadProfile: () => setProfileRevision(value => value + 1),
+        reloadBlog: () => setContextRevision(value => value + 1)
+    }}>{children}</ProfilePreviewContext.Provider>;
 }

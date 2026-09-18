@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { ProfilePreviewProvider } from '@/entities/profile/model/ProfilePreviewProvider';
-import { profilePreviewFeatures } from '@/entities/profile/model/profilePreview';
+import { useProfilePreview } from '@/entities/profile/model/profilePreview';
 import { JwtTokenService } from '@/shared/auth';
 import { AppHeader } from '@/widgets/header';
 
@@ -38,8 +38,12 @@ const PrivateRoute = () => {
   return isAuthenticated ? <Outlet /> : <div className="app-loader">Перенаправление на авторизацию...</div>;
 };
 
-export const AppRouter = () => (
-  <ProfilePreviewProvider>
+export const AppRouter = () => <ProfilePreviewProvider><ApplicationRoutes /></ProfilePreviewProvider>;
+
+const ApplicationRoutes = () => {
+  const { features, status: contextStatus } = useProfilePreview();
+
+  return (
   <Suspense fallback={<div className="app-loader">Загрузка...</div>}>
     <AppHeader />
     <Routes>
@@ -56,8 +60,8 @@ export const AppRouter = () => (
         <Route path="/liked" element={<LikedPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/studio" element={<StudioPage />} />
-        <Route path="/friends" element={profilePreviewFeatures.friendsEnabled ? <FutureSection title="Друзья" /> : <Navigate to="/profile" replace />} />
-        <Route path="/messages" element={profilePreviewFeatures.messagesEnabled ? <FutureSection title="Сообщения" /> : <Navigate to="/profile" replace />} />
+        <Route path="/friends" element={<FeatureRoute isLoading={contextStatus === 'loading'} isEnabled={features.friendsEnabled} title="Друзья" />} />
+        <Route path="/messages" element={<FeatureRoute isLoading={contextStatus === 'loading'} isEnabled={features.messagesEnabled} title="Сообщения" />} />
         <Route path="/profile">
           <Route index element={<ProfilePage />} />
           <Route path="edit" element={<EditProfilePage />} />
@@ -73,8 +77,13 @@ export const AppRouter = () => (
       </Route>
     </Routes>
   </Suspense>
-  </ProfilePreviewProvider>
-);
+  );
+};
+
+function FeatureRoute({ isLoading, isEnabled, title }: { isLoading: boolean; isEnabled: boolean; title: string }) {
+  if (isLoading) return <div className="app-loader">Загрузка...</div>;
+  return isEnabled ? <FutureSection title={title} /> : <Navigate to="/profile" replace />;
+}
 
 function FutureSection({ title }: { title: string }) {
   return <main style={{ maxWidth: 1200, margin: '32px auto', padding: 24 }}><h1>{title}</h1><p>Раздел появится позже.</p></main>;

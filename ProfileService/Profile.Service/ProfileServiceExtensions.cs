@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Profile.Application.Services;
 using Profile.Service.HttpClients;
@@ -17,9 +17,9 @@ namespace Profile.Service
             services.AddScoped<IBanService, DefaultPostBanService>();
             services.AddScoped<IProfilePictureStore, ProfilePictureStore>();
         }
-        public static void AddProfileHttpClient(this IServiceCollection services, IConfiguration configuration)
+        public static IHttpClientBuilder AddProfileHttpClient(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddHttpClient<ProfileHttpClient>(x =>
+            return services.AddHttpClient<ProfileHttpClient>(x =>
             {
                 x.BaseAddress = new Uri(configuration["AppUrls:Profile"]);
             });

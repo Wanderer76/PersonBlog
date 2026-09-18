@@ -4,11 +4,13 @@ import styles from '@/pages/post-create/ui/CreatePostForm.module.css';
 import { getBlog } from '@/shared/api/generated/blog/blog';
 import BlogCoverUpload from '@/pages/blog-create/ui/BlogCoverUpload';
 import BlogDetailsFields from '@/pages/blog-create/ui/BlogDetailsFields';
+import { useProfilePreview } from '@/entities/profile/model/profilePreview';
 
 const blogApi = getBlog();
 
 const EditBlogForm = () => {
     const navigate = useNavigate();
+    const { reloadBlog } = useProfilePreview();
     const [blogId, setBlogId] = useState(null);
     const [blogForm, setBlogForm] = useState({
         title: '',
@@ -94,6 +96,7 @@ const EditBlogForm = () => {
                 Description: blogForm.description.trim(),
                 PhotoUrl: blogForm.photoUrl ?? undefined
             });
+            reloadBlog();
             navigate('/studio');
         } catch (error) {
             console.error('Error updating blog:', error);

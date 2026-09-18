@@ -102,10 +102,10 @@ const Header = function () {
                                 if (!event.currentTarget.contains(event.relatedTarget)) setIsAccountOpen(false);
                             }}>
                                 <button ref={triggerRef} type="button" className="account-trigger" aria-label="Меню аккаунта" aria-expanded={isAccountOpen} aria-controls="account-navigation" onClick={() => { setIsMenuOpen(false); setIsAccountOpen(value => !value); }}>
-                                    <span className="account-avatar">{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.slice(0, 1)}</span><span aria-hidden="true">⌄</span>
+                                    <span className="account-avatar">{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.slice(0, 1) || '?'}</span><span aria-hidden="true">⌄</span>
                                 </button>
                                 {isAccountOpen && <nav className="account-panel" id="account-navigation" aria-label="Меню аккаунта">
-                                    <div className="account-person"><span className="account-avatar">{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.slice(0, 1)}</span><div><strong>{person.name}</strong><small>@{person.username}</small></div></div>
+                                    <div className="account-person"><span className="account-avatar">{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.slice(0, 1) || '?'}</span><div><strong>{person.name || 'Загрузка профиля…'}</strong>{person.username && <small>@{person.username}</small>}</div></div>
                                     <Link to="/profile" aria-current={pathname === '/profile' ? 'page' : undefined} onClick={() => setIsAccountOpen(false)}>Личный профиль</Link>
                                     {status === 'ready' ? <Link to={blog ? '/studio' : '/profile/blog/create'} aria-current={pathname === '/studio' ? 'page' : undefined} onClick={() => setIsAccountOpen(false)}>{blog ? 'Управление блогом' : 'Создать блог'}</Link> : status === 'error' ? <button type="button" onClick={reloadBlog}>Повторить загрузку блога</button> : <span className="account-loading">Загрузка блога…</span>}
                                     <button type="button" className="account-logout" onClick={() => { setIsAccountOpen(false); JwtTokenService.cleanAuth(); navigate('/'); }}>Выйти</button>
