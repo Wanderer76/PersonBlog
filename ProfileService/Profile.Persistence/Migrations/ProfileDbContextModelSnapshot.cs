@@ -8,10 +8,10 @@ using Profile.Persistence;
 
 #nullable disable
 
-namespace VideoReacting.Persistence.Migrations
+namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
-    partial class ViewReactingDbContextModelSnapshot : ModelSnapshot
+    partial class ProfileDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {

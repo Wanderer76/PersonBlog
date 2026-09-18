@@ -23,7 +23,7 @@ namespace Gateway.API.Controllers
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Reacting");
+                var client = _httpClientFactory.CreateClient("Profile");
                 await client.PostAsync($"Subscriber/subscribe/{blogId}", null);
                 return Ok();
             }
@@ -39,7 +39,7 @@ namespace Gateway.API.Controllers
         {
             try
             {
-                var client = _httpClientFactory.CreateClient("Reacting");
+                var client = _httpClientFactory.CreateClient("Profile");
                 await client.PostAsync($"Subscriber/unsubscribe/{blogId}", null);
                 return Ok();
             }
@@ -53,13 +53,13 @@ namespace Gateway.API.Controllers
         [AuthFilter]
         public async Task<IActionResult> SubscriptionsList(int page, int size)
         {
-            var client = _httpClientFactory.CreateClient("Reacting");
+            var client = _httpClientFactory.CreateClient("Profile");
             var subscriptions = await client.GetFromJsonAsync<PagedListViewModel<SubscribeViewModel>>($"Subscriber/subscriptions?page={page}&size={size}");
 
             if (subscriptions.Items.Count > 0)
             {
                 var blogs = await Task.WhenAll(subscriptions.Items
-                    .Select(x => _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<BlogModel>($"api/Blog/blog/{x.BlogId}")));
+                    .Select(x => _httpClientFactory.CreateClient("Blog").GetFromJsonAsync<BlogModel>($"Blog/blog/{x.BlogId}")));
                 return Ok(new PagedListViewModel<BlogModel>(subscriptions.TotalPageCount, subscriptions.PageSize, subscriptions.TotalPostsCount, blogs));
             }
             else

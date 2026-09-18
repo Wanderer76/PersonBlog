@@ -43,7 +43,7 @@ Endpoint `GET /Video/{blogId}/{postId}/{*file}` принимает иденти�
 
 В `appsettings.json` этих ключей нет. Без внешней конфигурации создание `Uri` завершается исключением ещё при запуске приложения.
 
-Дополнительно название `AppUrls:Profile` вводит в заблуждение: клиент с этим именем фактически вызывает Blog/Post endpoints, а Profile API задан как `Reacting`.
+URL и именованные HTTP-клиенты должны называться по реальным downstream-сервисам: `Blog` для Blog API и `Profile` для Profile API.
 
 Рекомендации:
 

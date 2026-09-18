@@ -6,11 +6,11 @@ using Profile.Domain.Entities;
 
 namespace Profile.Persistence
 {
-    public static class ViewReactingPersistenceExtensions
+    public static class ProfilePersistenceExtensions
     {
-        public static void AddViewReactingPersistence(this IServiceCollection services, IConfiguration configuration)
+        public static void AddProfilePersistence(this IServiceCollection services, IConfiguration configuration)
         {
-            var connectionString = configuration["ConnectionStrings:VideoReactingDbContext"]!;
+            var connectionString = configuration["ConnectionStrings:ProfileDbContext"]!;
             services.AddNpgSqlDbContext<ProfileDbContext>(connectionString);
             services.AddScoped<IDbInitializer, ProfileDbInitializer>();
             services.AddDefaultRepository<ProfileDbContext, IUserEntity>();

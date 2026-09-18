@@ -30,7 +30,7 @@ public class ViewController : BaseApiController
         var result = await _cache.GetOrAddDataAsync(new ViewCacheModel(userId.Value), async () =>
         {
             var historyItems = userId.HasValue ?
-           await _httpClientFactory.CreateClient("Reacting").GetFromJsonAsync<IReadOnlyList<HistoryViewItem>>($"ViewHistory/list/{userId.Value}")
+           await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<IReadOnlyList<HistoryViewItem>>($"ViewHistory/list/{userId.Value}")
            : [];
 
             var postPreviews = historyItems!
@@ -68,7 +68,7 @@ public class ViewController : BaseApiController
         var result = await _cache.GetOrAddDataAsync(new LikedCacheKey(userId.Value), async () =>
         {
             var historyItems = userId.HasValue ?
-           await _httpClientFactory.CreateClient("Reacting").GetFromJsonAsync<IReadOnlyList<LikedViewItem>>($"LikedHistory/list/{userId.Value}")
+           await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<IReadOnlyList<LikedViewItem>>($"LikedHistory/list/{userId.Value}")
            : [];
 
             var postPreviews = historyItems!

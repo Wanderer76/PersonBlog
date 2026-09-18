@@ -45,9 +45,9 @@ builder.Services.AddHttpClient("Auth", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
-builder.Services.AddHttpClient("Profile", x =>
+builder.Services.AddHttpClient("Blog", x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient<RecommendationApiClient>(x =>
@@ -71,9 +71,9 @@ builder.Services.AddHttpClient<NotificationApiClient>(x =>
     x.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddScoped<RecommendationFeedGateway>();
-builder.Services.AddHttpClient("Reacting", x =>
+builder.Services.AddHttpClient("Profile", x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Reacting"]);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
 builder.Services.AddHttpClient("Search", x =>

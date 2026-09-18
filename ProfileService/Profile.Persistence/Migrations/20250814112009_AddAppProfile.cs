@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace VideoReacting.Persistence.Migrations
+namespace Profile.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class AddAppProfile : Migration

@@ -42,7 +42,7 @@ public class BanController : BaseApiController
             UserId = user.UserId
         };
 
-        using var client = _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext);
+        using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
 
         var result = await client.PostAsJsonAsync("Ban/sendPostBanRequest", requestBody);
 

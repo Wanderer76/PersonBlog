@@ -10,7 +10,7 @@ using Profile.Persistence;
 
 #nullable disable
 
-namespace VideoReacting.Persistence.Migrations
+namespace Profile.Persistence.Migrations
 {
     [DbContext(typeof(ProfileDbContext))]
     [Migration("20250418103902_Init")]

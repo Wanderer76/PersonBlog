@@ -11,15 +11,15 @@ namespace Gateway.API.Api
     //TODO сделать обычный сервис, пробрасывать заголовки оригинального запроса
     public static class PostApiService
     {
-        private const string PostManifest = "api/Post/manifest";
-        private const string DetailPost = "api/Post/detail";
-        private const string VideoAccess = "api/Post/video-access";
+        private const string PostManifest = "Post/manifest";
+        private const string DetailPost = "Post/detail";
+        private const string VideoAccess = "Post/video-access";
         private const string UserPostInfo = "ViewHistory/userReaction";
-        private const string CommonBlog = "api/Blog/blogViewerInfoByPost";
+        private const string CommonBlog = "Blog/blogViewerInfoByPost";
 
         public static async Task<Result<PostFileMetadataModel>> GetFileMetadataAsync(this IHttpClientFactory httpContextFactory, Guid postId)
         {
-            var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<PostFileMetadataModel>($"{PostManifest}/{postId}");
+            var result = await httpContextFactory.CreateClient("Blog").GetFromJsonAsync<PostFileMetadataModel>($"{PostManifest}/{postId}");
             if (result == null)
             {
                 return Result<PostFileMetadataModel>.Failure(new Error("404", "Не удалось найти данные"));
@@ -31,7 +31,7 @@ namespace Gateway.API.Api
         {
             try
             {
-                var result = await httpContextFactory.CreateClientContextHeaders("Profile", context)
+                var result = await httpContextFactory.CreateClientContextHeaders("Blog", context)
                     .GetFromJsonAsync<PostDetailViewModel>($"{DetailPost}/{postId}");
                 if (result == null)
                 {
@@ -51,7 +51,7 @@ namespace Gateway.API.Api
             Guid postId,
             CancellationToken cancellationToken)
         {
-            using var response = await httpClientFactory.CreateClient("Profile")
+            using var response = await httpClientFactory.CreateClient("Blog")
                 .GetAsync($"{VideoAccess}/{blogId}/{postId}", cancellationToken);
 
             return response.StatusCode;
@@ -61,7 +61,7 @@ namespace Gateway.API.Api
         {
             try
             {
-                var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<BlogUserInfoViewModel>($"{CommonBlog}/{postId}");
+                var result = await httpContextFactory.CreateClient("Blog").GetFromJsonAsync<BlogUserInfoViewModel>($"{CommonBlog}/{postId}");
                 if (result == null)
                 {
                     return Result<BlogUserInfoViewModel>.Failure(new Error("404", "Не удалось найти данные"));
@@ -80,7 +80,7 @@ namespace Gateway.API.Api
             {
                 try
                 {
-                    var result = await httpContextFactory.CreateClient("Reacting").GetFromJsonAsync<ReactionHistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}?blogId={blogId}");
+                    var result = await httpContextFactory.CreateClient("Profile").GetFromJsonAsync<ReactionHistoryViewItem>($"{UserPostInfo}/{postId}/{userId.Value}?blogId={blogId}");
                     if (result.PostId == Guid.Empty)
                         return Result<ReactionHistoryViewItem>.Success(new());
                     return Result<ReactionHistoryViewItem>.Success(result!);

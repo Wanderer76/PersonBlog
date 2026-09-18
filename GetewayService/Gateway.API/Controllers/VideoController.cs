@@ -123,7 +123,7 @@ public class VideoController : BaseApiController
     [AuthFilter]
     public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
     {
-        var client = _httpClientFactory.CreateClient("Reacting");
+        var client = _httpClientFactory.CreateClient("Profile");
         var result = await client.PostAsJsonAsync("Reaction/setView", viewRequest);
         if (!result.IsSuccessStatusCode)
             return BadRequest(result.Content);
@@ -133,7 +133,7 @@ public class VideoController : BaseApiController
     [HttpPost("setReaction/{postId:guid}")]
     public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
     {
-        var client = _httpClientFactory.CreateClient("Reacting");
+        var client = _httpClientFactory.CreateClient("Profile");
 
         var result = await client.PostAsync($"Reaction/setReaction/{postId}?isLike={isLike}", null);
         if (!result.IsSuccessStatusCode)

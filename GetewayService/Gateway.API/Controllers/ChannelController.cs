@@ -26,9 +26,9 @@ namespace Gateway.API.Controllers
         [HttpGet("{channelId}")]
         public async Task<IActionResult> GetChannelInfo(Guid channelId)
         {
-            using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = (await client.GetFromJsonAsync<BlogModel>($"api/Blog/blog/{channelId}"))!;
-            var hasSubscription = (await _httpClientFactory.CreateClient("Reacting")
+            using var client = _httpClientFactory.CreateClient("Blog");
+            var blog = (await client.GetFromJsonAsync<BlogModel>($"Blog/blog/{channelId}"))!;
+            var hasSubscription = (await _httpClientFactory.CreateClient("Profile")
                 .GetFromJsonAsync<HasSubscriptionModel>($"Subscriber/hasSubscription/{channelId}"))!;
             return Ok(new
             {

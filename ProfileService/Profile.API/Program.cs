@@ -22,8 +22,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddViewReactingPersistence(builder.Configuration);
-builder.Services.AddVideoReactingService();
+builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddProfileServices();
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; });
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();

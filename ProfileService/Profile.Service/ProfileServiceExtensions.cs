@@ -6,9 +6,9 @@ using Profile.Service.Implementation;
 
 namespace Profile.Service
 {
-    public static class VideoReactingServiceExtensions
+    public static class ProfileServiceExtensions
     {
-        public static void AddVideoReactingService(this IServiceCollection services)
+        public static void AddProfileServices(this IServiceCollection services)
         {
             services.AddScoped<IViewHistoryService, DefaultViewHistoryService>();
             services.AddScoped<IReactionService, DefaultReactionService>();
@@ -21,7 +21,7 @@ namespace Profile.Service
         {
             services.AddHttpClient<ProfileHttpClient>(x =>
             {
-                x.BaseAddress = new Uri(configuration["AppUrls:Reacting"]);
+                x.BaseAddress = new Uri(configuration["AppUrls:Profile"]);
             });
         }
     }
