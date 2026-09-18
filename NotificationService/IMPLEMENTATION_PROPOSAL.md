@@ -20,7 +20,7 @@
 
 | Область | Подтверждено кодом | Значение для реализации |
 |---|---|---|
-| Notification API | `NotificationService/Notification.API/Program.cs`: .NET 8, Swagger, Serilog, ServiceDefaults, HTTP-клиент Blog, подписка на `PostUpdateEvent`, маршрут-заглушка `/weatherforecast` | Нет API истории, авторизации, SignalR и регистрации хранилища уведомлений |
+| Notification API | `NotificationService/Notification.API/Program.cs`: .NET 10, Swagger, Serilog, ServiceDefaults, HTTP-клиент Blog, подписка на `PostUpdateEvent`, маршрут-заглушка `/weatherforecast` | Нет API истории, авторизации, SignalR и регистрации хранилища уведомлений |
 | Модель | `NotificationService/Notification.Domain/Entities/UserNotification.cs`: `UserId`, `Payload`, `IsViewed`, типы с `InApp/Push/Email` | Есть начало модели, но нет состояний доставки, дедупликации и настроек пользователя |
 | Обработчик | `NotificationService/Notification.Domain/EventHandlers/PostCreateEventHandler.cs` | Для `UpdateType.Create` читает получателей и только логирует их; уведомления не создаёт |
 | Старый контракт | `NotificationService/Notification.Contract/Events/CreateNotificationEvent.cs`: `UserId`, `CreatedAt`, строковый `Payload`, exchange `notifications` | Нет стабильного EventId и типизированного содержания; подписчик на этот контракт в Notification API не зарегистрирован |
@@ -33,7 +33,7 @@
 | Конференции | `ConferenceService/Conference.Service/Implementation/DefaultConferenceService.cs`, `Conference.API/Controllers/ConferenceRoomController.cs` | Есть создание комнаты и присоединение участника. Отдельного процесса адресного приглашения в просмотренном контуре нет |
 | Надёжность событий | `BlogService/Blog.Service/Services/Implementation/OutboxPublisher.cs`; `RecommendationService/Recommendation.Services/EventHandlers/SubscriptionChangedV1Handler.cs` | Уже есть outbox в Blog и паттерн inbox/`ExecuteOnceAsync` в Recommendation; подход можно повторить без ссылки на их доменные модели |
 | Транспорт | `Common/MessageBus/Internal/RabbitMqMessageBus.cs`, `Models/BaseEvent.cs` | Собственная шина, RabbitMQ.Client 7.1.2, ручной ACK, publisher confirms; есть отдельная реализация Kafka, но заготовка уведомлений использует RabbitMQ |
-| Хранилища | `Common/Infrastructure/Infrastructure.csproj`, `BlogService/Blog.Persistence/BlogDbContext.cs`, инфраструктурный Compose | EF Core/Npgsql 8.0.11, PostgreSQL, схемы сервисов; также Redis и MinIO |
+| Хранилища | `Common/Infrastructure/Infrastructure.csproj`, `BlogService/Blog.Persistence/BlogDbContext.cs`, инфраструктурный Compose | EF Core 10.0.12/Npgsql 10.0.3, PostgreSQL, схемы сервисов; также Redis и MinIO |
 | Клиентский контур | `GetewayService/Gateway.API/Program.cs`, `nginx/nginx.local-debug.conf`, `frontend/person-blog-app/packages/blog` | Gateway с HTTP-клиентами, Nginx, React/TypeScript, Orval; SignalR уже используется для видео и конференций |
 | Запуск | `docker-compose.yml`, `GetewayService/AspireTest/AspireTest.AppHost/AppHost.cs` | NotificationService не подключён к этим схемам запуска; требуется добавить отдельно |
 
@@ -233,7 +233,7 @@ UserId берётся из проверенной сессии, не из пар
 
 В Notification API подключить существующие authentication/session компоненты и authorization, адаптируя `ICurrentUserService` к Application-интерфейсу. Проверить подпись, issuer/audience, lifetime, тип access token и валидность сессии; не использовать простое декодирование `GetTokenModel` как доказательство подлинности. Текущая заготовка этого контура не имеет.
 
-Hub `/hubs/notifications` требует авторизации. Отправка через `Clients.User(userId)`; `IUserIdProvider` читает проверенный `AppClaimTypes.UserId`, который уже использует генератор JWT проекта. Нельзя использовать session Id/BlogId вместо UserId или позволять клиенту выбирать чужую группу. Для browser WebSocket/SSE использовать `accessTokenFactory`, а query-параметр `access_token` принимать только на пути этого hub и исключить из логирования. См. [SignalR authentication](https://learn.microsoft.com/en-gb/aspnet/core/signalr/authn-and-authz?view=aspnetcore-8.0).
+Hub `/hubs/notifications` требует авторизации. Отправка через `Clients.User(userId)`; `IUserIdProvider` читает проверенный `AppClaimTypes.UserId`, который уже использует генератор JWT проекта. Нельзя использовать session Id/BlogId вместо UserId или позволять клиенту выбирать чужую группу. Для browser WebSocket/SSE использовать `accessTokenFactory`, а query-параметр `access_token` принимать только на пути этого hub и исключить из логирования. См. [SignalR authentication](https://learn.microsoft.com/en-gb/aspnet/core/signalr/authn-and-authz?view=aspnetcore-10.0).
 
 Передаваемое событие: `NotificationCreated` с `notificationId` и минимальным DTO либо сигналом обновления; дополнительно `NotificationsRead` для синхронизации вкладок. Успешный SendAsync — факт попытки realtime-доставки, не прочтение и не доказательство получения браузером. Отсутствие клиента не требует бесконечного retry: история уже сохранена. Истечение/отзыв сессии должно закрывать соединение по выбранной политике; после refresh клиент переподключается.
 

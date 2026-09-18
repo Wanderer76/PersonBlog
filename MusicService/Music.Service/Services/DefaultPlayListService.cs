@@ -205,9 +205,8 @@ internal class DefaultPlayListService : IMusicPlayListService
             .Take(size)
             .ToList();
 
-        return await playlistTracks
-            .ToAsyncEnumerable()
-            .SelectAwait(async x =>
+        return await Task.WhenAll(playlistTracks
+            .Select(async x =>
             new TrackViewItem(
                 x.Track.Id,
                 x.Track.Title,
@@ -216,8 +215,7 @@ internal class DefaultPlayListService : IMusicPlayListService
                 new TrackFileInfo(await fileStorage.GetFileUrlAsync(x.Track.Metadata.Id, x.Track.Metadata.ObjectName), x.Track.Metadata.Duration),
                 [.. x.Artists.Select(artist => new Contract.Models.Artist.ArtistInfo(artist.ArtistId, artist.Name))],
                 x.IsLike
-                ))
-            .ToListAsync();
+                )));
     }
 
     public async Task<Result> RemovePlayListAsync(Guid id)

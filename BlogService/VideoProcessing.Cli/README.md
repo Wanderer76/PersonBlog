@@ -254,7 +254,7 @@ dotnet run --urls "http://0.0.0.0:5281"
 | FileStorage.Service | - | S3/MinIO интеграция |
 | Infrastructure | - | Общие сервисы, middleware |
 | MessageBus | - | RabbitMQ интеграция |
-| Microsoft.AspNetCore.Authentication.JwtBearer | 8.0.8 | JWT auth |
+| Microsoft.AspNetCore.Authentication.JwtBearer | 10.0.12 | JWT auth |
 | Swashbuckle.AspNetCore | 6.4.0 | Swagger UI |
 | StackExchange.Redis | - | Redis клиент |
 
@@ -354,4 +354,4 @@ Percent : 50.0
 
 - [FFmpeg Documentation](https://ffmpeg.org/documentation.html)
 - [HLS Format Spec](https://tools.ietf.org/html/rfc8216)
-- [SignalR Hub Client](https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client?view=aspnetcore-8.0)
+- [SignalR Hub Client](https://docs.microsoft.com/en-us/aspnet/core/signalr/javascript-client?view=aspnetcore-10.0)
