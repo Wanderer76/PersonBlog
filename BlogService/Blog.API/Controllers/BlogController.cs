@@ -53,11 +53,11 @@ public sealed class BlogController(
     }
 
     [HttpGet("hasBlog/{userId:guid}")]
-    [Produces<bool>]
-    public async Task<ActionResult<bool>> GetBlogDetail(Guid userId)
+    [Produces<HasBlogResponse>]
+    public async Task<ActionResult<HasBlogResponse>> GetBlogDetail(Guid userId)
     {
         var result = await blogService.HasUserBlogAsync(userId);
-        return Ok(result);
+        return Ok(new HasBlogResponse { HasBlog = result.HasBlog, BlogId = result.BlogId });
     }
 
     [HttpGet("hasUserBlog")]
@@ -66,7 +66,7 @@ public sealed class BlogController(
     {
         var user = await currentUserService.GetCurrentUserAsync();
         var result = await blogService.HasUserBlogAsync(user.UserId!);
-        return Ok(new HasBlogResponse { HasBlog = result });
+        return Ok(new HasBlogResponse { HasBlog = result.HasBlog, BlogId = result.BlogId });
     }
 
     [HttpGet("detail")]

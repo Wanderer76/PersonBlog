@@ -4,23 +4,11 @@ namespace Profile.Application.Models.Profile;
 
 public class ProfileModel
 {
-    public long Id { get; set; }
-    public string Name { get; set; }
-    public Guid UserId { get; set; }
-    public string? PhotoUrl { get; set; }
-    public ProfileState ProfileState { get; set; }
-
-    public ProfileModel()
-    {
-        
-    }
-
-    public ProfileModel(long id, string name, Guid userId, string? photoUrl, ProfileState profileState)
-    {
-        Id = id;
-        Name = name;
-        UserId = userId;
-        PhotoUrl = photoUrl;
-        ProfileState = profileState;
-    }
+    public required long Id { get; set; }
+    public required string Name { get; set; }
+    public required Guid UserId { get; set; }
+    public required string? PhotoUrl { get; set; }
+    public required ProfileState ProfileState { get; set; }
+    public required DateTimeOffset CreatedAt { get; set; }
+    public IReadOnlyList<string> Interests { get; set; } = [];
 }

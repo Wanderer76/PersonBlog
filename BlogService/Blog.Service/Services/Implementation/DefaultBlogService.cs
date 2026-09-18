@@ -194,11 +194,11 @@ internal sealed class DefaultBlogService : IBlogService
         return await blog.ToBlogUserInfoViewModel(hasSubscription, storage);
     }
 
-    public async Task<bool> HasUserBlogAsync(Guid userId)
+    public async Task<(bool HasBlog, Guid? BlogId)> HasUserBlogAsync(Guid userId)
     {
         var isBlogAlreadyExists = await _context.Get<PersonBlog>()
-            .AnyAsync(x => x.UserId == userId);
-        return isBlogAlreadyExists;
+            .FirstOrDefaultAsync(x => x.UserId == userId);
+        return (isBlogAlreadyExists != null, isBlogAlreadyExists?.Id);
     }
 
     private async Task RemoveBlogCacheAsync(PersonBlog blog)

@@ -41,7 +41,7 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet("profile/my")]
-    [AuthFilter]
+    [AuthFilter(Roles.User)]
     public async Task<ActionResult<ProfileModel>> GetProfile()
     {
         var user = await _currentUserService.GetCurrentUserAsync();

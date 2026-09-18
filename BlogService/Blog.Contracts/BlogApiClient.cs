@@ -39,10 +39,10 @@ public sealed class BlogApiClient
         return await HandleResponseAsync<BlogModel>(response);
     }
 
-    public async Task<Result<bool>> HasUserBlogAsync(Guid userId)
+    public async Task<Result<HasBlogResponse>> HasUserBlogAsync(Guid userId)
     {
         var response = await _httpClient.GetAsync($"Blog/hasBlog/{userId}");
-        return await HandleResponseAsync<bool>(response);
+        return await HandleResponseAsync<HasBlogResponse>(response);
     }
 
     public async Task<Result<BlogModel>> GetBlogByUserIdAsync(Guid userId)

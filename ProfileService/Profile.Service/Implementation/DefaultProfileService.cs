@@ -44,6 +44,7 @@ internal class DefaultProfileService : IProfileService
             Name = profile.Name,
             PhotoUrl = await _profilePictureStore.GetPictureUrlAsync(profile.Id),
             ProfileState = profile.ProfileState,
+            CreatedAt = profile.CreatedAt,
         };
     }
 
@@ -71,8 +72,9 @@ internal class DefaultProfileService : IProfileService
                 Name = profile.Name,
                 PhotoUrl = await _profilePictureStore.GetPictureUrlAsync(profile.Id),
                 ProfileState = profile.ProfileState,
+                CreatedAt = profile.CreatedAt,
             };
-        });
+        }, 1);
     }
 
     public async Task<Guid?> GetProfileIdByUserIdIfExistsAsync(Guid userId)
@@ -107,6 +109,7 @@ internal class DefaultProfileService : IProfileService
             Name = profile.Name,
             PhotoUrl = await _profilePictureStore.GetPictureUrlAsync(profile.Id),
             ProfileState = profile.ProfileState,
+            CreatedAt = profile.CreatedAt
         };
     }
 }

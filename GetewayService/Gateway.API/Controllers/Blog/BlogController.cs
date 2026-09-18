@@ -40,7 +40,7 @@ public sealed class BlogController : BaseApiController
         var result = await _blogClient.HasUserBlogAsync(userId);
 
         return result.IsSuccess
-            ? Ok(result.Value)
+            ? Ok(result.Value.HasBlog)
             : BadRequest(result.Errors.ToValidationProblem());
     }
 
@@ -59,7 +59,7 @@ public sealed class BlogController : BaseApiController
         var result = await _blogClient.HasUserBlogAsync(user.UserId);
 
         return result.IsSuccess
-            ? Ok(new HasBlogResponse { HasBlog = result.Value })
+            ? Ok(new HasBlogResponse { HasBlog = result.Value.HasBlog, BlogId = result.Value.BlogId })
             : BadRequest(result.Errors.ToValidationProblem());
     }
 
