@@ -311,6 +311,9 @@ namespace Blog.Persistence.Migrations
 
                     b.HasIndex("BlogId");
 
+                    b.HasIndex("PublicationId")
+                        .IsUnique();
+
                     b.ToTable("Posts", "Blog");
                 });
 
@@ -448,11 +451,6 @@ namespace Blog.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BlogId");
-
-                    b.HasIndex("PublicationId")
-                        .IsUnique();
-
                     b.HasIndex("BlogId", "SubscriptionStartDate", "UserId");
 
                     b.HasIndex("UserId", "BlogId");
@@ -466,7 +464,6 @@ namespace Blog.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Text")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
