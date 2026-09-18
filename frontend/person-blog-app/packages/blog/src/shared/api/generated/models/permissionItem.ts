@@ -5,8 +5,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface HasBlogResponse {
-  hasBlog?: boolean;
-  /** @nullable */
-  blogId?: string | null;
+export interface PermissionItem {
+  isAllowed?: boolean;
 }

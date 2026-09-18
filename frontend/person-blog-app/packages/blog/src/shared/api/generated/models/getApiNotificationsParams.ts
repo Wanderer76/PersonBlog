@@ -5,8 +5,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface HasBlogResponse {
-  hasBlog?: boolean;
-  /** @nullable */
-  blogId?: string | null;
-}
+export type GetApiNotificationsParams = {
+cursor?: string;
+limit?: number;
+unreadOnly?: boolean;
+};

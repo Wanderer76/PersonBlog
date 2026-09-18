@@ -1,9 +1,14 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.4",
   "info": {
     "title": "Gateway.API",
     "version": "1.0"
   },
+  "servers": [
+    {
+      "url": "/video"
+    }
+  ],
   "paths": {
     "/api/Ban/sendPostBanRequest": {
       "post": {
@@ -1305,6 +1310,585 @@
         }
       }
     },
+    "/api/BlogPostV2/my": {
+      "get": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "postType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PostType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/availablePostByBlogId/{blogId}": {
+      "get": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "parameters": [
+          {
+            "name": "blogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "postType",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PostType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCommonModelV2PagedListViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCommonModelV2PagedListViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCommonModelV2PagedListViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/create": {
+      "get": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePostModelViewModel"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  },
+                  "VideoPostData.Thumbnail": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "VideoPostData.Description": {
+                    "type": "string"
+                  },
+                  "VideoPostData.Categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                },
+                "VideoPostData.Thumbnail": {
+                  "style": "form"
+                },
+                "VideoPostData.Description": {
+                  "style": "form"
+                },
+                "VideoPostData.Categories": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/remove/{postId}": {
+      "post": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/edit/{postId}": {
+      "get": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEditViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEditViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostEditViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/edit": {
+      "post": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Description": {
+                    "type": "string"
+                  },
+                  "Title": {
+                    "minLength": 3,
+                    "type": "string"
+                  },
+                  "Preview": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "Categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  }
+                }
+              },
+              "encoding": {
+                "Id": {
+                  "style": "form"
+                },
+                "Description": {
+                  "style": "form"
+                },
+                "Title": {
+                  "style": "form"
+                },
+                "Preview": {
+                  "style": "form"
+                },
+                "Categories": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/createTextPost": {
+      "post": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "Title"
+                ],
+                "type": "object",
+                "properties": {
+                  "Title": {
+                    "type": "string"
+                  },
+                  "Text": {
+                    "type": "string"
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  },
+                  "Media": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMedia": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "Title": {
+                  "style": "form"
+                },
+                "Text": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                },
+                "Media": {
+                  "style": "form"
+                },
+                "InlineMedia": {
+                  "style": "form"
+                },
+                "InlineMediaIds": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPostInfoModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/textEdit/{postId}": {
+      "get": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextPostEditViewModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextPostEditViewModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TextPostEditViewModel"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/BlogPostV2/textEdit": {
+      "post": {
+        "tags": [
+          "BlogPostV2"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "Title"
+                ],
+                "type": "object",
+                "properties": {
+                  "Id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "Title": {
+                    "minLength": 3,
+                    "type": "string"
+                  },
+                  "Text": {
+                    "type": "string"
+                  },
+                  "Visibility": {
+                    "$ref": "#/components/schemas/PostVisibility"
+                  },
+                  "Media": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMedia": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  },
+                  "InlineMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "RemovedMediaIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              },
+              "encoding": {
+                "Id": {
+                  "style": "form"
+                },
+                "Title": {
+                  "style": "form"
+                },
+                "Text": {
+                  "style": "form"
+                },
+                "Visibility": {
+                  "style": "form"
+                },
+                "Media": {
+                  "style": "form"
+                },
+                "InlineMedia": {
+                  "style": "form"
+                },
+                "InlineMediaIds": {
+                  "style": "form"
+                },
+                "RemovedMediaIds": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Channel/{channelId}": {
       "get": {
         "tags": [
@@ -1608,6 +2192,151 @@
         }
       }
     },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAllNotificationsReadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAllNotificationsReadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkAllNotificationsReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/notification-preferences": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/PlayList/item/{id}": {
       "get": {
         "tags": [
@@ -1621,6 +2350,28 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "maximum": 2147483647,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 20
             }
           }
         ],
@@ -2384,7 +3135,140 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/Profile/edit": {
+      "post": {
+        "tags": [
+          "Profile"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "Name"
+                ],
+                "type": "object",
+                "properties": {
+                  "Name": {
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "ProfilePicture": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "Name": {
+                  "style": "form"
+                },
+                "ProfilePicture": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileModel"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileModel"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -2401,35 +3285,10 @@
         }
       }
     },
-    "/api/BlogPostV2/my": {
+    "/api/Profile/context": {
       "get": {
         "tags": [
-          "BlogPostV2"
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "postType",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/PostType"
-            }
-          }
+          "Profile"
         ],
         "responses": {
           "200": {
@@ -2437,545 +3296,20 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                  "$ref": "#/components/schemas/UserContext"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                  "$ref": "#/components/schemas/UserContext"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModelPagedListViewModel"
+                  "$ref": "#/components/schemas/UserContext"
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/availablePostByBlogId/{blogId}": {
-      "get": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "parameters": [
-          {
-            "name": "blogId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "postType",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/PostType"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostCommonModelV2PagedListViewModel"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostCommonModelV2PagedListViewModel"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostCommonModelV2PagedListViewModel"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/create": {
-      "get": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePostModelViewModel"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePostModelViewModel"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatePostModelViewModel"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "Title": {
-                    "type": "string"
-                  },
-                  "Visibility": {
-                    "$ref": "#/components/schemas/PostVisibility"
-                  },
-                  "VideoPostData.Thumbnail": {
-                    "type": "string",
-                    "format": "binary"
-                  },
-                  "VideoPostData.Description": {
-                    "type": "string"
-                  },
-                  "VideoPostData.Categories": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer",
-                      "format": "int32"
-                    }
-                  }
-                }
-              },
-              "encoding": {
-                "Title": {
-                  "style": "form"
-                },
-                "Visibility": {
-                  "style": "form"
-                },
-                "VideoPostData.Thumbnail": {
-                  "style": "form"
-                },
-                "VideoPostData.Description": {
-                  "style": "form"
-                },
-                "VideoPostData.Categories": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModel"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModel"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModel"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/remove/{postId}": {
-      "post": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "parameters": [
-          {
-            "name": "postId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/edit/{postId}": {
-      "get": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "parameters": [
-          {
-            "name": "postId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostEditViewModel"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostEditViewModel"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PostEditViewModel"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/edit": {
-      "post": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "Id": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "Description": {
-                    "type": "string"
-                  },
-                  "Title": {
-                    "minLength": 3,
-                    "type": "string"
-                  },
-                  "Preview": {
-                    "type": "string",
-                    "format": "binary"
-                  },
-                  "Categories": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer",
-                      "format": "int32"
-                    }
-                  },
-                  "Visibility": {
-                    "$ref": "#/components/schemas/PostVisibility"
-                  }
-                }
-              },
-              "encoding": {
-                "Id": {
-                  "style": "form"
-                },
-                "Description": {
-                  "style": "form"
-                },
-                "Title": {
-                  "style": "form"
-                },
-                "Preview": {
-                  "style": "form"
-                },
-                "Categories": {
-                  "style": "form"
-                },
-                "Visibility": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/createTextPost": {
-      "post": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "Title"
-                ],
-                "type": "object",
-                "properties": {
-                  "Title": {
-                    "type": "string"
-                  },
-                  "Text": {
-                    "type": "string"
-                  },
-                  "Visibility": {
-                    "$ref": "#/components/schemas/PostVisibility"
-                  },
-                  "Media": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  },
-                  "InlineMedia": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  },
-                  "InlineMediaIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  }
-                }
-              },
-              "encoding": {
-                "Title": {
-                  "style": "form"
-                },
-                "Text": {
-                  "style": "form"
-                },
-                "Visibility": {
-                  "style": "form"
-                },
-                "Media": {
-                  "style": "form"
-                },
-                "InlineMedia": {
-                  "style": "form"
-                },
-                "InlineMediaIds": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModel"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModel"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserPostInfoModel"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/textEdit/{postId}": {
-      "get": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "parameters": [
-          {
-            "name": "postId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TextPostEditViewModel"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TextPostEditViewModel"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TextPostEditViewModel"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/BlogPostV2/textEdit": {
-      "post": {
-        "tags": [
-          "BlogPostV2"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "Title"
-                ],
-                "type": "object",
-                "properties": {
-                  "Id": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "Title": {
-                    "minLength": 3,
-                    "type": "string"
-                  },
-                  "Text": {
-                    "type": "string"
-                  },
-                  "Visibility": {
-                    "$ref": "#/components/schemas/PostVisibility"
-                  },
-                  "Media": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  },
-                  "InlineMedia": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  },
-                  "InlineMediaIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "RemovedMediaIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  }
-                }
-              },
-              "encoding": {
-                "Id": {
-                  "style": "form"
-                },
-                "Title": {
-                  "style": "form"
-                },
-                "Text": {
-                  "style": "form"
-                },
-                "Visibility": {
-                  "style": "form"
-                },
-                "Media": {
-                  "style": "form"
-                },
-                "InlineMedia": {
-                  "style": "form"
-                },
-                "InlineMediaIds": {
-                  "style": "form"
-                },
-                "RemovedMediaIds": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -4109,6 +4443,20 @@
         },
         "additionalProperties": false
       },
+      "BlogInfo": {
+        "type": "object",
+        "properties": {
+          "hasBlog": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "BlogModel": {
         "type": "object",
         "properties": {
@@ -4297,6 +4645,18 @@
         },
         "additionalProperties": false
       },
+      "Features": {
+        "type": "object",
+        "properties": {
+          "friendsEnabled": {
+            "type": "boolean"
+          },
+          "messagesEnabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "GenerateUrlRequest": {
         "type": "object",
         "properties": {
@@ -4320,6 +4680,11 @@
         "properties": {
           "hasBlog": {
             "type": "boolean"
+          },
+          "blogId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4354,6 +4719,16 @@
           "duration": {
             "type": "number",
             "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MarkAllNotificationsReadRequest": {
+        "type": "object",
+        "properties": {
+          "snapshot": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -4417,6 +4792,32 @@
           "completedETag": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NotificationPreferenceResponse": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "nullable": true
+          },
+          "channel": {
+            "type": "string",
+            "nullable": true
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PermissionItem": {
+        "type": "object",
+        "properties": {
+          "isAllowed": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -4863,6 +5264,58 @@
         "type": "integer",
         "format": "int32"
       },
+      "ProfileModel": {
+        "required": [
+          "createdAt",
+          "id",
+          "name",
+          "photoUrl",
+          "profileState",
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "photoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "profileState": {
+            "$ref": "#/components/schemas/ProfileState"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "interests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProfileState": {
+        "enum": [
+          0,
+          1
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
       "RecommendationFeedItem": {
         "type": "object",
         "properties": {
@@ -4962,6 +5415,7 @@
             "nullable": true
           },
           "price": {
+            "maximum": 1.7976931348623157E+308,
             "minimum": 0,
             "type": "number",
             "format": "double"
@@ -5032,6 +5486,7 @@
             "nullable": true
           },
           "price": {
+            "maximum": 1.7976931348623157E+308,
             "minimum": 0,
             "type": "number",
             "format": "double"
@@ -5273,6 +5728,19 @@
         },
         "additionalProperties": false
       },
+      "UpdateNotificationPreferencesRequest": {
+        "type": "object",
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationPreferenceResponse"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UploadStatus": {
         "enum": [
           0,
@@ -5282,6 +5750,21 @@
         ],
         "type": "integer",
         "format": "int32"
+      },
+      "UserContext": {
+        "type": "object",
+        "properties": {
+          "blog": {
+            "$ref": "#/components/schemas/BlogInfo"
+          },
+          "features": {
+            "$ref": "#/components/schemas/Features"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/UserPermissions"
+          }
+        },
+        "additionalProperties": false
       },
       "UserModel": {
         "type": "object",
@@ -5326,6 +5809,18 @@
               "format": "uuid"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserPermissions": {
+        "type": "object",
+        "properties": {
+          "publishVideo": {
+            "$ref": "#/components/schemas/PermissionItem"
+          },
+          "publishText": {
+            "$ref": "#/components/schemas/PermissionItem"
           }
         },
         "additionalProperties": false
@@ -5467,5 +5962,64 @@
         "additionalProperties": false
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Ban"
+    },
+    {
+      "name": "Blog"
+    },
+    {
+      "name": "BlogPostV2"
+    },
+    {
+      "name": "Channel"
+    },
+    {
+      "name": "Comments"
+    },
+    {
+      "name": "ConferenceChat"
+    },
+    {
+      "name": "ConferenceRoom"
+    },
+    {
+      "name": "Health"
+    },
+    {
+      "name": "Notifications"
+    },
+    {
+      "name": "PlayList"
+    },
+    {
+      "name": "Post"
+    },
+    {
+      "name": "Profile"
+    },
+    {
+      "name": "Recommendation"
+    },
+    {
+      "name": "Search"
+    },
+    {
+      "name": "Subscriber"
+    },
+    {
+      "name": "TextPost"
+    },
+    {
+      "name": "Video"
+    },
+    {
+      "name": "VideoUpload"
+    },
+    {
+      "name": "View"
+    }
+  ]
 }

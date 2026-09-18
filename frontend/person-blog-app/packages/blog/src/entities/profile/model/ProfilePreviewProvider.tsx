@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import axios from 'axios';
-import { getMyProfile, getProfileContext } from '@/entities/profile/api/profileApi';
 import { getBlog } from '@/shared/api/generated/blog/blog';
+import { getProfile } from '@/shared/api/generated/profile/profile';
 import { initialPermissions, initialPerson, profilePreviewFeatures, ProfilePreviewContext, type BlogState, type LoadStatus } from './profilePreview';
 import { JwtTokenService, subscribeToAuthState } from '@/shared/auth/tokenStorage';
 
@@ -11,6 +11,8 @@ type ContextState = BlogState & {
     features: typeof profilePreviewFeatures;
     permissions: typeof initialPermissions;
 };
+
+const profileApi = getProfile();
 
 export function ProfilePreviewProvider({ children }: { children: ReactNode }) {
     const [person, setPerson] = useState(initialPerson);
@@ -34,9 +36,9 @@ export function ProfilePreviewProvider({ children }: { children: ReactNode }) {
         const controller = new AbortController();
         async function load() {
             try {
-                const { data } = await getMyProfile(controller.signal);
+                const { data } = await profileApi.getApiProfileMy({ signal: controller.signal });
                 setPerson({
-                    name: data.name,
+                    name: data.name ?? '',
                     username: null,
                     photoUrl: data.photoUrl ?? '',
                     createdAt: data.createdAt,
@@ -55,13 +57,21 @@ export function ProfilePreviewProvider({ children }: { children: ReactNode }) {
         const controller = new AbortController();
         async function load() {
             try {
-                const { data: context } = await getProfileContext(controller.signal);
-                const blog = context.blog.hasBlog && context.blog.id
-                    ? (await getBlog().getApiBlogBlogBlogId(context.blog.id, { signal: controller.signal })).data
+                const { data: context } = await profileApi.getApiProfileContext({ signal: controller.signal });
+                const blogId = context.blog?.hasBlog ? context.blog.id : null;
+                const blog = blogId
+                    ? (await getBlog().getApiBlogBlogBlogId(blogId, { signal: controller.signal })).data
                     : null;
                 setContextState({
                     status: 'ready', blog, requestKey: contextRequestKey,
-                    features: context.features, permissions: context.permissions
+                    features: {
+                        friendsEnabled: context.features?.friendsEnabled ?? false,
+                        messagesEnabled: context.features?.messagesEnabled ?? false
+                    },
+                    permissions: {
+                        publishVideo: { isAllowed: context.permissions?.publishVideo?.isAllowed ?? false },
+                        publishText: { isAllowed: context.permissions?.publishText?.isAllowed ?? false }
+                    }
                 });
             } catch (error: unknown) {
                 if (!axios.isCancel(error)) {

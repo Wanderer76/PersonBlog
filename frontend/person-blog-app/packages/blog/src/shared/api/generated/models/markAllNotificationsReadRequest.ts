@@ -5,8 +5,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface HasBlogResponse {
-  hasBlog?: boolean;
+export interface MarkAllNotificationsReadRequest {
   /** @nullable */
-  blogId?: string | null;
+  snapshot?: string | null;
 }

@@ -5,8 +5,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface HasBlogResponse {
+export interface BlogInfo {
   hasBlog?: boolean;
   /** @nullable */
-  blogId?: string | null;
+  id?: string | null;
 }

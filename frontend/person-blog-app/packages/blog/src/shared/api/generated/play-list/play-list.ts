@@ -7,6 +7,7 @@
 import type {
   ChangePostPositionRequest,
   GetApiPlayListAvailableVideosParams,
+  GetApiPlayListItemIdParams,
   GetApiPlayListListParams,
   PlayListItemAddRequest,
   PlayListItemRemoveRequest,
@@ -25,9 +26,11 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getPlayList = () => {
 const getApiPlayListItemId = (
     id: string,
+    params?: GetApiPlayListItemIdParams,
  options?: SecondParameter<typeof customInstance<PlayListWithPostsViewModel>>,) => {
       return customInstance<PlayListWithPostsViewModel>(
-      {url: `/api/PlayList/item/${id}`, method: 'GET'
+      {url: `/api/PlayList/item/${id}`, method: 'GET',
+        params
     },
       options);
     }

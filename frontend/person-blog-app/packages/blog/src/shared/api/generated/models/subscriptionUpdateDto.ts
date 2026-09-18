@@ -11,7 +11,10 @@ export interface SubscriptionUpdateDto {
   title: string;
   /** @nullable */
   previousLevelId?: string | null;
-  /** @minimum 0 */
+  /**
+   * @minimum 0
+   * @maximum 1.7976931348623157e+308
+   */
   price?: number;
   /** @nullable */
   description?: string | null;

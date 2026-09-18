@@ -4,6 +4,12 @@
  * Gateway.API
  * OpenAPI spec version: 1.0
  */
+import type {
+  PostApiProfileEditBody,
+  ProfileModel,
+  UserContext
+} from '.././models';
+
 import { customInstance } from '../../mutator';
 
 
@@ -13,9 +19,24 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
   export const getProfile = () => {
 const getApiProfileMy = (
     
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
+ options?: SecondParameter<typeof customInstance<ProfileModel>>,) => {
+      return customInstance<ProfileModel>(
       {url: `/api/Profile/my`, method: 'GET'
+    },
+      options);
+    }
+  const postApiProfileEdit = (
+    postApiProfileEditBody: PostApiProfileEditBody,
+ options?: SecondParameter<typeof customInstance<ProfileModel>>,) => {const formData = new FormData();
+formData.append(`Name`, postApiProfileEditBody.Name);
+if(postApiProfileEditBody.ProfilePicture !== undefined) {
+ formData.append(`ProfilePicture`, postApiProfileEditBody.ProfilePicture);
+ }
+
+      return customInstance<ProfileModel>(
+      {url: `/api/Profile/edit`, method: 'POST',
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData
     },
       options);
     }
@@ -27,6 +48,16 @@ const getApiProfileMy = (
     },
       options);
     }
-  return {getApiProfileMy,getApiProfilePlayLists}};
+  const getApiProfileContext = (
+
+ options?: SecondParameter<typeof customInstance<UserContext>>,) => {
+      return customInstance<UserContext>(
+      {url: `/api/Profile/context`, method: 'GET'
+    },
+      options);
+    }
+  return {getApiProfileMy,postApiProfileEdit,getApiProfilePlayLists,getApiProfileContext}};
 export type GetApiProfileMyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfile>['getApiProfileMy']>>>
+export type PostApiProfileEditResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfile>['postApiProfileEdit']>>>
 export type GetApiProfilePlayListsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfile>['getApiProfilePlayLists']>>>
+export type GetApiProfileContextResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getProfile>['getApiProfileContext']>>>
