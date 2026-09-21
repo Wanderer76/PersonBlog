@@ -26,3 +26,9 @@ public sealed class Error : IResultError
 
     public ErrorList ToErrorList() => new([this]);
 }
+
+public static class ErrorConstants
+{
+    public const string NotFound = "NotFound";
+    public const string Forbidden = "Forbidden";
+}
