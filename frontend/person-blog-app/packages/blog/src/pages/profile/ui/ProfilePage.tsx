@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
 import { useProfilePreview } from '@/entities/profile/model/profilePreview';
 import DefaultProfileIcon from '@/shared/assets/defaultProfilePic.png';
+import { PageShell } from '@/widgets/page-shell';
 import styles from './PersonalProfile.module.css';
 
 export default function ProfilePage() {
     const { person, profileStatus, reloadProfile, features, blog, status, reloadBlog } = useProfilePreview();
     const hasPersonalNavigation = features.friendsEnabled || features.messagesEnabled;
 
-    return <main className={styles.page}>
+    return <PageShell contentClassName={styles.page}>
         {hasPersonalNavigation && <nav className={styles.navigation} aria-label="Личные разделы">
             <Link to="/profile" aria-current="page">Мой профиль</Link>
             {features.friendsEnabled && <Link to="/friends">Друзья</Link>}
@@ -20,7 +21,7 @@ export default function ProfilePage() {
             </div>
             <Link className={styles.secondary} to="/profile/edit">Редактировать профиль</Link>
         </section>
-        <div className={features.friendsEnabled ? styles.columns : undefined}>
+        <div className={styles.contentGrid}>
             <section className={styles.card}>
                 <h2>Обо мне</h2>
                 <dl className={styles.details}>
@@ -28,19 +29,19 @@ export default function ProfilePage() {
                     <div><dt>На сайте с</dt><dd>{person.createdAt ? new Date(person.createdAt).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }) : 'Не указано'}</dd></div>
                 </dl>
             </section>
-            {features.friendsEnabled && <section className={styles.card}><h2>Друзья</h2><p className={styles.muted}>Раздел появится позже.</p></section>}
+            <section className={`${styles.card} ${styles.blogCard}`} aria-label="Мой блог" aria-busy={status === 'loading'}>
+                {status === 'loading' ? <p className={styles.muted}>Загрузка блога…</p> : status === 'error' ? <div role="alert"><h2>Не удалось загрузить блог</h2><p className={styles.muted}>Попробуйте ещё раз.</p><button className={styles.secondary} onClick={reloadBlog}>Повторить</button></div> : blog ? <>
+                    <div className={styles.identity}>
+                        <img className={styles.blogAvatar} src={blog.photoUrl || DefaultProfileIcon} alt="Аватар блога" />
+                        <div><p className={styles.eyebrow}>Мой блог</p><h2>{blog.name}</h2>{blog.description && <p className={styles.muted}>{blog.description}</p>}<p className={styles.muted}>{blog.subscribersCount ?? 0} подписчиков</p></div>
+                    </div>
+                    <Link className={styles.secondary} to="/studio">Управление блогом →</Link>
+                </> : <>
+                    <div><p className={styles.eyebrow}>Мой блог</p><h2>У вас пока нет блога</h2><p className={styles.muted}>Создайте блог, чтобы публиковать видео и посты.</p></div>
+                    <Link className={styles.primary} to="/profile/blog/create">Создать блог</Link>
+                </>}
+            </section>
+            {features.friendsEnabled && <section className={`${styles.card} ${styles.friendsCard}`}><h2>Друзья</h2><p className={styles.muted}>Раздел появится позже.</p></section>}
         </div></>}
-        <section className={`${styles.card} ${styles.blogCard}`} aria-label="Мой блог" aria-busy={status === 'loading'}>
-            {status === 'loading' ? <p className={styles.muted}>Загрузка блога…</p> : status === 'error' ? <div role="alert"><h2>Не удалось загрузить блог</h2><p className={styles.muted}>Попробуйте ещё раз.</p><button className={styles.secondary} onClick={reloadBlog}>Повторить</button></div> : blog ? <>
-                <div className={styles.identity}>
-                    <img className={styles.blogAvatar} src={blog.photoUrl || DefaultProfileIcon} alt="Аватар блога" />
-                    <div><p className={styles.eyebrow}>Мой блог</p><h2>{blog.name}</h2>{blog.description && <p className={styles.muted}>{blog.description}</p>}<p className={styles.muted}>{blog.subscribersCount ?? 0} подписчиков</p></div>
-                </div>
-                <Link className={styles.secondary} to="/studio">Управление блогом →</Link>
-            </> : <>
-                <div><p className={styles.eyebrow}>Мой блог</p><h2>У вас пока нет блога</h2><p className={styles.muted}>Создайте блог, чтобы публиковать видео и посты.</p></div>
-                <Link className={styles.primary} to="/profile/blog/create">Создать блог</Link>
-            </>}
-        </section>
-    </main>;
+    </PageShell>;
 }
