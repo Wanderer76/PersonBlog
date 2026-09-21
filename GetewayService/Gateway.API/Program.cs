@@ -96,7 +96,7 @@ builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddProfileHttpClient(builder.Configuration)
-    .AddHttpMessageHandler<HeaderClientHandler>();
+    ;
 builder.Services.AddBlogContract(builder.Configuration);
 
 var app = builder.Build();

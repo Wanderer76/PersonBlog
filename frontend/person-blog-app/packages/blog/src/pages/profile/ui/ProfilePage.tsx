@@ -5,13 +5,14 @@ import styles from './PersonalProfile.module.css';
 
 export default function ProfilePage() {
     const { person, profileStatus, reloadProfile, features, blog, status, reloadBlog } = useProfilePreview();
+    const hasPersonalNavigation = features.friendsEnabled || features.messagesEnabled;
+
     return <main className={styles.page}>
-        <p className={styles.breadcrumb}><Link to="/">Главная</Link><span>/</span>Личный профиль</p>
-        <nav className={styles.navigation} aria-label="Личные разделы">
+        {hasPersonalNavigation && <nav className={styles.navigation} aria-label="Личные разделы">
             <Link to="/profile" aria-current="page">Мой профиль</Link>
             {features.friendsEnabled && <Link to="/friends">Друзья</Link>}
             {features.messagesEnabled && <Link to="/messages">Сообщения</Link>}
-        </nav>
+        </nav>}
         {profileStatus === 'loading' ? <section className={styles.card}><p className={styles.muted} role="status">Загрузка профиля…</p></section> : profileStatus === 'error' ? <section className={styles.card} role="alert"><h1>Не удалось загрузить профиль</h1><p className={styles.muted}>Попробуйте ещё раз.</p><button className={styles.secondary} onClick={reloadProfile}>Повторить</button></section> : <><section className={styles.hero}>
             <div className={styles.identity}>
                 <div className={styles.avatar}>{person.photoUrl ? <img src={person.photoUrl} alt="" /> : person.name.trim().split(/\s+/).slice(0, 2).map(word => word[0]).join('')}</div>

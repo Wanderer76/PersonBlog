@@ -41,11 +41,12 @@ const SideBar = function ({ variant = 'desktop', id = undefined, onNavigate = un
                 </NavLink>
 
                 <div className={styles.sidebarSectionDivider} />
-
-                <a href="http://localhost:5173/" className={styles.sidebarItem} onClick={onNavigate}>
+                {/*TODO*/}
+                {false && <a href="http://localhost:5173/" className={styles.sidebarItem} onClick={onNavigate}>
                     <MusicIcon />
                     <span>Melodia</span>
                 </a>
+                }
             </nav>
         </aside>
     );
