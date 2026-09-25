@@ -37,9 +37,15 @@ public sealed class TextPostInfo : IBlogEntity
             }
         }
     }
+
+    public void UpdateText(string? text)
+    {
+        Text = string.IsNullOrWhiteSpace(text) ? null : text;
+    }
+
     public void RemoveFiles(IEnumerable<Guid> ids)
     {
-        var filesToRemove = Files.Where(x => ids.Contains(x.Id));
+        var filesToRemove = Files.Where(x => ids.Contains(x.Id)).ToList();
 
         foreach (var file in filesToRemove)
         {

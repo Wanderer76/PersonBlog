@@ -1,6 +1,7 @@
 ﻿using Authentication.Contract.Constants;
 using Blog.Contracts;
 using Blog.Contracts.Models;
+using Blog.Domain.Entities;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
@@ -26,10 +27,13 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("item/{id:guid}")]
-    public async Task<ActionResult<PlayListWithPostsViewModel>> GetPlayListViewModel(Guid id)
+    public async Task<ActionResult<PlayListWithPostsViewModel>> GetPlayListViewModel(
+        Guid id,
+        [Range(1, int.MaxValue)] int page = 1,
+        [Range(1, 100)] int pageSize = 20)
     {
         var playListTask = _playListService.GetPlayListAsync(id);
-        var postsPageTask = _playListService.GetPlayListPostPagedAsync(id, 1, 20);
+        var postsPageTask = _playListService.GetPlayListPostPagedAsync(id, page, pageSize);
         await Task.WhenAll([playListTask, postsPageTask]);
 
         var playList = await playListTask;
@@ -56,18 +60,35 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("availableVideos")]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     [Produces(typeof(IReadOnlyList<PostCommonModel>))]
-    public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetAvailablePostToPlayList(Guid playListId)
+    public async Task<ActionResult<IReadOnlyList<PostCommonModel>>> GetAvailablePostToPlayList(
+        Guid? playListId,
+        PlayListContentTypeModel contentType = PlayListContentTypeModel.Video)
     {
-        var posts = (await _playListService.GetPlayListPostPagedAsync(playListId, 1, int.MaxValue)).Items.Select(x => x.Id);
-        var result = await postApiClient.GetCurrentUserPostCommonModelWithExcludeIdsAsync(posts);
+        IEnumerable<Guid> posts = [];
+        if (playListId.HasValue)
+        {
+            var playlist = await _playListService.GetPlayListAsync(playListId.Value);
+            if (playlist.IsFailure)
+            {
+                return BadRequest(playlist.Errors.ToValidationProblem());
+            }
+            contentType = playlist.Value.ContentType;
+            posts = (await _playListService.GetPlayListPostPagedAsync(playListId.Value, 1, int.MaxValue)).Items.Select(x => x.Id);
+        }
+        var result = await postApiClient.GetCurrentUserPostCommonModelWithExcludeIdsAsync(
+            posts,
+            contentType == PlayListContentTypeModel.Video
+                ? PostType.Video
+                : PostType.Text);
 
         return Ok(result);
     }
 
     [HttpPost("create")]
     [AuthFilter(Roles.User, Roles.Blogger)]
-    public async Task<ActionResult<PlayListWithPostsViewModel>> CreatePlayList([FromBody] CreatePlayListRequest form)
+    public async Task<ActionResult<PlayListWithPostsViewModel>> CreatePlayList([FromForm] CreatePlayListRequest form)
     {
         var result = await _playListService.CreatePlayListAsync(form);
         if (result.IsFailure)
@@ -78,7 +99,7 @@ public class PlayListController : BaseApiController
     }
 
     //[HttpPost("update")]
-    //[Authorize]
+    //[AuthFilter]
     //[Produces(typeof(PlayListDetailViewModel))]
     //public async Task<IActionResult> UpdatePlayList([FromBody] PlayListUpdateRequest form)
     //{

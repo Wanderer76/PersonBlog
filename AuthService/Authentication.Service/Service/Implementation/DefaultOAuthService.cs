@@ -1,6 +1,7 @@
 ﻿using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -26,13 +27,15 @@ internal class DefaultOAuthService : IOAuthService
     public async Task<Result<AuthResponse>> ExchangeCodeToTokenAsync(string grant_type, string code, string client_id, string client_secret)
     {
         if (grant_type != "authorization_code") return Result<AuthResponse>.Failure(new Error("", "Unsupported grant type"));
-        //var client = await _repository.Get<Client>()
-        // .FirstOrDefaultAsync(c => c.ClientId == client_id && c.ClientSecret == client_secret);
-        // Валидация клиента
-        //if (client == null) return Unauthorized("Invalid client credentials");
+        var client = await _repository.Get<Client>()
+         .FirstOrDefaultAsync(c => c.ClientId == client_id);
+
+        if (client == null) return Result<AuthResponse>.Failure(new Error("Invalid client credentials"));
 
         var authCodeEntity = await _cacheService.GetCachedDataAsync<AuthCode>(AuthCode.GetCacheKey(code));
-        if (authCodeEntity == null || authCodeEntity.ExpiresAt < DateTime.UtcNow)
+        if (authCodeEntity == null ||
+            authCodeEntity.ExpiresAt < DateTime.UtcNow ||
+            !string.Equals(authCodeEntity.ClientId, client_id, StringComparison.Ordinal))
             return Result<AuthResponse>.Failure(new Error("", "Invalid or expired code"));
 
         var user = await _repository.Get<AppUser>()
@@ -55,17 +58,36 @@ internal class DefaultOAuthService : IOAuthService
 
     public async Task<Result<RedirectResponse>> GenerateAuthCodeAsync(string clientId, string redirectUri, string response_type, string state, string returnUrl)
     {
-        var authClient = await _repository.Get<Client>()
-            .FirstOrDefaultAsync(c => c.ClientId == "auth");
-        if (authClient == null) return Result<RedirectResponse>.Failure(new Error("Клиент не найден"));
+        if (!string.Equals(response_type, "code", StringComparison.Ordinal))
+            return Result<RedirectResponse>.Failure(new Error("unsupported_response_type", "Unsupported response type"));
+
+        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(redirectUri))
+            return Result<RedirectResponse>.Failure(new Error("invalid_request", "Client ID and redirect URI are required"));
+
+        var client = await _repository.Get<Client>()
+            .FirstOrDefaultAsync(c => c.ClientId == clientId);
+        if (client == null || !string.Equals(client.RedirectUri, redirectUri, StringComparison.Ordinal))
+            return Result<RedirectResponse>.Failure(new Error("invalid_request", "Invalid client or redirect URI"));
 
         var user = await _currentUserService.GetCurrentUserAsync();
 
         if (user.IsAnonymous)
         {
-            var queryString = BuildAuthQueryString(clientId, redirectUri, response_type, state, returnUrl);
-            return new RedirectResponse($"{authClient.RedirectUri}{queryString}");
+            var authClient = await _repository.Get<Client>()
+                .FirstOrDefaultAsync(c => c.ClientId == "auth");
+            if (authClient == null)
+                return Result<RedirectResponse>.Failure(new Error("server_error", "Authentication client was not found"));
+
+            return new RedirectResponse(QueryHelpers.AddQueryString(authClient.RedirectUri, new Dictionary<string, string?>
+            {
+                ["client_id"] = clientId,
+                ["redirectUri"] = redirectUri,
+                ["response_type"] = response_type,
+                ["state"] = state,
+                ["returnUrl"] = returnUrl
+            }));
         }
+
         var code = RandomCodeGenerator.GenerateRandomCode();
         await _cacheService.SetCachedDataAsync(AuthCode.GetCacheKey(code), new AuthCode
         {
@@ -75,30 +97,12 @@ internal class DefaultOAuthService : IOAuthService
             ExpiresAt = DateTime.UtcNow.AddMinutes(10)
         }, TimeSpan.FromMinutes(10));
 
-        var redirectUrl = $"{redirectUri}?code={code}&state={state}&returnUrl={returnUrl}";
-        return new RedirectResponse(redirectUrl);
-    }
-
-    private static string BuildAuthQueryString(
-    string clientId,
-    string redirectUri,
-    string responseType,
-    string state,
-    string returnUrl)
-    {
-        var parameters = new List<(string Key, string Value)>
+        var redirectUrl = QueryHelpers.AddQueryString(redirectUri, new Dictionary<string, string?>
         {
-            ("client_id", clientId),
-            ("redirectUri", redirectUri),
-            ("response_type", responseType),
-            ("state", state),
-            ("returnUrl", returnUrl)
-        };
-        var validParams = parameters
-            .Where(p => !string.IsNullOrEmpty(p.Value))
-            .Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}");
-
-        var queryString = string.Join("&", validParams);
-        return string.IsNullOrEmpty(queryString) ? string.Empty : $"?{queryString}";
+            ["code"] = code,
+            ["state"] = state,
+            ["returnUrl"] = returnUrl
+        });
+        return new RedirectResponse(redirectUrl);
     }
 }

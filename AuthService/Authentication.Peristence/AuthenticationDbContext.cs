@@ -2,7 +2,6 @@
 using Authentication.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
-using Shared.Services;
 
 namespace Authentication.Peristence;
 
@@ -69,9 +68,12 @@ public class AuthenticationDbContext : BaseDbContext
                 new AppUser
                 {
                     Id = Guid.Parse("09f3c24e-6e70-48ea-a5c5-60727af95d1e"),
-                    CreatedAt = DateTimeOffset.UtcNow,
+                    CreatedAt = new DateTimeOffset(2026, 3, 26, 9, 32, 13, 701, TimeSpan.Zero)
+                        .AddTicks(3537),
                     Login = "admin",
-                    Password = PasswordHasher.GetHash("admin"),
+                    // HasData values must be deterministic. This is the existing
+                    // PBKDF2 hash from AuthenticationDbContextModelSnapshot.
+                    Password = "VacCRVsNifQ=;+M5kOYZEqn/MHZuMwpRUdX1OY9zTfS5sp31hUS+rFMw=",
 
                 }
             });
@@ -104,6 +106,7 @@ public class AuthenticationDbContext : BaseDbContext
         {
             var entity = modelBuilder.Entity<UserContext>();
             entity.HasKey(x => new { x.UserId, x.ContextType, x.ContextId });
+            entity.Property(x => x.ContextType).HasMaxLength(100);
         }
         {
             var entity = modelBuilder.Entity<Client>();

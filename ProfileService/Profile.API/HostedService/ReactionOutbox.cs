@@ -57,7 +57,7 @@ public class ReactionOutbox : BackgroundService
                 }
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Интервал опроса
+            await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Интервал опроса
         }
     }
 

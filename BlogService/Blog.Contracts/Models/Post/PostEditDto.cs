@@ -12,6 +12,7 @@ public class PostEditDto
     public string Title { get; set; }
     public IFormFile? Preview { get; set; }
     public List<int>? Categories { get; set; }
+    public PostVisibility Visibility { get; set; }
 }
 
 public class PostEditViewModel

@@ -56,7 +56,7 @@ public static class ApiExceptionExtensions
     public static ApiException? ToValidationProblem<TValue, TError>(
         this Result<TValue, TError> result,
         Func<TError, IReadOnlyList<Error>> errorMapper)
-        where TError : class
+        where TError : class, IResultError
     {
         return result.IsFailure
             ? errorMapper(result.Error!).ToValidationProblem()
@@ -67,7 +67,7 @@ public static class ApiExceptionExtensions
         this Result<TValue, TError> result,
         Func<TError, string> messageMapper,
         string key = "Global")
-        where TError : class
+        where TError : class, IResultError
     {
         return result.IsFailure
             ? new[] { new Error(key, messageMapper(result.Error!)) }

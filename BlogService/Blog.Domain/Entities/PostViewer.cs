@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Blog.Domain.Entities
 {
@@ -11,7 +11,7 @@ namespace Blog.Domain.Entities
         public Guid? ProfileId { get; set; }
         public bool? IsLike { get; set; }
         public bool IsViewed { get; set; }
-        public string UserIpAddress { get; set; }
+        public string? UserIpAddress { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
     }
 }

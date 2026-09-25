@@ -32,7 +32,7 @@ namespace Infrastructure.Services
             {
                 return (T)(object)result.ToString();
             }
-            return JsonSerializer.Deserialize<T>(result!, _serializerOptions);
+            return JsonSerializer.Deserialize<T>(result.ToString(), _serializerOptions);
         }
 
         public async Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<string> keys)
@@ -44,7 +44,7 @@ namespace Infrastructure.Services
                 ? []
                 : result
                 .Where(x => x.HasValue)
-                .Select(obj => JsonSerializer.Deserialize<T>(obj!, _serializerOptions)!);
+                .Select(obj => JsonSerializer.Deserialize<T>(obj.ToString(), _serializerOptions)!);
         }
 
         public Task<T?> GetCachedDataAsync<T>(ICacheKey key)

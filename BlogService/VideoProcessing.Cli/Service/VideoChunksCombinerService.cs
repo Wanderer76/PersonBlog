@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Events;
+using Blog.Contracts.Events;
 using Infrastructure.Services;
 using MessageBus.EventHandler;
 using MessageBus.Models;
@@ -30,7 +30,7 @@ public class VideoChunksCombinerService : IEventHandler<CombineFileChunksCommand
             await foreach (var chunk in storage.GetAllBucketObjects(@event.PostId, new ChunkUploadingInfo(@event.VideoMetadataId, default))
                 .Where(x => x.Headers != null && x.Headers.Count > 0))
             {
-                chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.Objectname));
+                chunks.Add((long.Parse(chunk.Headers["ChunkNumber"]), int.Parse(chunk.Headers["ChunkSize"]), chunk.ObjectName));
             }
             if (chunks.Count == 0)
             {

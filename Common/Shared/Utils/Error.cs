@@ -2,7 +2,7 @@
 
 namespace Shared.Utils;
 
-public sealed class Error
+public sealed class Error : IResultError
 {
     public string Key { get; }
     public string Message { get; }
@@ -25,4 +25,10 @@ public sealed class Error
     }
 
     public ErrorList ToErrorList() => new([this]);
+}
+
+public static class ErrorConstants
+{
+    public const string NotFound = "NotFound";
+    public const string Forbidden = "Forbidden";
 }

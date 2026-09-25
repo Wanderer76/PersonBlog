@@ -14,15 +14,24 @@ public class HeaderClientHandler : DelegatingHandler
 
     protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        var token = _httpContextAccessor.HttpContext?.Request.Headers.Authorization.ToString();
-        if (!string.IsNullOrEmpty(token))
+        var context = _httpContextAccessor.HttpContext;
+        var authorization = context?.Request.Headers.Authorization.ToString();
+
+        if (AuthenticationHeaderValue.TryParse(authorization, out var authenticationHeader))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Replace("Bearer ", "").Trim());
+            request.Headers.Authorization = authenticationHeader;
         }
 
-        if (_httpContextAccessor.HttpContext!.Request.Headers.TryGetValue(CorrelationMiddleware.CorrelationId, out var correlationId))
+        if (context?.Request.Headers.TryGetValue(CorrelationMiddleware.CorrelationId, out var correlationId) == true)
         {
-            request.Headers.Add(CorrelationMiddleware.CorrelationId, correlationId.ToString());
+            request.Headers.TryAddWithoutValidation(CorrelationMiddleware.CorrelationId, correlationId.ToString());
+        }
+
+        if (context is not null && context.User.Identity?.IsAuthenticated != true)
+        {
+            request.Headers.TryAddWithoutValidation(
+                Infrastructure.Services.AnonymousSession.HeaderName,
+                Infrastructure.Services.AnonymousSession.GetOrCreate(context));
         }
 
         return base.SendAsync(request, cancellationToken);

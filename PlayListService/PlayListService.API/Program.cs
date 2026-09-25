@@ -16,6 +16,7 @@ internal class Program
         // Add services to the container.
 
         builder.AddServiceDefaults();
+        builder.Host.AddSerilogLogger(builder.Configuration);
 
         builder.Services.AddControllers();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -28,7 +29,11 @@ internal class Program
         builder.Services.AddCors();
 
         builder.Services.AddPlayListService();
-        builder.Services.AddUserSessionServices();
+        builder.Services.AddUserSessionServices(options =>
+        {
+            options.BaseUrl = builder.Configuration["AppUrls:Auth"]
+                ?? throw new InvalidOperationException("Auth service URL is not configured.");
+        });
         builder.Services.AddCustomJwtAuthentication();
         builder.Services.AddAuthorization();
 

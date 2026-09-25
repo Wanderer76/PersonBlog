@@ -201,8 +201,10 @@ namespace Authentication.Peristence.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("ContextType")
-                        .HasColumnType("integer");
+                    b.Property<string>("ContextType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid>("ContextId")
                         .HasColumnType("uuid");

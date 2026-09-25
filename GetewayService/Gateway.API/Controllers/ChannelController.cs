@@ -1,26 +1,34 @@
-﻿using Blog.Contracts.Models.Blog;
-using Blog.Contracts.Models.Post;
-using Infrastructure.Models;
+using Blog.Contracts.Models.Blog;
+using Blog.Contracts;
+using Blog.Contracts.Models;
+using Blog.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using PlayListService.Services.Models;
-using Profile.Domain.Models;
+using Shared.Models;
+using Profile.Application.Models;
 
 namespace Gateway.API.Controllers
 {
-    public class ChannelController : BaseApiController
+    public class ChannelController : GatewayApiController
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public ChannelController(ILogger<BaseApiController> logger, IHttpClientFactory httpClientFactory) : base(logger)
+        private readonly PostApiClient _postApiClient;
+
+        public ChannelController(
+            ILogger<ChannelController> logger,
+            IHttpClientFactory httpClientFactory,
+            PostApiClient postApiClient) : base(logger)
         {
             _httpClientFactory = httpClientFactory;
+            _postApiClient = postApiClient;
         }
 
         [HttpGet("{channelId}")]
         public async Task<IActionResult> GetChannelInfo(Guid channelId)
         {
-            using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = (await client.GetFromJsonAsync<BlogModel>($"api/Blog/blog/{channelId}"))!;
-            var hasSubscription = (await _httpClientFactory.CreateClient("Reacting")
+            using var client = _httpClientFactory.CreateClient("Blog");
+            var blog = (await client.GetFromJsonAsync<BlogModel>($"Blog/blog/{channelId}"))!;
+            var hasSubscription = (await _httpClientFactory.CreateClient("Profile")
                 .GetFromJsonAsync<HasSubscriptionModel>($"Subscriber/hasSubscription/{channelId}"))!;
             return Ok(new
             {
@@ -36,18 +44,25 @@ namespace Gateway.API.Controllers
         }
 
         [HttpGet("posts/{channelId}")]
-        public async Task<IActionResult> GetChannelPosts(Guid channelId, int page, int size)
+        public async Task<ActionResult<PagedListViewModel<PostCommonModelV2>>> GetChannelPosts(
+            Guid channelId,
+            int page,
+            int size)
         {
-            using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = await client.GetFromJsonAsync<PostPagedListViewModel>($"api/Post/list?blogId={channelId}&page={page}&limit={size}");
-            return Ok(blog);
+            var posts = await _postApiClient.GetAvailablePostsByBlogIdAsync(
+                channelId,
+                page,
+                size,
+                PostType.Video);
+
+            return Ok(posts);
         }
 
         [HttpGet("playLists/{channelId}")]
         public async Task<IActionResult> GetChannelPlaylists(Guid channelId)
         {
-            using var client = _httpClientFactory.CreateClient("Profile");
-            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListListItem>>($"api/PlayList/list?blogId={channelId}");
+            using var client = _httpClientFactory.CreateClient("PlayList");
+            var blog = await client.GetFromJsonAsync<IReadOnlyList<PlayListListItem>>($"PlayList/list?blogId={channelId}");
             return Ok(blog);
         }
     }

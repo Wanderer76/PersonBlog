@@ -1,4 +1,4 @@
-﻿using Blog.Contracts.Models;
+using Blog.Contracts.Models;
 using Blog.Contracts.Services;
 using Blog.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,9 @@ namespace Blog.Service.Services.Implementation
             {
                 var hasView = await _readRepository.Get<PostViewer>()
                     .Where(x => x.PostId == postId)
-                    .Where(x => x.UserId == userId || x.UserIpAddress == address)
+                    .Where(x => userId.HasValue
+                        ? x.UserId == userId
+                        : x.UserId == null && x.UserIpAddress == address)
                     .FirstOrDefaultAsync();
 
                 var hasSub = userId.HasValue && await _readRepository.Get<Subscriber>()

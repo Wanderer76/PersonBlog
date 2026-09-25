@@ -1,4 +1,5 @@
 ﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Events;
 using Authentication.Domain.Entities;
 using Authentication.Service.Models;
 using Authentication.Service.Service;
@@ -11,6 +12,7 @@ using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using System.Reflection;
 
 namespace AuthTests;
 
@@ -87,19 +89,48 @@ public class AuthenticationTest
         };
         var users = new List<AppUser> { user }.BuildMockDbSet();
         _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
+        _repoMock.Setup(x => x.Get<Client>()).Returns(
+            new List<Client> { CreateClient("blog", "https://client.example/callback") }
+                .BuildMockDbSet().Object);
         _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
         _cacheServiceMock.Setup(x => x.SetCachedDataAsync(It.IsAny<ICacheKey>(), It.IsAny<object>(), It.IsAny<TimeSpan>()))
             .Returns(Task.CompletedTask);
+        AuthCode? cachedCode = null;
+        _cacheServiceMock.Setup(x => x.SetCachedDataAsync(
+                It.IsAny<ICacheKey>(),
+                It.IsAny<AuthCode>(),
+                It.IsAny<TimeSpan>()))
+            .Callback<ICacheKey, AuthCode, TimeSpan>((_, value, _) => cachedCode = value)
+            .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _authService.Authenticate(new LoginPasswordModel("test", "correct"));
+        var result = await _authService.Authenticate(new LoginPasswordModel("test", "correct")
+        {
+            ClientId = "blog",
+            RedirectUrl = "https://client.example/callback"
+        });
 
         // Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.NotNull(result.Value.AuthCode);
+        Assert.NotNull(cachedCode);
+        Assert.Equal("blog", cachedCode.ClientId);
         _repoMock.Verify(x => x.SaveChangesAsync(), Times.Once);
         _cacheServiceMock.Verify(x => x.SetCachedDataAsync(It.IsAny<SessionKey>(), It.IsAny<UserModel>(), It.IsAny<TimeSpan>()), Times.Once);
+    }
+
+    private static Client CreateClient(string clientId, string redirectUri)
+    {
+        var constructor = typeof(Client).GetConstructor(
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            Type.EmptyTypes,
+            modifiers: null)!;
+        var client = (Client)constructor.Invoke(null);
+        typeof(Client).GetProperty(nameof(Client.ClientId))!.SetValue(client, clientId);
+        typeof(Client).GetProperty(nameof(Client.RedirectUri))!.SetValue(client, redirectUri);
+        return client;
     }
 
     [Fact]
@@ -128,6 +159,7 @@ public class AuthenticationTest
     {
         // Arrange
         var userList = new List<AppUser>();
+        var eventList = new List<AuthEvent>();
         var users = userList.BuildMockDbSet();
         _repoMock.Setup(x => x.Get<AppUser>()).Returns(users.Object);
 
@@ -146,6 +178,10 @@ public class AuthenticationTest
                 {
                     userList.Add(user);
                 }
+                else if (entity is AuthEvent authEvent)
+                {
+                    eventList.Add(authEvent);
+                }
             });
 
         _repoMock.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
@@ -159,6 +195,10 @@ public class AuthenticationTest
         _repoMock.Verify(x => x.SaveChangesAsync(), Times.AtLeastOnce);
         Assert.Single(userList);
         Assert.Equal("newuser", userList[0].Login);
+        var authEvent = Assert.Single(eventList);
+        Assert.Equal(nameof(ProfileRegisterEvent), authEvent.EventType);
+        Assert.Contains("\"Name\":\"test\"", authEvent.EventData);
+        Assert.Contains("\"UserName\":\"newuser\"", authEvent.EventData);
     }
 
     [Fact]
@@ -287,7 +327,8 @@ public class AuthenticationTest
         {
             UserId = userId,
             Login = "test",
-            BlogId = Guid.NewGuid(),
+            ContextType = "conference",
+            ContextId = Guid.NewGuid(),
             ExpiredAt = DateTimeService.Now().AddHours(1)
         };
 
@@ -304,5 +345,7 @@ public class AuthenticationTest
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.IsAnonymous);
         Assert.Equal(userId, result.Value.UserId);
+        Assert.Equal(tokenData.ContextType, result.Value.ContextType);
+        Assert.Equal(tokenData.ContextId, result.Value.ContextId);
     }
 }

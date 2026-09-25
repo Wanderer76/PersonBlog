@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace VideoReacting.Persistence.Migrations
+namespace Profile.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class AddPostReaction : Migration

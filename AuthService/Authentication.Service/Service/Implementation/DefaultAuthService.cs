@@ -10,7 +10,7 @@ using Shared.Services;
 using Shared.Utils;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
-[assembly: InternalsVisibleTo("AuthTests",AllInternalsVisible =true)]
+[assembly: InternalsVisibleTo("AuthTests", AllInternalsVisible = true)]
 
 namespace Authentication.Service.Service.Implementation;
 
@@ -47,18 +47,35 @@ internal class DefaultAuthService : IAuthService
                 return new Error("400", "Неверный логин/пароль");
             }
 
-            var blogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId;
+            var client = await _context.Get<Client>()
+                .FirstOrDefaultAsync(x => x.ClientId == loginModel.ClientId);
+            if (client == null ||
+                !string.Equals(client.RedirectUri, loginModel.RedirectUrl, StringComparison.Ordinal))
+            {
+                return new Error("invalid_request", "Invalid client or redirect URI");
+            }
 
-            await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromMinutes(10));
+            var context = GetDefaultContext(user);
+
+            await _cacheService.SetCachedDataAsync(
+                new SessionKey(user.Id),
+                new UserModel(
+                    user.Id,
+                    user.Login,
+                    null,
+                    context?.ContextType,
+                    context?.ContextId ?? Guid.Empty,
+                    user.AppUserRoles.Select(x => x.UserRoleId).ToList()),
+                TimeSpan.FromMinutes(10));
             await _context.SaveChangesAsync();
 
-            var authCode =  RandomCodeGenerator.GenerateRandomCode();
+            var authCode = RandomCodeGenerator.GenerateRandomCode();
 
             await _cacheService.SetCachedDataAsync(AuthCode.GetCacheKey(authCode), new AuthCode
             {
                 Code = authCode,
                 UserId = user.Id,
-                ClientId = "",
+                ClientId = client.ClientId,
                 ExpiresAt = DateTime.UtcNow.AddMinutes(10)
             }, TimeSpan.FromMinutes(10));
 
@@ -101,22 +118,15 @@ internal class DefaultAuthService : IAuthService
         };
         _context.Add(user);
 
-        var profileCreateModel = new ProfileRegisterEvent
+        var userRegisteredEvent = new ProfileRegisterEvent
         (
             registerModel.UserName,
+            user.Login,
             userId,
             createdAt
         );
 
-        var userCreateEvent = new UserCreateEvent
-        {
-            UserId = userId,
-            CreatedAt = createdAt,
-            UserName = user.Login
-        };
-
-        _context.Add(AuthEvent.Create(userCreateEvent));
-        _context.Add(AuthEvent.Create(profileCreateModel));
+        _context.Add(AuthEvent.Create(userRegisteredEvent));
         await _context.SaveChangesAsync();
         return Result.Success();
     }
@@ -170,9 +180,18 @@ internal class DefaultAuthService : IAuthService
             return new Error("Пользователь не найден");
         }
 
-        var blogId = user.UserContexts.FirstOrDefault(x => x.ContextType == UserContextType.Blog)?.ContextId;
+        var context = GetDefaultContext(user);
         var response = await _tokenService.GenerateTokenAsync(user);
-        await _cacheService.SetCachedDataAsync(new SessionKey(user.Id), new UserModel(user.Id, user.Login, null, blogId ?? Guid.Empty, user.AppUserRoles.Select(x => x.UserRoleId).ToList()), TimeSpan.FromDays(10));
+        await _cacheService.SetCachedDataAsync(
+            new SessionKey(user.Id),
+            new UserModel(
+                user.Id,
+                user.Login,
+                null,
+                context?.ContextType,
+                context?.ContextId ?? Guid.Empty,
+                user.AppUserRoles.Select(x => x.UserRoleId).ToList()),
+            TimeSpan.FromDays(10));
         await _context.SaveChangesAsync();
         return response;
     }
@@ -191,7 +210,18 @@ internal class DefaultAuthService : IAuthService
             .Select(x => x.UserRoleId)
             .ToListAsync();
 
-        var model = new UserModel(tokenData.UserId, tokenData.Login, null, tokenData.BlogId, userRoles);
+        var model = new UserModel(
+            tokenData.UserId,
+            tokenData.Login,
+            null,
+            tokenData.ContextType,
+            tokenData.ContextId,
+            userRoles);
         return model;
     }
+
+    private static UserContext? GetDefaultContext(AppUser user) =>
+        user.UserContexts
+            .OrderByDescending(x => x.ContextType == UserContextTypes.Blog)
+            .FirstOrDefault();
 }

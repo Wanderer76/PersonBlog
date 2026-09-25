@@ -1,10 +1,10 @@
 ﻿using Blog.Contracts.Models;
 using Gateway.API.Api;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 using Shared.Services;
 
 namespace Gateway.API.Controllers;
@@ -21,9 +21,8 @@ public class ViewController : BaseApiController
         _cache = cache;
     }
 
-
     [HttpGet("history")]
-    [Authorize]
+    [AuthFilter]
     public async Task<IActionResult> GetViewHistory()
     {
         HttpContext.TryGetUserFromContext(out var userId);
@@ -31,7 +30,7 @@ public class ViewController : BaseApiController
         var result = await _cache.GetOrAddDataAsync(new ViewCacheModel(userId.Value), async () =>
         {
             var historyItems = userId.HasValue ?
-           await _httpClientFactory.CreateClient("Reacting").GetFromJsonAsync<IReadOnlyList<HistoryViewItem>>($"ViewHistory/list/{userId.Value}")
+           await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<IReadOnlyList<HistoryViewItem>>($"ViewHistory/list/{userId.Value}")
            : [];
 
             var postPreviews = historyItems!
@@ -61,7 +60,7 @@ public class ViewController : BaseApiController
         return Ok(result);
     }
     [HttpGet("liked")]
-    [Authorize]
+    [AuthFilter]
     public async Task<IActionResult> GetLikedHistory()
     {
         HttpContext.TryGetUserFromContext(out var userId);
@@ -69,7 +68,7 @@ public class ViewController : BaseApiController
         var result = await _cache.GetOrAddDataAsync(new LikedCacheKey(userId.Value), async () =>
         {
             var historyItems = userId.HasValue ?
-           await _httpClientFactory.CreateClient("Reacting").GetFromJsonAsync<IReadOnlyList<LikedViewItem>>($"LikedHistory/list/{userId.Value}")
+           await _httpClientFactory.CreateClient("Profile").GetFromJsonAsync<IReadOnlyList<LikedViewItem>>($"LikedHistory/list/{userId.Value}")
            : [];
 
             var postPreviews = historyItems!

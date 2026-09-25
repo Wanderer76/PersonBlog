@@ -1,5 +1,6 @@
 ﻿using Authentication.Contract.Services;
 using Infrastructure.Extensions;
+using Infrastructure.Middleware;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,15 +15,34 @@ public class AuthenticationClientOptions
 
 public static class AuthenticationContractExtensions
 {
+    public static void AddCurrentUserHttpClient(
+        this IServiceCollection services,
+        Action<AuthenticationClientOptions>? configureOptions = null)
+    {
+        var options = new AuthenticationClientOptions();
+        configureOptions?.Invoke(options);
+
+        services.AddHttpContextAccessor();
+        services.AddTransient<HeaderClientHandler>();
+        services.AddHttpClient<CurrentUserHttpClientService>(client =>
+        {
+            client.BaseAddress = new Uri(options.BaseUrl);
+            client.Timeout = options.Timeout;
+        }).AddHttpMessageHandler<HeaderClientHandler>();
+        services.AddScoped<ICurrentUserService>(serviceProvider =>
+            serviceProvider.GetRequiredService<CurrentUserHttpClientService>());
+    }
+
     public static void AddUserSessionServices(this IServiceCollection services, Action<AuthenticationClientOptions>? configureOptions = null)
     {
         var options = new AuthenticationClientOptions();
         configureOptions?.Invoke(options);
+        services.AddTransient<HeaderClientHandler>();
         services.AddHttpClient<HttpContextCachedUserService>("AuthApp", client =>
         {
             client.BaseAddress = new Uri(options.BaseUrl);
             client.Timeout = options.Timeout;
-        });
+        }).AddHttpMessageHandler<HeaderClientHandler>();
 
         services.AddScoped<ICurrentUserService>(sp =>
         {

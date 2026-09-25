@@ -1,16 +1,16 @@
 // orval.config.js
 export const profile = {
     input: {
-        target: 'http://localhost:7892/video/swagger/v1/swagger.json',
+        target: './swagger.json',
     },
     output: {
-        target: './src/lib/api/generated',
-        schemas: './src/lib/api/generated/models',
+        target: './src/shared/api/generated',
+        schemas: './src/shared/api/generated/models',
         client: 'axios',
         mode: 'tags-split',
         override: {
             mutator: {
-                path: './src/lib/api/mutator.ts',
+                path: './src/shared/api/mutator.ts',
                 name: 'customInstance',
             },
             query: {
@@ -22,6 +22,28 @@ export const profile = {
                     return `${tag}Client`;
                 },
             }
+        },
+        prettier: true,
+        indexFiles: true,
+        mock: false,
+    },
+};
+
+export const authGateway = {
+    input: {
+        target: '../auth/swagger.json',
+    },
+    output: {
+        target: './src/shared/api/generated/auth-gateway',
+        schemas: './src/shared/api/generated/auth-gateway/models',
+        client: 'axios',
+        mode: 'tags-split',
+        override: {
+            requestOptions: true,
+            mutator: {
+                path: './src/shared/api/authGatewayMutator.ts',
+                name: 'authGatewayInstance',
+            },
         },
         prettier: true,
         indexFiles: true,

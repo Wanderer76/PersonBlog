@@ -1,6 +1,6 @@
 ﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Services;
+using Profile.Application.Services;
 
 namespace Profile.API.Controllers
 {

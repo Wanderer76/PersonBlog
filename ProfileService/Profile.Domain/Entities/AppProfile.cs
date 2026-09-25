@@ -1,6 +1,7 @@
 ﻿using Shared;
 using Shared.Services;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Profile.Domain.Entities;
 
@@ -19,12 +20,12 @@ public class AppProfile : BaseEntity, IUserEntity
     //public DateTimeOffset? Birthdate { get; set; }
 
     public Guid UserId { get; set; }
-    public string? PhotoUrl { get; set; }
     public ProfileState ProfileState { get; set; }
 
     public Guid? BlogId { get; set; }
 
     //public List<ProfileSubscription> PaymentSubscriptions { get; set; } = [];
+    public ProfilePictureFile ProfilePictureFile { get; private set; }
 
     public AppProfile() { }
 

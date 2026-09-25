@@ -10,3 +10,10 @@ export interface ProfileData {
 export interface HasBlogResponse {
   hasBlog: boolean | null;
 }
+
+export interface VideoProcessingProgress {
+  postId: string;
+  percent: number;
+  status: 'processing' | 'completed' | 'failed';
+  error?: string | null;
+}

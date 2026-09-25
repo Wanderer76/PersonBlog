@@ -36,7 +36,7 @@ public class PlayListController : BaseApiController
     }
 
     [HttpGet("my/list")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<IReadOnlyList<PlayListListItem>>> GetCurrentUserPlayLists()
     {
         var result = await _playListService.GetUserPlayLists();
@@ -76,7 +76,7 @@ public class PlayListController : BaseApiController
     }
 
     [HttpPost("create")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<PlayListListItem>> CreatePlayList([FromForm] CreatePlayListRequest form)
     {
         var result = await _playListService.CreatePlayListAsync(form);
@@ -97,7 +97,7 @@ public class PlayListController : BaseApiController
     //}
 
     [HttpPost("addVideo")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<PlayListListItem>> AddVideoToPlayList([FromBody] PlayListItemAddRequest form)
     {
         var result = await _playListService.AddVideoAsync(form);
@@ -107,7 +107,7 @@ public class PlayListController : BaseApiController
     }
 
     [HttpPost("updatePositions")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<PlayListListItem>> UpdatePostPositions([FromBody] ChangePostPositionRequest form)
     {
         var result = await _playListService.ChangePostPositionAsync(form);
@@ -117,7 +117,7 @@ public class PlayListController : BaseApiController
     }
 
     [HttpPost("removePlaylist/{id:guid}")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<PlayListListItem>> RemovePlayList(Guid id)
     {
         var result = await _playListService.RemovePlayListAsync(id);
@@ -127,7 +127,7 @@ public class PlayListController : BaseApiController
     }
 
     [HttpPost("removeVideo")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<PlayListListItem>> RemoveVideoFromPlayList([FromBody] PlayListItemRemoveRequest form)
     {
         var result = await _playListService.RemoveVideoAsync(form);
@@ -138,7 +138,7 @@ public class PlayListController : BaseApiController
 
     // TODO Возможно будет потом
     [HttpPost("loadThumbnail")]
-    [AuthFilter(Roles.User)]
+    [AuthFilter(Roles.User, Roles.Blogger)]
     public async Task<ActionResult<Guid>> UploadThumbnail([FromForm] IFormFile thumbnail)
     {
         var user = await _currentUserService.GetCurrentUserAsync();

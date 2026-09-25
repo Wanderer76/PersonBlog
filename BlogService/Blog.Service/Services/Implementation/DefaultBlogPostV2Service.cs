@@ -1,0 +1,677 @@
+using Blog.Contracts.Events;
+using Blog.Contracts.Models;
+using Blog.Contracts.Models.Post;
+using Blog.Contracts.Services;
+using Blog.Domain.Entities;
+using Blog.Service.Events;
+using FileStorage.Service;
+using Infrastructure.Services;
+using Infrastructure.Models;
+using Microsoft.EntityFrameworkCore;
+using Shared.Models;
+using Shared.Persistence;
+using Shared.Services;
+using Shared.Utils;
+using System.Text.RegularExpressions;
+
+namespace Blog.Service.Services.Implementation;
+
+internal sealed class DefaultBlogPostV2Service(
+    IReadWriteRepository<IBlogEntity> repository,
+    IFileStorageFactory fileStorageFactory,
+    ICurrentUserService currentUserService,
+    ISubscriptionLevelService subscriptionLevelService,
+    ICategoryService categoryService,
+    IImageConvertService imageConvertService)
+    : IBlogPostV2Service
+{
+    public async Task<PagedListViewModel<UserPostInfoModel>> GetCurrentUserPostsAsync(
+            Guid blogId, int page, int pageSize, PostType postType)
+    {
+        var query = BuildBasePostQuery(blogId, postType);
+        var totalCount = await query.CountAsync();
+        var posts = await ApplyIncludes(query, postType)
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var dtos = await MapToUserPostInfoDtosAsync(posts, blogId, postType);
+        return PagedListViewModel.Create(dtos, pageSize, totalCount);
+    }
+
+    public async Task<CreatePostModelViewModel> GetPostCreateModelAsync()
+    {
+        var visibility = Enum.GetValues<PostVisibility>().Select(x => new SelectItem<PostVisibility>(x, x.FormatName()));
+        var subscriptions = await subscriptionLevelService.GetAllSubscriptionsAsync();
+        var categories = await categoryService.GetAllCategoriesAsync();
+        return new CreatePostModelViewModel(subscriptions, visibility, categories);
+    }
+
+    public async Task<Result<UserPostInfoModel>> CreatePostAsync(PostCreateCommand command)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var blogId = user.BlogId;
+        var postId = GuidService.GetNewGuid();
+        var categories = command.CategoryIds != null && command.CategoryIds.Any()
+            ? await categoryService.GetCategoriesByIdsAsync(command.CategoryIds)
+            : [];
+
+        var post = new Post(
+            id: postId,
+            blogId: blogId,
+            type: command.Type,
+            description: command.Description,
+            title: command.Title,
+            paymentSubscriptionId: null,
+            visibility: command.Visibility,
+            categories: categories.Select(c => c.Id).ToList(),
+            text: command.TextContent);
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var processResult = await ProcessPostFilesAsync(post, command, blogId, postId, storage);
+
+        if (processResult.IsFailure)
+        {
+            return Result<UserPostInfoModel>.Failure(processResult.Errors);
+        }
+
+        repository.Add(post);
+        if (post.Type == PostType.Text)
+        {
+            repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+            var publication = PostPublishedV1Factory.TryCreate(post, user.UserId);
+            if (publication is not null) repository.Add(VideoProcessEvent.Create(publication));
+        }
+        await repository.SaveChangesAsync();
+
+        return await MapToUserPostInfoDtoAsync(post, blogId, storage);
+    }
+
+    public async Task<PagedListViewModel<PostCommonModelV2>> GetAvailablePostsByBlogIdAsync(Guid requestedBlogId, int page, int pageSize, PostType postType)
+    {
+        var query = BuildBasePostQuery(requestedBlogId, postType);
+
+        var user = await currentUserService.GetCurrentUserAsync();
+        var isOwner = user.HasBlog && requestedBlogId == user.BlogId;
+
+        if (!isOwner)
+        {
+            query = query.Where(x =>
+                x.ProcessState == ProcessState.Complete
+                && x.Visibility == PostVisibility.Public
+                && !x.BanMessageId.HasValue);
+        }
+
+        var totalCount = await query.CountAsync();
+        var posts = await ApplyIncludes(query, postType)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var dtos = await MapToPostCommonModelDtosAsync(posts, requestedBlogId, postType);
+        return new PagedListViewModel<PostCommonModelV2>(
+            (int)Math.Ceiling((double)totalCount / pageSize),
+            pageSize,
+            totalCount,
+            dtos);
+    }
+
+    private IQueryable<Post> BuildBasePostQuery(Guid blogId, PostType postType) =>
+        repository.Get<Post>()
+            .Where(x => !x.IsDelete && x.BlogId == blogId && x.Type == postType);
+
+    private static IQueryable<Post> ApplyIncludes(IQueryable<Post> query, PostType postType) =>
+        postType == PostType.Video
+            ? query
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PostCategories)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.VideoFile)
+                .Include(x => x.VideoPostInfo).ThenInclude(x => x.PreviewFile)
+            : query.Include(x => x.TextPostInfo);
+
+    private async Task<List<UserPostInfoModel>> MapToUserPostInfoDtosAsync(
+        List<Post> posts, Guid blogId, PostType postType)
+    {
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var tasks = posts.Select(post => MapToUserPostInfoDtoAsync(post, blogId, storage));
+        return [.. (await Task.WhenAll(tasks))];
+    }
+
+    private async Task<UserPostInfoModel> MapToUserPostInfoDtoAsync(
+        Post post, Guid blogId, IFileStorage storage)
+    {
+        return new UserPostInfoModel
+        {
+            Id = post.Id,
+            BlogId = post.BlogId,
+            DislikeCount = post.DislikeCount,
+            LikeCount = post.LikeCount,
+            ViewCount = post.ViewCount,
+            PaymentSubscriptionId = post.PaymentSubscriptionId,
+            Visibility = post.Visibility,
+            Title = post.Title,
+            CreatedAt = post.CreatedAt,
+            TextInfo = post.Type == PostType.Text
+                ? new TextInfoDto { Text = post.TextPostInfo.Text }
+                : null,
+            VideoInfo = post.Type == PostType.Video
+                ? new VideoInfoDto
+                {
+                    ProcessState = post.ProcessState,
+                    PreviewUrl = post.VideoPostInfo.PreviewFile == null
+                        ? null
+                        : await storage.GetFileUrlAsync(blogId, post.VideoPostInfo.PreviewFile.ObjectName),
+                    VideoMetadata = post.IsProcessComplete()
+                        ? new VideoMetadataModel(
+                            post.VideoPostInfo.VideoFile!.Id,
+                            post.VideoPostInfo.VideoFile!.Length,
+                            post.VideoPostInfo.VideoFile!.Duration,
+                            post.VideoPostInfo.VideoFile!.ContentType,
+                            post.VideoPostInfo.VideoFile!.ObjectName)
+                        : null
+                }
+                : null
+        };
+    }
+
+    private async Task<List<PostCommonModelV2>> MapToPostCommonModelDtosAsync(
+        List<Post> posts, Guid blogId, PostType postType)
+    {
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var tasks = posts.Select(async post => new PostCommonModelV2
+        {
+            Id = post.Id,
+            BlogId = post.BlogId,
+            Title = post.Title,
+            PostType = (PostTypeModel)post.Type,
+            Text = postType == PostType.Text ? post.TextPostInfo.Text : null,
+            PreviewUrl = postType == PostType.Video && post.VideoPostInfo.PreviewFile != null
+                ? await storage.GetFileUrlAsync(blogId, post.VideoPostInfo.PreviewFile.ObjectName)
+                : null
+        });
+        return (await Task.WhenAll(tasks)).ToList();
+    }
+
+    private async Task<Result> ProcessPostFilesAsync(
+        Post post,
+        PostCreateCommand command,
+        Guid blogId,
+        Guid postId,
+        IFileStorage storage)
+    {
+        if (command.Type == PostType.Text && command.TextFiles?.Any() == true)
+        {
+            var files = new List<PostFile>();
+            foreach (var file in command.TextFiles)
+            {
+                if (file.Length == 0) continue;
+
+                var fileId = GuidService.GetNewGuid();
+
+                var fileToUpload = await PrepareTextPostFileAsync(file);
+
+                if (fileToUpload.IsFailure)
+                    return Result.Failure(fileToUpload.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    blogId,
+                    $"{postId}/{fileId}",
+                    fileToUpload.Value.ContentStream);
+
+                files.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = postId,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(fileToUpload.Value.FileName),
+                    ContentType = fileToUpload.Value.ContentType,
+                    Length = fileToUpload.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = fileToUpload.Value.FileExtension
+                });
+            }
+            post.TextPostInfo.UpdateFiles(files);
+        }
+
+        if (command.Type == PostType.Text && command.InlineTextFiles?.Any() == true)
+        {
+            var inlineFiles = new List<PostFile>();
+            var text = post.TextPostInfo.Text;
+            foreach (var inlineFile in command.InlineTextFiles)
+            {
+                if (inlineFile.File.Length == 0 || !ContainsInlineReference(text, inlineFile.ReferenceId))
+                    continue;
+
+                if (!inlineFile.File.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return Result.Failure(new Error("inlineMedia", "В текст можно вставлять только изображения"));
+
+                var fileId = GuidService.GetNewGuid();
+                var fileToUpload = await PrepareTextPostFileAsync(inlineFile.File);
+                if (fileToUpload.IsFailure)
+                    return Result.Failure(fileToUpload.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    blogId,
+                    $"{postId}/{fileId}",
+                    fileToUpload.Value.ContentStream);
+
+                inlineFiles.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = postId,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(fileToUpload.Value.FileName),
+                    ContentType = fileToUpload.Value.ContentType,
+                    Length = fileToUpload.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = fileToUpload.Value.FileExtension
+                });
+                text = BindInlineReference(text, inlineFile.ReferenceId, fileId);
+            }
+
+            post.TextPostInfo.UpdateFiles(inlineFiles);
+            post.TextPostInfo.UpdateText(RemoveTransientImageSources(text));
+        }
+
+        if (command.Type == PostType.Video && command.Thumbnail != null && command.Thumbnail.Length > 0)
+        {
+            var thumbId = GuidService.GetNewGuid();
+
+            var fileToUpload = await imageConvertService.ConvertImageToPngAsync(command.Thumbnail!);
+
+            if (fileToUpload.IsFailure)
+                return Result.Failure(fileToUpload.Errors);
+
+            var objectName = await storage.PutFileAsync(
+                blogId,
+                $"{postId}/{thumbId}",
+                fileToUpload.Value.ContentStream);
+
+            var previewFile = new PostFile
+            {
+                Id = thumbId,
+                PostId = postId,
+                ObjectName = objectName,
+                Name = Path.GetFileName(command.Thumbnail.FileName),
+                FileExtension = Path.GetExtension(command.Thumbnail.FileName),
+                ContentType = command.Thumbnail.ContentType,
+                Length = command.Thumbnail.Length,
+                CreatedAt = DateTimeService.Now()
+            };
+
+            post.VideoPostInfo.PreviewFile = previewFile;
+            post.VideoPostInfo.PreviewId = previewFile.Id;
+        }
+        return Result.Success();
+    }
+
+    public async Task<Result> RemovePostAsync(Guid postId)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        var post = await repository.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .Include(x => x.TextPostInfo)
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+            return Result.Failure(new Error("postId", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+        {
+            return Result.Failure(new Error("postId", "Пост не принадлежит пользователю"));
+        }
+        repository.Attach(post);
+        post.Delete();
+        repository.Add(new PostRemoveEvent(post.Id, DateTimeService.Now()));
+        repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Delete,
+            Description = post.Type == PostType.Video
+                ? post.VideoPostInfo?.Description
+                : post.TextPostInfo?.Text,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
+        repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+        await repository.SaveChangesAsync();
+        return Result.Success();
+    }
+
+    public async Task<Result<PostEditViewModel>> GetPostEditViewModelAsync(Guid postId)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        var post = await repository.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .ThenInclude(x => x.PreviewFile)
+            .Include(x => x.VideoPostInfo.PostCategories)
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+            return Result<PostEditViewModel>.Failure(new Error("postId", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+        {
+            return Result<PostEditViewModel>.Failure(new Error("postId", "Пост не принадлежит пользователю"));
+        }
+        using var storage = fileStorageFactory.CreateFileStorage();
+
+        return new PostEditViewModel(
+            id: post.Id,
+            title: post.Title,
+            description: post.VideoPostInfo.Description,
+            previewUrl: await storage.GetFileUrlAsync(post.BlogId, post.VideoPostInfo!.PreviewFile!.ObjectName),
+            visibility: post.Visibility,
+            paymentSubscriptionId: post.PaymentSubscriptionId,
+            categories: post.VideoPostInfo.PostCategories.Select(x => x.CategoryId).ToList()
+            );
+
+    }
+
+    public async Task<Result<TextPostEditViewModel>> GetTextPostEditViewModelAsync(Guid postId)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+        var post = await repository.Get<Post>()
+            .Include(x => x.TextPostInfo)
+            .ThenInclude(x => x.Files)
+            .FirstOrDefaultAsync(x => x.Id == postId && !x.IsDelete && x.Type == PostType.Text);
+
+        if (post == null)
+            return Result<TextPostEditViewModel>.Failure(new Error("postId", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+            return Result<TextPostEditViewModel>.Failure(new Error("postId", "Пост не принадлежит пользователю"));
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var media = await Task.WhenAll(post.TextPostInfo.Files.Select(async file =>
+            new TextPostMediaViewModel(
+                file.Id,
+                file.Name,
+                await storage.GetFileUrlAsync(post.BlogId, file.ObjectName),
+                file.ContentType,
+                file.Length)));
+
+        return new TextPostEditViewModel(
+            post.Id,
+            post.Title,
+            post.TextPostInfo.Text,
+            post.Visibility,
+            media);
+    }
+
+    public async Task<Result> UpdateTextPostAsync(TextPostEditDto request)
+    {
+        if ((request.InlineMedia?.Count ?? 0) != request.InlineMediaIds.Count)
+            return Result.Failure(new Error("inlineMedia", "Количество встроенных изображений не совпадает с количеством их идентификаторов"));
+
+        var user = await currentUserService.GetCurrentUserAsync();
+        var post = await repository.Get<Post>()
+            .Include(x => x.TextPostInfo)
+            .ThenInclude(x => x.Files)
+            .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDelete && x.Type == PostType.Text);
+
+        if (post == null)
+            return Result.Failure(new Error("id", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+            return Result.Failure(new Error("id", "Пост не принадлежит пользователю"));
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+        var removedInlineMediaIds = GetInlineMediaIds(post.TextPostInfo.Text)
+            .Except(GetInlineMediaIds(request.Text));
+        var mediaIdsToRemove = request.RemovedMediaIds
+            .Concat(removedInlineMediaIds)
+            .ToHashSet();
+        var filesToRemove = post.TextPostInfo.Files
+            .Where(file => mediaIdsToRemove.Contains(file.Id))
+            .ToList();
+        var newFiles = new List<PostFile>();
+
+        var remainingMediaCount = post.TextPostInfo.Files.Count - filesToRemove.Count;
+        if (string.IsNullOrWhiteSpace(request.Text)
+            && remainingMediaCount == 0
+            && (request.Media == null || !request.Media.Any(file => file.Length > 0)))
+            return Result.Failure(new Error("text", "Добавьте текст или медиафайл"));
+
+        if (request.Media != null)
+        {
+            foreach (var mediaFile in request.Media)
+            {
+                if (mediaFile.Length == 0) continue;
+
+                var fileId = GuidService.GetNewGuid();
+                var convertedFile = await PrepareTextPostFileAsync(mediaFile.ConvertToFileMetadata());
+                if (convertedFile.IsFailure)
+                    return Result.Failure(convertedFile.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    post.BlogId,
+                    $"{post.Id}/{fileId}",
+                    convertedFile.Value.ContentStream);
+
+                newFiles.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = post.Id,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(convertedFile.Value.FileName),
+                    ContentType = convertedFile.Value.ContentType,
+                    Length = convertedFile.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = convertedFile.Value.FileExtension
+                });
+            }
+        }
+
+        var text = request.Text;
+        if (request.InlineMedia != null)
+        {
+            for (var index = 0; index < request.InlineMedia.Count; index++)
+            {
+                var mediaFile = request.InlineMedia[index];
+                var referenceId = request.InlineMediaIds[index];
+                if (mediaFile.Length == 0 || !ContainsInlineReference(text, referenceId))
+                    continue;
+
+                if (!mediaFile.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                    return Result.Failure(new Error("inlineMedia", "В текст можно вставлять только изображения"));
+
+                var fileId = GuidService.GetNewGuid();
+                var convertedFile = await PrepareTextPostFileAsync(mediaFile.ConvertToFileMetadata());
+                if (convertedFile.IsFailure)
+                    return Result.Failure(convertedFile.Errors);
+
+                var objectName = await storage.PutFileAsync(
+                    post.BlogId,
+                    $"{post.Id}/{fileId}",
+                    convertedFile.Value.ContentStream);
+
+                newFiles.Add(new PostFile
+                {
+                    Id = fileId,
+                    PostId = post.Id,
+                    ObjectName = objectName,
+                    Name = Path.GetFileName(convertedFile.Value.FileName),
+                    ContentType = convertedFile.Value.ContentType,
+                    Length = convertedFile.Value.Length,
+                    CreatedAt = DateTimeService.Now(),
+                    FileExtension = convertedFile.Value.FileExtension
+                });
+                text = BindInlineReference(text, referenceId, fileId);
+            }
+        }
+
+        repository.Attach(post);
+        post.Title = request.Title.Trim();
+        post.Visibility = request.Visibility;
+        post.TextPostInfo.UpdateText(RemoveTransientImageSources(text));
+        post.TextPostInfo.RemoveFiles(filesToRemove.Select(file => file.Id));
+        post.TextPostInfo.UpdateFiles(newFiles);
+        foreach (var file in newFiles) repository.Add(file);
+        foreach (var file in filesToRemove) repository.Remove(file);
+
+        post.MarkRecommendationChanged();
+        repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Update,
+            Description = post.TextPostInfo.Text,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
+        repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+        var publication = PostPublishedV1Factory.TryCreate(post, user.UserId);
+        if (publication is not null) repository.Add(VideoProcessEvent.Create(publication));
+        try
+        {
+            await repository.SaveChangesAsync();
+        }
+        catch
+        {
+            foreach (var file in newFiles)
+                await storage.RemoveFileAsync(post.BlogId, file.ObjectName);
+
+            throw;
+        }
+
+        foreach (var file in filesToRemove)
+            await storage.RemoveFileAsync(post.BlogId, file.ObjectName);
+
+        return Result.Success();
+    }
+
+    private async Task<Result<FileMetadataModel>> PrepareTextPostFileAsync(FileMetadataModel file)
+    {
+        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            return file;
+
+        return await imageConvertService.ConvertImageToPngAsync(file);
+    }
+
+    private static bool ContainsInlineReference(string? text, Guid referenceId) =>
+        text?.Contains($"data-media-reference=\"{referenceId:D}\"", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static string? BindInlineReference(string? text, Guid referenceId, Guid fileId) =>
+        text?.Replace(
+            $"data-media-reference=\"{referenceId:D}\"",
+            $"data-media-id=\"{fileId:D}\"",
+            StringComparison.OrdinalIgnoreCase);
+
+    private static string? RemoveTransientImageSources(string? text) => string.IsNullOrWhiteSpace(text)
+        ? text
+        : Regex.Replace(
+            text,
+            "\\s+src=\"[^\"]*\"",
+            string.Empty,
+            RegexOptions.IgnoreCase);
+
+    private static HashSet<Guid> GetInlineMediaIds(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return [];
+
+        return Regex.Matches(
+                text,
+                "data-media-id=\"(?<id>[0-9a-f-]{36})\"",
+                RegexOptions.IgnoreCase)
+            .Select(match => Guid.TryParse(match.Groups["id"].Value, out var id) ? id : Guid.Empty)
+            .Where(id => id != Guid.Empty)
+            .ToHashSet();
+    }
+
+    public async Task<Result> UpdatePostAsync(PostUpdateRequest updateRequest)
+    {
+        var user = await currentUserService.GetCurrentUserAsync();
+
+        var post = await repository.Get<Post>()
+            .Include(x => x.VideoPostInfo)
+            .Include(x => x.VideoPostInfo.PreviewFile)
+            .Include(x => x.VideoPostInfo.PostCategories)
+            .FirstOrDefaultAsync(x => x.Id == updateRequest.Id);
+
+        if (post == null)
+            return Result.Failure(new Error("id", "Not found"));
+
+        if (post.BlogId != user.BlogId)
+        {
+            return Result.Failure(new Error("id", "Пост не принадлежит пользователю"));
+        }
+
+        using var storage = fileStorageFactory.CreateFileStorage();
+
+        repository.Attach(post);
+
+        post.VideoPostInfo.Description = updateRequest.Description;
+        post.Title = updateRequest.Title;
+        post.Visibility = updateRequest.Visibility;
+
+        var categoriesToRemove = post.VideoPostInfo.PostCategories.Select(x => x.CategoryId)
+            .Except(updateRequest.Categories)
+            .ToList();
+
+        foreach (var category in post.VideoPostInfo.PostCategories
+                     .Where(x => categoriesToRemove.Contains(x.CategoryId))
+                     .ToList())
+        {
+            repository.Remove(category);
+            post.VideoPostInfo.PostCategories.Remove(category);
+        }
+
+        var newCategories = await repository.Get<Category>()
+            .Where(x => updateRequest.Categories.Contains(x.Id))
+            .ToListAsync();
+
+        foreach (var i in newCategories)
+        {
+            post.AddCategory(i);
+        }
+
+        if (updateRequest.Preview != null)
+        {
+            var preview = post.VideoPostInfo.PreviewFile!;
+            repository.Remove(preview);
+            var fileId = GuidService.GetNewGuid();
+            var newThumbnail = new PostFile
+            {
+                Id = fileId,
+                ContentType = updateRequest.Preview.ContentType,
+                CreatedAt = DateTimeService.Now(),
+                FileExtension = updateRequest.Preview.FileExtension,
+                Length = updateRequest.Preview.Length,
+                Name = updateRequest.Preview.Name,
+                ObjectName = $"{post.Id}/{fileId}",
+                PostId = post.Id,
+            };
+            repository.Add(newThumbnail);
+
+            await storage.PutFileAsync(post.BlogId, newThumbnail.ObjectName, updateRequest.Preview.ContentStream);
+            post.VideoPostInfo.PreviewId = newThumbnail.Id;
+            post.VideoPostInfo.PreviewFile = newThumbnail;
+            await storage.RemoveFileAsync(post.BlogId, preview.ObjectName);
+        }
+
+        post.MarkRecommendationChanged();
+        repository.Add(VideoProcessEvent.Create(new PostUpdateEvent
+        {
+            BlogId = post.BlogId,
+            CreatedAt = DateTimeService.Now(),
+            UpdateType = UpdateType.Update,
+            Description = post.VideoPostInfo.Description,
+            PostId = post.Id,
+            Title = post.Title,
+            ViewCount = post.ViewCount
+        }));
+        repository.Add(VideoProcessEvent.Create(PostCatalogChangedV2Factory.Create(post)));
+        var publication = PostPublishedV1Factory.TryCreate(post, user.UserId);
+        if (publication is not null) repository.Add(VideoProcessEvent.Create(publication));
+
+        await repository.SaveChangesAsync();
+
+        return Result.Success();
+    }
+}

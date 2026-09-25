@@ -4,18 +4,17 @@ using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Infrastructure.Middleware;
 
 namespace Conference.API.Controllers
 {
     public class ConferenceRoomController : BaseApiController
     {
-        private readonly ILogger<ConferenceRoomController> _logger;
         private readonly IConferenceRoomService _conferenceRoomService;
         private readonly ICurrentUserService _currentUserService;
         public ConferenceRoomController(ILogger<ConferenceRoomController> logger, IConferenceRoomService conferenceRoomService, ICurrentUserService currentUserService)
             : base(logger)
         {
-            _logger = logger;
             _conferenceRoomService = conferenceRoomService;
             _currentUserService = currentUserService;
         }
@@ -30,6 +29,16 @@ namespace Conference.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("{roomId:guid}/invitations")]
+        [AuthFilter]
+        [Produces<ConferenceInvitationViewModel>]
+        public async Task<ActionResult<ConferenceInvitationViewModel>> CreateInvitation(Guid roomId,
+            CreateConferenceInvitationRequest request, CancellationToken cancellationToken)
+        {
+            var result = await _conferenceRoomService.CreateInvitationAsync(roomId, request, cancellationToken);
+            return ToActionResult(result);
+        }
+
         [HttpGet("joinLink")]
         [Produces<ConferenceViewModel>]
         public async Task<IActionResult> GetConferenceRoomAsync(Guid roomId)
@@ -39,6 +48,7 @@ namespace Conference.API.Controllers
         }
 
         [HttpGet("join")]
+        [Authorize]
         public async Task<IActionResult> Join(Guid roomId)
         {
             var user = await _currentUserService.GetCurrentUserAsync();

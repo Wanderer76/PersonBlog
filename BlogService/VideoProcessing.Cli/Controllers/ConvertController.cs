@@ -1,4 +1,4 @@
-﻿using FFmpeg.Service;
+﻿using FileStorage.Service;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,11 +6,28 @@ namespace VideoProcessing.Cli.Controllers;
 
 public class ConvertController(ILogger<BaseApiController> logger, IImageConvertService imageConvertService) : BaseApiController(logger)
 {
-    [HttpPost("convertToPng")]
-    public async Task<IActionResult> ConvertImageToPng([FromForm] Files image)
+    private const long MaxImageSize = 20 * 1024 * 1024;
+    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
+        ".bmp", ".gif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"
+    };
+
+    [HttpPost("convertToPng")]
+    [RequestSizeLimit(MaxImageSize)]
+    public async Task<IActionResult> ConvertImageToPng([FromForm] Files? image, CancellationToken cancellationToken)
+    {
+        if (image?.Image is null || image.Image.Length == 0)
+            return BadRequest("Файл изображения не передан.");
+
+        if (image.Image.Length > MaxImageSize)
+            return StatusCode(StatusCodes.Status413PayloadTooLarge);
+
+        var extension = Path.GetExtension(image.Image.FileName);
+        if (!AllowedExtensions.Contains(extension))
+            return BadRequest("Неподдерживаемый формат изображения.");
+
         var file = image.Image.ConvertToFileMetadata();
-        var convertedFile = await imageConvertService.ConvertImageToPngAsync(file);
+        var convertedFile = await imageConvertService.ConvertImageToPngAsync(file, cancellationToken);
 
         if (convertedFile.IsFailure)
             return BadRequest(convertedFile.Errors);
@@ -19,7 +36,4 @@ public class ConvertController(ILogger<BaseApiController> logger, IImageConvertS
     }
 }
 
-public class Files
-{
-    public IFormFile Image { get; set; }
-}
+public record Files(IFormFile Image);

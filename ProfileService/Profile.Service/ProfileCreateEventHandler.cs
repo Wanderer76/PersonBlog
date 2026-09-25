@@ -3,7 +3,7 @@ using MessageBus.EventHandler;
 using Profile.Domain.Entities;
 using Shared.Persistence;
 
-namespace Profile.Domain.Events
+namespace Profile.Service
 {
     public class ProfileCreateEventHandler : IEventHandler<ProfileRegisterEvent>
     {

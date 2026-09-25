@@ -15,16 +15,19 @@ using MessageBus;
 using MessageBus.Configs;
 using MessageBus.Models;
 using Profile.Domain.Events;
+using Recommendation.Contracts;
+using Recommendation.Contracts.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.Services.AddProfileServices();
+builder.Services.AddBlogServices();
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; });
-builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddBlogPersistence(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddFileStorage(builder.Configuration);
@@ -68,6 +71,26 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
             Name = "blogs",
             RoutingKey = "post.unbanned"
         };
+    })
+    .AddMessage<PostCatalogChangedV2>(x =>
+    {
+        x.Exchange = RecommendationExchange.Name;
+        x.RoutingKey = RecommendationExchange.PostCatalogChangedV2RoutingKey;
+    })
+    .AddMessage<PostPublishedV1>(x =>
+    {
+        x.Exchange = BlogIntegrationEvents.Exchange;
+        x.RoutingKey = BlogIntegrationEvents.PostPublishedV1RoutingKey;
+    })
+    .AddMessage<VideoProcessingCompletedV1>(x =>
+    {
+        x.Exchange = BlogIntegrationEvents.Exchange;
+        x.RoutingKey = VideoProcessingIntegrationEvents.CompletedV1RoutingKey;
+    })
+    .AddMessage<VideoProcessingFailedV1>(x =>
+    {
+        x.Exchange = BlogIntegrationEvents.Exchange;
+        x.RoutingKey = VideoProcessingIntegrationEvents.FailedV1RoutingKey;
     });
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -99,8 +122,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(policy => policy.WithOrigins("*").AllowAnyHeader().AllowAnyMethod());
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseJwtMiddleware();
+app.UseAuthorization();
 app.MapControllers();
 app.MapDefaultEndpoints();
 

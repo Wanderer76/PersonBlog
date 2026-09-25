@@ -3,6 +3,7 @@ using Blog.Contracts;
 using Blog.Service.Extensions;
 using FileStorage.Service;
 using Gateway.API;
+using Gateway.API.Api;
 using Gateway.API.Services;
 using Infrastructure.Extensions;
 using Infrastructure.Middleware;
@@ -24,7 +25,14 @@ builder.Services.AddControllers()
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors();
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:3000", "http://127.0.0.1:3000"];
+builder.Services.AddCors(options => options.AddDefaultPolicy(policy => policy
+    .WithOrigins(allowedOrigins)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<HeaderClientHandler>();
 builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]; });
@@ -37,21 +45,32 @@ builder.Services.AddHttpClient("Auth", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Auth"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
-builder.Services.AddHttpClient("Profile", x =>
+builder.Services.AddHttpClient("Blog", x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Profile"]);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
-builder.Services.AddHttpClient("Recommendation", x =>
+builder.Services.AddHttpClient<RecommendationApiClient>(x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]);
-    x.Timeout = TimeSpan.FromSeconds(2);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Recommendation"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<HeaderClientHandler>();
-builder.Services.AddHttpClient("Reacting", x =>
+builder.Services.AddHttpClient<BlogFeedApiClient>(x =>
 {
-    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Reacting"]);
-    x.Timeout = TimeSpan.FromSeconds(2);
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
 }).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddHttpClient<TextPostDetailApiClient>(x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Blog"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
+}).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddHttpClient<NotificationApiClient>(x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:Notification"]!);
+    x.Timeout = TimeSpan.FromSeconds(5);
+}).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddScoped<RecommendationFeedGateway>();
 builder.Services.AddHttpClient("Search", x =>
 {
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Search"]);
@@ -67,11 +86,17 @@ builder.Services.AddHttpClient("Comments", x =>
     x.BaseAddress = new Uri(builder.Configuration["AppUrls:Comments"]);
     x.Timeout = TimeSpan.FromSeconds(2);
 }).AddHttpMessageHandler<HeaderClientHandler>();
+builder.Services.AddHttpClient("PlayList", x =>
+{
+    x.BaseAddress = new Uri(builder.Configuration["AppUrls:PlayList"]);
+    x.Timeout = TimeSpan.FromSeconds(2);
+}).AddHttpMessageHandler<HeaderClientHandler>();
 
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
-builder.Services.AddProfileHttpClient(builder.Configuration);
+builder.Services.AddProfileHttpClient(builder.Configuration)
+    ;
 builder.Services.AddBlogContract(builder.Configuration);
 
 var app = builder.Build();
@@ -85,7 +110,7 @@ app.UseSerilogRequestLogger();
 }
 
 app.UseRouting();
-app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseCors();
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor |
@@ -95,9 +120,9 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 app.MapDefaultEndpoints();
 app.UseHttpsRedirection();
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseCorrelationMiddleware();
 app.UseJwtMiddleware();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

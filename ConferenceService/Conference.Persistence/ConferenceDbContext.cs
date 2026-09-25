@@ -1,4 +1,4 @@
-﻿using Conference.Domain.Entities;
+using Conference.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 
@@ -10,6 +10,8 @@ namespace Conference.Persistence
 
         public DbSet<Message> Messages { get; set; }
         public DbSet<ConferenceParticipant> ConferenceParticipants { get; set; }
+        public DbSet<ConferenceInvitation> ConferenceInvitations { get; set; }
+        public DbSet<ConferenceOutboxMessage> OutboxMessages { get; set; }
 
         public ConferenceDbContext(DbContextOptions<ConferenceDbContext> options) : base(options)
         {
@@ -18,13 +20,31 @@ namespace Conference.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.HasDefaultSchema("Conference");
             {
                 var entity = modelBuilder.Entity<ConferenceParticipant>();
                 entity.HasKey(x => new { x.ConferenceRoomId, x.SessionId });
+                entity.HasIndex(x => new { x.ConferenceRoomId, x.UserId }).IsUnique();
+                entity.Property(x => x.UserName).HasMaxLength(200);
             }
             {
                 var entity = modelBuilder.Entity<ConferenceRoom>();
                 entity.HasKey(x => new { x.Id });
+                entity.Property(x => x.Id).ValueGeneratedNever();
+                entity.Property(x => x.PostId);
+            }
+            {
+                var entity = modelBuilder.Entity<ConferenceInvitation>();
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => new { x.ConferenceId, x.RecipientUserId }).IsUnique();
+                entity.HasOne<ConferenceRoom>()
+                    .WithMany()
+                    .HasForeignKey(x => x.ConferenceId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            }
+            {
+                var entity = modelBuilder.Entity<Message>();
+                entity.Property(x => x.MessageText).HasMaxLength(4000);
             }
         }
     }

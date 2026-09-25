@@ -1,5 +1,7 @@
 using Authentication.Contract;
 using Authentication.Contract.Events;
+using Comments.API.HostedServices;
+using Comments.Contracts.Events;
 using Comments.Domain.Services;
 using Comments.Persistence.Extensions;
 using Comments.Service.Extensions;
@@ -13,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.AddServiceDefaults();
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -24,10 +27,16 @@ builder.Services.AddCommentPersistence(builder.Configuration);
 builder.Services.AddRedisCache(builder.Configuration);
 builder.Services.AddProfileHttpClient(builder.Configuration);
 builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
-    .AddSubscription<UserCreateEvent, UserCreateEventHandler>(cfg =>
+    .AddSubscription<ProfileRegisterEvent, UserCreateEventHandler>(cfg =>
     {
         cfg.QueueName = "comment-userprofile-create";
+    })
+    .AddMessage<CommentReplyCreatedV1>(cfg =>
+    {
+        cfg.Exchange = CommentIntegrationEvents.Exchange;
+        cfg.RoutingKey = CommentIntegrationEvents.CommentReplyCreatedV1RoutingKey;
     });
+builder.Services.AddHostedService<CommentOutboxPublisherService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

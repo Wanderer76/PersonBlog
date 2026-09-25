@@ -1,4 +1,4 @@
-﻿using Blog.Domain.Entities;
+using Blog.Domain.Entities;
 using MessageBus.EventHandler;
 using Microsoft.EntityFrameworkCore;
 using Profile.Domain.Events;
@@ -18,11 +18,10 @@ public sealed class SubscribeHandlers : IEventHandler<SubscribeCreateEvent>, IEv
 
     public async Task Handle(IMessageContext<SubscribeCreateEvent> @event)
     {
-        var isCurrentUserBlog = await _readWriteRepository.Get<PersonBlog>()
-            .Where(x => x.Id == @event.Message.BlogId && x.UserId == @event.Message.UserId)
-            .AnyAsync();
+        var blog = await _readWriteRepository.Get<PersonBlog>()
+            .FirstOrDefaultAsync(x => x.Id == @event.Message.BlogId);
 
-        if (isCurrentUserBlog)
+        if (blog == null || blog.UserId == @event.Message.UserId)
         {
             return;
         }
@@ -44,9 +43,8 @@ public sealed class SubscribeHandlers : IEventHandler<SubscribeCreateEvent>, IEv
             SubscriptionStartDate = @event.Message.CreatedAt,
         };
         _readWriteRepository.Add(newSubscription);
-        await _readWriteRepository.Get<PersonBlog>()
-           .Where(x => x.Id == newSubscription.BlogId)
-           .ExecuteUpdateAsync(blog => blog.SetProperty(u => u.SubscriptionsCount, u => u.SubscriptionsCount + 1));
+        _readWriteRepository.Attach(blog);
+        blog.AddSubscriber();
         await _readWriteRepository.SaveChangesAsync();
 
     }
@@ -62,9 +60,13 @@ public sealed class SubscribeHandlers : IEventHandler<SubscribeCreateEvent>, IEv
 
         _readWriteRepository.Attach(hasActiveSubscription);
         hasActiveSubscription.SubscriptionEndDate = @event.Message.CreatedAt;
-        await _readWriteRepository.Get<PersonBlog>()
-           .Where(x => x.Id == @event.Message.BlogId)
-           .ExecuteUpdateAsync(blog => blog.SetProperty(u => u.SubscriptionsCount, u => u.SubscriptionsCount - 1));
+        var blog = await _readWriteRepository.Get<PersonBlog>()
+            .FirstOrDefaultAsync(x => x.Id == @event.Message.BlogId);
+        if (blog != null)
+        {
+            _readWriteRepository.Attach(blog);
+            blog.RemoveSubscriber();
+        }
         await _readWriteRepository.SaveChangesAsync();
     }
 }

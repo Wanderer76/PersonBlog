@@ -1,0 +1,229 @@
+.postCard {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid #e7e7e9;
+  border-radius: 14px;
+  background: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.postCard:hover {
+  transform: translateY(-2px);
+  border-color: #dddde1;
+  box-shadow: 0 12px 28px rgba(24, 24, 27, 0.09);
+}
+
+.postCardMenuOpen {
+  z-index: 10;
+}
+
+.postThumbnail {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: 13px 13px 0 0;
+  background: #18181b;
+  cursor: pointer;
+}
+
+.postThumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.postThumbnailFallback {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #a1a1aa;
+  background: radial-gradient(circle at 50% 35%, #35353b 0, #18181b 65%);
+}
+
+.postThumbnailFallback span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding-left: 3px;
+  border: 1px solid #52525b;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.videoDuration,
+.postStatus {
+  position: absolute;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 11px;
+  backdrop-filter: blur(6px);
+}
+
+.videoDuration {
+  right: 10px;
+  bottom: 10px;
+  background: rgba(24, 24, 27, 0.82);
+}
+
+.postStatus {
+  top: 10px;
+  right: 10px;
+  max-width: calc(100% - 20px);
+  background: rgba(24, 24, 27, 0.82);
+  text-align: center;
+}
+
+.postStatus.status-1 { background: rgba(22, 101, 52, 0.88); }
+.postStatus.status-2 { background: rgba(194, 65, 12, 0.9); }
+.postStatus.status-3 { background: rgba(185, 28, 28, 0.9); }
+
+.videoProcessingProgress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 5px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.videoProcessingProgress > div {
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+  background: #ff7b00;
+  transition: width 180ms ease;
+}
+
+.postContent {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.postTitleRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.postTitle {
+  display: -webkit-box;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  margin: 2px 0 14px;
+  color: #27272a;
+  font-size: 16px;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: color 0.2s;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.postTitle:hover { color: #e96800; }
+
+.postMenu {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+.postMenuTrigger {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #71717a;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.postMenuTrigger:hover,
+.postMenuTrigger[aria-expanded='true'] {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.postMenuTrigger:focus-visible {
+  outline: 2px solid #ff7b00;
+  outline-offset: 2px;
+}
+
+.postMenuPopover {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  z-index: 20;
+  width: 170px;
+  padding: 6px;
+  border: 1px solid #e4e4e7;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(24, 24, 27, 0.16);
+}
+
+.postMenuPopover button {
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #27272a;
+  cursor: pointer;
+  text-align: left;
+}
+
+.postMenuPopover button:hover,
+.postMenuPopover button:focus-visible {
+  outline: 0;
+  background: #f4f4f5;
+}
+
+.postMenuPopover .postMenuDanger { color: #b91c1c; }
+.postMenuPopover .postMenuDanger:hover,
+.postMenuPopover .postMenuDanger:focus-visible { background: #fef2f2; }
+
+.postMeta {
+  margin-top: auto;
+}
+
+.postStats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  color: #85858f;
+  font-size: 12px;
+}
+
+.postStats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.postStats svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+@media (max-width: 480px) {
+  .postContent { padding: 14px; }
+}

@@ -1,6 +1,4 @@
-﻿using Profile.Domain.Events;
-
-namespace Profile.Service;
+﻿namespace Profile.Service;
 
 //TODO данный сервис должен отправлять сообщения о событиях, логики быть не должно
 public interface IReactionService

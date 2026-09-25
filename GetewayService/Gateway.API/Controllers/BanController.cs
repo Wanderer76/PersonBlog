@@ -4,9 +4,8 @@ using Infrastructure.Extensions;
 using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 
 namespace Gateway.API.Controllers;
 
@@ -22,7 +21,6 @@ public class BanController : BaseApiController
     }
 
     [HttpPost("sendPostBanRequest")]
-    [Authorize]
     [AuthFilter(Roles.User)]
     public async Task<IActionResult> SendBanRequest([FromBody] PostReportForm postReport)
     {
@@ -44,7 +42,7 @@ public class BanController : BaseApiController
             UserId = user.UserId
         };
 
-        using var client = _httpClientFactory.CreateClientContextHeaders("Reacting", HttpContext);
+        using var client = _httpClientFactory.CreateClientContextHeaders("Profile", HttpContext);
 
         var result = await client.PostAsJsonAsync("Ban/sendPostBanRequest", requestBody);
 

@@ -1,4 +1,5 @@
-﻿using Comments.Domain.Entities;
+using Comments.Domain.Entities;
+using Comments.Contracts.Events;
 using Comments.Domain.Models;
 using Comments.Domain.Services;
 using Infrastructure.Services;
@@ -25,20 +26,37 @@ internal class DefaultCommentService : ICommentService
 
     public async Task<Result<CommentCreateResponse>> CreateCommentAsync(CommentCreateRequest createRequest)
     {
+        Comment? parent = null;
         if (createRequest.ReplyTo.HasValue)
         {
-            var isReplyExists = await _repository.Get<Comment>()
-                .Where(x => x.Id == createRequest.ReplyTo.Value)
-                .AnyAsync();
-            if (!isReplyExists)
+            parent = await _repository.Get<Comment>()
+                .FirstOrDefaultAsync(x => x.Id == createRequest.ReplyTo.Value);
+            if (parent is null)
             {
                 return Result<CommentCreateResponse>.Failure(new Error("Комментария не существует"));
             }
+            if (parent.PostId != createRequest.PostId)
+                return Result<CommentCreateResponse>.Failure(new Error(nameof(createRequest.PostId),
+                    "Родительский комментарий относится к другой публикации"));
         }
 
         var user = await _currentUserService.GetCurrentUserAsync();
         var comment = new Comment(user.UserId, createRequest.PostId, createRequest.Text, createRequest.ReplyTo);
         _repository.Add(comment);
+        if (parent is not null)
+        {
+            var eventId = GuidService.GetNewGuid();
+            _repository.Add(CommentOutboxMessage.Create(new CommentReplyCreatedV1
+            {
+                EventId = eventId,
+                OccurredAt = comment.CreatedAt.ToUniversalTime(),
+                CommentId = comment.Id,
+                ParentCommentId = parent.Id,
+                PostId = comment.PostId,
+                ActorUserId = comment.UserId,
+                RecipientUserId = parent.UserId
+            }, eventId));
+        }
         await _repository.SaveChangesAsync();
         var userEntity = await _repository.Get<UserProfile>()
             .FirstOrDefaultAsync(x => x.UserId == user.UserId);
@@ -65,7 +83,6 @@ internal class DefaultCommentService : ICommentService
             .Where(x => x.PostId == postId)
             .CountAsync();
 
-
         var userIds = (await Task.WhenAll(comments.Select(x => x.UserId)
             .Distinct()
             .Select(x => _profileHttpClient.GetProfileByUserIdAsync(x))))
@@ -79,8 +96,6 @@ internal class DefaultCommentService : ICommentService
         //    .Distinct()
         //    .ToDictionaryAsync(x => x.UserId))!;
 
-
-
         var result = comments.ToTree(c => c.Id, c => c.ParentId)
             .Select(x => MapToCommentListItem(x, (userId) => userIds.TryGetValue(userId, out var user) ? user.Name : null))
             .OrderByDescending(x => x.CreatedAt)
@@ -88,7 +103,6 @@ internal class DefaultCommentService : ICommentService
 
         return new CommentsListViewModel(commentsCount, result);
     }
-
 
     public async Task<Result> RemoveCommentAsync(Guid commentId)
     {

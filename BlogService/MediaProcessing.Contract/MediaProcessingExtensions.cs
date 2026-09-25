@@ -1,4 +1,4 @@
-﻿using FFmpeg.Service;
+﻿using FileStorage.Service;
 using Infrastructure.Middleware;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

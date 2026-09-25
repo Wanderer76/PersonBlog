@@ -12,7 +12,7 @@ namespace Conference.Domain.Entities
 
         public Guid CreatorId { get; set; }
 
-        public string MessageText { get; set; }
+        public string MessageText { get; set; } = string.Empty;
 
         public DateTimeOffset CreatedAt { get; set; }
 
@@ -31,6 +31,6 @@ namespace Conference.Domain.Entities
         }
 
         [ForeignKey(nameof(ConferenceId))]
-        public ConferenceRoom Room { get; set; }
+        public ConferenceRoom Room { get; set; } = null!;
     }
 }

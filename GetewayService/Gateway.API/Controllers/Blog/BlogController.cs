@@ -1,4 +1,5 @@
-﻿using Authentication.Contract.Constants;
+using Authentication.Contract.Constants;
+using Authentication.Contract.Models;
 using Blog.Contracts;
 using Blog.Contracts.Models;
 using Blog.Contracts.Models.Blog;
@@ -7,6 +8,8 @@ using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Models;
+using System.Net.Http.Json;
 
 namespace Gateway.API.Controllers.Blog;
 
@@ -14,10 +17,16 @@ public sealed class BlogController : BaseApiController
 {
     private readonly BlogApiClient _blogClient;
     private readonly ICurrentUserService _currentUserService;
-    public BlogController(ILogger<BaseApiController> logger, BlogApiClient blogClient, ICurrentUserService currentUserService) : base(logger)
+    private readonly IHttpClientFactory _httpClientFactory;
+    public BlogController(
+        ILogger<BaseApiController> logger,
+        BlogApiClient blogClient,
+        ICurrentUserService currentUserService,
+        IHttpClientFactory httpClientFactory) : base(logger)
     {
         _blogClient = blogClient;
         _currentUserService = currentUserService;
+        _httpClientFactory = httpClientFactory;
     }
 
     /// <summary>
@@ -31,7 +40,7 @@ public sealed class BlogController : BaseApiController
         var result = await _blogClient.HasUserBlogAsync(userId);
 
         return result.IsSuccess
-            ? Ok(result.Value)
+            ? Ok(result.Value.HasBlog)
             : BadRequest(result.Errors.ToValidationProblem());
     }
 
@@ -50,7 +59,7 @@ public sealed class BlogController : BaseApiController
         var result = await _blogClient.HasUserBlogAsync(user.UserId);
 
         return result.IsSuccess
-            ? Ok(new HasBlogResponse { HasBlog = result.Value })
+            ? Ok(new HasBlogResponse { HasBlog = result.Value.HasBlog, BlogId = result.Value.BlogId })
             : BadRequest(result.Errors.ToValidationProblem());
     }
 
@@ -79,6 +88,7 @@ public sealed class BlogController : BaseApiController
     /// Получение списка уровней подписки для создания
     /// </summary>
     [HttpGet("subscriptionLevelCreate")]
+    [HttpGet("subscription-levels")]
     [AuthFilter(Roles.Blogger)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -96,6 +106,7 @@ public sealed class BlogController : BaseApiController
     /// Создание уровня подписки
     /// </summary>
     [HttpPost("subscriptionLevelCreate")]
+    [HttpPost("subscription-levels")]
     [AuthFilter(Roles.Blogger)]
     [ProducesResponseType(typeof(SubscriptionLevelModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -113,6 +124,59 @@ public sealed class BlogController : BaseApiController
 
         return result.IsSuccess
             ? Ok(result.Value)
+            : BadRequest(result.Errors.ToValidationProblem());
+    }
+
+    [HttpGet("subscription-levels/blog/{blogId:guid}")]
+    public async Task<ActionResult<IReadOnlyList<SubscriptionLevelModel>>> GetSubscriptionLevelsByBlog(Guid blogId)
+    {
+        var result = await _blogClient.GetSubscriptionsByBlogAsync(blogId);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors.ToValidationProblem());
+    }
+
+    [HttpGet("subscription-levels/{id:guid}")]
+    public async Task<ActionResult<SubscriptionLevelModel>> GetSubscriptionLevel(Guid id)
+    {
+        var result = await _blogClient.GetSubscriptionAsync(id);
+        return result.IsSuccess
+            ? Ok(result.Value)
+            : result.Errors.Any(error => error.Key == "NotFound")
+                ? NotFound(result.Errors)
+                : BadRequest(result.Errors.ToValidationProblem());
+    }
+
+    [HttpPut("subscription-levels/{id:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<SubscriptionLevelModel>> UpdateSubscriptionLevel(
+        Guid id,
+        [FromBody] SubscriptionUpdateDto form)
+    {
+        form.Id = id;
+        var result = await _blogClient.UpdateSubscriptionAsync(form);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return result.Errors.Any(error => error.Key == "NotFound")
+            ? NotFound(result.Errors)
+            : BadRequest(result.Errors.ToValidationProblem());
+    }
+
+    [HttpDelete("subscription-levels/{id:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<IActionResult> DeleteSubscriptionLevel(Guid id)
+    {
+        var result = await _blogClient.DeleteSubscriptionAsync(id);
+        if (result.IsSuccess)
+            return NoContent();
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return result.Errors.Any(error => error.Key == "NotFound")
+            ? NotFound(result.Errors)
             : BadRequest(result.Errors.ToValidationProblem());
     }
 
@@ -135,7 +199,7 @@ public sealed class BlogController : BaseApiController
     }
 
     /// <summary>
-    /// Получение информации о блоге для зрителя по ID поста (требует авторизации)
+    /// Получение информации о блоге для зрителя по ID поста с опциональной авторизацией
     /// </summary>
     [HttpGet("blogViewerInfoByPost/{postId:guid}")]
     [ProducesResponseType(typeof(BlogUserInfoViewModel), StatusCodes.Status200OK)]
@@ -144,8 +208,7 @@ public sealed class BlogController : BaseApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BlogUserInfoViewModel>> GetBlogViewerInfoByPostId(Guid postId)
     {
-        var user = await _currentUserService.GetCurrentUserAsync();
-        var result = await _blogClient.GetBlogByPostIdAsync(postId, user.UserId);
+        var result = await _blogClient.GetBlogViewerInfoByPostIdAsync(postId);
 
         return result.IsSuccess
             ? Ok(result.Value)
@@ -173,11 +236,56 @@ public sealed class BlogController : BaseApiController
     }
 
     /// <summary>
+    /// Проверяет владение блогом и активирует его как текущий пользовательский контекст.
+    /// </summary>
+    [HttpPost("context/{blogId:guid}")]
+    [AuthFilter(Roles.User)]
+    [ProducesResponseType(typeof(UserModel), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<ActionResult<UserModel>> ActivateBlogContext(
+        Guid blogId,
+        CancellationToken cancellationToken)
+    {
+        var user = await _currentUserService.GetCurrentUserAsync();
+        if (user.IsAnonymous)
+            return Unauthorized();
+
+        var blogResult = await _blogClient.GetBlogByIdAsync(blogId);
+        if (blogResult.IsFailure)
+        {
+            return blogResult.Errors.Any(error => error.Key == "NotFound")
+                ? NotFound(blogResult.Errors)
+                : BadRequest(blogResult.Errors.ToValidationProblem());
+        }
+
+        if (blogResult.Value.UserId != user.UserId)
+            return Forbid();
+
+        using var authResponse = await ActivateContextInAuthAsync(
+            user.UserId,
+            blogId,
+            cancellationToken);
+
+        if (!authResponse.IsSuccessStatusCode)
+            return StatusCode((int)authResponse.StatusCode);
+
+        var session = await authResponse.Content.ReadFromJsonAsync<UserModel>(cancellationToken);
+        return session is null
+            ? StatusCode(StatusCodes.Status502BadGateway)
+            : Ok(session);
+    }
+
+    /// <summary>
     /// Создание нового блога
     /// </summary>
     [HttpPost("create")]
+    [AuthFilter(Roles.User)]
     [ProducesResponseType(typeof(BlogModel), StatusCodes.Status200OK)]
- 
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<BlogModel>> CreateBlog([FromForm] BlogCreateRequest form)
     {
         if (!ModelState.IsValid)
@@ -185,11 +293,71 @@ public sealed class BlogController : BaseApiController
             return BadRequest(ModelState);
         }
 
+        var user = await _currentUserService.GetCurrentUserAsync();
+        if (user.IsAnonymous)
+            return Unauthorized();
+
         var result = await _blogClient.CreateBlogAsync(form);
 
-        return result.IsSuccess
-            ? Ok(result.Value)
+        if (result.IsFailure)
+        {
+            return BadRequest(result.Errors.ToValidationProblem());
+        }
+
+        if (result.Value.UserId != user.UserId)
+            return Forbid();
+
+        using var authResponse = await ActivateContextInAuthAsync(
+            user.UserId,
+            result.Value.Id,
+            HttpContext.RequestAborted);
+
+        if (!authResponse.IsSuccessStatusCode)
+        {
+            return StatusCode(
+                StatusCodes.Status502BadGateway,
+                new ProblemDetails
+                {
+                    Title = "Не удалось обновить пользовательскую сессию",
+                    Detail = "Блог создан, но AuthService не подтвердил обновление контекста пользователя.",
+                    Status = StatusCodes.Status502BadGateway
+                });
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpPut("{blogId:guid}")]
+    [AuthFilter(Roles.Blogger)]
+    public async Task<ActionResult<BlogModel>> UpdateBlog(Guid blogId, [FromForm] BlogEditRequest form)
+    {
+        form.Id = blogId;
+        var result = await _blogClient.UpdateBlogAsync(blogId, form);
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        if (result.Errors.Any(error => error.Key == "Forbidden"))
+            return Forbid();
+
+        return result.Errors.Any(error => error.Key == "NotFound")
+            ? NotFound(result.Errors)
             : BadRequest(result.Errors.ToValidationProblem());
+    }
+
+    private Task<HttpResponseMessage> ActivateContextInAuthAsync(
+        Guid userId,
+        Guid blogId,
+        CancellationToken cancellationToken)
+    {
+        var authClient = _httpClientFactory.CreateClient("Auth");
+        return authClient.PostAsJsonAsync(
+            "Auth/context",
+            new ActivateUserContextRequest(
+                userId,
+                UserContextTypes.Blog,
+                blogId,
+                Roles.BloggerRoleId),
+            cancellationToken);
     }
 
     ///// <summary>

@@ -12,6 +12,7 @@ namespace Profile.Persistence
         public DbSet<SubscribedChanel> SubscribedChanels { get; set; }
         public DbSet<AppProfile> Profiles { get; set; }
         public DbSet<PostBanRequest> PostBanRequests { get; set; }
+        public DbSet<ProfilePictureFile> ProfilePictureFiles { get; set; }
 
         public ProfileDbContext(DbContextOptions<ProfileDbContext> options) : base(options)
         {

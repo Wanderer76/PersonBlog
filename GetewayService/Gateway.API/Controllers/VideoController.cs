@@ -2,12 +2,13 @@ using Blog.Contracts.Models;
 using Blog.Contracts.Models.Blog;
 using Gateway.API.Api;
 using Gateway.API.Services;
+using Infrastructure.Middleware;
 using Infrastructure.Models;
 using Infrastructure.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Profile.Domain.Models;
+using Profile.Application.Models;
 using Shared.Services;
+using System.Net;
 
 namespace Gateway.API.Controllers;
 
@@ -15,42 +16,75 @@ namespace Gateway.API.Controllers;
 [Route("[controller]")]
 public class VideoController : BaseApiController
 {
-    private const string HLSType = "application/x-mpegURL";
-    private readonly IFileStorage storage;
+    private const string HlsManifestType = "application/vnd.apple.mpegurl";
+    private const string HlsSegmentType = "video/mp2t";
+    private readonly IFileStorageFactory _storageFactory;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ICacheService _cache;
 
-    public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IHttpClientFactory httpClientFactory, ICacheService cache)
+    public VideoController(ILogger<VideoController> logger, IFileStorageFactory factory, IHttpClientFactory httpClientFactory)
         : base(logger)
     {
-        storage = factory.CreateFileStorage();
+        _storageFactory = factory;
         _httpClientFactory = httpClientFactory;
-        _cache = cache;
     }
 
     [HttpGet("{blogId}/{postId}/{*file}")]
-    [ResponseCache(NoStore = false, Duration = 6000, Location = ResponseCacheLocation.Client)]
-    public async Task<IActionResult> GetVideoSegmentsOrManifest(Guid blogId, Guid postId, string file)
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> GetVideoSegmentsOrManifest(
+        Guid blogId,
+        Guid postId,
+        string file,
+        CancellationToken cancellationToken)
     {
-        if (file.EndsWith("playlist.m3u8"))
+        if (!IsPostFile(postId, file))
         {
-            //var key = new FileCacheKey(file);
-            //var playlistParsed = await _cache.GetCachedDataAsync<string>(key);
-            //if (playlistParsed == null)
-            //{
-            var playlistParsed = await storage.ProcessHLSManifestAsync(blogId, file);
-            //await _cache.SetCachedDataAsync(key, playlistParsed, TimeSpan.FromMinutes(15));
-            //}
+            return NotFound();
+        }
 
-            return Content(playlistParsed, HLSType);
-        }
-        else
+        var accessStatus = await _httpClientFactory.CheckVideoAccessAsync(
+            blogId,
+            postId,
+            cancellationToken);
+
+        if (accessStatus == HttpStatusCode.NotFound || accessStatus == HttpStatusCode.Forbidden)
         {
-            var result = new MemoryStream();
-            await storage.ReadFileAsync(blogId, file, result);
-            result.Position = 0;
-            return File(result, HLSType);
+            return NotFound();
         }
+
+        if (accessStatus != HttpStatusCode.NoContent)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        }
+
+        using var storage = _storageFactory.CreateFileStorage();
+        if (file.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase))
+        {
+            var playlist = await storage.ReadHlsManifestAsync(blogId, file, cancellationToken);
+            return Content(playlist, HlsManifestType);
+        }
+
+        if (!file.EndsWith(".ts", StringComparison.OrdinalIgnoreCase))
+        {
+            return NotFound();
+        }
+
+        Response.ContentType = HlsSegmentType;
+        await storage.ReadFileAsync(blogId, file, Response.Body, cancellationToken);
+        return new EmptyResult();
+    }
+
+    private static bool IsPostFile(Guid postId, string file)
+    {
+        if (string.IsNullOrWhiteSpace(file) || file.Contains('\\'))
+        {
+            return false;
+        }
+
+        var parts = file.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            && Guid.TryParse(parts[0], out var filePostId)
+            && filePostId == postId
+            && parts.All(part => part is not "." and not "..");
     }
 
     [HttpGet("video/{postId:guid}")]
@@ -59,11 +93,11 @@ public class VideoController : BaseApiController
         try
         {
             var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-            var hasUser = HttpContext.TryGetUserFromContext(out var userId);
+            HttpContext.TryGetUserFromContext(out var userId);
 
             var blog = await _httpClientFactory.GetBlogModelAsync(postId);
             var post = _httpClientFactory.GetPostDetailViewAsync(HttpContext, postId);
-            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.Value?.Id);
+            var userInfo = _httpClientFactory.GetUserViewInfoAsync(postId, userId, remoteIp!, blog.IsSuccess ? blog.Value?.Id : null);
 
             await Task.WhenAll(post, userInfo).ConfigureAwait(false);
 
@@ -80,16 +114,16 @@ public class VideoController : BaseApiController
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            _logger.LogError(ex, "Failed to load video data for post {PostId}", postId);
             return BadRequest(ex);
         }
     }
 
     [HttpPost("setView")]
-    [Authorize]
+    [AuthFilter]
     public async Task<IActionResult> SetViewToVideo([FromBody] SetViewRequest viewRequest)
     {
-        var client = _httpClientFactory.CreateClient("Reacting");
+        var client = _httpClientFactory.CreateClient("Profile");
         var result = await client.PostAsJsonAsync("Reaction/setView", viewRequest);
         if (!result.IsSuccessStatusCode)
             return BadRequest(result.Content);
@@ -99,7 +133,7 @@ public class VideoController : BaseApiController
     [HttpPost("setReaction/{postId:guid}")]
     public async Task<IActionResult> SetReactionToVideo(Guid postId, bool? isLike)
     {
-        var client = _httpClientFactory.CreateClient("Reacting");
+        var client = _httpClientFactory.CreateClient("Profile");
 
         var result = await client.PostAsync($"Reaction/setReaction/{postId}?isLike={isLike}", null);
         if (!result.IsSuccessStatusCode)
@@ -109,8 +143,3 @@ public class VideoController : BaseApiController
 }
 
 internal record VideoDataViewModel(PostDetailViewModel? Post, BlogUserInfoViewModel? Blog, ReactionHistoryViewItem? UserPostInfo, List<string> Comment);
-
-file record FileCacheKey(string File) : ICacheKey
-{
-    public string GetKey() => $"{nameof(FileCacheKey)}:{File}";
-}

@@ -1,4 +1,4 @@
-﻿using Authentication.Domain.Entities;
+using Authentication.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
 using Shared.Services;
@@ -8,10 +8,14 @@ namespace AuthenticationApplication.HostedServices;
 public class TokenCleanerHostedService : BackgroundService
 {
     private readonly IServiceProvider serviceProvider;
+    private readonly ILogger<TokenCleanerHostedService> logger;
 
-    public TokenCleanerHostedService(IServiceProvider serviceProvider)
+    public TokenCleanerHostedService(
+        IServiceProvider serviceProvider,
+        ILogger<TokenCleanerHostedService> logger)
     {
         this.serviceProvider = serviceProvider;
+        this.logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,7 +41,7 @@ public class TokenCleanerHostedService : BackgroundService
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logger.LogError(ex, "Failed to clean expired authentication tokens");
             }
             finally
             {

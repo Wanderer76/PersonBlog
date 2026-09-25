@@ -1,0 +1,317 @@
+.create-text-post-page {
+  min-height: 100vh;
+  padding: 40px 24px 72px;
+  box-sizing: border-box;
+  background: #f6f7f9;
+  color: #18181b;
+  font-size: 16px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.create-text-post-form {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  overflow: visible;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 20px 55px rgba(24, 24, 27, 0.08);
+}
+
+.create-text-post-form__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.create-text-post-form__header h1 {
+  margin: 5px 0 8px;
+  color: #18181b;
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.create-text-post-form__header p,
+.create-text-post-form__section-heading p,
+.create-text-post-form__actions > p {
+  margin: 0;
+  color: #71717a;
+  font-size: 14px;
+}
+
+.create-text-post-form__eyebrow {
+  color: #ea580c;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.create-text-post-form__close {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  background: #fff;
+  color: #52525b;
+  cursor: pointer;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.create-text-post-form__close:hover {
+  background: #f4f4f5;
+  color: #18181b;
+}
+
+.create-text-post-form__close:focus-visible {
+  outline: 3px solid rgba(249, 115, 22, 0.25);
+  outline-offset: 2px;
+}
+
+.create-text-post-form__body {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 32px;
+}
+
+.create-text-post-form__section {
+  min-width: 0;
+}
+
+.create-text-post-form__section + .create-text-post-form__section {
+  padding-top: 32px;
+  border-top: 1px solid #ededee;
+}
+
+.create-text-post-form__section-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.create-text-post-form__section-heading > span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: #fff1e8;
+  color: #ea580c;
+  font-weight: 800;
+}
+
+.create-text-post-form__section-heading h2 {
+  margin: 0 0 3px;
+  color: #27272a;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.create-text-post-form__field {
+  margin-top: 20px;
+}
+
+.create-text-post-form__field > label {
+  display: block;
+  margin-bottom: 8px;
+  color: #27272a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.create-text-post-form .rich-text-editor {
+  border-color: #d4d4d8;
+  border-radius: 12px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.create-text-post-form .rich-text-editor:focus-within {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+}
+
+.create-text-post-form .rich-text-editor-toolbar {
+  padding: 10px 12px;
+  background: #fafafa;
+}
+
+.create-text-post-form .rich-text-editor-toolbar button:hover {
+  border-color: #fb923c;
+  background: #fff7ed;
+}
+
+.create-text-post-form .rich-text-editor-toolbar button.is-active {
+  border-color: #f97316;
+  background: #fff1e8;
+  color: #c2410c;
+}
+
+.create-text-post-form .rich-text-editor-content {
+  min-height: 230px;
+  padding: 18px;
+}
+
+.create-text-post-form .rich-text-editor-content .ProseMirror {
+  min-height: 210px;
+  font-size: 16px;
+}
+
+.create-text-post-form .media-uploader-dropzone {
+  padding: 42px 24px;
+  border-color: #d4d4d8;
+  border-radius: 14px;
+  background: #fafafa;
+}
+
+.create-text-post-form .media-uploader-dropzone:hover,
+.create-text-post-form .media-uploader-dropzone.is-active {
+  border-color: #f97316;
+  background: #fff7ed;
+}
+
+.create-text-post-form .media-uploader-dropzone p {
+  margin: 6px 0;
+  color: #52525b;
+  font-size: 15px;
+}
+
+.create-text-post-form .media-uploader-hint {
+  color: #71717a;
+  font-size: 13px;
+}
+
+.create-text-post-form__access {
+  padding: 24px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 14px;
+  background: #fafafa;
+}
+
+.create-text-post-form__access .create-text-post-form__section-heading {
+  margin-bottom: 18px;
+}
+
+.create-text-post-form__access select {
+  background-color: #fff;
+}
+
+.create-text-post-form__error {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.create-text-post-form__error--general {
+  margin: 22px 32px 0;
+  padding: 13px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  font-size: 14px;
+}
+
+.create-text-post-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 32px;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0 0 20px 20px;
+  background: rgba(250, 250, 250, 0.96);
+}
+
+.create-text-post-form__actions > div {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+
+.create-text-post-form__actions button {
+  min-height: 44px;
+  border-radius: 10px;
+}
+
+.create-text-post-loading {
+  width: min(960px, 100%);
+  margin: 0 auto;
+  padding: 72px 24px;
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+  color: #71717a;
+  text-align: center;
+  box-shadow: 0 20px 55px rgba(24, 24, 27, 0.08);
+}
+
+.create-text-post-loading p {
+  margin: 0 0 18px;
+}
+
+@media (max-width: 640px) {
+  .create-text-post-page {
+    padding: 0 0 40px;
+  }
+
+  .create-text-post-form {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .create-text-post-form__header,
+  .create-text-post-form__body {
+    padding: 22px 18px;
+  }
+
+  .create-text-post-form__header {
+    gap: 14px;
+  }
+
+  .create-text-post-form__actions {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px 18px;
+    border-radius: 0;
+  }
+
+  .create-text-post-form__actions > p {
+    display: none;
+  }
+
+  .create-text-post-form__actions > div,
+  .create-text-post-form__actions button {
+    width: 100%;
+  }
+
+  .create-text-post-form__actions button {
+    flex: 1;
+  }
+
+  .create-text-post-form .rich-text-editor-content,
+  .create-text-post-form .rich-text-editor-content .ProseMirror {
+    min-height: 180px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-text-post-form .rich-text-editor,
+  .create-text-post-form .media-uploader-dropzone {
+    transition: none;
+  }
+}

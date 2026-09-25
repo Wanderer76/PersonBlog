@@ -13,7 +13,7 @@ public interface IVideoService
     [Obsolete("", true)]
     Task<Result<UploadVideoProgress>> GetUploadVideoMetadata(Guid fileId);
     Task<Result> InitVideoUploadAsync(InitiateUploadRequest initiateUploadRequest);
-    Task CompleteUploadAsync(Guid postId);
+    Task<Result> CompleteUploadAsync(Guid postId);
 
 }
 public class InitiateUploadRequest

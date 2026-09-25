@@ -1,0 +1,46 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.button:hover:not(:disabled) { transform: translateY(-1px); }
+.button:disabled { opacity: 0.58; cursor: not-allowed; }
+.button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.primary { background: var(--color-brand-500); color: white; }
+.primary:hover:not(:disabled) { background: var(--color-brand-600); }
+.secondary { background: var(--color-surface-subtle); border-color: var(--color-border); color: var(--color-text-primary); }
+.secondary:hover:not(:disabled) { background: var(--color-border); }
+.danger { background: var(--color-danger-500); color: white; }
+.danger:hover:not(:disabled) { background: var(--color-danger-600); }
+.ghost { background: transparent; color: var(--color-text-primary); }
+.ghost:hover:not(:disabled) { background: var(--color-surface-subtle); }
+.small { min-height: 32px; padding: 6px 12px; font-size: 12px; }
+.medium { min-height: 40px; padding: 8px 16px; font-size: 14px; }
+.large { min-height: 48px; padding: 12px 24px; font-size: 16px; }
+.fullWidth { width: 100%; }
+.loading .label { visibility: hidden; }
+.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spin 700ms linear infinite;
+}
+
+@keyframes button-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 480px) {
+  .medium { min-height: 44px; }
+}

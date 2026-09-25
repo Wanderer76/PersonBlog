@@ -1,182 +1,139 @@
-﻿using Conference.Domain.Services;
-using Infrastructure.Services;
+using Conference.Domain.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Shared.Services;
-using Shared.Utils;
 
-namespace Conference.Service.Hubs
+namespace Conference.Service.Hubs;
+
+[Authorize]
+public class ConferenceHub(
+    IConferenceRoomService conferenceRoomService,
+    IConferenceStateStore stateStore) : Hub<IConferenceHub>
 {
-    public class ConferenceHub : Hub<IConferenceHub>
+    public async Task CloseConnectionAsync(Guid roomId)
     {
-        private readonly IConferenceRoomService _conferenceRoomService;
-        private readonly ICacheService _cacheService;
-
-        public ConferenceHub(IConferenceRoomService conferenceRoomService, ICacheService cacheService)
+        var conferenceId = GetConferenceId();
+        if (roomId != conferenceId)
         {
-            _conferenceRoomService = conferenceRoomService;
-            _cacheService = cacheService;
+            throw new HubException("The requested room does not match the current connection.");
         }
 
-        public async Task CloseConnectionAsync(Guid roomId)
+        var userId = GetUserId();
+        await RemoveConnectionAsync(conferenceId, userId);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, conferenceId.ToString());
+        Context.Abort();
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        var conferenceId = GetConferenceId();
+        var userId = GetUserId();
+
+        if (!await conferenceRoomService.IsConferenceActiveAsync(conferenceId))
         {
-            var session = TryGetSession();
-            session.AssertFound();
-            await _conferenceRoomService.RemoveParticipantToConferenceAsync(roomId, session.Value);
+            throw new HubException("Conference does not exist or is closed.");
         }
 
-        public override async Task OnConnectedAsync()
+        await stateStore.AddConnectionAsync(conferenceId, userId, Context.ConnectionId);
+        try
         {
-            var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext();
-            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            var conferenceId = Guid.Parse(value.First()!);
-            var sessionId = TryGetSession();
-
-            if (sessionId == null)
-                return;
-
-            //if (!await _conferenceRoomService.IsConferenceActiveAsync(conferenceId))
-            //{
-            //    return;
-            //}
-
-            var key = new ConferenceChatModelCacheKey(conferenceId);
-            var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
-            if (model != null)
-            {
-                await _conferenceRoomService.AddParticipantToConferenceAsync(conferenceId, sessionId!.Value);
-                if (!model.ConferenceParticipants.Any(x => x.Key == sessionId!.Value))
-                {
-                    model.ConferenceParticipants.Add(sessionId!.Value, connectionId);
-                    await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromHours(24));
-                }
-            }
-            else
-            {
-                model = new ConferenceChatModel
-                {
-                    ConferenceId = conferenceId,
-                    ConferenceParticipants = new Dictionary<Guid, string>
-                    {
-                        {sessionId!.Value,connectionId}
-                    }
-                };
-                await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
-            }
-            await Groups.AddToGroupAsync(connectionId, conferenceId.ToString());
-            //await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
+            await conferenceRoomService.AddParticipantToConferenceAsync(conferenceId, userId, GetUserName());
+            await Groups.AddToGroupAsync(Context.ConnectionId, conferenceId.ToString());
             await base.OnConnectedAsync();
         }
-
-        public override async Task OnDisconnectedAsync(Exception? exception)
+        catch
         {
-            var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext();
-            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            var conferenceId = value.First();
-            //var sessionId = TryGetSession();
+            await stateStore.RemoveConnectionAsync(conferenceId, userId, Context.ConnectionId);
+            throw;
+        }
+    }
 
-            //if (sessionId == null)
-            //{
-            //    return;
-            //}
-            await Groups.RemoveFromGroupAsync(connectionId, conferenceId);
-            //var key = new ConferenceChatModelCacheKey(conferenceId);
-            //var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
-            //if (model != null)
-            //{
-            //    if (model.ConferenceParticipants.TryGetValue(sessionId.Value, out var connection))
-            //    {
-            //        await _conferenceRoomService.RemoveParticipantToConferenceAsync(conferenceId, sessionId.Value);
-            //        model.ConferenceParticipants.Remove(sessionId.Value);
-            //        await Groups.RemoveFromGroupAsync(connection, conferenceId.ToString());
-            //        await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
-            //    }
-            //    //await Clients.Group(conferenceId.ToString()).OnConferenceConnect($"Присоединилось пользователей: {model.ConferenceParticipants.Count}");
-            //}
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        try
+        {
+            var conferenceId = GetConferenceId();
+            var userId = GetUserId();
+            await RemoveConnectionAsync(conferenceId, userId);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, conferenceId.ToString());
+        }
+        finally
+        {
             await base.OnDisconnectedAsync(exception);
         }
+    }
 
-        public async Task PauseVideo(double time)
+    public Task PauseVideo(double time)
+    {
+        ValidateTime(time);
+        var conferenceId = GetConferenceId().ToString();
+        return Clients.GroupExcept(conferenceId, [Context.ConnectionId]).OnPause(time);
+    }
+
+    public Task SetCurrentTime(double time)
+    {
+        return stateStore.SetCurrentTimeIfGreaterAsync(GetConferenceId(), time);
+    }
+
+    public Task ResumeVideo()
+    {
+        var conferenceId = GetConferenceId().ToString();
+        return Clients.GroupExcept(conferenceId, [Context.ConnectionId]).OnPlay();
+    }
+
+    public async Task Seek(double time)
+    {
+        ValidateTime(time);
+        var conferenceId = GetConferenceId();
+        await stateStore.SetCurrentTimeAsync(conferenceId, time);
+        await Clients.GroupExcept(conferenceId.ToString(), [Context.ConnectionId]).OnTimeSeek(time);
+    }
+
+    private async Task RemoveConnectionAsync(Guid conferenceId, Guid userId)
+    {
+        var isLastUserConnection = await stateStore.RemoveConnectionAsync(
+            conferenceId,
+            userId,
+            Context.ConnectionId);
+
+        if (isLastUserConnection)
         {
-            var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext();
-            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            var conferenceId = value.First()!;
-            await Clients.GroupExcept(conferenceId, [connectionId]).OnPause(time);
-        }
-
-        public async Task SetCurrentTime(double time)
-        {
-            var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext();
-            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            var conferenceId = Guid.Parse(value.First()!);
-            var key = new ConferenceChatModelCacheKey(conferenceId);
-            var model = (await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key))!;
-            model.CurrentTime = Math.Max(model.CurrentTime, time);
-            await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
-        }
-
-        public async Task ResumeVideo()
-        {
-            try
-            {
-                var connectionId = Context.ConnectionId;
-
-                var httpContext = Context.GetHttpContext();
-                httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-                var conferenceId = value.First()!;
-                var key = new ConferenceChatModelCacheKey(Guid.Parse(conferenceId));
-                var model = await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key);
-                await Clients.GroupExcept(conferenceId, [connectionId]).OnPlay();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-
-        public async Task Seek(double time)
-        {
-            var connectionId = Context.ConnectionId;
-            var httpContext = Context.GetHttpContext();
-            httpContext!.Request.Query.TryGetValue("conferenceId", out var value);
-            var conferenceId = value.First()!;
-            var key = new ConferenceChatModelCacheKey(Guid.Parse(conferenceId));
-            var model = (await _cacheService.GetCachedDataAsync<ConferenceChatModel>(key))!;
-            model.CurrentTime = time;
-            await _cacheService.SetCachedDataAsync(key, model, TimeSpan.FromMinutes(50));
-            await Clients.GroupExcept(conferenceId, [connectionId]).OnTimeSeek(time);
-            //await Clients.Group(conferenceId).OnTimeSeek(time);
-        }
-
-        private Guid? TryGetSession()
-        {
-            var context = Context.GetHttpContext();
-            var session = context.Request.Query.TryGetValue("token", out var value);
-            return !session ? null : JwtUtils.GetTokenRepresentaion(value).Value.UserId;
+            await conferenceRoomService.RemoveParticipantToConferenceAsync(conferenceId, userId);
         }
     }
-    public class ConferenceChatModel
-    {
-        public Guid ConferenceId { get; set; }
-        public double CurrentTime { get; set; }
-        public Dictionary<Guid, string> ConferenceParticipants { get; set; }
-    }
-    public class ConferenceChatModelCacheKey : ICacheKey
-    {
-        public const string Key = "HubConference";
-        private readonly Guid _id;
 
-        public ConferenceChatModelCacheKey(Guid id)
+    private Guid GetConferenceId()
+    {
+        var value = Context.GetHttpContext()?.Request.Query["conferenceId"].FirstOrDefault();
+        if (!Guid.TryParse(value, out var conferenceId))
         {
-            _id = id;
+            throw new HubException("A valid conferenceId is required.");
         }
 
-        public string GetKey() => $"{Key}:{_id}";
+        return conferenceId;
+    }
 
-        public static implicit operator string(ConferenceChatModelCacheKey key) => $"{Key}:{key._id}";
+    private Guid GetUserId()
+    {
+        var value = Context.User?.FindFirst(AppClaimTypes.UserId)?.Value;
+        if (!Guid.TryParse(value, out var userId) || userId == Guid.Empty)
+        {
+            throw new HubException("An authenticated user is required.");
+        }
+
+        return userId;
+    }
+
+    private string GetUserName()
+    {
+        return Context.User?.FindFirst(AppClaimTypes.Login)?.Value ?? "unknown";
+    }
+
+    private static void ValidateTime(double time)
+    {
+        if (!double.IsFinite(time) || time < 0)
+        {
+            throw new HubException("Video time must be a finite, non-negative value.");
+        }
     }
 }

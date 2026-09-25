@@ -1,118 +1,108 @@
-﻿using Conference.Domain.Entities;
+using Conference.Domain.Entities;
 using Conference.Domain.Models;
 using Conference.Domain.Services;
-using Conference.Service.Extensions;
-using Infrastructure.Extensions;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
-using Shared.Utils;
 
-namespace Conference.Service.Implementation
+namespace Conference.Service.Implementation;
+
+internal sealed class DefaultConferenceChatService(
+    IReadWriteRepository<IConferenceEntity> repository,
+    ICacheService cacheService,
+    ICurrentUserService currentUserService) : IConferenceChatService
 {
-    internal class DefaultConferenceChatService : IConferenceChatService
+    private const int MaxPageSize = 100;
+
+    public async Task<MessageModel> CreateMessageAsync(Guid userId, CreateMessageForm messageForm)
     {
-        private readonly IReadWriteRepository<IConferenceEntity> _readWriteRepository;
-        private readonly ICacheService _cacheService;
-        private readonly ICurrentUserService _currentUserService;
-
-        public DefaultConferenceChatService(IReadWriteRepository<IConferenceEntity> readWriteRepository, ICacheService cacheService, ICurrentUserService currentUserService)
+        var messageText = messageForm.Message?.Trim();
+        if (string.IsNullOrEmpty(messageText) || messageText.Length > 4000)
         {
-            _readWriteRepository = readWriteRepository;
-            _cacheService = cacheService;
-            _currentUserService = currentUserService;
+            throw new ArgumentException("Message must contain between 1 and 4000 characters.", nameof(messageForm));
         }
 
-        public async Task<MessageModel> CreateMessageAsync(Guid sessionId, CreateMessageForm messageForm)
+        var conference = await repository.Get<ConferenceRoom>()
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == messageForm.ConferenceId);
+
+        if (conference == null)
         {
-            var conference = await _cacheService.GetConferenceRoomCacheAsync(new ConferenceRoomKey(messageForm.ConferenceId));
-            if (conference == null)
-            {
-                conference = await _readWriteRepository.Get<ConferenceRoom>()
-                    .Include(x => x.Participants)
-                    .FirstOrDefaultAsync(x => x.Id == messageForm.ConferenceId);
-                await _cacheService.UpdateConferenceRoomCacheAsync(conference);
-            }
-            if (conference == null)
-                throw new ArgumentException("no such conference");
-
-            var user = await _currentUserService.GetCurrentUserAsync();
-
-            user.AssertFound();
-
-            var message = new Message(GuidService.GetNewGuid(), conference.Id, user.UserId, messageForm.Message);
-            _readWriteRepository.Add(message);
-            await _readWriteRepository.SaveChangesAsync();
-
-            var result = new MessageModel(user.UserName, message.MessageText, message.CreatedAt.DateTime, null);
-
-            var key = new MessageModelCacheKey(conference.Id);
-
-            var allData = (await _cacheService.GetCachedDataAsync<List<MessageModel>>(key)) ?? [];
-            allData.Add(result);
-
-            await _cacheService.SetCachedDataAsync(key, allData, TimeSpan.FromHours(1));
-            return result;
+            throw new ArgumentException("No such conference.", nameof(messageForm));
         }
 
-        public async Task<IReadOnlyList<MessageModel>> GetLastMessagesAsync(Guid conferenceId, int offset, int limit)
+        if (!conference.IsActive)
         {
-            var conference = await _cacheService.GetConferenceRoomCacheAsync(new ConferenceRoomKey(conferenceId));
-            conference ??= await _readWriteRepository.Get<ConferenceRoom>()
-                .Include(x => x.Participants)
-                .FirstOrDefaultAsync(x => x.Id == conferenceId);
-
-            if (conference == null)
-                throw new ArgumentException("no such conference");
-
-            var participantsUserNames = (await _cacheService.GetCachedDataAsync<UserModel>(conference.Participants.Select(x => new SessionKey(x.SessionId))))
-                .Where(x => x.UserId != Guid.Empty)
-                .ToDictionary(x => x.UserId, x => x.UserName);
-
-
-            var total = offset * limit;
-            var key = new MessageModelCacheKey(conferenceId);
-            var messages = await _cacheService.GetCachedDataAsync<List<MessageModel>>(key);
-            if (messages == null)
-            {
-                var allMessages = await _readWriteRepository.Get<Message>().Where(x => x.ConferenceId == conferenceId).CountAsync();
-                var allPages = allMessages / limit;
-                if (allPages < offset)
-                    return [];
-
-                messages = await _readWriteRepository.Get<Message>()
-                    .Where(x => x.ConferenceId == conferenceId)
-                    .OrderByDescending(x => x.CreatedAt)
-                    .Skip(offset)
-                    .Take(limit)
-                    .AsAsyncEnumerable()
-                    .Select(x =>
-                    {
-                        var userName = participantsUserNames.TryGetValue(x.CreatorId, out var name) ? name ?? "unknown" : "unknown";
-                        return new MessageModel(userName, x.MessageText, x.CreatedAt.DateTime, null);
-                    })
-                    .ToListAsync();
-                await _cacheService.SetCachedDataAsync(key, messages, TimeSpan.FromHours(1));
-                return messages;
-            }
-            else
-            {
-                var allPages = Math.Max(messages.Count / limit, 1);
-                if (allPages < offset)
-                    return [];
-                return messages.OrderByDescending(x => x.CreatedAt).Skip(offset).Take(limit).OrderBy(x => x.CreatedAt).ToList();
-            }
-
+            throw new InvalidOperationException("Conference is closed.");
         }
+
+        if (!conference.Participants.Any(x => x.UserId == userId))
+        {
+            throw new UnauthorizedAccessException("Join the conference before sending messages.");
+        }
+
+        var user = await currentUserService.GetCurrentUserAsync();
+        if (user.IsAnonymous || user.UserId != userId)
+        {
+            throw new UnauthorizedAccessException("The current user session is invalid.");
+        }
+
+        var message = new Message(
+            GuidService.GetNewGuid(),
+            conference.Id,
+            user.UserId,
+            messageText);
+        repository.Add(message);
+        await repository.SaveChangesAsync();
+
+        return new MessageModel(user.UserName, message.MessageText, message.CreatedAt.DateTime, null);
     }
 
-    readonly struct MessageModelCacheKey(Guid conferenceId) : ICacheKey
+    public async Task<IReadOnlyList<MessageModel>> GetLastMessagesAsync(Guid conferenceId, int offset, int limit)
     {
-        private const string Key = nameof(MessageModel);
-        private readonly Guid _conferenceId = conferenceId;
+        if (offset < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(offset));
+        }
 
-        public string GetKey() => $"{Key}:{_conferenceId}";
+        if (limit is <= 0 or > MaxPageSize)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), $"Limit must be between 1 and {MaxPageSize}.");
+        }
+
+        var conference = await repository.Get<ConferenceRoom>()
+            .Include(x => x.Participants)
+            .FirstOrDefaultAsync(x => x.Id == conferenceId);
+        if (conference == null)
+        {
+            throw new ArgumentException("No such conference.", nameof(conferenceId));
+        }
+
+        var messages = await repository.Get<Message>()
+            .Where(x => x.ConferenceId == conferenceId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync();
+
+        var userKeys = messages
+            .Select(x => x.CreatorId)
+            .Distinct()
+            .Select(x => new SessionKey(x));
+        var creators = await cacheService.GetCachedDataAsync<UserModel>(userKeys);
+        var creatorNames = creators
+            .GroupBy(x => x.UserId)
+            .ToDictionary(x => x.Key, x => x.First().UserName);
+
+        return messages
+            .Select(x => new MessageModel(
+                creatorNames.TryGetValue(x.CreatorId, out var name) ? name ?? "unknown" : "unknown",
+                x.MessageText,
+                x.CreatedAt.DateTime,
+                null))
+            .Reverse()
+            .ToList();
     }
 }

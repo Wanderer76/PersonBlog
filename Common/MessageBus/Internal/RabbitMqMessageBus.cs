@@ -2,6 +2,7 @@
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -19,18 +20,23 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     private readonly IServiceScopeFactory _serviceScope;
     private readonly Lazy<Task<IConnection>> _connectionLazy;
     private readonly MessageBusInfoContainer _subscriptionInfo;
+    private readonly ILogger<RabbitMqMessageBus> _logger;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedValues;
     private readonly ConcurrentDictionary<string, SubscriptionContext> _subscriptions = new();
     private readonly IRequestClient requestClient;
 
     private static readonly JsonSerializerOptions _baseEventSerializerOptions = new() { Converters = { new BaseEventJsonConverter() } };
     private static readonly JsonSerializerOptions _deserializeOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly CreateChannelOptions _publisherChannelOptions = new(
+        publisherConfirmationsEnabled: true,
+        publisherConfirmationTrackingEnabled: true);
 
     public RabbitMqMessageBus(
         RabbitMqConnection config,
         IServiceScopeFactory serviceScope,
         IOptions<MessageBusInfoContainer> subscriptionInfo,
-        IRequestClient requestClient)
+        IRequestClient requestClient,
+        ILogger<RabbitMqMessageBus> logger)
     {
         _factory = new ConnectionFactory
         {
@@ -41,6 +47,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         };
         _subscriptionInfo = subscriptionInfo.Value;
         _serviceScope = serviceScope;
+        _logger = logger;
         _cachedValues = new();
 
         // Ленивая инициализация ОСНОВНОГО соединения (для публикации/подписки)
@@ -117,15 +124,15 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
                     cancellationToken: cancellationToken);
             }
 
-            var subscribeMethod = typeof(RabbitMqMessageBus).GetMethod(nameof(StartConsumerAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var genericSubscribe = subscribeMethod.MakeGenericMethod(handlerConfig.HandlerType);
-
-            await (Task)genericSubscribe.Invoke(this, [queueName])!;
+            await StartConsumerAsync(queueName);
         }
         catch (Exception ex)
         {
-            // ❗ Логируем, но не роняем весь сервис из-за одной очереди
-            // logger.LogError(ex, "Failed to initialize subscription for {HandlerType}", handlerConfig.HandlerType);
+            _logger.LogError(
+                ex,
+                "Failed to initialize RabbitMQ subscription for {EventType}",
+                handlerConfig.HandlerType);
+            throw;
         }
     }
 
@@ -133,7 +140,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
 
     #region Consumer Management
 
-    private async Task StartConsumerAsync<T>(string queueName)
+    private async Task StartConsumerAsync(string queueName)
     {
         // Проверяем, что подписка ещё не активна (защита от дублей)
         if (_subscriptions.ContainsKey(queueName))
@@ -148,7 +155,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         await channel.BasicQosAsync(0, 10, false);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
-        consumer.ReceivedAsync += async (model, ea) => await ProcessMessageAsync<T>(channel, ea);
+        consumer.ReceivedAsync += async (model, ea) => await ProcessMessageAsync(channel, ea);
 
         var consumerTag = await channel.BasicConsumeAsync(queueName, autoAck: false, consumer: consumer);
 
@@ -163,7 +170,32 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         await channel.QueueBindAsync("errors", "error", "");
     }
 
-    private async Task ProcessMessageAsync<T>(IChannel channel, BasicDeliverEventArgs ea)
+    private async Task ProcessMessageAsync(IChannel channel, BasicDeliverEventArgs ea)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(ea.Body);
+            if (!document.RootElement.TryGetProperty(nameof(BaseEvent.EventType), out var eventTypeElement)
+                || eventTypeElement.GetString() is not { } eventType
+                || !_subscriptionInfo.HandlerTypes.TryGetValue(eventType, out var handlerInfo))
+            {
+                await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
+                return;
+            }
+
+            var processMethod = typeof(RabbitMqMessageBus)
+                .GetMethod(nameof(ProcessTypedMessageAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var genericProcessMethod = processMethod.MakeGenericMethod(handlerInfo.HandlerType);
+
+            await (Task)genericProcessMethod.Invoke(this, [channel, ea])!;
+        }
+        catch
+        {
+            await RejectMessageAsync(channel, ea.DeliveryTag, requeue: false);
+        }
+    }
+
+    private async Task ProcessTypedMessageAsync<T>(IChannel channel, BasicDeliverEventArgs ea)
     {
         try
         {
@@ -178,7 +210,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
             using var scope = _serviceScope.CreateScope();
 
             // 🔍 Находим все хендлеры для этого типа события: IEventHandler<TConcrete>
-            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(concreteEvent.EventType);
+            var handlers = scope.ServiceProvider.GetKeyedServices<IEventHandler<T>>(typeof(T).Name);
 
             if (!handlers.Any())
             {
@@ -259,7 +291,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     public async Task SendMessageAsync<T>(string exchangeName, string routingKey, T message) where T : BaseEvent
     {
         var connection = await GetConnectionInternalAsync();
-        using var channel = await connection.CreateChannelAsync();
+        using var channel = await connection.CreateChannelAsync(_publisherChannelOptions);
 
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         await channel.BasicPublishAsync(
@@ -278,7 +310,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
     {
         cfg ??= new MessageProperty();
         var connection = await GetConnectionInternalAsync();
-        using var channel = await connection.CreateChannelAsync();
+        using var channel = await connection.CreateChannelAsync(_publisherChannelOptions);
 
         var baseEvent = BaseEvent<T>.Create(message);
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(baseEvent));
@@ -301,7 +333,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         ConfigureProperties<T>(cfg);
 
         var connection = await GetConnectionInternalAsync();
-        using var channel = await connection.CreateChannelAsync();
+        using var channel = await connection.CreateChannelAsync(_publisherChannelOptions);
 
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
         await channel.BasicPublishAsync(
@@ -327,7 +359,7 @@ internal sealed class RabbitMqMessageBus : IMessagePublish, IMessageSubscriber
         cfg.Exchange ??= attr?.Exchange ?? publishCfg?.Exchange;
 
         var connection = await GetConnectionInternalAsync();
-        using var channel = await connection.CreateChannelAsync();
+        using var channel = await connection.CreateChannelAsync(_publisherChannelOptions);
 
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message, _baseEventSerializerOptions));
         await channel.BasicPublishAsync(

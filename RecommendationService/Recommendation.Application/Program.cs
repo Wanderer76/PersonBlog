@@ -1,24 +1,47 @@
-using Blog.Persistence;
-using FileStorage.Service;
+using Authentication.Contract;
 using Infrastructure.Extensions;
-using Recommendation.Service;
+using Infrastructure.Interface;
+using MessageBus;
+using MessageBus.Configs;
+using Recommendation.Application.Services;
+using Recommendation.Persistence;
+using Recommendation.Services;
+using Recommendation.Services.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.AddServiceDefaults();
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCustomJwtAuthentication();
+builder.Services.AddAuthorization();
 builder.Services.AddRedisCache(builder.Configuration);
-builder.Services.AddBlogServices();
-builder.Services.AddFileStorage(builder.Configuration);
-builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddUserSessionServices(options =>
+    options.BaseUrl = builder.Configuration["AppUrls:Auth"]
+        ?? throw new InvalidOperationException("Auth service URL is not configured."));
+builder.Services.AddRecommendationEventServices();
+builder.Services.AddRecommendationFeedServices(options =>
+    builder.Configuration.GetSection(RecommendationFeedOptions.SectionName).Bind(options));
+builder.Services.AddRecommendationPersistence(builder.Configuration);
+builder.Services.AddScoped<IRecommendationSubjectResolver, RecommendationSubjectResolver>();
+builder.Services
+    .AddRabbitMqMessageBus(
+        builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()
+        ?? throw new InvalidOperationException("RabbitMQ connection is not configured."))
+    .AddRecommendationEventSubscriptions();
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
+{
+    var initializers = scope.ServiceProvider.GetServices<IDbInitializer>();
+    foreach (var initializer in initializers)
+    {
+        initializer.Initialize();
+    }
+}
+
 {
     app.UseSwagger();
     app.UseSwaggerUI();
@@ -26,6 +49,7 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapDefaultEndpoints();
 app.MapControllers();

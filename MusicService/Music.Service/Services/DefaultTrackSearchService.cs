@@ -34,7 +34,7 @@ namespace Music.Service.Services
             {
                 return await GetTrackByFilterAsync(new SearchFilter { Ids = recommendations.Value }, page, size);
             }
-            return new(0, 0, []);
+            return new(0, 0, 0, []);
         }
 
         public async Task<PagedListViewModel<TrackViewItem>> GetTrackByFilterAsync(SearchFilter filter, int page, int size)
@@ -75,9 +75,8 @@ namespace Music.Service.Services
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
-            var items = await tracks
-                .ToAsyncEnumerable()
-                .SelectAwait(async item =>
+            var items = await Task.WhenAll(tracks
+                .Select(async item =>
                 {
                     var data = new TrackViewItem(
                     item.Id,
@@ -89,8 +88,7 @@ namespace Music.Service.Services
                     item.IsLike
                     );
                     return data;
-                })
-                .ToListAsync();
+                }));
 
             return PagedListViewModel.Create(items, size, count);
         }

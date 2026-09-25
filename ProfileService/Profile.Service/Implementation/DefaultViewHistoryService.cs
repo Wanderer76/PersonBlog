@@ -1,8 +1,9 @@
 ﻿using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Profile.Application.Models;
+using Profile.Application.Services;
 using Profile.Domain.Entities;
-using Profile.Domain.Models;
-using Profile.Domain.Services;
+using Recommendation.Contracts.Events;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
@@ -41,6 +42,20 @@ namespace Profile.Service.Implementation
             {
                 _repository.Add(new UserPostView(postViewer.UserId, postViewer.PostId, postViewer.WatchedTime, postViewer.IsCompleteWatch));
             }
+
+            var eventId = GuidService.GetNewGuid();
+            var recommendationEvent = new UserInteractionRecordedV1
+            {
+                EventId = eventId,
+                OccurredAt = DateTimeService.Now(),
+                UserId = postViewer.UserId,
+                PostId = postViewer.PostId,
+                Type = postViewer.IsCompleteWatch
+                    ? UserInteractionType.ViewCompleted
+                    : UserInteractionType.ViewProgress,
+                WatchedSeconds = postViewer.WatchedTime
+            };
+            _repository.Add(ReactingEvent.Create(recommendationEvent, eventId));
             await _repository.SaveChangesAsync();
             return Result<UpdateViewState>.Success(state);
         }
@@ -85,7 +100,6 @@ namespace Profile.Service.Implementation
             var reaction = await _repository.Get<PostReaction>()
                           .Where(x => x.PostId == postId && x.UserId == userId)
                           .FirstOrDefaultAsync();
-
 
             var subscription = blogId.HasValue
                 ? await _repository.Get<SubscribedChanel>()

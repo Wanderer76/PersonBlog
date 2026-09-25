@@ -157,7 +157,7 @@ namespace Music.Service.Services
 
             using var fileStorage = _fileStorageFactory.CreateFileStorage();
 
-            var result = await trackList.ToAsyncEnumerable().SelectAwait(async track =>
+            var result = await Task.WhenAll(trackList.Select(async track =>
             {
                 var thumbnail = track.ThumbnailMetadata != null
                 ? await fileStorage.GetFileUrlAsync(track.ThumbnailMetadata.Id, track.ThumbnailMetadata.ObjectName)
@@ -166,7 +166,7 @@ namespace Music.Service.Services
                 var trackFileInfo = new TrackFileInfo(song, track.Metadata.Duration);
                 var artists = track.Aritsts.Select(x => new ArtistInfo(x.ArtistId, x.Name)).ToList();
                 return new TrackViewItem(track.Id, track.Title, thumbnail, track.AlbumId, trackFileInfo, artists, false);
-            }).ToListAsync();
+            }));
 
             return PagedListViewModel.Create(result, size, totalCount);
         }

@@ -6,7 +6,7 @@ using Shared.Persistence;
 
 namespace Comments.Domain.Services
 {
-    public class UserCreateEventHandler : IEventHandler<UserCreateEvent>
+    public class UserCreateEventHandler : IEventHandler<ProfileRegisterEvent>
     {
         private readonly IReadWriteRepository<ICommentEntity> _repository;
 
@@ -15,7 +15,7 @@ namespace Comments.Domain.Services
             _repository = repository;
         }
 
-        public async Task Handle(IMessageContext<UserCreateEvent> @event)
+        public async Task Handle(IMessageContext<ProfileRegisterEvent> @event)
         {
             var message = @event.Message;
 

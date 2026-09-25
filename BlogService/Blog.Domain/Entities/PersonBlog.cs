@@ -1,4 +1,4 @@
-﻿using Shared.Utils;
+using Shared.Utils;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
@@ -56,4 +56,21 @@ public class PersonBlog : IBlogEntity
 
         return blog;
     }
+
+    public Result Update(string title, string? description, string? photoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return Result.Failure(new Error(nameof(title), "Blog title is empty"));
+        }
+
+        Title = title.Trim();
+        Description = description?.Trim();
+        PhotoUrl = photoUrl;
+        return Result.Success();
+    }
+
+    public void AddSubscriber() => SubscriptionsCount++;
+
+    public void RemoveSubscriber() => SubscriptionsCount = Math.Max(SubscriptionsCount - 1, 0);
 }

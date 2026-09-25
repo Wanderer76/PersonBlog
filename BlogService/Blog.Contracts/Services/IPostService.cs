@@ -1,5 +1,6 @@
-﻿using Blog.Contracts.Models;
+using Blog.Contracts.Models;
 using Blog.Contracts.Models.Post;
+using Blog.Contracts.Models.TextPost;
 using Blog.Domain.Entities;
 using Shared.Models;
 using Shared.Utils;
@@ -19,11 +20,16 @@ public interface IPostService
     /// <param name="output"></param>
     [Obsolete("Пригоден для .mp4 сейчас не поддерживается")]
     Task<Guid> GetVideoChunkStreamByPostIdAsync(Guid postId, Guid fileMetadataId, long offset, long length, Stream output);
-    Task RemovePostByIdAsync(Guid id);
+    Task<Result> RemovePostByIdAsync(Guid id);
+    Task<bool> CanAccessVideoAsync(Guid blogId, Guid postId);
     Task<PostDetailViewModel?> GetDetailPostByIdAsync(Guid postId);
+    Task<Result<TextPostDetailResponse>> GetTextPostDetailAsync(Guid postId);
+    Task<bool> RegisterPostViewAsync(Guid postId);
     Task SetReactionToPost(ReactionCreateModel value);
     IEnumerable<SelectItem<PostVisibility>> GetPostVisibilityList();
     Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelAsync(IEnumerable<Guid> postIds);
-    Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(IEnumerable<Guid> excludePostIds);
+    Task<IReadOnlyList<PostCommonModel>> GetPostCommonModelWithExcludeIdsAsync(
+        IEnumerable<Guid> excludePostIds,
+        PostType postType);
     Task<IReadOnlyList<PostCommonModel>> GetCurrentUserPostListAsync();
 }

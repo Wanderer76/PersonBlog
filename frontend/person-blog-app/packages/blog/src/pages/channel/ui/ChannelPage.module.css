@@ -1,0 +1,215 @@
+.channelContainer {
+    width: 100%;
+}
+
+.profileContainer {
+    width: min(100%, 1440px);
+    margin: 0 auto;
+    padding: 32px 24px 56px;
+    box-sizing: border-box;
+}
+
+.profileHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding: 28px 32px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.avatarSection {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 24px;
+}
+
+.avatarWrapper {
+    width: 104px;
+    height: 104px;
+    flex: 0 0 104px;
+    overflow: hidden;
+    border: 4px solid #fff4eb;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #ffd8bc;
+}
+
+.profileAvatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profileInfo {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.blogTitle {
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: clamp(24px, 3vw, 32px);
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.profileMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.postDescription {
+    max-width: 680px;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.postsSection {
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.postsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 20px;
+}
+
+.postsGrid > article {
+    height: 100%;
+}
+
+.emptyState {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 48px 20px;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.pageState,
+.loadingState,
+.errorState {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 32px 20px;
+    color: var(--color-text-secondary);
+    text-align: center;
+}
+
+.pageState {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.errorState,
+.pageState[role='alert'] {
+    color: var(--color-danger-600);
+}
+
+.aboutSection {
+    max-width: 760px;
+    padding: 8px 0 16px;
+}
+
+.aboutSection h2 {
+    margin: 0 0 16px;
+    color: var(--color-text-primary);
+    font-size: 20px;
+}
+
+.aboutSection p {
+    margin: 0 0 24px;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+}
+
+.details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-subtle);
+}
+
+.detailItem span:first-child {
+    color: var(--color-text-muted);
+    font-size: 13px;
+}
+
+.detailItem span:last-child {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .profileContainer {
+        padding: 20px 16px 40px;
+    }
+
+    .profileHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .postsSection {
+        padding: 18px;
+    }
+
+    .postsGrid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+    .postsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .profileHeader {
+        padding: 20px;
+    }
+
+    .avatarSection {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .avatarWrapper {
+        width: 88px;
+        height: 88px;
+        flex-basis: 88px;
+    }
+}

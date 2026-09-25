@@ -1,32 +1,39 @@
 using Authentication.Contract;
 using Authentication.Contract.Events;
 using Blog.Contracts.Events;
+using FileStorage.Service;
 using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Configs;
 using Profile.API.HostedService;
-using Profile.Domain.Events;
 using Profile.Persistence;
 using Profile.Service;
+using Recommendation.Contracts;
+using Recommendation.Contracts.Events;
+using Shared.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.AddServiceDefaults();
+builder.Host.AddSerilogLogger(builder.Configuration);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddViewReactingPersistence(builder.Configuration);
-builder.Services.AddVideoReactingService();
-builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; }); 
+builder.Services.AddProfilePersistence(builder.Configuration);
+builder.Services.AddProfileServices();
+builder.Services.AddUserSessionServices(s => { s.BaseUrl = builder.Configuration["AppUrls:Auth"]!; });
 builder.Services.AddCustomJwtAuthentication();
 builder.Services.AddAuthorization();
 builder.Services.AddCors();
+builder.Services.AddScoped<IDateTimeManager, DateTimeService>();
+builder.Services.AddScoped<IGuidManager, GuidService>();
 builder.Services.AddRedisCache(builder.Configuration);
+builder.Services.AddFileStorage(builder.Configuration);
 builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitMQ:Connection").Get<RabbitMqConnection>()!)
-    .AddSubscription<Profile.Domain.Events.VideoViewEvent, VideoViewEventHandler>(x =>
+    .AddSubscription<Profile.Service.VideoViewEvent, VideoViewEventHandler>(x =>
     {
         x.QueueName = QueueConstants.QueueName;
         x.Exchange = new MessageBus.Models.ExchangeParam { RoutingKey = QueueConstants.RoutingKey, Name = QueueConstants.Exchange };
@@ -53,6 +60,16 @@ builder.Services.AddRabbitMqMessageBus(builder.Configuration.GetSection("RabbitM
     .AddSubscription<BlogCreateEvent, BlogCreateEventHandler>(x =>
     {
         x.QueueName = "profile-blog";
+    })
+    .AddMessage<UserInteractionRecordedV1>(x =>
+    {
+        x.Exchange = RecommendationExchange.Name;
+        x.RoutingKey = RecommendationExchange.UserInteractionRecordedV1RoutingKey;
+    })
+    .AddMessage<SubscriptionChangedV1>(x =>
+    {
+        x.Exchange = RecommendationExchange.Name;
+        x.RoutingKey = RecommendationExchange.SubscriptionChangedV1RoutingKey;
     });
 
 builder.Services.AddHttpClient("Blog", x =>

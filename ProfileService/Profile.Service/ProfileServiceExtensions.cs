@@ -1,0 +1,34 @@
+using Infrastructure.Middleware;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Profile.Application.Services;
+using Profile.Service.HttpClients;
+using Profile.Service.Implementation;
+
+namespace Profile.Service
+{
+    public static class ProfileServiceExtensions
+    {
+        public static void AddProfileServices(this IServiceCollection services)
+        {
+            services.AddScoped<IViewHistoryService, DefaultViewHistoryService>();
+            services.AddScoped<IReactionService, DefaultReactionService>();
+            services.AddScoped<ISubscribeService, DefaultSubscriptionService>();
+            services.AddScoped<IProfileService, DefaultProfileService>();
+            services.AddScoped<IBanService, DefaultPostBanService>();
+            services.AddScoped<IProfilePictureStore, ProfilePictureStore>();
+        }
+        public static IHttpClientBuilder AddProfileHttpClient(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddHttpClient("Profile", x =>
+            {
+                x.BaseAddress = new Uri(configuration["AppUrls:Profile"]);
+            }).AddHttpMessageHandler<HeaderClientHandler>();
+
+            return services.AddHttpClient<ProfileHttpClient>(x =>
+            {
+                x.BaseAddress = new Uri(configuration["AppUrls:Profile"]);
+            }).AddHttpMessageHandler<HeaderClientHandler>();
+        }
+    }
+}

@@ -2,10 +2,15 @@
 
 public interface IGuidManager
 {
-    Guid GetNewGuid() => GuidService.GetNewGuid();
+    Guid GetNewGuid() => Guid.NewGuid();
 }
 
-public static class GuidService
+public class GuidService : IGuidManager
 {
     public static Guid GetNewGuid() => Guid.NewGuid();
 }
+
+//public static class GuidService
+//{
+//    public static Guid GetNewGuid() => Guid.NewGuid();
+//}

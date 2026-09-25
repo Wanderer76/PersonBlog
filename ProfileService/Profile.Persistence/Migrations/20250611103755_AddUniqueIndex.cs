@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace VideoReacting.Persistence.Migrations
+namespace Profile.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class AddUniqueIndex : Migration

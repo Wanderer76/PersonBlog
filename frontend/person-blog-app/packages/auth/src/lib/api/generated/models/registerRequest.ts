@@ -15,5 +15,7 @@ export interface RegisterRequest {
   /** @minLength 1 */
   userName: string;
   /** @nullable */
+  clientId?: string | null;
+  /** @nullable */
   redirectUrl?: string | null;
 }

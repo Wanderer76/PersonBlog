@@ -1,0 +1,495 @@
+using Blog.Contracts;
+using Blog.Contracts.Models;
+using Authentication.Contract.Constants;
+using Infrastructure.Extensions;
+using Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using PlayListService.Domain.Entities;
+using PlayListService.Persistence;
+using PlayListService.Services;
+using PlayListService.Services.Models;
+using PlayListService.Services.Services;
+using Shared.Models;
+using Shared.Persistence;
+using Shared.Services;
+using System.Net;
+using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
+
+namespace PlayListServiceTests;
+
+public sealed class CrudPlayListServiceTests
+{
+    [Fact]
+    public async Task AddVideoAsync_ReturnsFailure_WhenPlaylistDoesNotExist()
+    {
+        await using var fixture = CreateFixture();
+
+        var result = await fixture.Service.AddVideoAsync(new PlayListItemAddRequest
+        {
+            PlayListId = Guid.NewGuid(),
+            PostsToAdd = [Guid.NewGuid()]
+        });
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task RemoveVideoAsync_ReturnsFailure_WhenPlaylistDoesNotExist()
+    {
+        await using var fixture = CreateFixture();
+
+        var result = await fixture.Service.RemoveVideoAsync(new PlayListItemRemoveRequest
+        {
+            PlayListId = Guid.NewGuid(),
+            PostId = Guid.NewGuid()
+        });
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task ChangePostPositionAsync_ReturnsFailure_WhenPlaylistDoesNotExist()
+    {
+        await using var fixture = CreateFixture();
+
+        var result = await fixture.Service.ChangePostPositionAsync(new ChangePostPositionRequest
+        {
+            PlaylistId = Guid.NewGuid(),
+            PostId = Guid.NewGuid(),
+            Destination = 1
+        });
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task RemovePlayListAsync_ReturnsFailure_WhenPlaylistDoesNotExist()
+    {
+        await using var fixture = CreateFixture();
+
+        var result = await fixture.Service.RemovePlayListAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task RemoveVideoAsync_ReturnsFailure_WhenPostDoesNotExist()
+    {
+        await using var fixture = CreateFixture();
+        var playlist = await fixture.SeedPlaylistAsync([Guid.NewGuid()]);
+
+        var result = await fixture.Service.RemoveVideoAsync(new PlayListItemRemoveRequest
+        {
+            PlayListId = playlist.Id,
+            PostId = Guid.NewGuid()
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Single(playlist.PlayListItems);
+    }
+
+    [Fact]
+    public async Task GetPlayListPostPagedAsync_PreservesStoredPlaylistOrder()
+    {
+        var firstPostId = Guid.NewGuid();
+        var secondPostId = Guid.NewGuid();
+        var thirdPostId = Guid.NewGuid();
+        var postsReturnedByBlogService = new[]
+        {
+            CreatePost(thirdPostId),
+            CreatePost(firstPostId),
+            CreatePost(secondPostId)
+        };
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(postsReturnedByBlogService)
+            }));
+        var playlist = await fixture.SeedPlaylistAsync([firstPostId, secondPostId, thirdPostId]);
+
+        var result = await fixture.Service.GetPlayListPostPagedAsync(playlist.Id, page: 1, pageSize: 3);
+
+        Assert.Equal(
+            [firstPostId, secondPostId, thirdPostId],
+            result.Items.Select(x => x.Id));
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_ReturnsFailure_WhenRequestedPostIsNotAnAvailableVideo()
+    {
+        var textPostId = Guid.NewGuid();
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(Array.Empty<PostCommonModel>())
+            }));
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "My playlist",
+            Kind = PlayListKindModel.Collection,
+            PostIds = [textPostId]
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayLists.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_CreatesPlaylist_WhenAllRequestedPostsAreAvailableVideos()
+    {
+        var videoPostId = Guid.NewGuid();
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { CreatePost(videoPostId) })
+            }));
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "My playlist",
+            Kind = PlayListKindModel.Collection,
+            PostIds = [videoPostId]
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(videoPostId, (await fixture.Context.PlayListItems.SingleAsync()).PostId);
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_RejectsUnsupportedThumbnailType()
+    {
+        await using var fixture = CreateFixture();
+        await using var stream = new MemoryStream([1, 2, 3]);
+        var thumbnail = new FormFile(stream, 0, stream.Length, "Thumbnail", "cover.svg")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/svg+xml"
+        };
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "Unsafe cover",
+            Thumbnail = thumbnail
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayLists.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_SavesOptionalThumbnailAndLinksItToPlaylist()
+    {
+        await using var fixture = CreateFixture();
+        await using var stream = new MemoryStream([1, 2, 3]);
+        var thumbnail = new FormFile(stream, 0, stream.Length, "Thumbnail", "cover.webp")
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = "image/webp"
+        };
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "With cover",
+            Thumbnail = thumbnail
+        });
+
+        Assert.True(result.IsSuccess);
+        var file = await fixture.Context.Set<PlayListFile>().SingleAsync();
+        Assert.Equal(result.Value.Id, file.PlaylistId);
+        Assert.Equal(file.Id, (await fixture.Context.PlayLists.SingleAsync()).ThumbnailId);
+        Assert.Equal(file.ObjectName, result.Value.ThumbnailUrl);
+    }
+
+    [Fact]
+    public async Task AddVideoAsync_ReturnsFailure_WhenRequestedPostIsNotAnAvailableVideo()
+    {
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(Array.Empty<PostCommonModel>())
+            }));
+        var playlist = await fixture.SeedPlaylistAsync([Guid.NewGuid()]);
+
+        var result = await fixture.Service.AddVideoAsync(new PlayListItemAddRequest
+        {
+            PlayListId = playlist.Id,
+            PostsToAdd = [Guid.NewGuid()]
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Single(await fixture.Context.PlayListItems.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_CreatesTextCollection_WithForeignPost()
+    {
+        var postId = Guid.NewGuid();
+        var post = CreatePost(postId, PostTypeModel.Text);
+        var user = CreateUser(Roles.UserRoleId);
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { post })
+            }), user);
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "Saved articles",
+            Kind = PlayListKindModel.Collection,
+            ContentType = PlayListContentTypeModel.Text,
+            PostIds = [postId]
+        });
+
+        Assert.True(result.IsSuccess);
+        var playlist = await fixture.Context.PlayLists.SingleAsync();
+        Assert.Equal(PlayListKind.Collection, playlist.Kind);
+        Assert.Equal(PlayListContentType.Text, playlist.ContentType);
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_RejectsAuthoredPlaylist_ForUserWithoutBloggerRole()
+    {
+        var user = CreateUser(Roles.UserRoleId);
+        await using var fixture = CreateFixture(user: user);
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "Not allowed",
+            Kind = PlayListKindModel.Authored,
+            ContentType = PlayListContentTypeModel.Video
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayLists.ToListAsync());
+    }
+
+    [Fact]
+    public async Task CreatePlayListAsync_RejectsForeignPost_InAuthoredPlaylist()
+    {
+        var user = CreateUser(Roles.BloggerRoleId);
+        var foreignPost = CreatePost(Guid.NewGuid(), PostTypeModel.Video, Guid.NewGuid());
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { foreignPost })
+            }), user);
+
+        var result = await fixture.Service.CreatePlayListAsync(new PlayListService.Services.Models.CreatePlayListRequest
+        {
+            Title = "My videos",
+            Kind = PlayListKindModel.Authored,
+            ContentType = PlayListContentTypeModel.Video,
+            PostIds = [foreignPost.Id]
+        });
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task AddVideoAsync_RejectsTextPost_ForVideoCollection()
+    {
+        var textPost = CreatePost(Guid.NewGuid(), PostTypeModel.Text);
+        await using var fixture = CreateFixture(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new[] { textPost })
+            }));
+        var playlist = await fixture.SeedPlaylistAsync([], PlayListContentType.Video, PlayListKind.Collection);
+
+        var result = await fixture.Service.AddVideoAsync(new PlayListItemAddRequest
+        {
+            PlayListId = playlist.Id,
+            PostsToAdd = [textPost.Id]
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Empty(await fixture.Context.PlayListItems.ToListAsync());
+    }
+
+    private static PostCommonModel CreatePost(
+        Guid id,
+        PostTypeModel postType = PostTypeModel.Video,
+        Guid? ownerUserId = null) => new()
+    {
+        Id = id,
+        Title = id.ToString(),
+        PostType = postType,
+        Creator = new PostCreatorModel
+        {
+            UserId = ownerUserId ?? Guid.NewGuid(),
+            BlogId = Guid.NewGuid(),
+            Name = "Author"
+        }
+    };
+
+    private static ServiceFixture CreateFixture(HttpMessageHandler? postHandler = null, UserModel? user = null)
+    {
+        user ??= CreateUser(Roles.UserRoleId, Roles.BloggerRoleId);
+        var services = new ServiceCollection();
+        services.AddDbContext<PlayListDbContext>(options =>
+            options
+                .UseInMemoryDatabase($"playlist-tests-{Guid.NewGuid()}")
+                .ConfigureWarnings(warnings => warnings.Ignore(
+                    Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning)));
+        services.AddDefaultRepository<PlayListDbContext, IPlayListEntity>();
+        services.AddSingleton<ICurrentUserService>(new StubCurrentUserService(user));
+        services.AddSingleton<IFileStorageFactory, StubFileStorageFactory>();
+        services.AddSingleton<ICacheService, StubCacheService>();
+        services.AddScoped(serviceProvider => new PostApiClient(
+            new HttpClient(postHandler ?? new FixedResponseHandler(
+                new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = JsonContent.Create(Array.Empty<PostCommonModel>())
+                }))
+            {
+                BaseAddress = new Uri("http://blog/api/")
+            },
+            serviceProvider.GetRequiredService<ICacheService>()));
+        services.AddScoped(_ => new BlogApiClient(new HttpClient(new FixedResponseHandler(
+            new HttpResponseMessage(HttpStatusCode.NotFound)))
+        {
+            BaseAddress = new Uri("http://blog/api/")
+        }));
+        services.AddPlayListService();
+
+        return new ServiceFixture(services.BuildServiceProvider(), user.UserId);
+    }
+
+    private static UserModel CreateUser(params Guid[] roles) => new(
+        Guid.NewGuid(),
+        "playlist-owner",
+        null,
+        Guid.NewGuid(),
+        [.. roles]);
+
+    private sealed class ServiceFixture : IAsyncDisposable
+    {
+        private readonly ServiceProvider provider;
+        private readonly AsyncServiceScope scope;
+        private readonly Guid userId;
+
+        public ServiceFixture(ServiceProvider provider, Guid userId)
+        {
+            this.provider = provider;
+            this.userId = userId;
+            scope = provider.CreateAsyncScope();
+            Service = scope.ServiceProvider.GetRequiredService<IPlayListService>();
+            Context = scope.ServiceProvider.GetRequiredService<PlayListDbContext>();
+        }
+
+        public IPlayListService Service { get; }
+        public PlayListDbContext Context { get; }
+
+        public async Task<PlayList> SeedPlaylistAsync(
+            List<Guid> postIds,
+            PlayListContentType contentType = PlayListContentType.Video,
+            PlayListKind kind = PlayListKind.Authored)
+        {
+            var playlist = PlayList.Create(
+                Guid.NewGuid(),
+                DateTimeOffset.UtcNow,
+            "My playlist",
+            userId,
+            thumbnailId: null,
+                contentType,
+                kind,
+            postIds).Value;
+            Context.Add(playlist);
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+            return playlist;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await scope.DisposeAsync();
+            await provider.DisposeAsync();
+        }
+    }
+
+    private sealed class FixedResponseHandler(HttpResponseMessage response) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) => Task.FromResult(response);
+    }
+
+    private sealed class StubCurrentUserService(UserModel user) : ICurrentUserService
+    {
+        public Task<UserModel> GetCurrentUserAsync() => Task.FromResult(user);
+    }
+
+    private sealed class StubCacheService : ICacheService
+    {
+        public Task<T?> GetCachedDataAsync<T>(ICacheKey key) => Task.FromResult<T?>(default);
+
+        public Task<IEnumerable<T>> GetCachedDataAsync<T>(IEnumerable<ICacheKey> keys) =>
+            Task.FromResult<IEnumerable<T>>([]);
+
+        public Task SetCachedDataAsync<T>(ICacheKey key, T data, TimeSpan ttl) where T : notnull =>
+            Task.CompletedTask;
+
+        public Task RemoveCachedDataAsync(ICacheKey key) => Task.CompletedTask;
+    }
+
+    private sealed class StubFileStorageFactory : IFileStorageFactory
+    {
+        public IFileStorage CreateFileStorage() => new StubFileStorage();
+    }
+
+    private sealed class StubFileStorage : IFileStorage
+    {
+        public Task<string> PutFileAsync(Guid bucketId, string objectName, Stream input, CancellationToken cancellationToken = default) =>
+            Task.FromResult(objectName);
+
+        public Task ReadFileAsync(Guid bucketId, string objectName, Stream output, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<string> GetFileUrlAsync(Guid bucketId, string objectName, CancellationToken cancellationToken = default) =>
+            Task.FromResult(objectName);
+
+        public Task RemoveFileAsync(Guid bucketId, string objectName, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task RemoveFilesByPrefixAsync(Guid bucketId, string prefix, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task RemoveBucketAsync(Guid bucketId, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task CreateTempBucketAsync(Guid bucketId, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<string> PutFileChunkAsync(
+            Guid bucketId,
+            Guid id,
+            Stream input,
+            ChunkUploadingInfo options,
+            CancellationToken cancellationToken = default) => Task.FromResult(id.ToString());
+
+        public Task<long> ReadFileByChunksAsync(
+            Guid bucketId,
+            string objectName,
+            long offset,
+            long length,
+            Stream output,
+            CancellationToken cancellationToken = default) => Task.FromResult(length);
+
+        public async IAsyncEnumerable<(string ObjectName, IReadOnlyDictionary<string, string> Headers)> GetAllBucketObjects(
+            Guid bucketId,
+            ChunkUploadingInfo options,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+}

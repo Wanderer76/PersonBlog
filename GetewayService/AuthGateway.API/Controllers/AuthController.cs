@@ -2,6 +2,7 @@
 using AuthGateway.API.Services;
 using Infrastructure.Extensions;
 using Infrastructure.Models;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthGateway.API.Controllers;
@@ -30,9 +31,9 @@ public class AuthController(ILogger<AuthController> logger, IHttpClientFactory _
 
     [HttpPost("refresh")]
     [Produces(typeof(AuthResponse))]
-    public async Task<ActionResult<AuthResponse>> Refresh(string refreshToken)
+    public async Task<ActionResult<AuthResponse>> Refresh([FromBody] RefreshTokenRequest request)
     {
-        var response = await _httpClientFactory.RefreshAsync(HttpContext, refreshToken);
+        var response = await _httpClientFactory.RefreshAsync(HttpContext, request.RefreshToken);
         return ToActionResult(response);
     }
 
@@ -40,13 +41,22 @@ public class AuthController(ILogger<AuthController> logger, IHttpClientFactory _
     public async Task<ActionResult<RedirectResponse>> Authorize(string clientId, string redirectUri, string response_type, string state, string returnUrl)
     {
         using var client = _httpClientFactory.CreateClient("Auth");
-        var result = await client.GetFromJsonAsync<Result<RedirectResponse>>($"OAuth/authorize?clientId={clientId}&redirectUri={redirectUri}&response_type={response_type}&state={state}&returnUrl={returnUrl}");
+        var requestUri = QueryHelpers.AddQueryString("OAuth/authorize", new Dictionary<string, string?>
+        {
+            ["client_id"] = clientId,
+            ["redirect_uri"] = redirectUri,
+            ["response_type"] = response_type,
+            ["state"] = state,
+            ["returnUrl"] = returnUrl
+        });
+        var result = await client.GetFromJsonAsync<Result<RedirectResponse>>(requestUri);
         return ToActionResult(result);
     }
 
     // 2. Обмен кода на токен (делается с бэкенда React приложения или напрямую, если SPA)
     [HttpPost("token")]
-    public async Task<IActionResult> Token([FromBody] TokenRequest body)
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<AuthResponse>> Token([FromBody] TokenRequest body)
     {
         using var client = _httpClientFactory.CreateClient("Auth");
         var result = await client.PostAsync($"OAuth/token?grant_type={body.grant_type}&code={body.code}&client_id={body.client_id}&client_secret={body.client_secret}&redirect_uri={body.redirect_uri}", null);

@@ -1,0 +1,24 @@
+using Blog.Contracts.Services;
+using Blog.Service.Services.Implementation;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Blog.Service.Extensions
+{
+    public static class BlogServiceExtensions
+    {
+        public static void AddBlogServices(this IServiceCollection services)
+        {
+            services.AddScoped<IPostService, DefaultPostService>();
+            services.AddScoped<IBlogPostV2Service, DefaultBlogPostV2Service>();
+            services.AddScoped<IBlogService, DefaultBlogService>();
+            services.AddScoped<IVideoService, DefaultVideoService>();
+            services.AddScoped<IUserPostService, DefaultUserPostService>();
+            //services.AddScoped<ISubscriptionService, DefaultSubscriptionService>();
+            services.AddScoped<ISubscriptionLevelService, DefaultSubscriptionLevelService>();
+            services.AddScoped<ICategoryService, DefaultCategoryService>();
+            services.AddScoped<ISubscriberDirectoryService, DefaultSubscriberDirectoryService>();
+            services.AddScoped<OutboxPublisher>();
+            services.AddScoped<PostFileCleanupService>();
+        }
+    }
+}

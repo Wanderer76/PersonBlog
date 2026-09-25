@@ -17,12 +17,18 @@ internal sealed class DefaultVideoService : IVideoService
     private readonly IReadWriteRepository<IBlogEntity> _context;
     private readonly ICacheService _cacheService;
     private readonly IFileStorageFactory _fileStorageFactory;
+    private readonly ICurrentUserService _currentUserService;
     public const int LifeTimeInMinutes = 60000;
-    public DefaultVideoService(IReadWriteRepository<IBlogEntity> context, ICacheService cacheService, IFileStorageFactory fileStorageFactory)
+    public DefaultVideoService(
+        IReadWriteRepository<IBlogEntity> context,
+        ICacheService cacheService,
+        IFileStorageFactory fileStorageFactory,
+        ICurrentUserService currentUserService)
     {
         _context = context;
         _cacheService = cacheService;
         _fileStorageFactory = fileStorageFactory;
+        _currentUserService = currentUserService;
     }
     [Obsolete("", true)]
     public async Task<Result<UploadVideoProgress>> CreateUploadVideoMetadata(CreateUploadVideoProgressRequest uploadVideoChunk)
@@ -111,25 +117,44 @@ internal sealed class DefaultVideoService : IVideoService
 
     public async Task<Result> InitVideoUploadAsync(InitiateUploadRequest initiateUploadRequest)
     {
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
         var post = await _context.Get<Post>()
-            .FirstAsync(x => x.Id == initiateUploadRequest.PostId);
+            .Include(x => x.VideoPostInfo)
+            .FirstOrDefaultAsync(x => x.Id == initiateUploadRequest.PostId);
+
+        if (post == null)
+        {
+            return Result.Failure(new Error("NotFound", "Пост не найден"));
+        }
+
+        if (post.BlogId != currentUser.BlogId)
+        {
+            return Result.Failure(new Error("Forbidden", "Пост не принадлежит текущему пользователю"));
+        }
 
         if (post.Type != PostType.Video)
         {
             return Result.Failure(new Error("Пост не является постом с видео"));
         }
 
-        var exists = await _context.Get<VideoFile>()
-            .FirstOrDefaultAsync(x => x.PostId == post.Id);
-
-        if (exists != null)
-        {
-            _context.Attach(exists);
-            exists.PostId = Guid.Empty;
-        }
-
         _context.Attach(post);
         post.ProcessState = ProcessState.Load;
+
+        var existingFiles = await _context.Get<VideoFile>()
+            .Where(x => x.PostId == post.Id)
+            .ToListAsync();
+
+        using var transaction = await _context.BeginTransactionAsync();
+        if (existingFiles.Count > 0)
+        {
+            post.VideoPostInfo.VideoFileId = null;
+            foreach (var existingFile in existingFiles)
+                _context.Remove(existingFile);
+
+            // The old rows must be deleted before the replacement is inserted,
+            // otherwise the unique (PostId, Resolution, ContentType) index fails.
+            await _context.SaveChangesAsync();
+        }
 
         var metadata = new VideoFile
         {
@@ -146,19 +171,63 @@ internal sealed class DefaultVideoService : IVideoService
         };
         _context.Add(metadata);
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
         return Result.Success();
     }
 
-    public async Task CompleteUploadAsync(Guid postId)
+    public async Task<Result> CompleteUploadAsync(Guid postId)
     {
-        var metadata = await _context.Get<VideoFile>()
-                  .Where(x => x.PostId == postId)
-                  .FirstAsync();
-
-
+        var currentUser = await _currentUserService.GetCurrentUserAsync();
         var post = await _context.Get<Post>()
             .Include(x => x.VideoPostInfo)
-            .FirstAsync(x => x.Id == metadata.PostId);
+            .FirstOrDefaultAsync(x => x.Id == postId);
+
+        if (post == null)
+        {
+            return Result.Failure(new Error("NotFound", "Пост не найден"));
+        }
+
+        if (post.BlogId != currentUser.BlogId)
+        {
+            return Result.Failure(new Error("Forbidden", "Пост не принадлежит текущему пользователю"));
+        }
+
+        // Complete is retried by the client when the response is lost. Once the
+        // post has left the upload state, the conversion command was already saved
+        // in the same unit of work as this state transition.
+        if (post.ProcessState != ProcessState.Load)
+        {
+            return Result.Success();
+        }
+
+        var metadata = await _context.Get<VideoFile>()
+                  .Where(x => x.PostId == postId)
+                  .FirstOrDefaultAsync();
+
+        if (metadata == null)
+        {
+            return Result.Failure(new Error("NotFound", "Метаданные видео не найдены"));
+        }
+
+        var conversionAlreadyQueued = await _context.Get<VideoProcessEvent>()
+            .AnyAsync(x =>
+                x.CorrelationId == metadata.Id &&
+                x.EventType == nameof(ConvertVideoCommand));
+
+        if (conversionAlreadyQueued)
+        {
+            _context.Attach(post);
+            post.ProcessState = ProcessState.Draft;
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Result.Success();
+            }
+            return Result.Success();
+        }
 
         var videoCreateEvent = new ConvertVideoCommand
         {
@@ -175,6 +244,16 @@ internal sealed class DefaultVideoService : IVideoService
         var videoEvent = VideoProcessEvent.Create(videoCreateEvent, videoCreateEvent.VideoMetadataId);
         post.ProcessState = ProcessState.Draft;
         _context.Add(videoEvent);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // A concurrent CompleteUpload request already moved the post out of
+            // Load and persisted its conversion command in the same unit of work.
+            return Result.Success();
+        }
+        return Result.Success();
     }
 }

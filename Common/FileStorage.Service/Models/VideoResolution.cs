@@ -8,5 +8,7 @@
         Middle = 480,
         Hd = 720,
         FullHd = 1080,
+        WQHD = 1440,
+        UHD = 2160
     }
 }

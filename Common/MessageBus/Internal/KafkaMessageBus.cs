@@ -4,6 +4,7 @@ using MessageBus.Configs;
 using MessageBus.EventHandler;
 using MessageBus.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shared.Services;
 using System.Collections.Concurrent;
@@ -18,6 +19,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
     private readonly KafkaConnection _config;
     private readonly IServiceScopeFactory _serviceScope;
     private readonly MessageBusInfoContainer _subscriptionInfo;
+    private readonly ILogger<KafkaMessageBus> _logger;
     private readonly ConcurrentDictionary<Type, EventPublishAttribute> _cachedAttributes = new();
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _consumers = new();
     private readonly ProducerBuilder<string, string> _producerBuilder;
@@ -40,11 +42,13 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         KafkaConnection config,
         IServiceScopeFactory serviceScope,
         IOptions<MessageBusInfoContainer> subscriptionInfo,
-        IRequestClient requestClient)
+        IRequestClient requestClient,
+        ILogger<KafkaMessageBus> logger)
     {
         _config = config;
         _serviceScope = serviceScope;
         _subscriptionInfo = subscriptionInfo.Value;
+        _logger = logger;
 
         _producerBuilder = new ProducerBuilder<string, string>(BuildProducerConfig());
         _requestClient = requestClient;
@@ -117,17 +121,15 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
 
             await EnsureTopicExistsAsync(topicName, cancellationToken);
 
-            var subscribeMethod = typeof(KafkaMessageBus)
-                .GetMethod(nameof(StartConsumerAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var genericSubscribe = subscribeMethod
-                .MakeGenericMethod(handlerConfig.HandlerType);
-
-            await (Task)genericSubscribe.Invoke(this, [topicName, groupId, prefetch, cancellationToken])!;
+            await StartConsumerAsync(topicName, groupId, prefetch, cancellationToken);
         }
         catch (Exception ex)
         {
-            // Логируем, но не роняем весь сервис
-            // logger.LogError(ex, "Failed to initialize subscription for {HandlerType}", handlerConfig.HandlerType);
+            _logger.LogError(
+                ex,
+                "Failed to initialize Kafka subscription for {EventType}",
+                handlerConfig.HandlerType);
+            throw;
         }
     }
 
@@ -173,7 +175,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         }
     }
 
-    private async Task StartConsumerAsync<T>(
+    private async Task StartConsumerAsync(
         string topicName,
         string groupId,
         int prefetch,
@@ -204,7 +206,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
                         var result = consumer.Consume(cts.Token);
                         if (result?.Message == null) continue;
 
-                        await ProcessMessageAsync<T>(consumer, result, cts.Token);
+                        await ProcessMessageAsync(consumer, result, cts.Token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -225,7 +227,35 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
         await Task.CompletedTask;
     }
 
-    private async Task ProcessMessageAsync<T>(
+    private async Task ProcessMessageAsync(
+        IConsumer<string, string> consumer,
+        ConsumeResult<string, string> result,
+        CancellationToken ct)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(result.Message.Value);
+            if (!document.RootElement.TryGetProperty(nameof(BaseEvent.EventType), out var eventTypeElement)
+                || eventTypeElement.GetString() is not { } eventType
+                || !_subscriptionInfo.HandlerTypes.TryGetValue(eventType, out var handlerInfo))
+            {
+                consumer.Commit(result);
+                return;
+            }
+
+            var processMethod = typeof(KafkaMessageBus)
+                .GetMethod(nameof(ProcessTypedMessageAsync), BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var genericProcessMethod = processMethod.MakeGenericMethod(handlerInfo.HandlerType);
+
+            await (Task)genericProcessMethod.Invoke(this, [consumer, result, ct])!;
+        }
+        catch
+        {
+            try { consumer.Commit(result); } catch { /* ignore */ }
+        }
+    }
+
+    private async Task ProcessTypedMessageAsync<T>(
         IConsumer<string, string> consumer,
         ConsumeResult<string, string> result,
         CancellationToken ct)
@@ -244,7 +274,7 @@ internal sealed class KafkaMessageBus : IMessagePublish, IMessageSubscriber
 
             using var scope = _serviceScope.CreateScope();
             var handlers = scope.ServiceProvider
-                .GetKeyedServices<IEventHandler<T>>(concreteEvent.EventType);
+                .GetKeyedServices<IEventHandler<T>>(typeof(T).Name);
 
             if (!handlers.Any())
             {

@@ -1,75 +1,46 @@
-﻿using Shared.Services;
-using Shared.Utils;
-using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.ObjectModel;
 
 namespace Notification.Domain.Entities;
 
-public class UserNotification : INotificationEntity
+/// <summary>One recipient's immutable notification and its independently managed read state.</summary>
+public sealed class UserNotification : INotificationEntity
 {
     public Guid Id { get; private set; }
     public Guid UserId { get; private set; }
+    public NotificationKind Kind { get; private set; }
+    public Guid BusinessId { get; private set; }
+    public string Producer { get; private set; } = null!;
+    public Guid EventId { get; private set; }
+    public NotificationContent Content { get; private set; } = null!;
     public DateTimeOffset CreatedAt { get; private set; }
-    public bool IsViewed { get; private set; }
-    public string Payload {  get; private set; }
-    public List<UserNotificationTypes> NotificationTypes { get; private set; }
+    public DateTimeOffset? ReadAt { get; private set; }
 
-    private UserNotification()
+    public NotificationSource Source => new(Producer, EventId);
+    public bool IsRead => ReadAt.HasValue;
+
+    private UserNotification() { }
+
+    /// <summary>Creates a notification from validated input; identity and time are supplied by the caller.</summary>
+    public static UserNotification Create(Guid id, Guid userId, NotificationSource source,
+        NotificationContent content, DateTimeOffset createdAt) => new()
     {
+        Id = id,
+        UserId = userId,
+        Kind = content.Kind,
+        BusinessId = content.BusinessId,
+        Producer = source.Producer,
+        EventId = source.EventId,
+        Content = content with
+        {
+            Data = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(content.Data)),
+            OccurredAt = content.OccurredAt.ToUniversalTime(),
+            ExpiresAt = content.ExpiresAt?.ToUniversalTime()
+        },
+        CreatedAt = createdAt.ToUniversalTime()
+    };
 
-    }
+    public bool IsExpired(DateTimeOffset now) => Content.ExpiresAt <= now;
 
-    public UserNotification(Guid userId, string payload, IEnumerable<long> notificationTypesIds)
-    {
-        Id = GuidService.GetNewGuid();
-        CreatedAt = DateTimeService.Now();
-        UserId = userId;
-        Payload = payload;
-        IsViewed = false;
-        NotificationTypes = notificationTypesIds.Select(x => new UserNotificationTypes(Id, x)).ToList();
-    }
-
-    public Result MarkAsViewed()
-    {
-        IsViewed = true;
-        return Result.Success();
-    }
-}
-
-public class UserNotificationTypes
-{
-    public Guid UserNotificationId { get; private set; }
-    public long NotificationTypeId { get; private set; }
-
-    [ForeignKey(nameof(UserNotificationId))]
-    public UserNotification UserNotification { get; private set; }
-
-    [ForeignKey(nameof(NotificationTypeId))]
-    public NotificationType NotificationType { get; private set; }
-
-    private UserNotificationTypes()
-    {
-
-    }
-
-
-    public UserNotificationTypes(Guid userNotificationId, long notificationTypeId)
-    {
-        UserNotificationId = userNotificationId;
-        NotificationTypeId = notificationTypeId;
-    }
-}
-
-public class NotificationType : INotificationEntity
-{
-    public long Id { get; private set; }
-    public string Name { get; private set; }
-    public bool IsActive { get; private set; }
-    public DeliveryType DeliveryType { get; private set; }
-}
-
-public enum DeliveryType
-{
-    InApp,
-    Push,
-    Email
+    /// <summary>Repeated reads preserve the time of the first read.</summary>
+    public void MarkRead(DateTimeOffset readAt) => ReadAt ??= readAt.ToUniversalTime();
 }

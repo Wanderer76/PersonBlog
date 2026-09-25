@@ -1,10 +1,12 @@
-﻿namespace FileStorage.Service
+namespace FileStorage.Service
 {
     public class FileStorageOptions
     {
-        public string Endpoint { get; set; }
-        public string AccessKey { get; set; }
-        public string SecretKey { get; set; }
-       // public required string Bucket { get; init; }
+        public const int DefaultPresignedUrlExpirySeconds = 900;
+
+        public string Endpoint { get; set; } = null!;
+        public string AccessKey { get; set; } = null!;
+        public string SecretKey { get; set; } = null!;
+        public int PresignedUrlExpirySeconds { get; set; } = DefaultPresignedUrlExpirySeconds;
     }
 }

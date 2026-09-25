@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +13,11 @@ public static class SerilogExtensions
 {
     public static void AddSerilogLogger(this IHostBuilder builder, IConfiguration configuration)
     {
+        if (!configuration.GetSection("Serilog").Exists())
+        {
+            return;
+        }
+
         builder.UseSerilog((ctx, services, logger) =>
         {
             var baseConfig = new LoggerConfiguration()
@@ -36,6 +41,13 @@ public static class SerilogExtensions
 
             options.EnrichDiagnosticContext = async (diagnosticContext, httpContext) =>
             {
+                if (httpContext.Request.Headers.TryGetValue(
+                        global::Infrastructure.Middleware.CorrelationMiddleware.CorrelationId,
+                        out var correlationId))
+                {
+                    diagnosticContext.Set("CorrelationId", correlationId.ToString());
+                }
+
                 var statusCode = httpContext.Response.StatusCode;
                 var hasException = httpContext.Features.Get<IExceptionHandlerFeature>()?.Error != null;
 

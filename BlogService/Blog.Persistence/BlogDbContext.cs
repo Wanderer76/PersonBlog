@@ -1,4 +1,4 @@
-﻿using Blog.Domain.Entities;
+using Blog.Domain.Entities;
 using Blog.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Shared.Persistence;
@@ -11,9 +11,9 @@ public class BlogDbContext : BaseDbContext
     public DbSet<PersonBlog> Blogs { get; set; }
     public DbSet<Post> Posts { get; set; }
     public DbSet<VideoFile> VideoMetadata { get; set; }
-    public DbSet<VideoProcessEvent> ProfileEventMessages { get; set; }
+    public DbSet<VideoProcessEvent> OutboxMessages { get; set; }
     public DbSet<PostViewer> PostViewers { get; set; }
-    public DbSet<PaymentSubscriber> ProfileSubscriptions { get; set; }
+    public DbSet<PaymentSubscriber> PaymentSubscribers { get; set; }
     public DbSet<PaymentSubscription> PaymentSubscriptions { get; set; }
     public DbSet<VideoProcessingSagaState> VideoProcessingSagaStates { get; set; }
     public DbSet<PostRemoveEvent> PostRemoveEvents { get; set; }
@@ -49,9 +49,11 @@ public class BlogDbContext : BaseDbContext
             {
                 var entity = modelBuilder.Entity<Subscriber>();
                 entity.HasIndex(x => new { x.UserId, x.BlogId });
+                entity.HasIndex(x => new { x.BlogId, x.SubscriptionStartDate, x.UserId });
             }
             {
                 var entity = modelBuilder.Entity<Post>();
+                entity.HasIndex(x => x.PublicationId).IsUnique();
                 entity.HasOne(x => x.BanMessage)
                     .WithOne(x => x.Post)
                     .HasForeignKey<BanMessage>(x => x.PostId);

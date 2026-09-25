@@ -71,24 +71,32 @@ public class AudioExtractorFfmpegService : IAudioExtractorService
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = fFMpegOptions.FFMpegPath,
-                    Arguments = $"-i \"{filePath}\" -map 0:v -c copy \"{tempCoverPath}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
-            process.ErrorDataReceived += (sender, e) =>
-            {
-                if (!string.IsNullOrEmpty(e.Data))
-                {
-                    Console.Error.WriteLine($"Error: {e.Data}");
-                }
-            };
-            process.Start();
-            process.BeginErrorReadLine();
+            process.StartInfo.ArgumentList.Add("-y");
+            process.StartInfo.ArgumentList.Add("-i");
+            process.StartInfo.ArgumentList.Add(filePath);
+            process.StartInfo.ArgumentList.Add("-map");
+            process.StartInfo.ArgumentList.Add("0:v:0");
+            process.StartInfo.ArgumentList.Add("-frames:v");
+            process.StartInfo.ArgumentList.Add("1");
+            process.StartInfo.ArgumentList.Add("-c:v");
+            process.StartInfo.ArgumentList.Add("mjpeg");
+            process.StartInfo.ArgumentList.Add(tempCoverPath);
 
-            await process.WaitForExitAsync();
+            process.Start();
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            await WaitForExitWithTimeoutAsync(process);
+            _ = await outputTask;
+            var error = await errorTask;
+
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException($"FFmpeg cover extraction failed with exit code {process.ExitCode}: {error}");
 
             if (File.Exists(tempCoverPath) && new FileInfo(tempCoverPath).Length > 0)
             {
@@ -113,19 +121,29 @@ public class AudioExtractorFfmpegService : IAudioExtractorService
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "ffmpeg",
-                    Arguments = $"-v error -i \"{filePath}\" -f null -",
+                    FileName = fFMpegOptions.FFMpegPath,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 }
             };
+            process.StartInfo.ArgumentList.Add("-v");
+            process.StartInfo.ArgumentList.Add("error");
+            process.StartInfo.ArgumentList.Add("-i");
+            process.StartInfo.ArgumentList.Add(filePath);
+            process.StartInfo.ArgumentList.Add("-f");
+            process.StartInfo.ArgumentList.Add("null");
+            process.StartInfo.ArgumentList.Add("-");
 
             process.Start();
-            var errorOutput = await process.StandardError.ReadToEndAsync();
-            await process.WaitForExitAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            await WaitForExitWithTimeoutAsync(process);
+            var errorOutput = await errorTask;
 
-            return string.IsNullOrEmpty(errorOutput) || !errorOutput.Contains("Invalid data found");
+            if (process.ExitCode != 0)
+                _logger.LogWarning("MP3 validation failed with exit code {ExitCode}: {Error}", process.ExitCode, errorOutput);
+
+            return process.ExitCode == 0;
         }
         catch
         {
@@ -140,16 +158,18 @@ public class AudioExtractorFfmpegService : IAudioExtractorService
             StartInfo = new ProcessStartInfo
             {
                 FileName = fFMpegOptions.FFMpegPath,
-                Arguments = $"-i \"{filePath}\"",
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             }
         };
+        process.StartInfo.ArgumentList.Add("-i");
+        process.StartInfo.ArgumentList.Add(filePath);
 
         process.Start();
-        string output = await process.StandardError.ReadToEndAsync();
-        await process.WaitForExitAsync();
+        var outputTask = process.StandardError.ReadToEndAsync();
+        await WaitForExitWithTimeoutAsync(process);
+        string output = await outputTask;
 
         return output;
     }
@@ -161,18 +181,28 @@ public class AudioExtractorFfmpegService : IAudioExtractorService
             StartInfo = new ProcessStartInfo
             {
                 FileName = fFMpegOptions.FFProbePath,
-                Arguments = $"-i \"{filePath}\" -show_streams -select_streams v -loglevel error",
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             }
         };
+        process.StartInfo.ArgumentList.Add("-i");
+        process.StartInfo.ArgumentList.Add(filePath);
+        process.StartInfo.ArgumentList.Add("-show_streams");
+        process.StartInfo.ArgumentList.Add("-select_streams");
+        process.StartInfo.ArgumentList.Add("v:0");
+        process.StartInfo.ArgumentList.Add("-loglevel");
+        process.StartInfo.ArgumentList.Add("error");
 
         process.Start();
-        var output = await process.StandardOutput.ReadToEndAsync();
-        await process.WaitForExitAsync();
+        var outputTask = process.StandardOutput.ReadToEndAsync();
+        var errorTask = process.StandardError.ReadToEndAsync();
+        await WaitForExitWithTimeoutAsync(process);
+        var output = await outputTask;
+        _ = await errorTask;
 
-        return !string.IsNullOrEmpty(output);
+        return process.ExitCode == 0 && !string.IsNullOrEmpty(output);
     }
 
     private async Task<string> SaveTempFileAsync(IFormFile file)
@@ -193,6 +223,36 @@ public class AudioExtractorFfmpegService : IAudioExtractorService
         {
             try { File.Delete(filePath); }
             catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete temp file"); }
+        }
+    }
+
+    private async Task WaitForExitWithTimeoutAsync(Process process)
+    {
+        using var timeoutCts = new CancellationTokenSource(
+            TimeSpan.FromSeconds(Math.Max(1, fFMpegOptions.CommandTimeoutSeconds)));
+
+        try
+        {
+            await process.WaitForExitAsync(timeoutCts.Token);
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+        {
+            try
+            {
+                if (!process.HasExited)
+                    process.Kill(entireProcessTree: true);
+            }
+            catch (InvalidOperationException)
+            {
+                // The process exited between the checks.
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Unable to terminate timed out process {Process}", process.StartInfo.FileName);
+            }
+
+            throw new TimeoutException(
+                $"Process '{Path.GetFileName(process.StartInfo.FileName)}' exceeded the configured timeout of {fFMpegOptions.CommandTimeoutSeconds} seconds.");
         }
     }
 

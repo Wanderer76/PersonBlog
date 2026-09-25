@@ -2,10 +2,11 @@
 
 public interface IDateTimeManager
 {
-    public static DateTimeOffset Now() => DateTimeService.Now();
+    DateTimeOffset UtcNow();
 }
 
-public static class DateTimeService
+public class DateTimeService : IDateTimeManager
 {
     public static DateTimeOffset Now() => DateTimeOffset.UtcNow;
+    public DateTimeOffset UtcNow() => DateTimeOffset.UtcNow;
 }

@@ -1,0 +1,93 @@
+.playlistPage { min-height: 100vh; color: #181511; background: radial-gradient(circle at 85% 0%, rgba(255, 145, 56, .17), transparent 34rem), #f5f3ef; }
+.playlistShell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 72px; }
+.playlistBack { padding: 8px 0; color: #766f66; background: transparent; border: 0; font: inherit; font-weight: 650; cursor: pointer; }
+.playlistBack:hover { color: #d85f08; }
+.playlistHero { display: grid; grid-template-columns: minmax(240px, 390px) 1fr; gap: clamp(30px, 6vw, 72px); align-items: center; padding: 52px 0 60px; }
+.playlistHeroArtwork { position: relative; display: grid; overflow: hidden; aspect-ratio: 16 / 10; place-items: center; color: #fff; background: linear-gradient(140deg, #ed6f17, #ffad68); border-radius: 28px; box-shadow: 0 28px 60px rgba(126, 67, 22, .22); }
+.playlistHeroArtwork::after { position: absolute; inset: 14px; content: ''; border: 1px solid rgba(255,255,255,.34); border-radius: 19px; }
+.playlistHeroArtwork img { width: 100%; height: 100%; object-fit: cover; }
+.playlistHeroArtwork > span { font-size: clamp(54px, 9vw, 96px); font-weight: 800; letter-spacing: -.08em; }
+.playlistHeroArtwork i { position: absolute; right: 23px; bottom: 23px; z-index: 1; display: grid; width: 44px; height: 44px; place-items: center; color: #201b16; background: #fff; border-radius: 50%; font-style: normal; font-weight: 800; }
+.playlistEyebrow { color: #d85f08; font-size: 12px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+.playlistHeroCopy h1 { max-width: 650px; margin: 13px 0 14px; font-size: clamp(38px, 6vw, 68px); letter-spacing: -.05em; line-height: 1; overflow-wrap: anywhere; }
+.playlistHeroCopy p { margin: 0 0 27px; color: #777067; font-size: 17px; }
+.playlistButtonPrimary, .playlistButtonSecondary { padding: 12px 18px; border: 0; border-radius: 12px; font: inherit; font-weight: 750; cursor: pointer; }
+.playlistButtonPrimary { color: #fff; background: #ed731c; box-shadow: 0 8px 20px rgba(221, 94, 5, .18); }
+.playlistButtonPrimary:hover:not(:disabled) { background: #ff852c; transform: translateY(-1px); }
+.playlistButtonPrimary:disabled { opacity: .48; cursor: not-allowed; }
+.playlistButtonSecondary { color: #403a34; background: #eeeae4; }
+.playlistContent { padding: clamp(22px, 4vw, 38px); background: rgba(255,255,255,.92); border: 1px solid rgba(68, 57, 45, .1); border-radius: 28px; box-shadow: 0 20px 55px rgba(49, 36, 23, .07); }
+.playlistSectionHeader { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 24px; }
+.playlistSectionHeader span { color: #d85f08; font-size: 11px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+.playlistSectionHeader h2 { margin: 5px 0 0; font-size: 27px; }
+.playlistSectionHeader small { color: #898177; }
+.playlistPosts { display: flex; flex-direction: column; gap: 10px; }
+.playlistPost { display: flex; min-width: 0; align-items: center; gap: 14px; padding: 12px; background: #faf9f7; border: 1px solid #e9e5df; border-radius: 17px; transition: background .2s, border-color .2s, box-shadow .2s; }
+.playlistPost:hover { background: #fff; border-color: #ddc9b8; }
+.playlistPostDragging { background: #fff6ee; border-color: #ed731c; box-shadow: 0 18px 34px rgba(47, 34, 21, .18); }
+.playlistDragHandle { display: grid; width: 45px; align-self: stretch; flex: 0 0 auto; place-content: center; gap: 2px; color: #8a8076; background: transparent; border: 0; border-right: 1px solid #e8e3dc; cursor: grab; }
+.playlistDragHandle:active { cursor: grabbing; }
+.playlistDragHandle span { color: #d85f08; font-size: 14px; font-weight: 850; }
+.playlistDragHandle small { font-size: 10px; letter-spacing: -3px; }
+.playlistPostMain { display: flex; min-width: 0; flex: 1; align-items: center; gap: 16px; padding: 0; color: inherit; text-align: left; background: transparent; border: 0; cursor: pointer; }
+.playlistPostArtwork, .playlistOptionArtwork { display: grid; flex: 0 0 auto; place-items: center; color: #fff; object-fit: cover; background: linear-gradient(140deg, #ed731c, #ffab64); font-weight: 800; }
+.playlistPostArtwork { width: 112px; height: 70px; border-radius: 12px; font-size: 24px; }
+.playlistPostCopy { min-width: 0; flex: 1; }
+.playlistPostCopy > strong, .playlistPostCopy > span, .playlistPostCopy > small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.playlistPostCopy > strong { margin-bottom: 5px; font-size: 16px; }
+.playlistPostCopy > span { color: #827a71; font-size: 13px; }
+.playlistPostCopy > small { margin-top: 6px; color: #a0988f; font-size: 11px; }
+.playlistRemoveButton { padding: 9px 12px; color: #8b4230; background: #fff0ec; border: 0; border-radius: 10px; font: inherit; font-size: 12px; font-weight: 750; cursor: pointer; }
+.playlistRemoveButton:hover { color: #fff; background: #b9452b; }
+.playlistEmpty, .playlistPageState { display: grid; min-height: 340px; place-content: center; padding: 30px; text-align: center; }
+.playlistEmpty > span { color: #ed731c; font-size: 60px; font-weight: 800; }
+.playlistEmpty h3 { margin: 14px 0 5px; font-size: 22px; }
+.playlistEmpty p { max-width: 430px; margin: 0 auto 22px; color: #827a71; line-height: 1.5; }
+.playlistPageError { color: #8c2d22; }
+.playlistError { margin-bottom: 18px; padding: 13px 16px; color: #8c2d22; background: #fff0ee; border: 1px solid #fac7c0; border-radius: 12px; }
+.playlistModalOverlay { position: fixed; inset: 0; z-index: 1000; display: grid; padding: 24px; place-items: center; background: rgba(24, 20, 16, .64); backdrop-filter: blur(5px); }
+.playlistModal { display: flex; width: min(780px, 100%); max-height: min(760px, calc(100vh - 48px)); flex-direction: column; overflow: hidden; background: #fff; border-radius: 25px; box-shadow: 0 30px 80px rgba(0,0,0,.3); }
+.playlistModalHeader { display: flex; justify-content: space-between; gap: 20px; align-items: start; padding: 26px 28px 20px; border-bottom: 1px solid #eee9e3; }
+.playlistModalHeader span { color: #d85f08; font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+.playlistModalHeader h2 { margin: 6px 0 0; font-size: 26px; }
+.playlistModalHeader > button { width: 38px; height: 38px; color: #70685f; background: #f2efeb; border: 0; border-radius: 50%; font-size: 25px; cursor: pointer; }
+.playlistModalBody { display: grid; gap: 9px; min-height: 250px; padding: 20px 28px; overflow-y: auto; }
+.playlistModalState { display: grid; min-height: 220px; place-items: center; color: #847c72; }
+.playlistOption { display: flex; width: 100%; min-width: 0; align-items: center; gap: 14px; padding: 10px; color: inherit; text-align: left; background: #faf9f7; border: 1px solid #e9e5df; border-radius: 15px; cursor: pointer; }
+.playlistOption:hover { border-color: #e9a36d; }
+.playlistOptionSelected { background: #fff4eb; border-color: #ed731c; box-shadow: inset 0 0 0 1px #ed731c; }
+.playlistOptionArtwork { width: 82px; height: 54px; border-radius: 10px; }
+.playlistOption > span { min-width: 0; flex: 1; }
+.playlistOption strong, .playlistOption small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.playlistOption strong { margin-bottom: 5px; font-size: 14px; }
+.playlistOption small { color: #857d74; }
+.playlistOption i { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; color: #fff; background: #29231e; border-radius: 10px; font-style: normal; font-size: 18px; font-weight: 800; }
+.playlistOptionSelected i { background: #ed731c; }
+.playlistModalFooter { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 18px 28px; background: #faf9f7; border-top: 1px solid #eee9e3; }
+.playlistModalFooter > span { color: #7b736a; }
+.playlistModalFooter > div { display: flex; gap: 10px; }
+
+@media (max-width: 720px) {
+    .playlistShell { width: min(100% - 28px, 1120px); padding-top: 20px; }
+    .playlistHero { grid-template-columns: 1fr; gap: 28px; padding: 32px 0 42px; }
+    .playlistHeroArtwork { width: min(390px, 100%); }
+    .playlistSectionHeader { align-items: start; flex-direction: column; }
+    .playlistPost { align-items: stretch; }
+    .playlistPostArtwork { width: 86px; height: 62px; }
+    .playlistRemoveButton { align-self: center; }
+}
+
+@media (max-width: 520px) {
+    .playlistContent { padding: 20px 13px; border-radius: 20px; }
+    .playlistPost { position: relative; gap: 8px; padding: 9px; }
+    .playlistDragHandle { width: 32px; }
+    .playlistPostMain { align-items: flex-start; gap: 10px; }
+    .playlistPostArtwork { width: 72px; height: 54px; }
+    .playlistPostCopy > span { white-space: normal; }
+    .playlistRemoveButton { position: absolute; right: 8px; bottom: 8px; padding: 6px 8px; }
+    .playlistModalOverlay { padding: 10px; }
+    .playlistModal { max-height: calc(100vh - 20px); border-radius: 18px; }
+    .playlistModalHeader, .playlistModalBody, .playlistModalFooter { padding-left: 16px; padding-right: 16px; }
+    .playlistModalFooter { align-items: stretch; flex-direction: column; }
+    .playlistModalFooter > div button { flex: 1; }
+}

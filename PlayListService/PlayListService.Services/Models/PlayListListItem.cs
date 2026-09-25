@@ -7,4 +7,6 @@ public sealed class PlayListListItem
     public string? ThumbnailUrl { get; set; }
     public int PostCount { get; set; }
     public bool CanEdit { get; set; }
+    public PlayListContentTypeModel ContentType { get; set; }
+    public PlayListKindModel Kind { get; set; }
 }

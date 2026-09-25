@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
+using Serilog.Context;
 using Shared.Services;
 
 namespace Infrastructure.Middleware;
@@ -20,6 +21,12 @@ public sealed class CorrelationMiddleware
         {
             context.Request.Headers[CorrelationId] = GuidService.GetNewGuid().ToString();
         }
-        await _next(context);
+        var correlationId = context.Request.Headers[CorrelationId].ToString();
+        context.Response.Headers[CorrelationId] = correlationId;
+
+        using (LogContext.PushProperty("CorrelationId", correlationId))
+        {
+            await _next(context);
+        }
     }
 }

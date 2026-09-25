@@ -18,6 +18,7 @@ namespace Infrastructure.Extensions
                         //ValidateIssuer = true,
                         //ValidateAudience = true,
                         ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero,
                         //ValidateIssuerSigningKey = true,
                         ValidIssuer = AuthOptions.ISSUER,
                         ValidAudience = AuthOptions.AUDIENCE,
