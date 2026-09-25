@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.37628.2 d17.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.9.12128.139 oobstable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{46B45E6F-2994-42A8-9FEB-69C8D854785E}"
 	ProjectSection(SolutionItems) = preProject
@@ -197,6 +197,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Persistence", "NotificationService\Notification.Persistence\Notification.Persistence.csproj", "{0AD088E6-F568-4A6D-9669-5EB0151C9D6F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Application", "ProfileService\Profile.Application\Profile.Application.csproj", "{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatService.Domain", "ChatService\ChatService.Domain\ChatService.Domain.csproj", "{C998E9C6-F745-AD16-978C-ADF9C936FF21}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatService.Application", "ChatService\ChatService.Application\ChatService.Application.csproj", "{8FEEF137-0DA4-4BA4-0FA5-2663BD67C01D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ChatService", "ChatService", "{64555DDD-2B9E-4490-B949-1F9871847200}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Profile.Contract", "ProfileService\Profile.Contract\Profile.Contract.csproj", "{BA63A1D4-9481-42BB-82DF-625A728D4F90}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -528,6 +536,18 @@ Global
 		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C998E9C6-F745-AD16-978C-ADF9C936FF21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C998E9C6-F745-AD16-978C-ADF9C936FF21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C998E9C6-F745-AD16-978C-ADF9C936FF21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C998E9C6-F745-AD16-978C-ADF9C936FF21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FEEF137-0DA4-4BA4-0FA5-2663BD67C01D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FEEF137-0DA4-4BA4-0FA5-2663BD67C01D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FEEF137-0DA4-4BA4-0FA5-2663BD67C01D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FEEF137-0DA4-4BA4-0FA5-2663BD67C01D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA63A1D4-9481-42BB-82DF-625A728D4F90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA63A1D4-9481-42BB-82DF-625A728D4F90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA63A1D4-9481-42BB-82DF-625A728D4F90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA63A1D4-9481-42BB-82DF-625A728D4F90}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -614,6 +634,9 @@ Global
 		{5BDCDF42-BD98-4A99-A7B6-0F359147ECC0} = {F73ED5B6-7823-44EA-84D9-3AFCB788A9C7}
 		{0AD088E6-F568-4A6D-9669-5EB0151C9D6F} = {8BEEA585-07D3-424B-8747-7218BA325627}
 		{CC2E93D1-3A0B-F82F-E88B-AE5F8A57CE0E} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
+		{C998E9C6-F745-AD16-978C-ADF9C936FF21} = {64555DDD-2B9E-4490-B949-1F9871847200}
+		{8FEEF137-0DA4-4BA4-0FA5-2663BD67C01D} = {64555DDD-2B9E-4490-B949-1F9871847200}
+		{BA63A1D4-9481-42BB-82DF-625A728D4F90} = {96D77ACD-07C9-4B1C-9917-3FE2B715C042}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {11F13EE8-A0AE-48E4-BDD8-1661E47D9784}

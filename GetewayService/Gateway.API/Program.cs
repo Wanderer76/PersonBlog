@@ -1,8 +1,6 @@
 using Authentication.Contract;
 using Blog.Contracts;
-using Blog.Service.Extensions;
 using FileStorage.Service;
-using Gateway.API;
 using Gateway.API.Api;
 using Gateway.API.Services;
 using Infrastructure.Extensions;
@@ -10,7 +8,7 @@ using Infrastructure.Middleware;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using PlayListService.Contract;
-using Profile.Service;
+using Profile.Contract;
 
 var builder = WebApplication.CreateBuilder(args);
 

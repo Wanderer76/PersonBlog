@@ -9,7 +9,7 @@ using Infrastructure.Extensions;
 using Infrastructure.Interface;
 using MessageBus;
 using MessageBus.Configs;
-using Profile.Service;
+using Profile.Contract;
 
 var builder = WebApplication.CreateBuilder(args);
 

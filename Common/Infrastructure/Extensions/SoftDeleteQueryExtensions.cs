@@ -1,5 +1,5 @@
-﻿using Infrastructure.Interface;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Shared;
 using System.Linq.Expressions;
 
 namespace Infrastructure.Extensions;

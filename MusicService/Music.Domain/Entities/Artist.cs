@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Interface;
+using Shared;
 using Shared.Services;
 using Shared.Utils;
 using System.ComponentModel.DataAnnotations;

@@ -1,4 +1,4 @@
-﻿namespace Infrastructure.Interface;
+﻿namespace Shared;
 
 public interface ISoftDelete
 {

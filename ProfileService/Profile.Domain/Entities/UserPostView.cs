@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Interface;
+using Shared;
 using Shared.Services;
 
 namespace Profile.Domain.Entities

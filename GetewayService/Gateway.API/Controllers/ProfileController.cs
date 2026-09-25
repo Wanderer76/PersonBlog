@@ -8,8 +8,8 @@ using Infrastructure.Services;
 using Microsoft.AspNetCore.Mvc;
 using PlayListService.Contract;
 using PlayListService.Services.Services;
-using Profile.Service.HttpClients;
 using Profile.Application.Models.Profile;
+using Profile.Contract.HttpClients;
 using System.ComponentModel.DataAnnotations;
 
 namespace Gateway.API.Controllers;

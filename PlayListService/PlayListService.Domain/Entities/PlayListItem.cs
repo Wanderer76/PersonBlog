@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Interface;
+using Shared;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PlayListService.Domain.Entities;

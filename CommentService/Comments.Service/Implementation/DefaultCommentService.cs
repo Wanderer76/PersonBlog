@@ -4,11 +4,11 @@ using Comments.Domain.Models;
 using Comments.Domain.Services;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Profile.Service.HttpClients;
 using Shared.Models;
 using Shared.Persistence;
 using Shared.Services;
 using Shared.Utils;
+using Profile.Contract.HttpClients;
 
 namespace Comments.Service.Implementation;
 
